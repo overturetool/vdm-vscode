@@ -6,3 +6,7 @@ To use, open a VDM file(.vdmsl, .vdmpp or .vdmrt). The language server will then
 
 To use the debugger open the file that you want to debug, this will launch the server. With the server running you can launch the debugger, by default the debugger will launch the VDMJ interpreter from where you can debug specifications. 
 For further explanation on the features see [here](https://github.com/nickbattle/vdmj/tree/master/LSP).
+
+The syntax highlighting is borrowed from [Futa Hirahoba](https://github.com/korosuke613/vdmpp-vscode-extension)
+
+***Note:** The extension is a working progress and definitly contains errors*
