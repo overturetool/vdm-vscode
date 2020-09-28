@@ -9,4 +9,4 @@ For further explanation on the features see [here](https://github.com/nickbattle
 
 The syntax highlighting is borrowed from [Futa Hirahoba](https://github.com/korosuke613/vdmpp-vscode-extension)
 
-***Note:** The extension is a working progress and definitly contains errors*
+***Note:** The extension is a working progress and may contain errors*
