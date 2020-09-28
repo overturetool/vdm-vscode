@@ -1,0 +1,126 @@
+{
+  "name": "vdmpp-lsp",
+  "description": "A language server for VDM++",
+  "author": "Jonas Rask and Frederik Palludan",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "vscode",
+  "engines": {
+    "vscode": "^1.41.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:VDM_PP"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "VDM_PP",
+        "aliases": [
+          "VDM++",
+          "vdmpp"
+        ],
+        "extensions": [
+          ".vdmpp"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "VDM_PP",
+        "scopeName": "source.vdmpp",
+        "path": "./syntaxes/vdmpp.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdmpp.number",
+        "path": "./syntaxes/number.tmLanguage.json"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "vdm",
+        "label": "VDM Debug",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "noDebug": {
+                "type": "boolean",
+                "description": "Don't run debug mode.",
+                "default": false
+              },
+              "defaultName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Name of the default module or class.",
+                "default": ""
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "vdm",
+            "request": "launch",
+            "name": "Launch VDM Debug",
+            "stopOnEntry": true,
+            "noDebug": false,
+            "defaultName": null
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "VDM Debug: Launch",
+            "description": "A new configuration for 'debugging' a VDM project.",
+            "body": {
+              "type": "vdm",
+              "request": "launch",
+              "name": "Launch VDM Debug",
+              "stopOnEntry": true,
+              "noDebug": false,
+              "defaultName": null
+            }
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "VDM_PP"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "postinstall": "node ./node_modules/vscode/bin/install"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.33",
+    "@types/node": "^6.14.9",
+    "typescript": "^2.1.5",
+    "vscode": "^1.1.36"
+  },
+  "dependencies": {
+    "portfinder": "^1.0.26",
+    "vscode-languageclient": "^3.1.0"
+  }
+}

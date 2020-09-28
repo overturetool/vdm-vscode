@@ -1,0 +1,29 @@
+\begin{vdm_al}
+clas Expert --ERROR
+
+instance variables
+
+quali : set1 of Qualification;
+\end{vdm_al}
+
+\begin{vdm_al}
+types 
+ 
+public qualificatio = <Mech> | <Chem> | <Bio> | <Elec>; --ERROR IN OTHER FILES
+\end{vdm_al}
+
+\begin{vdm_al}
+operations
+
+public Exper: set1 of Qualification ==> Expert --ERROR
+Expert(qs) ==
+  quali := qs;
+\end{vdm_al}
+  
+\begin{vdm_al}
+pure public GetQuali: () ==> set of Qualification
+GetQuali() ==
+  return quali;
+  
+end Expert
+\end{vdm_al}

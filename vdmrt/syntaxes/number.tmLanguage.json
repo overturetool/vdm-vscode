@@ -1,0 +1,100 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "number",
+	"patterns": [
+        {
+            "include": "#number"
+        }
+	],
+	"repository": {
+		"number": {
+			"name": "constant.numeric.number",
+			"patterns": [
+				{
+					"include": "#number-float"
+				},
+				{
+					"include": "#number-dec"
+				},
+				{
+					"include": "#number-hex"
+				},
+				{
+					"include": "#number-oct"
+				},
+				{
+					"include": "#number-bin"
+				},
+				{
+					"include": "#number-long"
+				},
+				{
+					"name": "invalid.illegal.name.number",
+					"match": "\\b[0-9]+\\w+"
+				}
+			]
+		},
+		"number-float": {
+			"name": "constant.numeric.float.number",
+			"match": "(?x)\n  (?<! \\w)(?:\n    (?:\n      \\.[0-9](?: _?[0-9] )*\n      |\n      [0-9](?: _?[0-9] )* \\. [0-9](?: _?[0-9] )*\n      |\n      [0-9](?: _?[0-9] )* \\.\n    ) (?: [eE][+-]?[0-9](?: _?[0-9] )* )?\n    |\n    [0-9](?: _?[0-9] )* (?: [eE][+-]?[0-9](?: _?[0-9] )* )\n  )([jJ])?\\b\n",
+			"captures": {
+				"1": {
+					"name": "storage.type.imaginary.number.number"
+				}
+			}
+		},
+		"number-dec": {
+			"name": "constant.numeric.dec.number",
+			"match": "(?x)\n  (?<![\\w\\.])(?:\n      [1-9](?: _?[0-9] )*\n      |\n      0+\n      |\n      [0-9](?: _?[0-9] )* ([jJ])\n      |\n      0 ([0-9]+)(?![eE\\.])\n  )\\b\n",
+			"captures": {
+				"1": {
+					"name": "storage.type.imaginary.number.number"
+				},
+				"2": {
+					"name": "invalid.illegal.dec.number"
+				},
+				"3": {
+					"name": "invalid.illegal.dec.number"
+				}
+			}
+		},
+		"number-hex": {
+			"name": "constant.numeric.hex.number",
+			"match": "(?x)\n  (?<![\\w\\.])\n    (0[xX]) (_?[0-9a-fA-F])+\n  \\b\n",
+			"captures": {
+				"1": {
+					"name": "storage.type.number.number"
+				}
+			}
+		},
+		"number-oct": {
+			"name": "constant.numeric.oct.number",
+			"match": "(?x)\n  (?<![\\w\\.])\n    (0[oO]) (_?[0-7])+\n  \\b\n",
+			"captures": {
+				"1": {
+					"name": "storage.type.number.number"
+				}
+			}
+		},
+		"number-bin": {
+			"name": "constant.numeric.bin.number",
+			"match": "(?x)\n  (?<![\\w\\.])\n    (0[bB]) (_?[01])+\n  \\b\n",
+			"captures": {
+				"1": {
+					"name": "storage.type.number.number"
+				}
+			}
+		},
+		"number-long": {
+			"name": "constant.numeric.bin.number",
+			"comment": "this is to support number2 syntax for long ints",
+			"match": "(?x)\n  (?<![\\w\\.])\n    ([1-9][0-9]* | 0) ([lL])\n  \\b\n",
+			"captures": {
+				"2": {
+					"name": "storage.type.number.number"
+				}
+			}
+        }
+    },
+	"scopeName": "source.vdmpp.number"
+}
