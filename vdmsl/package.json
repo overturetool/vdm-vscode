@@ -3,7 +3,11 @@
   "description": "A language server for VDM-SL",
   "author": "Jonas Rask and Frederik Palludan",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "repository": {
+		"type": "git",
+		"url": "https://github.com/jonaskrask/vdm-vscode"
+	},
   "publisher": "vscode",
   "engines": {
     "vscode": "^1.43.0"
