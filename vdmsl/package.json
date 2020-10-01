@@ -20,6 +20,23 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
+    "configuration":{
+      "title": "Extension configuration",
+      "type":"object",
+      "properties": {
+        "vdmsl-lsp.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server."
+				}
+      }
+    },
     "languages": [
       {
         "id": "vdmsl",
