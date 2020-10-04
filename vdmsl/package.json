@@ -20,6 +20,27 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
+    "commands":[
+      {
+        "command": "extension.runPOG",
+        "title": "POG: Run Proof Obligation Generation (POG)"
+      },
+      {
+        "command": "extension.retrievePOs",
+        "title": "POG: Retrieve Proof Obligations"
+      }
+    ],
+    "menus": {
+      "commandPalette": [{
+        "command": "extension.runPOG",
+        "when": "editorLangId == vdmsl"
+      }],
+      "explorer/context": [{
+        "when": "resourceLangId == vdmsl || explorerResourceIsFolder",
+        "command": "extension.runPOG",
+        "group": "verification@1"
+      }]
+    },
     "configuration":{
       "title": "Extension configuration",
       "type":"object",
@@ -31,8 +52,9 @@
 						"off",
 						"messages",
 						"verbose"
-					],
-					"default": "off",
+          ],
+          "format": "json",
+					"default": "verbose",
 					"description": "Traces the communication between VS Code and the language server."
 				}
       }

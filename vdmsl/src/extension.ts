@@ -3,8 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-var vdmDialect = 'vdmsl'
-
+import * as dialect from "./dialect"
 import * as path from 'path';
 import * as fs from 'fs'
 import * as net from 'net';
@@ -14,13 +13,19 @@ import * as pf from 'portfinder';
 
 import { 
 	workspace, 
-	ExtensionContext 
+	ExtensionContext, 
+	TextDocument,
+	Uri
 } from 'vscode';
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
-	StreamInfo,
+	Location,
+	Range,
+	RequestMessage,
+	RequestType,
+	StreamInfo
 } from 'vscode-languageclient';
 
 var SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
@@ -29,10 +34,14 @@ var serverModule = 'lsp.LSPServerSocket'
 
 let client: LanguageClient;
 
+export interface MyDocument extends TextDocument {
+	metadata: {}
+}
+
 export function activate(context: ExtensionContext) {
 	let options = { cwd: workspace.rootPath};
-	let clientLogFile = path.resolve(context.extensionPath, vdmDialect+'_lang_client.log');
-	let serverLogFile = path.resolve(context.extensionPath, vdmDialect+'_lang_server.log');
+	let clientLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_client.log');
+	let serverLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_server.log');
 	let vdmjPath = path.resolve(context.extensionPath,'resources', VDMJNAME);
 	let lspServerPath = path.resolve(context.extensionPath,'resources', SERVERNAME);
 	let javaExecutablePath = findJavaExecutable('java');
@@ -50,7 +59,7 @@ export function activate(context: ExtensionContext) {
 							let args = [
 								'-Dlog.filename='+ serverLogFile, '-cp', 
 								vdmjPath+path.delimiter+lspServerPath,
-								serverModule, '-'+vdmDialect, '-lsp', lspPort.toString(), '-dap', dapPort.toString()
+								serverModule, '-'+dialect.vdmDialect, '-lsp', lspPort.toString(), '-dap', dapPort.toString()
 							]
 							// Start the LSP server
 							child_process.spawn(javaExecutablePath, args, options);
@@ -70,7 +79,7 @@ export function activate(context: ExtensionContext) {
 									return reject("ERROR: LSP server connection timeout");
 								}
 							}
-
+							
 							// Connect to the LSP server
 							var conn = net.createConnection(lspPort);
 														
@@ -112,26 +121,78 @@ export function activate(context: ExtensionContext) {
 	// Setup client options
 	let ClientOptions: LanguageClientOptions = {
 		// Document selector defines which files from the workspace, that is also open in the client, to monitor.
-		documentSelector: [{ language: vdmDialect}],
+		documentSelector: [{ language: dialect.vdmDialect}],
 		synchronize: {
 			// Setup filesystem watcher for changes in vdm files
-			fileEvents: workspace.createFileSystemWatcher('**/.'+vdmDialect)
+			fileEvents: workspace.createFileSystemWatcher('**/.'+dialect.vdmDialect)
+		},
+		middleware: {
+			
+			didOpen: (document: MyDocument, next: (document: MyDocument) => void): void => {
+				document = {
+					...document,
+					metadata: { extraFlags: "-Wall" }
+				};
+				next(document);
+			}
 		}
 	}
-
+	
 	// Create the language client with the defined client options and the function to create and setup the server.
 	client = new LanguageClient(
-		vdmDialect+'-lsp', 
-		vdmDialect.toUpperCase()+' Language Server', 
+		dialect.vdmDialect+'-lsp', 
+		dialect.vdmDialect.toUpperCase()+' Language Server', 
 		CreateServer, 
 		ClientOptions);
 		
 	// Start the and launch the client
 	let disposable = client.start();
 
+	// Create client promise
+	let clientPromise = new Promise<LanguageClient>((resolve, reject) => {
+		client.onReady().then(() => {
+			resolve(client);
+		}, (error) => {
+			reject(error);
+		});
+	});
+
 	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
+
+
+	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
+	let pogHandler = new POGHandler(clientPromise);
+
+	disposable = vscode.commands.registerCommand('extension.runPOG', (inputUri:Uri) => {
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Running Proof Obligation Generation');
+		
+		if (inputUri){
+			vscode.window.showInformationMessage('Using file(s) from URI: ' + inputUri);
+		}	
+		else {
+			inputUri = vscode.window.activeTextEditor?.document.uri
+			vscode.window.showInformationMessage('Using active file ' + inputUri);
+		}
+
+		pogHandler.generate(inputUri)
+	});
+	context.subscriptions.push(disposable);
+
+	disposable = vscode.commands.registerCommand('extension.retrievePOs', () => {
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Running Proof Obligation Generation');
+
+		pogHandler.retrieve([1,2])
+	});
+	context.subscriptions.push(disposable);
+	
 }
+
+
 
 function writeToLog(path:string, msg:string){
 	let logStream = fs.createWriteStream(path, { flags: 'w' });
@@ -156,7 +217,7 @@ class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// if launch.json is missing or empty
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === vdmDialect) {
+			if (editor && editor.document.languageId === dialect.vdmDialect) {
 				config.type = 'vdm';
 				config.name = 'Launch';
 				config.request = 'launch';
@@ -170,11 +231,9 @@ class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
 }
 
 class VdmDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
-	private dapPort;
-
-	constructor(port){
-		this.dapPort = port;
-	}
+	constructor(
+		private dapPort: number
+		){}
 
 	createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
 		// make VS Code connect to debug server
@@ -211,4 +270,79 @@ function findJavaExecutable(binname: string) {
 
 	// Else return the binary name directly (this will likely always fail downstream) 
 	return null;
+}
+
+
+////////////////////////////////////////////// LSPx Stuff /////////////////////////////////////////////
+interface LspxParams {
+	submethod: string
+}
+
+interface VDMSourceCode {
+	source: string;
+}
+
+interface ProofObligationHeader {
+	id: number;
+	name: string;
+	type: string;
+}
+
+interface ProofObligation {
+	id: number;
+	type: string;
+	location: Location;
+	source: VDMSourceCode;
+}
+
+interface GeneratePOParams extends LspxParams {
+	uri: string;
+	range?: Range;
+}
+
+namespace GeneratePORequest {
+	export const type = new RequestType<GeneratePOParams, ProofObligationHeader[] | null, void, void>('lspx');
+}
+
+interface RetrievePOParams extends LspxParams {
+	ids: number[];
+}
+
+namespace RetrievePORequest {
+	export const type = new RequestType<RetrievePOParams, ProofObligation[] | null, void, void>('lspx');
+}
+
+
+
+
+
+
+class POGHandler {
+
+	private readonly client: Promise<LanguageClient>
+
+	public constructor(client: Promise<LanguageClient>) {
+		this.client = client;
+	}
+	
+	async generate(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
+		let client = await this.client;
+		let params: GeneratePOParams = {
+			submethod: 'POG/generate',  
+			uri: uri.toString(),
+			range: range
+		};
+		const values = await client.sendRequest(GeneratePORequest.type, params);
+		return values;
+	}
+
+	async retrieve(ids:number[]): Promise<ProofObligation[]> {
+		let client = await this.client;
+		let params: RetrievePOParams = {
+			submethod: 'POG/retrieve',  
+			ids: ids
+		};
+		const values = await client.sendRequest(RetrievePORequest.type, params);
+		return values;
+	}
 }
