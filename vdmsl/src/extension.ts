@@ -23,7 +23,6 @@ import {
 	LanguageClientOptions,
 	Location,
 	Range,
-	RequestMessage,
 	RequestType,
 	StreamInfo
 } from 'vscode-languageclient';
@@ -168,16 +167,18 @@ export function activate(context: ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Running Proof Obligation Generation');
-		
-		if (inputUri){
-			vscode.window.showInformationMessage('Using file(s) from URI: ' + inputUri);
-		}	
-		else {
-			inputUri = vscode.window.activeTextEditor?.document.uri
-			vscode.window.showInformationMessage('Using active file ' + inputUri);
-		}
 
-		pogHandler.generate(inputUri)
+		let uri = inputUri || vscode.window.activeTextEditor?.document.uri
+		pogHandler.generate(uri)
+	});
+	context.subscriptions.push(disposable);
+
+	disposable = vscode.commands.registerCommand('extension.runPOGSelection', (inputUri:Uri) => {
+		// The code you place here will be executed every time your command is executed
+		// Display a message box to the user
+		vscode.window.showInformationMessage('Running Proof Obligation Generation on Selection');
+		let selection = vscode.window.activeTextEditor.selection
+		pogHandler.generate(inputUri, selection)
 	});
 	context.subscriptions.push(disposable);
 

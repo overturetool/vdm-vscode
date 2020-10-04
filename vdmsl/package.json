@@ -23,7 +23,11 @@
     "commands":[
       {
         "command": "extension.runPOG",
-        "title": "POG: Run Proof Obligation Generation (POG)"
+        "title": "POG: Run on file(s)"
+      },
+      {
+        "command": "extension.runPOGSelection",
+        "title": "POG: Run on selection/line"
       },
       {
         "command": "extension.retrievePOs",
@@ -31,15 +35,37 @@
       }
     ],
     "menus": {
-      "commandPalette": [{
-        "command": "extension.runPOG",
-        "when": "editorLangId == vdmsl"
-      }],
+      "commandPalette": [
+        {
+          "command": "extension.runPOG",
+          "when": "editorLangId == vdmsl"
+        },
+        {
+          "command": "extension.runPOGSelection",
+          "when": "editorLangId == vdmsl"
+        },
+        {
+          "command": "extension.retrievePOs",
+          "title": "editorLangId == vdmsl"
+        }
+      ],
       "explorer/context": [{
         "when": "resourceLangId == vdmsl || explorerResourceIsFolder",
         "command": "extension.runPOG",
         "group": "verification@1"
-      }]
+      }],
+      "editor/context": [
+        {
+          "when": "resourceLangId == vdmsl",
+          "command": "extension.runPOG",
+          "group": "verification@1"
+        },
+        {
+          "when": "resourceLangId == vdmsl",
+          "command": "extension.runPOGSelection",
+          "group": "verification@2"
+        }
+      ]
     },
     "configuration":{
       "title": "Extension configuration",
