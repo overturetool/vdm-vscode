@@ -1,7 +1,8 @@
 ////////////////////////////////////////////// POG messsage extensions //////////////////////////////////////////////////
 
-import { Location, Range } from "vscode";
+import { Location } from "vscode";
 import { RequestType } from "vscode-languageclient";
+import * as lspclient from "vscode-languageclient"
 
 export interface LspxParams {
 	submethod: string
@@ -26,7 +27,7 @@ export interface ProofObligation {
 
 export interface GeneratePOParams extends LspxParams {
 	uri: string;
-	range?: Range;
+	range?: lspclient.Range;
 }
 
 export namespace GeneratePORequest {
