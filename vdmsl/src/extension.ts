@@ -146,7 +146,7 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 	
-	let pogController = new POGController(clientPromise)
+	let pogController = new POGController.POGCommandsHandler(clientPromise)
 
 	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
 	const registerCommand = (command: string, callback: (...args: any[]) => any) => {
