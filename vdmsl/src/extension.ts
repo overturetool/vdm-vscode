@@ -124,16 +124,6 @@ export function activate(context: ExtensionContext) {
 		synchronize: {
 			// Setup filesystem watcher for changes in vdm files
 			fileEvents: workspace.createFileSystemWatcher('**/.'+dialect.vdmDialect)
-		},
-		middleware: {
-			
-			didOpen: (document: MyDocument, next: (document: MyDocument) => void): void => {
-				document = {
-					...document,
-					metadata: { extraFlags: "-Wall" }
-				};
-				next(document);
-			}
 		}
 	}
 	
@@ -328,10 +318,11 @@ class POGHandler {
 	
 	async generate(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
 		let client = await this.client;
+		let shortRange : Range = Range.create(range.start,range.end)
 		let params: GeneratePOParams = {
 			submethod: 'POG/generate',  
 			uri: uri.toString(),
-			range: range
+			range: shortRange
 		};
 		const values = await client.sendRequest(GeneratePORequest.type, params);
 		return values;
