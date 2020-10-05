@@ -19,19 +19,17 @@ import {
 } from 'vscode';
 
 import {
-	LanguageClient,
 	LanguageClientOptions,
-	Location,
-	Range,
-	RequestType,
 	StreamInfo
 } from 'vscode-languageclient';
+import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { POGController } from "./POGController";
 
 var SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
 var VDMJNAME = "vdmj-4.3.0.jar"
 var serverModule = 'lsp.LSPServerSocket'
 
-let client: LanguageClient;
+let client: SpecificationLanguageClient;
 
 export interface MyDocument extends TextDocument {
 	metadata: {}
@@ -124,21 +122,11 @@ export function activate(context: ExtensionContext) {
 		synchronize: {
 			// Setup filesystem watcher for changes in vdm files
 			fileEvents: workspace.createFileSystemWatcher('**/.'+dialect.vdmDialect)
-		},
-		middleware: {
-			
-			didOpen: (document: MyDocument, next: (document: MyDocument) => void): void => {
-				document = {
-					...document,
-					metadata: { extraFlags: "-Wall" }
-				};
-				next(document);
-			}
 		}
 	}
 	
 	// Create the language client with the defined client options and the function to create and setup the server.
-	client = new LanguageClient(
+	client = new SpecificationLanguageClient(
 		dialect.vdmDialect+'-lsp', 
 		dialect.vdmDialect.toUpperCase()+' Language Server', 
 		CreateServer, 
@@ -147,52 +135,30 @@ export function activate(context: ExtensionContext) {
 	// Start the and launch the client
 	let disposable = client.start();
 
-	// Create client promise
-	let clientPromise = new Promise<LanguageClient>((resolve, reject) => {
+	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
+	context.subscriptions.push(disposable);
+	
+	let clientPromise = new Promise<SpecificationLanguageClient>((resolve, reject) => {
 		client.onReady().then(() => {
 			resolve(client);
 		}, (error) => {
 			reject(error);
 		});
 	});
-
-	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
-	context.subscriptions.push(disposable);
-
+	
+	let pogController = new POGController(clientPromise)
 
 	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
-	let pogHandler = new POGHandler(clientPromise);
+	const registerCommand = (command: string, callback: (...args: any[]) => any) => {
+		context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+	};
 
-	disposable = vscode.commands.registerCommand('extension.runPOG', (inputUri:Uri) => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Running Proof Obligation Generation');
+	registerCommand('extension.runPOG', (inputUri:Uri) => pogController.runPOG(inputUri));
 
-		let uri = inputUri || vscode.window.activeTextEditor?.document.uri
-		pogHandler.generate(uri)
-	});
-	context.subscriptions.push(disposable);
+	registerCommand('extension.runPOGSelection', (inputUri:Uri) => pogController.runPOGSelection(inputUri));
 
-	disposable = vscode.commands.registerCommand('extension.runPOGSelection', (inputUri:Uri) => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Running Proof Obligation Generation on Selection');
-		let selection = vscode.window.activeTextEditor.selection
-		pogHandler.generate(inputUri, selection)
-	});
-	context.subscriptions.push(disposable);
-
-	disposable = vscode.commands.registerCommand('extension.retrievePOs', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Running Proof Obligation Generation');
-
-		pogHandler.retrieve([1,2])
-	});
-	context.subscriptions.push(disposable);
-	
+	registerCommand('extension.retrievePOs', () => pogController.retrievePOs());
 }
-
 
 
 function writeToLog(path:string, msg:string){
@@ -271,79 +237,4 @@ function findJavaExecutable(binname: string) {
 
 	// Else return the binary name directly (this will likely always fail downstream) 
 	return null;
-}
-
-
-////////////////////////////////////////////// LSPx Stuff /////////////////////////////////////////////
-interface LspxParams {
-	submethod: string
-}
-
-interface VDMSourceCode {
-	source: string;
-}
-
-interface ProofObligationHeader {
-	id: number;
-	name: string;
-	type: string;
-}
-
-interface ProofObligation {
-	id: number;
-	type: string;
-	location: Location;
-	source: VDMSourceCode;
-}
-
-interface GeneratePOParams extends LspxParams {
-	uri: string;
-	range?: Range;
-}
-
-namespace GeneratePORequest {
-	export const type = new RequestType<GeneratePOParams, ProofObligationHeader[] | null, void, void>('lspx');
-}
-
-interface RetrievePOParams extends LspxParams {
-	ids: number[];
-}
-
-namespace RetrievePORequest {
-	export const type = new RequestType<RetrievePOParams, ProofObligation[] | null, void, void>('lspx');
-}
-
-
-
-
-
-
-class POGHandler {
-
-	private readonly client: Promise<LanguageClient>
-
-	public constructor(client: Promise<LanguageClient>) {
-		this.client = client;
-	}
-	
-	async generate(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
-		let client = await this.client;
-		let params: GeneratePOParams = {
-			submethod: 'POG/generate',  
-			uri: uri.toString(),
-			range: range
-		};
-		const values = await client.sendRequest(GeneratePORequest.type, params);
-		return values;
-	}
-
-	async retrieve(ids:number[]): Promise<ProofObligation[]> {
-		let client = await this.client;
-		let params: RetrievePOParams = {
-			submethod: 'POG/retrieve',  
-			ids: ids
-		};
-		const values = await client.sendRequest(RetrievePORequest.type, params);
-		return values;
-	}
 }
