@@ -1,11 +1,8 @@
 ////////////////////////////////////////////// POG messsage extensions //////////////////////////////////////////////////
 
-import { Location, Range } from "vscode";
+import { Location } from "vscode";
 import { RequestType } from "vscode-languageclient";
-
-export interface LspxParams {
-	submethod: string
-}
+import * as lspclient from "vscode-languageclient"
 
 export interface VDMSourceCode {
 	source: string;
@@ -24,20 +21,20 @@ export interface ProofObligation {
 	source: VDMSourceCode;
 }
 
-export interface GeneratePOParams extends LspxParams {
+export interface GeneratePOParams {
 	uri: string;
-	range?: Range;
+	range?: lspclient.Range;
 }
 
 export namespace GeneratePORequest {
-	export const type = new RequestType<GeneratePOParams, ProofObligationHeader[] | null, void, void>('lspx');
+	export const type = new RequestType<GeneratePOParams, ProofObligationHeader[] | null, void, void>('lspx/POG/generate');
 }
 
-export interface RetrievePOParams extends LspxParams {
+export interface RetrievePOParams {
 	ids: number[];
 }
 
 export namespace RetrievePORequest {
-	export const type = new RequestType<RetrievePOParams, ProofObligation[] | null, void, void>('lspx');
+	export const type = new RequestType<RetrievePOParams, ProofObligation[] | null, void, void>('lspx/POG/retrieve');
 }
 
