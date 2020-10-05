@@ -159,37 +159,6 @@ export function activate(context: ExtensionContext) {
 
 	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
-
-
-	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
-	let pogHandler = new POGHandler(clientPromise);
-
-	disposable = vscode.commands.registerCommand('extension.runPOG', (inputUri:Uri) => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Running Proof Obligation Generation');
-		
-		if (inputUri){
-			vscode.window.showInformationMessage('Using file(s) from URI: ' + inputUri);
-		}	
-		else {
-			inputUri = vscode.window.activeTextEditor?.document.uri
-			vscode.window.showInformationMessage('Using active file ' + inputUri);
-		}
-
-		pogHandler.generate(inputUri)
-	});
-	context.subscriptions.push(disposable);
-
-	disposable = vscode.commands.registerCommand('extension.retrievePOs', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Running Proof Obligation Generation');
-
-		pogHandler.retrieve([1,2])
-	});
-	context.subscriptions.push(disposable);
-	
 }
 
 
@@ -270,79 +239,4 @@ function findJavaExecutable(binname: string) {
 
 	// Else return the binary name directly (this will likely always fail downstream) 
 	return null;
-}
-
-
-////////////////////////////////////////////// LSPx Stuff /////////////////////////////////////////////
-interface LspxParams {
-	submethod: string
-}
-
-interface VDMSourceCode {
-	source: string;
-}
-
-interface ProofObligationHeader {
-	id: number;
-	name: string;
-	type: string;
-}
-
-interface ProofObligation {
-	id: number;
-	type: string;
-	location: Location;
-	source: VDMSourceCode;
-}
-
-interface GeneratePOParams extends LspxParams {
-	uri: string;
-	range?: Range;
-}
-
-namespace GeneratePORequest {
-	export const type = new RequestType<GeneratePOParams, ProofObligationHeader[] | null, void, void>('lspx');
-}
-
-interface RetrievePOParams extends LspxParams {
-	ids: number[];
-}
-
-namespace RetrievePORequest {
-	export const type = new RequestType<RetrievePOParams, ProofObligation[] | null, void, void>('lspx');
-}
-
-
-
-
-
-
-class POGHandler {
-
-	private readonly client: Promise<LanguageClient>
-
-	public constructor(client: Promise<LanguageClient>) {
-		this.client = client;
-	}
-	
-	async generate(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
-		let client = await this.client;
-		let params: GeneratePOParams = {
-			submethod: 'POG/generate',  
-			uri: uri.toString(),
-			range: range
-		};
-		const values = await client.sendRequest(GeneratePORequest.type, params);
-		return values;
-	}
-
-	async retrieve(ids:number[]): Promise<ProofObligation[]> {
-		let client = await this.client;
-		let params: RetrievePOParams = {
-			submethod: 'POG/retrieve',  
-			ids: ids
-		};
-		const values = await client.sendRequest(RetrievePORequest.type, params);
-		return values;
-	}
 }
