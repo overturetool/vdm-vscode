@@ -1,6 +1,6 @@
 {
-  "name": "vdmrt-lsp",
-  "description": "A language server for VDM-RT",
+  "name": "vdmpp-lsp",
+  "description": "A language server for VDM++",
   "author": "Jonas Rask and Frederik Palludan",
   "license": "MIT",
   "version": "0.0.2",
@@ -16,79 +16,26 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onLanguage:vdmrt"
+    "onLanguage:vdmpp"
   ],
   "main": "./out/src/extension",
   "contributes": {
-    "commands":[
-      {
-        "command": "extension.runPOG",
-        "title": "POG: Run Proof Obligation Generation (POG)"
-      },
-      {
-        "command": "extension.retrievePOs",
-        "title": "POG: Retrieve Proof Obligations"
-      }
-    ],
-    "menus": {
-      "commandPalette": [{
-        "command": "extension.runPOG",
-        "when": "editorLangId == vdmrt"
-      }],
-      "explorer/context": [{
-        "when": "resourceLangId == vdmrt || explorerResourceIsFolder",
-        "command": "extension.runPOG",
-        "group": "verification@1"
-      }]
-    },
-    "configuration":{
-      "title": "VDM-RT",
-      "properties": {
-        "vdmrt-lsp.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-          ],
-          "format": "json",
-					"default": "verbose",
-					"description": "Traces the communication between VS Code and the language server."
-        },
-        "vdmrt-lsp.debugServer": {
-					"type": "boolean",
-					"default": false,
-					"description": "Using debug server. True if running client should not launch server."
-        },
-        "vdmrt-lsp.lspPort": {
-					"type": "integer",
-					"default": 8000,
-					"description": "Default port for LSP client. Only used for debug server."
-        },
-        "vdmrt-lsp.dapPort": {
-					"type": "integer",
-					"default": 8001,
-					"description": "Default port for DAP client. Only used for debug server."
-        }
-      }
-    },
     "languages": [
       {
-        "id": "vdmrt",
+        "id": "vdmpp",
         "aliases": [
-          "VDM-RT",
-          "vdmrt"
+          "VDM++",
+          "vdmpp"
         ],
         "extensions": [
-          ".vdmrt"
+          ".vdmpp"
         ],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "vdmrt",
+        "language": "vdmpp",
         "scopeName": "source.vdmpp",
         "path": "./syntaxes/vdmpp.tmLanguage.json"
       },
@@ -160,7 +107,7 @@
     ],
     "breakpoints": [
       {
-        "language": "vdmrt"
+        "language": "vdmpp"
       }
     ]
   },

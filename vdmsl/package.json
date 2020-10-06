@@ -188,7 +188,7 @@
     ],
     "breakpoints": [
       {
-        "language": "VDM_SL"
+        "language": "vdmsl"
       }
     ]
   },
