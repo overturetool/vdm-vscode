@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as dialect from "./dialect"
+import * as dapSupport from "./dapSupport"
 import * as path from 'path';
 import * as fs from 'fs'
 import * as net from 'net';
@@ -13,8 +14,7 @@ import * as portfinder from 'portfinder';
 
 import { 
 	workspace, 
-	ExtensionContext, 
-	TextDocument} from 'vscode';
+	ExtensionContext} from 'vscode';
 
 import {
 	LanguageClient,
@@ -54,7 +54,7 @@ export async function activate(context: ExtensionContext) {
 						writer: server.stdin
 					});
 
-					initDebugConfig(context, dapPort)
+					dapSupport.initDebugConfig(context, dapPort)
 				})
 				.catch((err) => {
 					writeToLog(clientLogFile, "Error in finding free dap port: " + err);
@@ -79,7 +79,7 @@ export async function activate(context: ExtensionContext) {
 			return Promise.resolve(result);
 		};
 
-		initDebugConfig(context, defaultDapPort)
+		dapSupport.initDebugConfig(context, defaultDapPort)
 	}
 	else {
 		serverOptions = createServer
@@ -112,66 +112,10 @@ export async function activate(context: ExtensionContext) {
 }
 
 
-
 function writeToLog(path:string, msg:string){
 	let logStream = fs.createWriteStream(path, { flags: 'w' });
 	logStream.write(msg);
 	logStream.close();
-}
-
-export function deactivate(): Thenable<void> | undefined {
-	if (!client) {
-		return undefined;
-	}
-	return client.stop();
-}
-
-function initDebugConfig(context: ExtensionContext, port:number){
-	// register a configuration provider for 'vdm' debug type
-	const provider = new VdmConfigurationProvider();
-	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('vdm', provider));
-
-	// run the debug adapter as a server inside the extension and communicating via a socket
-	let factory = new VdmDebugAdapterDescriptorFactory(port);
-
-	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('vdm', factory));
-	if ('dispose' in factory) {
-		context.subscriptions.push(factory);
-	}
-}
-
-class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
-	/**
-	 * Massage a debug configuration just before a debug session is being launched,
-	 * e.g. add all missing attributes to the debug configuration.
-	 */
-	resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
-
-		// if launch.json is missing or empty
-		if (!config.type && !config.request && !config.name) {
-			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === dialect.vdmDialect) {
-				config.type = 'vdm';
-				config.name = 'Launch';
-				config.request = 'launch';
-				config.stopOnEntry = true;
-				config.noDebug = false;
-			}
-		}
-
-		return config;
-	}
-}
-
-class VdmDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
-	constructor(
-		private dapPort: number
-		){}
-
-	createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-		// make VS Code connect to debug server
-		return new vscode.DebugAdapterServer(this.dapPort);
-	}
 }
 
 // MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
