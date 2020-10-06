@@ -8,33 +8,26 @@ export namespace POGController
     export class POGCommandsHandler 
     {
         private _client: Promise<SpecificationLanguageClient>
-    
-        constructor(client: Promise<SpecificationLanguageClient>)
-        {
-            this._client = client
+        private readonly _extensionUri: vscode.Uri;
 
-            if (vscode.window.registerWebviewPanelSerializer) {
-                // Make sure we register a serializer in activation event
-                vscode.window.registerWebviewPanelSerializer(ProofObligationPanel.viewType, {
-                    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-                        ProofObligationPanel.revive(webviewPanel);
-                    }
-                });
-            }
+        constructor(client: Promise<SpecificationLanguageClient>, extensionUri: vscode.Uri)
+        {
+            this._client = client;
+            this._extensionUri = extensionUri;         
         }
     
         async runPOGSelection(inputUri:Uri)
         {
             // The code you place here will be executed every time your command is executed
             // Display a message box to the user
-            let client = await this._client
+            let client = await this._client;
             
-            vscode.window.showInformationMessage('Running Proof Obligation Generation on Selection')
-            let selection = vscode.window.activeTextEditor.selection
-            let po = client.generatePO(inputUri, selection)
+            vscode.window.showInformationMessage('Running Proof Obligation Generation on Selection');
+            let selection = vscode.window.activeTextEditor.selection;
+            let po = client.generatePO(inputUri, selection);
 
-            ProofObligationPanel.createOrShowPanel()
-            ProofObligationPanel.currentPanel.displayPOGSingleFile()
+            ProofObligationPanel.createOrShowPanel(this._extensionUri);
+            ProofObligationPanel.currentPanel.displayPOGSingleFile();
         }
     
         async runPOG(inputUri:Uri)
@@ -42,14 +35,14 @@ export namespace POGController
             // The code you place here will be executed every time your command is executed
             // Display a message box to the user
     
-            let client = await this._client
+            let client = await this._client;
     
-            vscode.window.showInformationMessage('Running Proof Obligation Generation')
+            vscode.window.showInformationMessage('Running Proof Obligation Generation');
     
-            let uri = inputUri || vscode.window.activeTextEditor?.document.uri
-            let po = client.generatePO(uri)
+            let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
+            let po = client.generatePO(uri);
 
-            ProofObligationPanel.createOrShowPanel()
+            ProofObligationPanel.createOrShowPanel(this._extensionUri);
 			ProofObligationPanel.currentPanel.displayPOGSingleAllFiles();
         }
     
@@ -57,10 +50,10 @@ export namespace POGController
         {
             // The code you place here will be executed every time your command is executed
             // Display a message box to the user
-            let client = await this._client
+            let client = await this._client;
             vscode.window.showInformationMessage('Running Proof Obligation Generation');
     
-            client.retrievePO([1,2])
+            client.retrievePO([1,2]);
         }
     }
 
@@ -75,8 +68,10 @@ export namespace POGController
    
        private readonly _panel: vscode.WebviewPanel;
        private _disposables: vscode.Disposable[] = [];
+
+       private readonly _extensionUri: vscode.Uri;
    
-       public static createOrShowPanel() {
+       public static createOrShowPanel(extensionUri: vscode.Uri) {
            const column = vscode.window.activeTextEditor
                ? vscode.window.activeTextEditor.viewColumn
                : undefined;
@@ -94,34 +89,34 @@ export namespace POGController
                column || vscode.ViewColumn.One,
                 {
                     // Enable javascript in the webview
-                    //enableScripts: true,
+                    enableScripts: true,
 
-                    // And restrict the webview to NOT load any content from any directory.
-                    localResourceRoots: []
+                    // Restrict the webview to only loading content from our extension's `resources` directory.
+                    localResourceRoots: [Uri.parse(extensionUri + '/' + 'resources')]
                 }
            );
    
-           ProofObligationPanel.currentPanel = new ProofObligationPanel(panel);
+           ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
        }
    
-       public static revive(panel: vscode.WebviewPanel) {
-           ProofObligationPanel.currentPanel = new ProofObligationPanel(panel);
-       }
-   
-       private constructor(panel: vscode.WebviewPanel) {
+       private constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel) {
            this._panel = panel;
-   
+           this._extensionUri = extensionUri;
            // Listen for when the panel is disposed
            // This happens when the user closes the panel or when the panel is closed programatically
            this._panel.onDidDispose(() => this.dispose(), null, this._disposables);		
        }
    
        public displayPOGSingleAllFiles() {
-           this._update("Proof Obligations for ALL files", "List of proof obligations for ALL file here...")
+           this._update("List of POG for ALL files")
+           let json = {'a': 'First', 'b': 'Second', 'c': 'Third'};
+           this._panel.webview.postMessage({ command: json });
        }
    
        public displayPOGSingleFile() {
-           this._update("Proof Obligations for SINGLE file", "List of proof obligations for SINGLE file here...")
+           this._update("List of POG for SINGLE file")
+           let json = {'a': 'Fourht', 'b': 'Fifth'};
+           this._panel.webview.postMessage({ command: json });
        }
    
        public dispose() {
@@ -138,25 +133,61 @@ export namespace POGController
            }
        }
    
-       private _update(titleText: string = "INIT", displayText: string = "INIT") {
+       private _update(displayText: string = "INIT") {
            const webview = this._panel.webview;
-           this._panel.title = titleText;
            this._panel.webview.html = this._getHtmlForWebview(webview, displayText);
        }
        
        private _getHtmlForWebview(webview: vscode.Webview, displayText: string) {		
-           return `<!DOCTYPE html>
-               <html lang="en">
-               <head>
-                   <meta charset="UTF-8">				
-                   <title>Proof Obligations</title>
-               </head>
-               <body>
-               <h1>` + displayText + `</h1>
-               </body>
-               </html>`;
-       }
+
+            const scriptUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.js'));
+
+            const styleUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.css'));
+
+            // Use a nonce to only allow specific scripts to be run
+            const nonce = getNonce();
+
+            return `<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                
+                <link href="${styleUri}" rel="stylesheet">
+
+            </head>
+            <body>
+                <h1 id="lines-of-code-counter">0</h1>
+
+                <p>Start of lists</p>
+
+                <div id="container">
+
+                    <div id="leftList"></div>
+                
+                    <div id="middleList"></div>
+                
+                    <div id="rightList"></div>
+            
+                </div>
+
+                <p>End of lists</p>
+                <script nonce="${nonce}" src="${scriptUri}"></script>
+
+            </body>
+            </html>`;
+            }
    }
    
+   function getNonce() 
+   {
+       let text = '';
+       const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+       for (let i = 0; i < 32; i++) {
+           text += possible.charAt(Math.floor(Math.random() * possible.length));
+       }
+       return text;
+   }
 }
 
