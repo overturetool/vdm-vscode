@@ -14,7 +14,7 @@ import * as portfinder from 'portfinder';
 
 import { 
 	workspace, 
-	ExtensionContext} from 'vscode';
+	ExtensionContext, Uri} from 'vscode';
 
 import {
 	LanguageClientOptions,
