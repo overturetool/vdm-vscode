@@ -9,132 +9,89 @@ import * as fs from 'fs'
 import * as net from 'net';
 import * as vscode from 'vscode';
 import * as child_process from 'child_process';
-import * as pf from 'portfinder';
+import * as portfinder from 'portfinder';
 
 import { 
 	workspace, 
 	ExtensionContext, 
-	TextDocument,
-	Uri
-} from 'vscode';
+	TextDocument} from 'vscode';
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
-	Location,
-	Range,
-	RequestMessage,
-	RequestType,
-	StreamInfo
-} from 'vscode-languageclient';
+	ServerOptions,
+	StreamInfo} from 'vscode-languageclient';
 
 var SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
 var VDMJNAME = "vdmj-4.3.0.jar"
-var serverModule = 'lsp.LSPServerSocket'
 
 let client: LanguageClient;
 
-export interface MyDocument extends TextDocument {
-	metadata: {}
-}
-
-export function activate(context: ExtensionContext) {
-	let options = { cwd: workspace.rootPath};
+export async function activate(context: ExtensionContext) {
 	let clientLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_client.log');
 	let serverLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_server.log');
+	let serverMainClass = 'lsp.LSPServerStdio'
 	let vdmjPath = path.resolve(context.extensionPath,'resources', VDMJNAME);
 	let lspServerPath = path.resolve(context.extensionPath,'resources', SERVERNAME);
-	let javaExecutablePath = findJavaExecutable('java');
 
-	// Thenable function to create the server with port connections. The function returns a promise of a StreamInfo object that represents the socket communication.
-	function CreateServer(): Promise<StreamInfo> {
+	function createServer(): Promise<StreamInfo> {
 		return new Promise(async (resolve, reject) => {
-			//Get port for lsp connection
-			pf.getPortPromise()
-				.then((lspPort) => {
-					// Get port for dap connection
-					pf.getPortPromise({port: lspPort+1})
-						.then(async (dapPort) => {
-							// jar args
-							let args = [
-								'-Dlog.filename='+ serverLogFile, '-cp', 
-								vdmjPath+path.delimiter+lspServerPath,
-								serverModule, '-'+dialect.vdmDialect, '-lsp', lspPort.toString(), '-dap', dapPort.toString()
-							]
-							// Start the LSP server
-							child_process.spawn(javaExecutablePath, args, options);
-							
-							// Wait for the server to be ready
-							let connected = false;
-							let timeOutCounter = 0;
-							while(!connected)
-							{
-								var t = net.connect(lspPort, 'localhost',() => { 
-									t.destroy();
-									connected = true;
-								});
-								await new Promise(resolve => setTimeout(resolve, 25))
-								if(timeOutCounter++ == 100){
-									writeToLog(clientLogFile, "ERROR: LSP server connection timeout");
-									return reject("ERROR: LSP server connection timeout");
-								}
-							}
-							
-							// Connect to the LSP server
-							var conn = net.createConnection(lspPort);
-														
-							conn.on('error', (err) => {								
-								writeToLog(clientLogFile, "Error in creating connection" + err);
-							});
+			portfinder.getPortPromise()
+				.then((dapPort) => {
+					let args = [
+						'-Dlog.filename='+serverLogFile, 
+						'-cp', vdmjPath+path.delimiter+lspServerPath,
+						serverMainClass, 
+						'-'+dialect.vdmDialect,
+						'-dap', dapPort.toString()
+					]
+					
+					// Start the LSP server
+					let server = child_process.spawn(findJavaExecutable('java'), args);
+	
+					resolve({
+						reader: server.stdout,
+						writer: server.stdin
+					});
 
-							resolve({
-								reader: conn,
-								writer: conn
-							});
+					initDebugConfig(context, dapPort)
+				})
+				.catch((err) => {
+					writeToLog(clientLogFile, "Error in finding free dap port: " + err);
+					return reject(err)
+				});	
+		})
+	}
 
-							// **************** Initialize Debug Configurations **************
-							// register a configuration provider for 'vdm' debug type
-							const provider = new VdmConfigurationProvider();
-							context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('vdm', provider));
+	let serverOptions: ServerOptions
+	let debug = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').debugServer;
+	if (debug) {
+		let defaultLspPort = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').lspPort;
+		let defaultDapPort = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').dapPort;
 
-							// run the debug adapter as a server inside the extension and communicating via a socket
-							let factory = new VdmDebugAdapterDescriptorFactory(dapPort);
+		serverOptions = () => {
+			// Connect to language server via socket
+			let socket = net.connect({port: defaultLspPort});
+			let result: StreamInfo = {
+				writer: socket,
+				reader: socket
+			};
+			return Promise.resolve(result);
+		};
 
-							context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('vdm', factory));
-							if ('dispose' in factory) {
-								context.subscriptions.push(factory);
-							}
-
-						}).catch((dapPortErr) => { // Handle error for finding dap port
-							writeToLog(clientLogFile,"Error in finding free dap port: " + dapPortErr);
-							return reject(dapPortErr)
-						}); 
-				
-				}).catch((lspPortErr) => { // Handle error for finding lsp port
-					writeToLog(clientLogFile, "Error in finding free lsp port: " + lspPortErr);
-					return reject(lspPortErr)
-				});
-			
-		});
-	};
+		initDebugConfig(context, defaultDapPort)
+	}
+	else {
+		serverOptions = createServer
+	}
 
 	// Setup client options
-	let ClientOptions: LanguageClientOptions = {
+	let clientOptions: LanguageClientOptions = {
 		// Document selector defines which files from the workspace, that is also open in the client, to monitor.
 		documentSelector: [{ language: dialect.vdmDialect}],
 		synchronize: {
 			// Setup filesystem watcher for changes in vdm files
 			fileEvents: workspace.createFileSystemWatcher('**/.'+dialect.vdmDialect)
-		},
-		middleware: {
-			
-			didOpen: (document: MyDocument, next: (document: MyDocument) => void): void => {
-				document = {
-					...document,
-					metadata: { extraFlags: "-Wall" }
-				};
-				next(document);
-			}
 		}
 	}
 	
@@ -142,20 +99,13 @@ export function activate(context: ExtensionContext) {
 	client = new LanguageClient(
 		dialect.vdmDialect+'-lsp', 
 		dialect.vdmDialect.toUpperCase()+' Language Server', 
-		CreateServer, 
-		ClientOptions);
+		serverOptions, 
+		clientOptions);
 		
 	// Start the and launch the client
 	let disposable = client.start();
 
 	// Create client promise
-	let clientPromise = new Promise<LanguageClient>((resolve, reject) => {
-		client.onReady().then(() => {
-			resolve(client);
-		}, (error) => {
-			reject(error);
-		});
-	});
 
 	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
@@ -174,6 +124,20 @@ export function deactivate(): Thenable<void> | undefined {
 		return undefined;
 	}
 	return client.stop();
+}
+
+function initDebugConfig(context: ExtensionContext, port:number){
+	// register a configuration provider for 'vdm' debug type
+	const provider = new VdmConfigurationProvider();
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('vdm', provider));
+
+	// run the debug adapter as a server inside the extension and communicating via a socket
+	let factory = new VdmDebugAdapterDescriptorFactory(port);
+
+	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('vdm', factory));
+	if ('dispose' in factory) {
+		context.subscriptions.push(factory);
+	}
 }
 
 class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {

@@ -42,8 +42,7 @@
       }]
     },
     "configuration":{
-      "title": "Extension configuration",
-      "type":"object",
+      "title": "VDM-SL",
       "properties": {
         "vdmsl-lsp.trace.server": {
 					"scope": "window",
@@ -56,7 +55,22 @@
           "format": "json",
 					"default": "verbose",
 					"description": "Traces the communication between VS Code and the language server."
-				}
+        },
+        "vdmsl-lsp.debugServer": {
+					"type": "boolean",
+					"default": false,
+					"description": "Using debug server. True if running client should not launch server."
+        },
+        "vdmsl-lsp.lspPort": {
+					"type": "integer",
+					"default": 8000,
+					"description": "Default port for LSP client. Only used for debug server."
+        },
+        "vdmsl-lsp.dapPort": {
+					"type": "integer",
+					"default": 8001,
+					"description": "Default port for DAP client. Only used for debug server."
+        }
       }
     },
     "languages": [
