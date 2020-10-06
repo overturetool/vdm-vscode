@@ -35,7 +35,7 @@ export interface MyDocument extends TextDocument {
 	metadata: {}
 }
 
-export function activate(context: ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
 	let options = { cwd: workspace.rootPath};
 	let clientLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_client.log');
 	let serverLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_server.log');
@@ -146,7 +146,7 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 	
-	let pogController = new POGController.POGCommandsHandler(clientPromise)
+	let pogController = new POGController.POGCommandsHandler(clientPromise, Uri.file(context.extensionPath))
 
 	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
 	const registerCommand = (command: string, callback: (...args: any[]) => any) => {

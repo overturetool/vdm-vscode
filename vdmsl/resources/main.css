@@ -1,0 +1,29 @@
+ul {
+    list-style-type: none;
+    padding: 0;
+    border: 1px solid #ddd;
+}
+
+ul li {
+    padding: 5px;  
+    border-bottom: 1px solid #ddd;
+}
+
+ul li:last-child {
+    border-bottom: none
+}
+
+#container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+#leftList {
+    width: 15%;
+}
+#middleList {
+    width: 60%;
+}
+#rightList {
+    width: 25%;
+}
