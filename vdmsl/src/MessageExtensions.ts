@@ -10,8 +10,9 @@ export interface VDMSourceCode {
 
 export interface ProofObligationHeader {
 	id: number;
+	kind: string;
 	name: string;
-	type: string;
+	location: Location;
 }
 
 export interface ProofObligation {
