@@ -22,7 +22,7 @@ export namespace POGController
             // Display a message box to the user
             let client = await this._client;
             
-            vscode.window.showInformationMessage('Running Proof Obligation Generation on Selection');
+            vscode.window.setStatusBarMessage('Running Proof Obligation Generation on Selection', 2000);
             let selection = vscode.window.activeTextEditor.selection;
             let po = client.generatePO(inputUri, selection);
 
@@ -34,16 +34,16 @@ export namespace POGController
         {
             // The code you place here will be executed every time your command is executed
             // Display a message box to the user
-    
             let client = await this._client;
     
-            vscode.window.showInformationMessage('Running Proof Obligation Generation');
-    
+            //vscode.window.showInformationMessage('Running Proof Obligation Generation');
+            vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
+
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
             let po = client.generatePO(uri);
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-			ProofObligationPanel.currentPanel.displayPOGSingleAllFiles();
+            ProofObligationPanel.currentPanel.displayPOGSingleAllFiles();
         }
     
         async retrievePOs()
@@ -51,7 +51,7 @@ export namespace POGController
             // The code you place here will be executed every time your command is executed
             // Display a message box to the user
             let client = await this._client;
-            vscode.window.showInformationMessage('Running Proof Obligation Generation');
+            vscode.window.setStatusBarMessage('Retrieving Proof Obligation Information', 2000);
     
             client.retrievePO([1,2]);
         }

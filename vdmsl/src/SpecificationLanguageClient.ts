@@ -5,7 +5,9 @@ import { ProofObligationHeader, GeneratePOParams, GeneratePORequest, ProofObliga
 export class SpecificationLanguageClient extends LanguageClient
 {
 	async generatePO(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
-		let lspRange = Range.create(range.start,range.end)
+		if (range)
+			var lspRange = Range.create(range.start,range.end)
+		
 		let params: GeneratePOParams = {
 			uri: uri.toString(),
 			range: lspRange
