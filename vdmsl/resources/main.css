@@ -1,29 +1,8 @@
-ul {
-    list-style-type: none;
-    padding: 0;
-    border: 1px solid #ddd;
+th, td {
+    text-align: left;
+    padding: 7px;
+    border-bottom: 1px solid rgb(91, 91, 91);
+    font-size: 1rem;
 }
 
-ul li {
-    padding: 5px;  
-    border-bottom: 1px solid #ddd;
-}
-
-ul li:last-child {
-    border-bottom: none
-}
-
-#container {
-    height: 100%;
-    width: 100%;
-    display: flex;
-}
-#leftList {
-    width: 15%;
-}
-#middleList {
-    width: 60%;
-}
-#rightList {
-    width: 25%;
-}
+tr:hover td {background-color: #000000;}

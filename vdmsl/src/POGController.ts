@@ -2,6 +2,7 @@ import { Uri } from "vscode"
 import * as vscode from 'vscode'
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import path = require("path")
+import { ProofObligationHeader } from "./MessageExtensions"
 
 export namespace POGController 
 {
@@ -24,10 +25,10 @@ export namespace POGController
             
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation on Selection', 2000);
             let selection = vscode.window.activeTextEditor.selection;
-            let po = client.generatePO(inputUri, selection);
+            let po = await client.generatePO(inputUri, selection);
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            ProofObligationPanel.currentPanel.displayPOGSingleFile();
+            ProofObligationPanel.currentPanel.displayTESTPOGS();
         }
     
         async runPOG(inputUri:Uri)
@@ -36,14 +37,12 @@ export namespace POGController
             // Display a message box to the user
             let client = await this._client;
     
-            //vscode.window.showInformationMessage('Running Proof Obligation Generation');
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
-            let po = client.generatePO(uri);
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            ProofObligationPanel.currentPanel.displayPOGSingleAllFiles();
+            ProofObligationPanel.currentPanel.displayPOGS(await client.generatePO(uri));
         }
     
         async retrievePOs()
@@ -92,7 +91,10 @@ export namespace POGController
                     enableScripts: true,
 
                     // Restrict the webview to only loading content from our extension's `resources` directory.
-                    localResourceRoots: [Uri.parse(extensionUri + '/' + 'resources')]
+                    localResourceRoots: [Uri.parse(extensionUri + '/' + 'resources')],
+
+                    // Retain state - this is an ineffective way of doing it!
+                    retainContextWhenHidden: true
                 }
            );
    
@@ -104,20 +106,36 @@ export namespace POGController
            this._extensionUri = extensionUri;
            // Listen for when the panel is disposed
            // This happens when the user closes the panel or when the panel is closed programatically
-           this._panel.onDidDispose(() => this.dispose(), null, this._disposables);		
+           this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+           
+           // Handle messages from the webview
+            this._panel.webview.onDidReceiveMessage(
+                message => {
+                    switch (message.command) {
+                        case 'rowclick':
+                            let json = message.text;
+                            vscode.window.showErrorMessage("TEXT");
+                            return;
+                    }
+                },
+                null,
+                this._disposables
+            );
        }
    
-       public displayPOGSingleAllFiles() {
-           this._update("List of POG for ALL files")
-           let json = {'a': 'First', 'b': 'Second', 'c': 'Third'};
-           this._panel.webview.postMessage({ command: json });
+       public displayPOGS(POH : ProofObligationHeader[]) {
+           this._update("List of POGs")
+           let json = JSON.stringify(POH);       
+           this._panel.webview.postMessage({ command: POH });
        }
-   
-       public displayPOGSingleFile() {
-           this._update("List of POG for SINGLE file")
-           let json = {'a': 'Fourht', 'b': 'Fifth'};
-           this._panel.webview.postMessage({ command: json });
-       }
+
+       public displayTESTPOGS() {
+        this._update("List of POGs")
+        let json = [{'column1':'1','column2':'2','column3':'3','column4':'4'},
+                    {'column1':'11','column2':'22','column3':'33','column4':'44'},
+                    {'column1':'111','column2':'222','column3':'333','column4':'444'}]     
+        this._panel.webview.postMessage({ command: json });
+    }
    
        public dispose() {
            ProofObligationPanel.currentPanel = undefined;
@@ -155,26 +173,11 @@ export namespace POGController
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 
                 <link href="${styleUri}" rel="stylesheet">
-
             </head>
             <body>
-                <h1 id="lines-of-code-counter">0</h1>
+                <table id="table"></table>
 
-                <p>Start of lists</p>
-
-                <div id="container">
-
-                    <div id="leftList"></div>
-                
-                    <div id="middleList"></div>
-                
-                    <div id="rightList"></div>
-            
-                </div>
-
-                <p>End of lists</p>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
-
             </body>
             </html>`;
             }
