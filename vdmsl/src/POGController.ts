@@ -25,10 +25,9 @@ export namespace POGController
             
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation on Selection', 2000);
             let selection = vscode.window.activeTextEditor.selection;
-            let po = await client.generatePO(inputUri, selection);
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            ProofObligationPanel.currentPanel.displayTESTPOGS();
+            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(await client.generatePO(inputUri, selection)));
         }
     
         async runPOG(inputUri:Uri)
@@ -42,7 +41,7 @@ export namespace POGController
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            ProofObligationPanel.currentPanel.displayPOGS(await client.generatePO(uri));
+            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(await client.generatePO(uri)));
         }
     
         async retrievePOs()
@@ -71,21 +70,22 @@ export namespace POGController
        private readonly _extensionUri: vscode.Uri;
    
        public static createOrShowPanel(extensionUri: vscode.Uri) {
-           const column = vscode.window.activeTextEditor
-               ? vscode.window.activeTextEditor.viewColumn
-               : undefined;
+            let t = vscode.window.visibleTextEditors;
+            const column = vscode.window.visibleTextEditors
+                ? vscode.window.visibleTextEditors.sort((t1,t2) => { return t1.viewColumn < t2.viewColumn ? 1 : -1})[0].viewColumn + 1
+                : undefined;
 
             // If we already have a panel, show it.
             if (ProofObligationPanel.currentPanel) {
                 ProofObligationPanel.currentPanel._panel.reveal(column);
                 return;
             }
-   
-           // Create a new panel.
-           const panel = vscode.window.createWebviewPanel(
-               ProofObligationPanel.viewType,
-               'Proof Obligations',
-               column || vscode.ViewColumn.One,
+
+            // Create a new panel.
+            const panel = vscode.window.createWebviewPanel(
+                ProofObligationPanel.viewType,
+                'Proof Obligations',
+                column || vscode.ViewColumn.One,
                 {
                     // Enable javascript in the webview
                     enableScripts: true,
@@ -96,9 +96,9 @@ export namespace POGController
                     // Retain state - this is an ineffective way of doing it!
                     retainContextWhenHidden: true
                 }
-           );
-   
-           ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
+            );
+
+            ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
        }
    
        private constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel) {
@@ -181,6 +181,12 @@ export namespace POGController
             </body>
             </html>`;
             }
+   }
+
+   function poHeaderFormatter(poHeaders: ProofObligationHeader[])
+   {
+       let t = poHeaders;
+       return t;
    }
    
    function getNonce() 
