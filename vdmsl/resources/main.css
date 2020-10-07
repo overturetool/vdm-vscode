@@ -1,8 +1,24 @@
 th, td {
     text-align: left;
-    padding: 7px;
-    border-bottom: 1px solid rgb(91, 91, 91);
     font-size: 1rem;
 }
 
-tr:hover td {background-color: #000000;}
+table {
+    width: 100%;
+}
+
+.mainrowcell {
+    padding: 6px;
+    border-top: 1px solid rgb(91, 91, 91);
+}
+
+.subrowcell {
+    padding-bottom: 20px;
+    padding-left: 15px;
+}
+
+.mainrow {
+    cursor:pointer;
+}
+
+.mainrow:hover {background-color: #000000;}

@@ -2,7 +2,7 @@ import { Uri } from "vscode"
 import * as vscode from 'vscode'
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import path = require("path")
-import { ProofObligationHeader } from "./MessageExtensions"
+import { ProofObligationHeader, ProofObligation } from "./MessageExtensions"
 
 export namespace POGController 
 {
@@ -27,7 +27,9 @@ export namespace POGController
             let selection = vscode.window.activeTextEditor.selection;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(await client.generatePO(inputUri, selection)));
+            let pohs = await client.generatePO(inputUri, selection);
+            let pos = await client.retrievePO(pohs.map(h => h.id));
+            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(pos));
         }
     
         async runPOG(inputUri:Uri)
@@ -41,7 +43,9 @@ export namespace POGController
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(await client.generatePO(uri)));
+            let pohs = await client.generatePO(uri);
+            let pos = await client.retrievePO(pohs.map(h => h.id));
+            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(pos));
         }
     
         async retrievePOs()
@@ -123,19 +127,10 @@ export namespace POGController
             );
        }
    
-       public displayPOGS(POH : ProofObligationHeader[]) {
-           this._update("List of POGs")
-           let json = JSON.stringify(POH);       
-           this._panel.webview.postMessage({ command: POH });
+       public displayPOGS(POH : ProofObligation[]) {
+           this._update()     
+           this._panel.webview.postMessage({ command: "poh", text:POH });
        }
-
-       public displayTESTPOGS() {
-        this._update("List of POGs")
-        let json = [{'column1':'1','column2':'2','column3':'3','column4':'4'},
-                    {'column1':'11','column2':'22','column3':'33','column4':'44'},
-                    {'column1':'111','column2':'222','column3':'333','column4':'444'}]     
-        this._panel.webview.postMessage({ command: json });
-    }
    
        public dispose() {
            ProofObligationPanel.currentPanel = undefined;
@@ -151,12 +146,12 @@ export namespace POGController
            }
        }
    
-       private _update(displayText: string = "INIT") {
+       private _update() {
            const webview = this._panel.webview;
-           this._panel.webview.html = this._getHtmlForWebview(webview, displayText);
+           this._panel.webview.html = this._getHtmlForWebview(webview);
        }
        
-       private _getHtmlForWebview(webview: vscode.Webview, displayText: string) {		
+       private _getHtmlForWebview(webview: vscode.Webview) {		
 
             const scriptUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.js'));
 
@@ -183,10 +178,14 @@ export namespace POGController
             }
    }
 
-   function poHeaderFormatter(poHeaders: ProofObligationHeader[])
+   function poHeaderFormatter(pos: ProofObligation[])
    {
-       let t = poHeaders;
-       return t;
+        for (let element of pos)
+        {
+            delete element['location'];
+        }
+
+        return pos;
    }
    
    function getNonce() 
