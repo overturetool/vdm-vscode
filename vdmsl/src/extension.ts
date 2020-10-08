@@ -14,7 +14,7 @@ import * as portfinder from 'portfinder';
 
 import { 
 	workspace, 
-	ExtensionContext, Uri} from 'vscode';
+	ExtensionContext, Uri, Disposable} from 'vscode';
 
 import {
 	CancellationToken,
@@ -122,10 +122,12 @@ export async function activate(context: ExtensionContext) {
 	});
 	
 	let pogController = new POGController.POGCommandsHandler(clientPromise, Uri.file(context.extensionPath))
-
+	
 	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
 	const registerCommand = (command: string, callback: (...args: any[]) => any) => {
-		context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+		let disposable = vscode.commands.registerCommand(command, callback)
+		context.subscriptions.push(disposable);
+		return disposable;
 	};
 
 	registerCommand('extension.runPOG', (inputUri:Uri) => pogController.runPOG(inputUri));
@@ -134,11 +136,19 @@ export async function activate(context: ExtensionContext) {
 
 	registerCommand('extension.retrievePOs', () => pogController.retrievePOs());
 
-
-
-	registerCommand('extension.test', () => commandTest());
+	
+	// TODO remove this command, also from package.json
+	let comDisp = registerCommand('extension.test', () => commandTest());
 	async function commandTest() : Promise<void> {
-		
+		vscode.window.showInformationMessage("command 1")
+		comDisp.dispose();
+		comDisp = registerCommand('extension.test', () => commandTest2());
+	}
+
+	async function commandTest2() : Promise<void> {
+		vscode.window.showInformationMessage("command 2")
+		comDisp.dispose()
+		comDisp = registerCommand('extension.test', () => commandTest());
 	}
 }
 

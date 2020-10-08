@@ -67,7 +67,7 @@
           "group": "verification@1"
         },
         {
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && editorHasSelection",
           "command": "extension.runPOGSelection",
           "group": "verification@2"
         }
