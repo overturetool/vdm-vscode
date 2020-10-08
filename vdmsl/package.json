@@ -32,6 +32,10 @@
       {
         "command": "extension.retrievePOs",
         "title": "POG: Retrieve Proof Obligations"
+      },
+      {
+        "command": "extension.test",
+        "title": "POG: Test command"
       }
     ],
     "menus": {

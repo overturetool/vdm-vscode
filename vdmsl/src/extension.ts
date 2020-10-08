@@ -17,9 +17,13 @@ import {
 	ExtensionContext, Uri} from 'vscode';
 
 import {
+	CancellationToken,
+	DocumentSymbolParams,
+	DocumentSymbolRequest,
 	LanguageClientOptions,
 	ServerOptions,
-	StreamInfo} from 'vscode-languageclient';
+	StreamInfo,
+	TextDocumentIdentifier} from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { POGController } from "./POGController";
 
@@ -129,7 +133,16 @@ export async function activate(context: ExtensionContext) {
 	registerCommand('extension.runPOGSelection', (inputUri:Uri) => pogController.runPOGSelection(inputUri));
 
 	registerCommand('extension.retrievePOs', () => pogController.retrievePOs());
+
+
+
+	registerCommand('extension.test', () => commandTest());
+	async function commandTest() : Promise<void> {
+		
+	}
 }
+
+
 
 
 function writeToLog(path:string, msg:string){
