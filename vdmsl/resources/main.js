@@ -8,11 +8,13 @@ function buildTable(json)
 
     // Build the headers
     let thead = table.createTHead();
-    let headerRows = thead.insertRow();  
+    let headerRows = thead.insertRow();
+    let th = document.createElement("th");
+    th.appendChild(document.createTextNode(""));
+    headerRows.appendChild(th);  
     for (let key of Object.keys(json[0]).filter(k => k.indexOf("source") == -1)) {
         let th = document.createElement("th");
-        let thtext = document.createTextNode(key);
-        th.appendChild(thtext);
+        th.appendChild(document.createTextNode(key));
         headerRows.appendChild(th);
     }       
 
@@ -21,45 +23,50 @@ function buildTable(json)
     table.appendChild(tbdy);
     let i = 0;
     for (let element of json) {
-        let row = tbdy.insertRow();
-        row.classList.add("mainrow");
+        let row1 = tbdy.insertRow();
+        row1.classList.add("mainrow");
+
+        let cell = row1.insertCell();
+        cell.classList.add("signcell");
+        cell.appendChild(document.createTextNode("+"));
 
         for (key in element) {
             if(key == "source")
             {
                 let row2 = tbdy.insertRow();
                 row2.classList.add("subrow");
-                let cell2 = row2.insertCell();
-                cell2.colSpan = 3;
-                cell2.classList.add("subrowcell");
-                cell2.style.display = "none";
-                cell2.appendChild(document.createTextNode(element[key]));
+                row2.style.display = "none";
+
+                let cell0 = row2.insertCell();
+                cell0.classList.add("signcell");
+
+                let cell1 = row2.insertCell();
+                cell1.colSpan = 3;
+                cell1.classList.add("subrowcell");
+                cell1.appendChild(document.createTextNode(element[key]));
             }
             else
             {
-                let cell = row.insertCell();
-                cell.classList.add("mainrowcell");
+                let cell = row1.insertCell();
+                cell.classList.add("mainrowcell"); 
                 cell.appendChild(document.createTextNode(element[key]));
             }
         }      
     }
 
+    // Add on click listeners to sub rows
     var rows = tbdy.getElementsByTagName('tr');
     for (i = 0; i < rows.length; i++) {
         if(!rows[i].classList.contains("subrow"))
         {
             rows[i].onclick = function() {
-                if(this.rowIndex >= rows.length) return;
+                if(this.rowIndex >= rows.length) return;           
+          
+                let subrow = rows[this.rowIndex];
+                subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
 
-                let cellx = rows[this.rowIndex].cells[0];
-                if (cellx.style.display === "none") 
-                {
-                    cellx.style.display = "table-cell";
-                } 
-                else 
-                {
-                    cellx.style.display = "none";
-                }
+                let signcell = rows[this.rowIndex - 1].cells[0];
+                signcell.innerText = signcell.innerText === "+" ? "-" : "+";
             }
         }           
     }

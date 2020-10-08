@@ -5,6 +5,7 @@ th, td {
 
 table {
     width: 100%;
+    border-collapse: collapse;
 }
 
 .mainrowcell {
@@ -13,12 +14,23 @@ table {
 }
 
 .subrowcell {
-    padding-bottom: 20px;
-    padding-left: 15px;
+    padding-top: 2px;
+    padding-left: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgb(91, 91, 91);
+    border-left: 1px solid rgb(91, 91, 91);
+    border-right: 1px solid rgb(91, 91, 91);
 }
 
 .mainrow {
     cursor:pointer;
 }
 
-.mainrow:hover {background-color: #000000;}
+
+.signcell {
+    text-align: right;
+    font-size: 0.9rem;
+    width: 1%;
+}
+
+.mainrow:hover {height: 200%;}
