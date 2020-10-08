@@ -26,11 +26,8 @@ table {
     cursor:pointer;
 }
 
-
 .signcell {
     text-align: right;
     font-size: 0.9rem;
     width: 1%;
 }
-
-.mainrow:hover {height: 200%;}

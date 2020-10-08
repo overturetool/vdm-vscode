@@ -1,10 +1,10 @@
 const vscode = acquireVsCodeApi();
-let mainCells = [];
 
 function buildTable(json)
 {
     // Access the DOM to get the table construct and add to it.
     let table = document.getElementById('table');
+    table.innerHTML = "";
 
     // Build the headers
     let thead = table.createTHead();
@@ -12,7 +12,7 @@ function buildTable(json)
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(""));
     headerRows.appendChild(th);  
-    for (let key of Object.keys(json[0]).filter(k => k.indexOf("source") == -1)) {
+    for (let key of Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1)) {
         let th = document.createElement("th");
         th.appendChild(document.createTextNode(key));
         headerRows.appendChild(th);
@@ -45,7 +45,7 @@ function buildTable(json)
                 cell1.classList.add("subrowcell");
                 cell1.appendChild(document.createTextNode(element[key]));
             }
-            else
+            else if (key != 'location')
             {
                 let cell = row1.insertCell();
                 cell.classList.add("mainrowcell"); 
@@ -66,7 +66,14 @@ function buildTable(json)
                 subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
 
                 let signcell = rows[this.rowIndex - 1].cells[0];
-                signcell.innerText = signcell.innerText === "+" ? "-" : "+";
+                signcell.innerText = signcell.innerText === "+" ? "-" : "+";            
+            }
+            
+            rows[i].ondblclick = function() {
+                vscode.postMessage({
+                    command: 'poid',
+                    text: rows[this.rowIndex - 1].cells[1].innerText
+                });
             }
         }           
     }
@@ -74,11 +81,8 @@ function buildTable(json)
 
 window.addEventListener('message', event => {
     switch (event.data.command) {
-        case 'poh':
-            buildTable(event.data.text);
-            return;
         case 'po':
-            addPOStoTable(event.data.text);
-            return;
+            buildTable(event.data.text);
+            return;      
     }
 });
