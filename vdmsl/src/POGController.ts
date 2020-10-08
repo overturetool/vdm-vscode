@@ -19,23 +19,18 @@ export namespace POGController
     
         async runPOGSelection(inputUri:Uri)
         {
-            // The code you place here will be executed every time your command is executed
-            // Display a message box to the user
             let client = await this._client;
             
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation on Selection', 2000);
             let selection = vscode.window.activeTextEditor.selection;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            let pohs = await client.generatePO(inputUri, selection);
-            let pos = await client.retrievePO(pohs.map(h => h.id));
-            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(pos));
+            let pos = await client.retrievePO((await client.generatePO(inputUri, selection)).map(h => h.id));
+            ProofObligationPanel.currentPanel.displayPOGS(pos);
         }
     
         async runPOG(inputUri:Uri)
         {
-            // The code you place here will be executed every time your command is executed
-            // Display a message box to the user
             let client = await this._client;
     
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
@@ -43,15 +38,12 @@ export namespace POGController
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            let pohs = await client.generatePO(uri);
-            let pos = await client.retrievePO(pohs.map(h => h.id));
-            ProofObligationPanel.currentPanel.displayPOGS(poHeaderFormatter(pos));
+            let pos = await client.retrievePO((await client.generatePO(uri)).map(h => h.id));
+            ProofObligationPanel.currentPanel.displayPOGS(pos);
         }
     
         async retrievePOs()
         {
-            // The code you place here will be executed every time your command is executed
-            // Display a message box to the user
             let client = await this._client;
             vscode.window.setStatusBarMessage('Retrieving Proof Obligation Information', 2000);
     
@@ -61,9 +53,6 @@ export namespace POGController
 
 
     class ProofObligationPanel {
-       /**
-        * Track the currently panel. Only allow a single panel to exist at a time.
-        */
        public static currentPanel: ProofObligationPanel | undefined;
    
        public static readonly viewType = 'proofObligationPanel';
@@ -72,12 +61,18 @@ export namespace POGController
        private _disposables: vscode.Disposable[] = [];
 
        private readonly _extensionUri: vscode.Uri;
+
+       private _pos: ProofObligation[];
    
        public static createOrShowPanel(extensionUri: vscode.Uri) {
-            let t = vscode.window.visibleTextEditors;
-            const column = vscode.window.visibleTextEditors
-                ? vscode.window.visibleTextEditors.sort((t1,t2) => { return t1.viewColumn < t2.viewColumn ? 1 : -1})[0].viewColumn + 1
-                : undefined;
+            // const column = vscode.window.visibleTextEditors
+            //     ? vscode.window.visibleTextEditors.sort((t1,t2) => { if(t1.viewColumn == null || t2.viewColumn == null) return;
+            //         return t1.viewColumn < t2.viewColumn ? 1 : -1})[0].viewColumn + 1
+            //     : 2;
+
+            const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn + 1
+            : 2;
 
             // If we already have a panel, show it.
             if (ProofObligationPanel.currentPanel) {
@@ -114,23 +109,30 @@ export namespace POGController
            
            // Handle messages from the webview
             this._panel.webview.onDidReceiveMessage(
-                message => {
+                async message => {
                     switch (message.command) {
-                        case 'rowclick':
+                        case 'poid':
                             let json = message.text;
-                            vscode.window.showErrorMessage("TEXT");
+                            let po = this._pos.find(d => d.id.toString() == json);
+                            let path = Uri.parse(po.location.uri.toString()).path;
+                            let doc = vscode.workspace.textDocuments.find(d => d.uri.path == path);
+                            doc = doc == null ? await vscode.workspace.openTextDocument(path) : doc;
+                            vscode.window.showTextDocument(doc.uri, {selection: po.location.range, viewColumn: 1})
                             return;
                     }
                 },
                 null,
                 this._disposables
             );
+            
+            // Generate the html for the webview
+            this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
        }
    
-       public displayPOGS(POH : ProofObligation[]) {
-           this._update()     
-           this._panel.webview.postMessage({ command: "poh", text:POH });
-       }
+        public displayPOGS(pos : ProofObligation[]) {  
+            this._pos = pos;
+            this._panel.webview.postMessage({ command: "po", text:pos });
+        }
    
        public dispose() {
            ProofObligationPanel.currentPanel = undefined;
@@ -145,10 +147,15 @@ export namespace POGController
                }
            }
        }
-   
-       private _update() {
-           const webview = this._panel.webview;
-           this._panel.webview.html = this._getHtmlForWebview(webview);
+
+       private _poFormatter(pos: ProofObligation[])
+       {
+            for (let element of pos)
+            {
+                delete element['location'];
+            }
+    
+            return pos;
        }
        
        private _getHtmlForWebview(webview: vscode.Webview) {		
@@ -176,16 +183,6 @@ export namespace POGController
             </body>
             </html>`;
             }
-   }
-
-   function poHeaderFormatter(pos: ProofObligation[])
-   {
-        for (let element of pos)
-        {
-            delete element['location'];
-        }
-
-        return pos;
    }
    
    function getNonce() 
