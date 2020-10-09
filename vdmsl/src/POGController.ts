@@ -155,8 +155,8 @@ export namespace POGController
                 <link href="${styleUri}" rel="stylesheet">
             </head>
             <body>
-                <table id="table"></table>
-
+            
+            <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
             </body>
             </html>`;
