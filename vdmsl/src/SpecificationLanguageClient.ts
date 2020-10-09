@@ -13,10 +13,10 @@ export class WorkaroundFeature implements StaticFeature {
         capabilities.experimental = { proofObligationGeneration: true };
     }
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
-		if (capabilities.experimental.proofObligationProvider){
+		// if (capabilities.experimental.proofObligationProvider){
 			
 
-		}
+		// }
 		
     }
 }

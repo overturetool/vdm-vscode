@@ -133,9 +133,6 @@ export async function activate(context: ExtensionContext) {
 	registerCommand('extension.runPOG', (inputUri:Uri) => pogController.runPOG(inputUri));
 
 	registerCommand('extension.runPOGSelection', (inputUri:Uri) => pogController.runPOGSelection(inputUri));
-
-	registerCommand('extension.retrievePOs', () => pogController.retrievePOs());
-
 	
 	// TODO remove this command, also from package.json
 	let comDisp = registerCommand('extension.test', () => commandTest());

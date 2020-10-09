@@ -9,8 +9,13 @@ table {
 }
 
 .mainrowcell {
-    padding: 6px;
+    padding: 6px;   
+}
+
+.locationcell {
     border-top: 1px solid rgb(91, 91, 91);
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
 .subrowcell {
@@ -22,7 +27,11 @@ table {
     border-right: 1px solid rgb(91, 91, 91);
 }
 
-.mainrow {
+.locationcell {
+    font-size: 1.2rem;
+}
+
+.filerow, .mainrow, .subrow {
     cursor:pointer;
 }
 
