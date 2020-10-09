@@ -1,61 +1,41 @@
 const vscode = acquireVsCodeApi();
 
-function buildTable(json)
+function buildTable(json, poContainer)
 {
     // Access the DOM to get the table construct and add to it.
-    let table = document.getElementById('table');
-    table.innerHTML = "";
+    poContainer.innerHTML = "";
+    let table = document.createElement('table');
+    poContainer.appendChild(table);
 
     // Build the headers
+    let headers = Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1 && k.indexOf("group") == -1);
     let thead = table.createTHead();
     let headerRow = thead.insertRow();
+
+    // Cell for the "collapsible sign" present in the table body
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(""));
-    headerRow.appendChild(th);  
-    for (let key of Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1)) {
+
+    headerRow.appendChild(th);
+    for (let key of headers) {
         let th = document.createElement("th");
         th.appendChild(document.createTextNode(key));
         headerRow.appendChild(th);
     }
 
     // Build the rows
+    let tbdy = document.createElement("tbody");
+    table.appendChild(tbdy);
     for (let element of json) {
-        let filename = element['location']['uri'].split(/.*[\/|\\]/)[1].split('.')[0];
-        let tbdy = document.getElementById(filename);
-
-        if(tbdy === null)
-        {
-            let tbdy_upper = document.createElement("tbody");
-            table.appendChild(tbdy_upper);
-
-            let filerow = tbdy_upper.insertRow();
-            filerow.classList.add("filerow"); 
-            filerow.onclick = function() { 
-                tbdy.style.display = tbdy.style.display === "none" ? "table-row-group" : "none";  
-            }
-           
-            let cell_filerow = filerow.insertCell();
-            cell_filerow.classList.add('locationcell');
-            cell_filerow.colSpan = 4;
-            cell_filerow.appendChild(document.createTextNode(filename));
-
-
-            tbdy = document.createElement("tbody");
-            table.appendChild(tbdy); 
-            tbdy.id = filename;
-            tbdy.style.display = "none";
-         
-        }
-
         let mainrow = tbdy.insertRow();
         mainrow.classList.add("mainrow");
 
         //click listener for expanding sub row
         mainrow.onclick = function() {
-            let subrow = tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1];
+            let subrow = tbdy.getElementsByTagName('tr')[mainrow.rowIndex];
             subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
 
-            let signcell = tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 2].cells[0];
+            let signcell = tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[0];
             signcell.innerText = signcell.innerText === "+" ? "-" : "+";     
         }
 
@@ -63,10 +43,11 @@ function buildTable(json)
         mainrow.ondblclick = function() {
             vscode.postMessage({
                 command: 'poid',
-                text: tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 2].cells[1].innerText
+                text: tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[1].innerText
             });
         }
 
+        // Add cell for "collapsible sign" as the first cell in the row
         let signcell_mainrow = mainrow.insertCell();
         signcell_mainrow.classList.add("signcell");
         signcell_mainrow.appendChild(document.createTextNode("+"));
@@ -80,6 +61,7 @@ function buildTable(json)
             }
         }
         
+        // Add a "subrow" to display the source information
         let subrow = tbdy.insertRow();
         subrow.classList.add("subrow");
         subrow.style.display = "none";
@@ -90,26 +72,80 @@ function buildTable(json)
             console.log(subrow.rowIndex);
             vscode.postMessage({
                 command: 'poid',
-                text: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 3].cells[1].innerText
+                text: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 2].cells[1].innerText
             });
         }
-
+        
+        // The first cell is for the "collapsible sign"
         let signcell_subrow = subrow.insertCell();
         signcell_subrow.classList.add("signcell");
 
+        // The main cell spans the rest of the row being the numbers of headers
         let cell_subrow = subrow.insertCell();
-        cell_subrow.colSpan = 3;
+        cell_subrow.colSpan = headers.length;
         cell_subrow.classList.add("subrowcell");
         cell_subrow.appendChild(document.createTextNode(element['source']));
     }
+}
 
+function addToPOTree(element, map)
+{
+    let groupings = element.grouping;
+
+    if(typeof groupings === 'undefined' || groupings.length < 1)
+    {
+        map.set('floating', [element]);     
+        return map;
+    }
+
+    let firstGroup = element.grouping[0];
+
+    if(groupings.length == 1)
+    {
+        if(!map.has(firstGroup))
+        {
+            map.set(firstGroup, [element]);
+        }
+        else
+        {
+            map.get(firstGroup).push(element);               
+        } 
+        return map;
+    }
+    else
+    {
+        element.grouping.shift();
+        if(!map.has(firstGroup))
+        {
+            map.set(firstGroup, addToPOTree(element,new Map()));
+        }
+        else
+        {
+            map.set(firstGroup, addToPOTree(element, map.get(firstGroup)));               
+        } 
+    }      
     
+    return map;
+}
+
+function buildPOView(json)
+{
+    let poContainer = document.getElementById('poContainer');
+
+    // Creates tree-like map structure for groupings of pos
+    let poTreeMap = new Map();
+    for (let element of Object(json))
+    {
+        poTreeMap = addToPOTree(element,poTreeMap);
+    }
+
+    buildTable(json, poContainer);
 }
 
 window.addEventListener('message', event => {
     switch (event.data.command) {
         case 'po':
-            buildTable(event.data.text);
+            buildPOView(event.data.text);
             return;      
     }
 });
