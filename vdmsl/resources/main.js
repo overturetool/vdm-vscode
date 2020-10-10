@@ -88,40 +88,34 @@ function buildTable(json, poContainer)
     }
 }
 
-function addToPOTree(element, map)
+function addToPOTree(poElement, map)
 {
-    let groupings = element.grouping;
+    let groupings = poElement.grouping;
 
-    if(typeof groupings === 'undefined' || groupings.length < 1)
-    {
-        map.set('floating', [element]);     
-        return map;
-    }
-
-    let firstGroup = element.grouping[0];
+    let groupElement = poElement.grouping[0];
 
     if(groupings.length == 1)
     {
-        if(!map.has(firstGroup))
+        if(!map.has(groupElement))
         {
-            map.set(firstGroup, [element]);
+            map.set(groupElement, [poElement]);
         }
         else
         {
-            map.get(firstGroup).push(element);               
+            map.get(groupElement).push(poElement);               
         } 
         return map;
     }
     else
     {
-        element.grouping.shift();
-        if(!map.has(firstGroup))
+        poElement.grouping.shift();
+        if(!map.has(groupElement))
         {
-            map.set(firstGroup, addToPOTree(element,new Map()));
+            map.set(groupElement, addToPOTree(poElement,new Map()));
         }
         else
         {
-            map.set(firstGroup, addToPOTree(element, map.get(firstGroup)));               
+            map.set(groupElement, addToPOTree(poElement, map.get(groupElement)));               
         } 
     }      
     
@@ -134,12 +128,25 @@ function buildPOView(json)
 
     // Creates tree-like map structure for groupings of pos
     let poTreeMap = new Map();
-    for (let element of Object(json))
+    let nonGroupedPos = [];
+    for (let po of Object(json))
     {
-        poTreeMap = addToPOTree(element,poTreeMap);
+        if(typeof po.grouping === 'undefined' || po.grouping.length < 1)
+        {
+            nonGroupedPos.push(po);
+        }
+        else
+        {
+            poTreeMap = addToPOTree(po,poTreeMap);
+        }
     }
 
-    buildTable(json, poContainer);
+    if(nonGroupedPos.length > 0)
+    {
+        buildTable(nonGroupedPos, poContainer);
+    }
+
+
 }
 
 window.addEventListener('message', event => {
