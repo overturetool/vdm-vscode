@@ -64,7 +64,7 @@ export async function activate(context: ExtensionContext) {
 	}
 
 	let serverOptions: ServerOptions
-	let debug = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').debugServer;
+	let debug = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').experimentalServer;
 	if (debug) {
 		let defaultLspPort = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').lspPort;
 		let defaultDapPort = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').dapPort;

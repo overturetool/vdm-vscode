@@ -88,10 +88,10 @@
           "default": "verbose",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "vdmsl-lsp.debugServer": {
+        "vdmsl-lsp.experimentalServer": {
           "type": "boolean",
-          "default": false,
-          "description": "Using debug server. True if running client should not launch server."
+          "default": true,
+          "description": "Using experimental server. True if running client should not launch server."
         },
         "vdmsl-lsp.lspPort": {
           "type": "integer",
