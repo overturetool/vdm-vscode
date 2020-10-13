@@ -2,7 +2,7 @@ import { Uri } from "vscode"
 import * as vscode from 'vscode'
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import path = require("path")
-import { ProofObligationHeader, ProofObligation } from "./MessageExtensions"
+import { ProofObligationHeader, ProofObligation } from "./protocol.lspx"
 
 export namespace POGController 
 {

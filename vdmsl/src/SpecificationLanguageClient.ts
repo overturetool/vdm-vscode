@@ -1,32 +1,26 @@
-import { version } from "os";
-import { Uri, window } from "vscode";
-import { DynamicFeature, LanguageClient, LanguageClientOptions, Range, ServerCapabilities, ServerOptions, StaticFeature } from "vscode-languageclient";
-import { ProofObligationHeader, GeneratePOParams, GeneratePORequest, ProofObligation, RetrievePOParams, RetrievePORequest } from "./MessageExtensions";
-
-
-export interface ExperimentalCapabilities {
-	proofObligationProvider ?: boolean
-}
-
-export class WorkaroundFeature implements StaticFeature {
-    fillClientCapabilities(capabilities): void {
-        capabilities.experimental = { proofObligationGeneration: true };
-    }
-    initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
-		if (capabilities.experimental.proofObligationProvider){
-			
-
-		}
-		
-    }
-}
+import { ExtensionContext, Uri } from "vscode";
+import { LanguageClient, LanguageClientOptions, Range, ServerOptions } from "vscode-languageclient";
+import { ProofObligationGenerationFeature } from "./proofObligationGeneration";
+import { ProofObligationHeader, GeneratePOParams, GeneratePORequest, ProofObligation, RetrievePOParams, RetrievePORequest } from "./protocol.lspx";
 
 export class SpecificationLanguageClient extends LanguageClient
 {
-	constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean){
+	private _context : ExtensionContext;
+	
+	constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, context : ExtensionContext, forceDebug?: boolean){
 		super(id, name, serverOptions, clientOptions, forceDebug);
-		this.registerFeature(new WorkaroundFeature());
+
+		this._context = context
+		this.registerFeature(new ProofObligationGenerationFeature(this, this._context));
 	}
+
+	public promise = new Promise<SpecificationLanguageClient>((resolve, reject) => {
+		this.onReady().then(() => {
+			resolve(this);
+		}, (error) => {
+			reject(error);
+		});
+	});
 	
 	async generatePO(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
 		if (range)

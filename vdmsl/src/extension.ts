@@ -14,18 +14,13 @@ import * as portfinder from 'portfinder';
 
 import { 
 	workspace, 
-	ExtensionContext, Uri, Disposable} from 'vscode';
+	ExtensionContext} from 'vscode';
 
 import {
-	CancellationToken,
-	DocumentSymbolParams,
-	DocumentSymbolRequest,
 	LanguageClientOptions,
 	ServerOptions,
-	StreamInfo,
-	TextDocumentIdentifier} from 'vscode-languageclient';
+	StreamInfo} from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import { POGController } from "./POGController";
 
 var SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
 var VDMJNAME = "vdmj-4.3.0.jar"
@@ -105,14 +100,11 @@ export async function activate(context: ExtensionContext) {
 		dialect.vdmDialect+'-lsp', 
 		dialect.vdmDialect.toUpperCase()+' Language Server', 
 		serverOptions, 
-		clientOptions);
-		
-	// Start the and launch the client
-	let disposable = client.start();
-
-	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
-	context.subscriptions.push(disposable);
+		clientOptions,
+		context
+	);
 	
+	/*
 	let clientPromise = new Promise<SpecificationLanguageClient>((resolve, reject) => {
 		client.onReady().then(() => {
 			resolve(client);
@@ -130,8 +122,15 @@ export async function activate(context: ExtensionContext) {
 		return disposable;
 	};
 
-	registerCommand('extension.runPOG', (inputUri:Uri) => pogController.runPOG(inputUri));
-
+	let POGdisp = registerCommand('extension.runPOG', () => {
+		vscode.window.showInformationMessage("Proof Obligation Generation is not supported by the language server")
+	});
+	function registerPOGCommand(){
+		POGdisp.dispose();
+		registerCommand('extension.runPOG', (inputUri:Uri) => pogController.runPOG(inputUri));
+	}
+	*/
+/*
 	registerCommand('extension.runPOGSelection', (inputUri:Uri) => pogController.runPOGSelection(inputUri));
 
 	registerCommand('extension.retrievePOs', () => pogController.retrievePOs());
@@ -150,6 +149,16 @@ export async function activate(context: ExtensionContext) {
 		comDisp.dispose()
 		comDisp = registerCommand('extension.test', () => commandTest());
 	}
+*/
+	
+	// Register client feature
+	// client.registerFeature(new ProofObligationGenerationFeature(registerPOGCommand));
+
+	// Start the and launch the client
+	let disposable = client.start();
+
+	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
+	context.subscriptions.push(disposable);
 }
 
 
