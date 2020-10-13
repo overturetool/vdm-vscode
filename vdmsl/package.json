@@ -23,15 +23,11 @@
     "commands": [
       {
         "command": "extension.runPOG",
-        "title": "POG: Run on file(s)"
+        "title": "Run Proof Obligation Generation"
       },
       {
         "command": "extension.runPOGSelection",
         "title": "POG: Run on selection/line"
-      },
-      {
-        "command": "extension.retrievePOs",
-        "title": "POG: Retrieve Proof Obligations"
       },
       {
         "command": "extension.test",
@@ -47,10 +43,6 @@
         {
           "command": "extension.runPOGSelection",
           "when": "editorLangId == vdmsl"
-        },
-        {
-          "command": "extension.retrievePOs",
-          "title": "editorLangId == vdmsl"
         }
       ],
       "explorer/context": [
@@ -90,7 +82,7 @@
         },
         "vdmsl-lsp.experimentalServer": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Using experimental server. True if running client should not launch server."
         },
         "vdmsl-lsp.lspPort": {

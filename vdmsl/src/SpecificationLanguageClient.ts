@@ -1,7 +1,7 @@
 import { ExtensionContext, Uri } from "vscode";
 import { LanguageClient, LanguageClientOptions, Range, ServerOptions } from "vscode-languageclient";
 import { ProofObligationGenerationFeature } from "./proofObligationGeneration";
-import { ProofObligationHeader, GeneratePOParams, GeneratePORequest, ProofObligation, RetrievePOParams, RetrievePORequest } from "./protocol.lspx";
+import * as lspx from "./protocol.lspx";
 
 export class SpecificationLanguageClient extends LanguageClient
 {
@@ -22,23 +22,15 @@ export class SpecificationLanguageClient extends LanguageClient
 		});
 	});
 	
-	async generatePO(uri: Uri, range?: Range): Promise<ProofObligationHeader[]> {
+	async generatePO(uri: Uri, range?: Range): Promise<lspx.ProofObligation[]> {
 		if (range)
 			var lspRange = Range.create(range.start,range.end)
 		
-		let params: GeneratePOParams = {
+		let params: lspx.GeneratePOParams = {
 			uri: uri.toString(),
 			range: lspRange
 		};
-		const values = await this.sendRequest(GeneratePORequest.type, params);
-		return values;
-	}
-
-	async retrievePO(ids:number[]): Promise<ProofObligation[]> {
-		let params: RetrievePOParams = {
-			ids: ids
-		};
-		const values = await this.sendRequest(RetrievePORequest.type, params);
+		const values = await this.sendRequest(lspx.GeneratePORequest.type, params);
 		return values;
 	}
 }

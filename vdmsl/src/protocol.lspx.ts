@@ -8,18 +8,13 @@ export interface VDMSourceCode {
 	source: string;
 }
 
-export interface ProofObligationHeader {
-	id: number;
-	kind: string;
-	name: string;
-	location: Location;
-}
-
 export interface ProofObligation {
 	id: number;
+	name: string[];
 	type: string;
 	location: Location;
 	source: VDMSourceCode;
+	proved?: boolean;
 }
 
 export interface GeneratePOParams {
@@ -28,14 +23,7 @@ export interface GeneratePOParams {
 }
 
 export namespace GeneratePORequest {
-	export const type = new RequestType<GeneratePOParams, ProofObligationHeader[] | null, void, void>('lspx/POG/generate');
+	export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void, void>('lspx/POG/generate');
 }
 
-export interface RetrievePOParams {
-	ids: number[];
-}
-
-export namespace RetrievePORequest {
-	export const type = new RequestType<RetrievePOParams, ProofObligation[] | null, void, void>('lspx/POG/retrieve');
-}
 
