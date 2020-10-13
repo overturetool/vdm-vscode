@@ -40,15 +40,7 @@ export namespace POGController
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
             let pos = await client.retrievePO((await client.generatePO(uri)).map(h => h.id));
             ProofObligationPanel.currentPanel.displayPOGS(pos);
-        }
-    
-        async retrievePOs()
-        {
-            let client = await this._client;
-            vscode.window.setStatusBarMessage('Retrieving Proof Obligation Information', 2000);
-    
-            client.retrievePO([1,2]);
-        }
+        }       
     }
 
 
@@ -65,11 +57,6 @@ export namespace POGController
        private _pos: ProofObligation[];
    
        public static createOrShowPanel(extensionUri: vscode.Uri) {
-            // const column = vscode.window.visibleTextEditors
-            //     ? vscode.window.visibleTextEditors.sort((t1,t2) => { if(t1.viewColumn == null || t2.viewColumn == null) return;
-            //         return t1.viewColumn < t2.viewColumn ? 1 : -1})[0].viewColumn + 1
-            //     : 2;
-
             const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn + 1
             : 2;
@@ -92,7 +79,7 @@ export namespace POGController
                     // Restrict the webview to only loading content from our extension's `resources` directory.
                     localResourceRoots: [Uri.parse(extensionUri + '/' + 'resources')],
 
-                    // Retain state - this is an ineffective way of doing it!
+                    // Retain state when PO view goes into the background
                     retainContextWhenHidden: true
                 }
             );
@@ -115,8 +102,9 @@ export namespace POGController
                             let json = message.text;
                             let po = this._pos.find(d => d.id.toString() == json);
                             let path = Uri.parse(po.location.uri.toString()).path;
-                            let doc = vscode.workspace.textDocuments.find(d => d.uri.path == path);
-                            doc = doc == null ? await vscode.workspace.openTextDocument(path) : doc;
+
+                            let doc = await vscode.workspace.openTextDocument(path);
+        
                             vscode.window.showTextDocument(doc.uri, {selection: po.location.range, viewColumn: 1})
                             return;
                     }
@@ -147,16 +135,6 @@ export namespace POGController
                }
            }
        }
-
-       private _poFormatter(pos: ProofObligation[])
-       {
-            for (let element of pos)
-            {
-                delete element['location'];
-            }
-    
-            return pos;
-       }
        
        private _getHtmlForWebview(webview: vscode.Webview) {		
 
@@ -177,8 +155,8 @@ export namespace POGController
                 <link href="${styleUri}" rel="stylesheet">
             </head>
             <body>
-                <table id="table"></table>
-
+            
+            <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
             </body>
             </html>`;

@@ -1,88 +1,158 @@
 const vscode = acquireVsCodeApi();
 
-function buildTable(json)
+function buildTable(json, poContainer)
 {
     // Access the DOM to get the table construct and add to it.
-    let table = document.getElementById('table');
-    table.innerHTML = "";
+    poContainer.innerHTML = "";
+    let table = document.createElement('table');
+    poContainer.appendChild(table);
 
     // Build the headers
+    let headers = Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1 && k.indexOf("group") == -1);
     let thead = table.createTHead();
-    let headerRows = thead.insertRow();
+    let headerRow = thead.insertRow();
+
+    // Cell for the "collapsible sign" present in the table body
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(""));
-    headerRows.appendChild(th);  
-    for (let key of Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1)) {
+
+    headerRow.appendChild(th);
+    for (let key of headers) {
         let th = document.createElement("th");
         th.appendChild(document.createTextNode(key));
-        headerRows.appendChild(th);
-    }       
+        headerRow.appendChild(th);
+    }
 
     // Build the rows
     let tbdy = document.createElement("tbody");
     table.appendChild(tbdy);
-    let i = 0;
     for (let element of json) {
-        let row1 = tbdy.insertRow();
-        row1.classList.add("mainrow");
+        let mainrow = tbdy.insertRow();
+        mainrow.classList.add("mainrow");
 
-        let cell = row1.insertCell();
-        cell.classList.add("signcell");
-        cell.appendChild(document.createTextNode("+"));
+        //click listener for expanding sub row
+        mainrow.onclick = function() {
+            let subrow = tbdy.getElementsByTagName('tr')[mainrow.rowIndex];
+            subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
+
+            let signcell = tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[0];
+            signcell.innerText = signcell.innerText === "+" ? "-" : "+";     
+        }
+
+        //click listener for go to
+        mainrow.ondblclick = function() {
+            vscode.postMessage({
+                command: 'poid',
+                text: tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[1].innerText
+            });
+        }
+
+        // Add cell for "collapsible sign" as the first cell in the row
+        let signcell_mainrow = mainrow.insertCell();
+        signcell_mainrow.classList.add("signcell");
+        signcell_mainrow.appendChild(document.createTextNode("+"));
 
         for (key in element) {
-            if(key == "source")
+            if (key != 'location' && key != 'source')
             {
-                let row2 = tbdy.insertRow();
-                row2.classList.add("subrow");
-                row2.style.display = "none";
-
-                let cell0 = row2.insertCell();
-                cell0.classList.add("signcell");
-
-                let cell1 = row2.insertCell();
-                cell1.colSpan = 3;
-                cell1.classList.add("subrowcell");
-                cell1.appendChild(document.createTextNode(element[key]));
+                let cell_mainrow = mainrow.insertCell();
+                cell_mainrow.classList.add("mainrowcell"); 
+                cell_mainrow.appendChild(document.createTextNode(element[key]));
             }
-            else if (key != 'location')
-            {
-                let cell = row1.insertCell();
-                cell.classList.add("mainrowcell"); 
-                cell.appendChild(document.createTextNode(element[key]));
-            }
-        }      
+        }
+        
+        // Add a "subrow" to display the source information
+        let subrow = tbdy.insertRow();
+        subrow.classList.add("subrow");
+        subrow.style.display = "none";
+
+        //click listener for go to
+        subrow.ondblclick = function() {
+            console.log(tbdy.getElementsByTagName('tr'));
+            console.log(subrow.rowIndex);
+            vscode.postMessage({
+                command: 'poid',
+                text: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 2].cells[1].innerText
+            });
+        }
+        
+        // The first cell is for the "collapsible sign"
+        let signcell_subrow = subrow.insertCell();
+        signcell_subrow.classList.add("signcell");
+
+        // The main cell spans the rest of the row being the numbers of headers
+        let cell_subrow = subrow.insertCell();
+        cell_subrow.colSpan = headers.length;
+        cell_subrow.classList.add("subrowcell");
+        cell_subrow.appendChild(document.createTextNode(element['source']));
     }
+}
 
-    // Add on click listeners to sub rows
-    var rows = tbdy.getElementsByTagName('tr');
-    for (i = 0; i < rows.length; i++) {
-        if(!rows[i].classList.contains("subrow"))
+function addToPOTree(poElement, map)
+{
+    let groupings = poElement.grouping;
+
+    let groupElement = poElement.grouping[0];
+
+    if(groupings.length == 1)
+    {
+        if(!map.has(groupElement))
         {
-            rows[i].onclick = function() {
-                if(this.rowIndex >= rows.length) return;           
-          
-                let subrow = rows[this.rowIndex];
-                subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
-
-                let signcell = rows[this.rowIndex - 1].cells[0];
-                signcell.innerText = signcell.innerText === "+" ? "-" : "+";            
-            }
-            
-            rows[i].ondblclick = function() {
-                vscode.postMessage({
-                    command: 'poid',
-                    text: rows[this.rowIndex - 1].cells[1].innerText
-                });
-            }
-        }           
+            map.set(groupElement, [poElement]);
+        }
+        else
+        {
+            map.get(groupElement).push(poElement);               
+        } 
+        return map;
     }
+    else
+    {
+        poElement.grouping.shift();
+        if(!map.has(groupElement))
+        {
+            map.set(groupElement, addToPOTree(poElement,new Map()));
+        }
+        else
+        {
+            map.set(groupElement, addToPOTree(poElement, map.get(groupElement)));               
+        } 
+    }      
+    
+    return map;
+}
+
+function buildPOView(json)
+{
+    let poContainer = document.getElementById('poContainer');
+
+    // Creates tree-like map structure for groupings of pos
+    let poTreeMap = new Map();
+    let nonGroupedPos = [];
+    for (let po of Object(json))
+    {
+        if(typeof po.grouping === 'undefined' || po.grouping.length < 1)
+        {
+            nonGroupedPos.push(po);
+        }
+        else
+        {
+            poTreeMap = addToPOTree(po,poTreeMap);
+        }
+    }
+
+    if(nonGroupedPos.length > 0)
+    {
+        buildTable(nonGroupedPos, poContainer);
+    }
+
+
 }
 
 window.addEventListener('message', event => {
     switch (event.data.command) {
         case 'po':
-            buildTable(event.data.text);
+            buildPOView(event.data.text);
             return;      
     }
 });

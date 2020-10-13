@@ -10,7 +10,7 @@ table {
 
 .mainrowcell {
     padding: 6px;
-    border-top: 1px solid rgb(91, 91, 91);
+    border-top: 1px solid rgb(91, 91, 91);   
 }
 
 .subrowcell {
@@ -22,7 +22,7 @@ table {
     border-right: 1px solid rgb(91, 91, 91);
 }
 
-.mainrow {
+.mainrow, .subrow {
     cursor:pointer;
 }
 

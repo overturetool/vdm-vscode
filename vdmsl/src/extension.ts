@@ -104,56 +104,6 @@ export async function activate(context: ExtensionContext) {
 		context
 	);
 	
-	/*
-	let clientPromise = new Promise<SpecificationLanguageClient>((resolve, reject) => {
-		client.onReady().then(() => {
-			resolve(client);
-		}, (error) => {
-			reject(error);
-		});
-	});
-	
-	let pogController = new POGController.POGCommandsHandler(clientPromise, Uri.file(context.extensionPath))
-	
-	////////////////////////////////////////////// Register commands //////////////////////////////////////////////////
-	const registerCommand = (command: string, callback: (...args: any[]) => any) => {
-		let disposable = vscode.commands.registerCommand(command, callback)
-		context.subscriptions.push(disposable);
-		return disposable;
-	};
-
-	let POGdisp = registerCommand('extension.runPOG', () => {
-		vscode.window.showInformationMessage("Proof Obligation Generation is not supported by the language server")
-	});
-	function registerPOGCommand(){
-		POGdisp.dispose();
-		registerCommand('extension.runPOG', (inputUri:Uri) => pogController.runPOG(inputUri));
-	}
-	*/
-/*
-	registerCommand('extension.runPOGSelection', (inputUri:Uri) => pogController.runPOGSelection(inputUri));
-
-	registerCommand('extension.retrievePOs', () => pogController.retrievePOs());
-
-	
-	// TODO remove this command, also from package.json
-	let comDisp = registerCommand('extension.test', () => commandTest());
-	async function commandTest() : Promise<void> {
-		vscode.window.showInformationMessage("command 1")
-		comDisp.dispose();
-		comDisp = registerCommand('extension.test', () => commandTest2());
-	}
-
-	async function commandTest2() : Promise<void> {
-		vscode.window.showInformationMessage("command 2")
-		comDisp.dispose()
-		comDisp = registerCommand('extension.test', () => commandTest());
-	}
-*/
-	
-	// Register client feature
-	// client.registerFeature(new ProofObligationGenerationFeature(registerPOGCommand));
-
 	// Start the and launch the client
 	let disposable = client.start();
 

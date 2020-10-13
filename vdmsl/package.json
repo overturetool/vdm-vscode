@@ -35,7 +35,7 @@
       },
       {
         "command": "extension.test",
-        "title": "POG: Test command"
+        "title": "POG: Test command (TODO remove this command..)"
       }
     ],
     "menus": {
