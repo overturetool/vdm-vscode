@@ -37,6 +37,10 @@ export namespace POGController {
             let pos = await client.generatePO(uri);
             ProofObligationPanel.currentPanel.displayPOGS(pos);
         }
+
+        pogViewVisible() : boolean {
+            return (ProofObligationPanel.currentPanel ? true : false)
+        }
     }
 
 

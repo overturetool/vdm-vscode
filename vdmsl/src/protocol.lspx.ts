@@ -1,5 +1,5 @@
 import { Location } from "vscode";
-import { RequestType } from "vscode-languageclient";
+import { NotificationType, RequestType } from "vscode-languageclient";
 import * as lspclient from "vscode-languageclient"
 
 
@@ -26,4 +26,18 @@ export namespace GeneratePORequest {
 	export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void, void>('lspx/POG/generate');
 }
 
+export interface POGUpdatedParams {
+	uri : string,
+	successful : boolean
+}
 
+export namespace POGUpdatedNotification {
+	export const type = new NotificationType<POGUpdatedParams>('lspx/POG/updated')
+}
+
+/**
+ * The experimental capabilities that the server can reply
+ */
+export interface POGExperimentalCapabilities {
+	proofObligationProvider ?: boolean
+}
