@@ -5,9 +5,9 @@
   "license": "MIT",
   "version": "0.0.2",
   "repository": {
-		"type": "git",
-		"url": "https://github.com/jonaskrask/vdm-vscode"
-	},
+    "type": "git",
+    "url": "https://github.com/jonaskrask/vdm-vscode"
+  },
   "publisher": "vscode",
   "engines": {
     "vscode": "^1.43.0"
@@ -20,7 +20,7 @@
   ],
   "main": "./out/src/extension",
   "contributes": {
-    "commands":[
+    "commands": [
       {
         "command": "extension.runPOG",
         "title": "POG: Run Proof Obligation Generation (POG)"
@@ -31,45 +31,49 @@
       }
     ],
     "menus": {
-      "commandPalette": [{
-        "command": "extension.runPOG",
-        "when": "editorLangId == vdmsl"
-      }],
-      "explorer/context": [{
-        "when": "resourceLangId == vdmsl || explorerResourceIsFolder",
-        "command": "extension.runPOG",
-        "group": "verification@1"
-      }]
+      "commandPalette": [
+        {
+          "command": "extension.runPOG",
+          "when": "editorLangId == vdmsl"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceLangId == vdmsl || explorerResourceIsFolder",
+          "command": "extension.runPOG",
+          "group": "verification@1"
+        }
+      ]
     },
-    "configuration":{
+    "configuration": {
       "title": "VDM-SL",
       "properties": {
         "vdmsl-lsp.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
           ],
           "format": "json",
-					"default": "verbose",
-					"description": "Traces the communication between VS Code and the language server."
+          "default": "verbose",
+          "description": "Traces the communication between VS Code and the language server."
         },
         "vdmsl-lsp.debugServer": {
-					"type": "boolean",
-					"default": false,
-					"description": "Using debug server. True if running client should not launch server."
+          "type": "boolean",
+          "default": false,
+          "description": "Using debug server. True if running client should not launch server."
         },
         "vdmsl-lsp.lspPort": {
-					"type": "integer",
-					"default": 8000,
-					"description": "Default port for LSP client. Only used for debug server."
+          "type": "integer",
+          "default": 8000,
+          "description": "Default port for LSP client. Only used for debug server."
         },
         "vdmsl-lsp.dapPort": {
-					"type": "integer",
-					"default": 8001,
-					"description": "Default port for DAP client. Only used for debug server."
+          "type": "integer",
+          "default": 8001,
+          "description": "Default port for DAP client. Only used for debug server."
         }
       }
     },

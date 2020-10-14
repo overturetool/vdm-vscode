@@ -47,7 +47,13 @@ export async function activate(context: ExtensionContext) {
 					]
 					
 					// Start the LSP server
-					let server = child_process.spawn(findJavaExecutable('java'), args);
+					let javaPath = findJavaExecutable('java');
+					if (!javaPath){
+						vscode.window.showErrorMessage("Java runtime environment not found!")
+						writeToLog(clientLogFile, "Java runtime environment not found!");
+						return reject("Java runtime environment not found!");
+					}
+					let server = child_process.spawn(javaPath, args);
 	
 					resolve({
 						reader: server.stdout,
