@@ -19,6 +19,12 @@ function buildTable(json, poContainer)
     headerRow.appendChild(th);
     for (let key of headers) {
         let th = document.createElement("th");
+        th.classList.add("headerrow");
+        th.onclick = function()
+        {
+            sortTable(th.cellIndex, table);
+        }
+        //th.onclick = sortTable(th.tabIndex, table);
         th.appendChild(document.createTextNode(key));
         headerRow.appendChild(th);
     }
@@ -48,16 +54,16 @@ function buildTable(json, poContainer)
         }
 
         // Add cell for "collapsible sign" as the first cell in the row
-        let signcell_mainrow = mainrow.insertCell();
-        signcell_mainrow.classList.add("signcell");
-        signcell_mainrow.appendChild(document.createTextNode("+"));
+        let mainrow_signcell = mainrow.insertCell();
+        mainrow_signcell.classList.add("signcell");
+        mainrow_signcell.appendChild(document.createTextNode("+"));
 
         for (key in element) {
             if (key != 'location' && key != 'source')
             {
-                let cell_mainrow = mainrow.insertCell();
-                cell_mainrow.classList.add("mainrowcell"); 
-                cell_mainrow.appendChild(document.createTextNode(element[key]));
+                let mainrow_cell = mainrow.insertCell();
+                mainrow_cell.classList.add("mainrowcell"); 
+                mainrow_cell.appendChild(document.createTextNode(element[key]));
             }
         }
         
@@ -68,8 +74,6 @@ function buildTable(json, poContainer)
 
         //click listener for go to
         subrow.ondblclick = function() {
-            console.log(tbdy.getElementsByTagName('tr'));
-            console.log(subrow.rowIndex);
             vscode.postMessage({
                 command: 'poid',
                 text: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 2].cells[1].innerText
@@ -77,14 +81,14 @@ function buildTable(json, poContainer)
         }
         
         // The first cell is for the "collapsible sign"
-        let signcell_subrow = subrow.insertCell();
-        signcell_subrow.classList.add("signcell");
+        let subrow_signcell = subrow.insertCell();
+        subrow_signcell.classList.add("signcell");
 
         // The main cell spans the rest of the row being the numbers of headers
-        let cell_subrow = subrow.insertCell();
-        cell_subrow.colSpan = headers.length;
-        cell_subrow.classList.add("subrowcell");
-        cell_subrow.appendChild(document.createTextNode(element['source']));
+        let subrow_cell = subrow.insertCell();
+        subrow_cell.colSpan = headers.length;
+        subrow_cell.classList.add("subrowcell");
+        subrow_cell.appendChild(document.createTextNode(element['source']));
     }
 }
 
@@ -121,6 +125,100 @@ function addToPOTree(poElement, map)
     
     return map;
 }
+
+function sortTable(n, table) {
+    let elementsToSort = [];
+    let rows = table.rows;
+    for(l = 1; l < (rows.length - 1); l+=2)
+    {
+        elementsToSort.push({row: rows[l], value: rows[l].getElementsByTagName("TD")[n].innerHTML});
+    }
+
+    if(elementsToSort.length == 0) return;
+
+    let isNum = /^\d+$/.test(elementsToSort[0].value);
+
+    if(isNum)
+    {
+        elementsToSort.sort(function(a,b){
+            return a.value - b.value;
+        });
+    }
+    
+    else
+    {
+        elementsToSort.sort(function(a,b){
+            return a.value.localeCompare(b.value);
+        });
+    }
+
+    for(l = 0; l < elementsToSort.length; l++)
+    {
+        console.log(elementsToSort[l]);
+    }
+
+    let elementsIndex = 0;
+
+    for(i = 1; i < (rows.length - 1); i+=2)
+    {
+        rows[i]. = elementsToSort[elementsIndex].row;
+        elementsIndex++;
+    }
+    // while (switching) {
+    //   // Start by saying: no switching is done:
+    //   switching = false;
+
+    //   /* Loop through all table rows (except the
+    //   first, which contains table headers): */
+    //   for (i = 1; i < (rows.length - 2); i+=2) {
+    //     console.log("i: " + i);
+    //     // Start by saying there should be no switching:
+    //     shouldSwitch = false;
+    //     /* Get the two elements you want to compare,
+    //     one from current row and one from the next: */
+    //     console.log("x row: " + i);
+    //     x = rows[i].getElementsByTagName("TD")[n];
+    //     console.log("x cell " + x.innerHTML);
+
+    //     console.log("y row: " + (i + 2));
+    //     y = rows[i + 2].getElementsByTagName("TD")[n];
+    //     console.log("y cell " + y.innerHTML);
+
+    //     /* Check if the two rows should switch place,
+    //     based on the direction, asc or desc: */
+    //     if (dir == "asc") {
+    //       if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+    //         // If so, mark as a switch and break the loop:
+    //         shouldSwitch = true;
+    //         console.log("asc break");
+    //         break;
+    //       }
+    //     } else if (dir == "desc") {
+    //       if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+    //         // If so, mark as a switch and break the loop:
+    //         shouldSwitch = true;
+    //         console.log("desc break");
+    //         break;
+    //       }
+    //     }
+    //   }
+    //   if (shouldSwitch) {
+    //     /* If a switch has been marked, make the switch
+    //     and mark that a switch has been done: */
+    //     rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
+    //     switching = true;
+    //     // Each time a switch is done, increase this count by 1:
+    //     switchcount ++;
+    //   } else {
+    //     /* If no switching has been done AND the direction is "asc",
+    //     set the direction to "desc" and run the while loop again. */
+    //     if (switchcount == 0 && dir == "asc") {
+    //       dir = "desc";
+    //       switching = true;
+    //     }
+    //   }
+    // }
+  }
 
 function buildPOView(json)
 {

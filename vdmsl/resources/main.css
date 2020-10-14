@@ -22,7 +22,7 @@ table {
     border-right: 1px solid rgb(91, 91, 91);
 }
 
-.mainrow, .subrow {
+.mainrow, .subrow, .headerrow {
     cursor:pointer;
 }
 
