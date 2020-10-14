@@ -27,6 +27,6 @@ To install the extensions by cloning the git repo you must
 * Navigate to the VS Code extensions folder into: ...\Microsoft VS Code\resources\app\extensions.
 * Copy the VDM extension folder (e.g. 'vdmsl') into the VS Code extensions folder 
 * Open the VDM extension folder (e.g. ```cd vdmsl```)
-* Run the followin bash commands in the VDM extension folder: ```npm install & npm run compile```
+* Run the following bash commands in the VDM extension folder: ```npm install & npm run compile```
 
 
