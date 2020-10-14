@@ -22,7 +22,7 @@ inv sch ==
 
   ExpertId = token;
 
-  Qualification = <Elec> | <Mech> | <Bio> | <Chem>;
+										Qualification = <Elec> | <Mech> | <Bio> | <Chem>;
 	   
   Alarm :: alarmtext : seq of char
            quali     : Qualification
