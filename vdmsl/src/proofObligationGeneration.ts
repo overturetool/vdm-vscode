@@ -62,7 +62,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
                 if (params.successful)
                     this._pogController.runPOG(Uri.parse(params.uri))
                 else
-                    return // TODO Add warning to POG view
+                    this._pogController.viewWarning();
             }
         });
     }

@@ -161,63 +161,10 @@ function sortTable(n, table) {
 
     for(i = 1; i < (rows.length - 1); i+=2)
     {
-        rows[i]. = elementsToSort[elementsIndex].row;
+        //rows[i]. = elementsToSort[elementsIndex].row;
         elementsIndex++;
     }
-    // while (switching) {
-    //   // Start by saying: no switching is done:
-    //   switching = false;
-
-    //   /* Loop through all table rows (except the
-    //   first, which contains table headers): */
-    //   for (i = 1; i < (rows.length - 2); i+=2) {
-    //     console.log("i: " + i);
-    //     // Start by saying there should be no switching:
-    //     shouldSwitch = false;
-    //     /* Get the two elements you want to compare,
-    //     one from current row and one from the next: */
-    //     console.log("x row: " + i);
-    //     x = rows[i].getElementsByTagName("TD")[n];
-    //     console.log("x cell " + x.innerHTML);
-
-    //     console.log("y row: " + (i + 2));
-    //     y = rows[i + 2].getElementsByTagName("TD")[n];
-    //     console.log("y cell " + y.innerHTML);
-
-    //     /* Check if the two rows should switch place,
-    //     based on the direction, asc or desc: */
-    //     if (dir == "asc") {
-    //       if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-    //         // If so, mark as a switch and break the loop:
-    //         shouldSwitch = true;
-    //         console.log("asc break");
-    //         break;
-    //       }
-    //     } else if (dir == "desc") {
-    //       if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-    //         // If so, mark as a switch and break the loop:
-    //         shouldSwitch = true;
-    //         console.log("desc break");
-    //         break;
-    //       }
-    //     }
-    //   }
-    //   if (shouldSwitch) {
-    //     /* If a switch has been marked, make the switch
-    //     and mark that a switch has been done: */
-    //     rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
-    //     switching = true;
-    //     // Each time a switch is done, increase this count by 1:
-    //     switchcount ++;
-    //   } else {
-    //     /* If no switching has been done AND the direction is "asc",
-    //     set the direction to "desc" and run the while loop again. */
-    //     if (switchcount == 0 && dir == "asc") {
-    //       dir = "desc";
-    //       switching = true;
-    //     }
-    //   }
-    // }
+    
   }
 
 function buildPOView(json)
@@ -243,14 +190,25 @@ function buildPOView(json)
     {
         buildTable(nonGroupedPos, poContainer);
     }
+}
 
-
+function displayInvalidText(showText)
+{
+    let txt = document.getElementById("poInvalid");
+    if(showText)
+        txt.style.display = 'compact';
+    else
+        txt.style.display = 'none';
 }
 
 window.addEventListener('message', event => {
     switch (event.data.command) {
         case 'po':
             buildPOView(event.data.text);
-            return;      
+            displayInvalidText(false);
+            return;
+        case 'val':
+            displayInvalidText(true);
+            return;
     }
 });

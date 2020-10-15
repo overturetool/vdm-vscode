@@ -41,6 +41,11 @@ export namespace POGController {
         pogViewVisible() : boolean {
             return (ProofObligationPanel.currentPanel ? true : false)
         }
+
+        async viewWarning()
+        {
+            ProofObligationPanel.currentPanel.displayWarning();
+        }
     }
 
 
@@ -117,6 +122,11 @@ export namespace POGController {
             this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
         }
 
+        public displayWarning()
+        {
+            this._panel.webview.postMessage({ command: "val" });
+        }
+
         public displayPOGS(pos: ProofObligation[]) {
             this._pos = pos;
             this._panel.webview.postMessage({ command: "po", text: pos });
@@ -153,8 +163,8 @@ export namespace POGController {
                 <link href="${styleUri}" rel="stylesheet">
             </head>
             <body>
-            
-            <div id="poContainer"></div>
+                <p id="poInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
+                <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
             </body>
             </html>`;
