@@ -3,7 +3,7 @@ import { ExtensionContext, Disposable, Uri } from 'vscode';
 import { StaticFeature } from 'vscode-languageclient';
 import { ClientCapabilities, ServerCapabilities, NotificationHandler } from 'vscode-languageserver-protocol';
 import { POGController } from './POGController';
-import { POGExperimentalCapabilities, POGUpdatedNotification } from './protocol.lspx';
+import { ExperimentalCapabilities, POGUpdatedNotification } from './protocol.lspx';
 import { SpecificationLanguageClient } from './SpecificationLanguageClient';
 
 
@@ -35,7 +35,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         capabilities.experimental = { proofObligationGeneration: true };
     }
 
-    initialize(capabilities: ServerCapabilities<POGExperimentalCapabilities>): void {
+    initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports POG
         if (capabilities?.experimental?.proofObligationProvider) {
             this._pogController = new POGController.POGCommandsHandler(this._client.promise, Uri.file(this._context.extensionPath))
@@ -60,7 +60,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         this._client.onNotification(POGUpdatedNotification.type, (params) => {
             if (this._pogController.pogViewVisible()){
                 if (params.successful)
-                    this._pogController.runPOG(Uri.parse(params.uri))
+                    this._pogController.updatePOG();
                 else
                     this._pogController.viewWarning();
             }
