@@ -118,6 +118,29 @@ export namespace POGController {
 
                             vscode.window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 })
                             return;
+                        case 'sort':
+                            let header = message.text;
+                            let isNum = /^\d+$/.test(header);
+
+                            if(isNum)
+                            {
+                                this._pos.sort(function(a,b){
+                                    let akey = Object.keys(a).find( k => k == header);
+                                    let bkey = Object.keys(b).find( k => k == header);
+                                    let aval = a[akey];
+                                    let bval = b[bkey];
+                                    return aval - bval;
+                                });
+                            }
+                            
+                            // else
+                            // {
+                            //     this._pos.sort(function(a,b){
+                            //         return a.value.localeCompare(b.value);
+                            //     });
+                            // }
+
+                            return;
                     }
                 },
                 null,
@@ -130,12 +153,12 @@ export namespace POGController {
 
         public displayWarning()
         {
-            this._panel.webview.postMessage({ command: "val" });
+            this._panel.webview.postMessage({ command: "warn" });
         }
 
         public displayPOGS(pos: ProofObligation[]) {
             this._pos = pos;
-            this._panel.webview.postMessage({ command: "po", text: pos });
+            this._panel.webview.postMessage({ command: "newPOs", text: pos });
         }
 
         public dispose() {

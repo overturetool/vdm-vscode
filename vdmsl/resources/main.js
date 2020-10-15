@@ -3,7 +3,6 @@ const vscode = acquireVsCodeApi();
 function buildTable(json, poContainer)
 {
     // Access the DOM to get the table construct and add to it.
-    poContainer.innerHTML = "";
     let table = document.createElement('table');
     poContainer.appendChild(table);
 
@@ -20,11 +19,10 @@ function buildTable(json, poContainer)
     for (let key of headers) {
         let th = document.createElement("th");
         th.classList.add("headerrow");
-        th.onclick = function()
-        {
-            sortTable(th.cellIndex, table);
-        }
-        //th.onclick = sortTable(th.tabIndex, table);
+        // th.onclick = function()
+        // {
+        //     sortTable(th.cellIndex, table);
+        // }
         th.appendChild(document.createTextNode(key));
         headerRow.appendChild(th);
     }
@@ -95,9 +93,7 @@ function buildTable(json, poContainer)
 function addToPOTree(poElement, map)
 {
     let groupings = poElement.grouping;
-
     let groupElement = poElement.grouping[0];
-
     if(groupings.length == 1)
     {
         if(!map.has(groupElement))
@@ -127,69 +123,40 @@ function addToPOTree(poElement, map)
 }
 
 function sortTable(n, table) {
-    let elementsToSort = [];
-    let rows = table.rows;
-    for(l = 1; l < (rows.length - 1); l+=2)
-    {
-        elementsToSort.push({row: rows[l], value: rows[l].getElementsByTagName("TD")[n].innerHTML});
-    }
-
-    if(elementsToSort.length == 0) return;
-
-    let isNum = /^\d+$/.test(elementsToSort[0].value);
-
-    if(isNum)
-    {
-        elementsToSort.sort(function(a,b){
-            return a.value - b.value;
-        });
-    }
-    
-    else
-    {
-        elementsToSort.sort(function(a,b){
-            return a.value.localeCompare(b.value);
-        });
-    }
-
-    for(l = 0; l < elementsToSort.length; l++)
-    {
-        console.log(elementsToSort[l]);
-    }
-
-    let elementsIndex = 0;
-
-    for(i = 1; i < (rows.length - 1); i+=2)
-    {
-        //rows[i]. = elementsToSort[elementsIndex].row;
-        elementsIndex++;
-    }
-    
+    vscode.postMessage({
+        command: 'sort',
+        text: table.rows[1].getElementsByTagName("TD")[n].innerText
+    });  
   }
 
 function buildPOView(json)
 {
     let poContainer = document.getElementById('poContainer');
 
-    // Creates tree-like map structure for groupings of pos
-    let poTreeMap = new Map();
-    let nonGroupedPos = [];
-    for (let po of Object(json))
-    {
-        if(typeof po.grouping === 'undefined' || po.grouping.length < 1)
-        {
-            nonGroupedPos.push(po);
-        }
-        else
-        {
-            poTreeMap = addToPOTree(po,poTreeMap);
-        }
-    }
+    //Clear the container
+    poContainer.innerHTML = "";
 
-    if(nonGroupedPos.length > 0)
-    {
-        buildTable(nonGroupedPos, poContainer);
-    }
+    buildTable(json, poContainer);
+
+    // // Creates tree-like map structure for groupings of pos
+    // let poTreeMap = new Map();
+    // let nonGroupedPos = [];
+    // for (let po of Object(json))
+    // {
+    //     if(typeof po.grouping === 'undefined' || po.grouping.length < 1)
+    //     {
+    //         nonGroupedPos.push(po);
+    //     }
+    //     else
+    //     {
+    //         poTreeMap = addToPOTree(po,poTreeMap);
+    //     }
+    // }
+
+    // if(nonGroupedPos.length > 0)
+    // {
+    //     buildTable(nonGroupedPos, poContainer);
+    // }
 }
 
 function displayInvalidText(showText)
@@ -203,11 +170,15 @@ function displayInvalidText(showText)
 
 window.addEventListener('message', event => {
     switch (event.data.command) {
-        case 'po':
+        case 'newPOs':
             buildPOView(event.data.text);
+            console.log(event.data.text.length);
             displayInvalidText(false);
             return;
-        case 'val':
+        case 'rebuildPOview':
+            buildPOView(event.data.text);
+            return;
+        case 'warn':
             displayInvalidText(true);
             return;
     }
