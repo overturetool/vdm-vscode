@@ -120,26 +120,26 @@ export namespace POGController {
                             return;
                         case 'sort':
                             let header = message.text;
-                            let isNum = /^\d+$/.test(header);
+                            let isNum = /^\d+$/.test(this._pos[0][header]);
 
                             if(isNum)
                             {
                                 this._pos.sort(function(a,b){
-                                    let akey = Object.keys(a).find( k => k == header);
-                                    let bkey = Object.keys(b).find( k => k == header);
-                                    let aval = a[akey];
-                                    let bval = b[bkey];
+                                    let aval = a[Object.keys(a).find( k => k == header)];
+                                    let bval = b[Object.keys(b).find( k => k == header)];
                                     return aval - bval;
                                 });
                             }
                             
-                            // else
-                            // {
-                            //     this._pos.sort(function(a,b){
-                            //         return a.value.localeCompare(b.value);
-                            //     });
-                            // }
-
+                            else
+                            {
+                                this._pos.sort(function(a,b){
+                                    let aval = a[Object.keys(a).find( k => k == header)];
+                                    let bval = b[Object.keys(b).find( k => k == header)];
+                                    return aval.localeCompare(bval);
+                                });
+                            }
+                            this._panel.webview.postMessage({ command: "newPOs", text: this._pos });
                             return;
                     }
                 },

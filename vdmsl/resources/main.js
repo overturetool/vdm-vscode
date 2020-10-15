@@ -4,6 +4,7 @@ function buildTable(json, poContainer)
 {
     // Access the DOM to get the table construct and add to it.
     let table = document.createElement('table');
+    table.id = "tble";
     poContainer.appendChild(table);
 
     // Build the headers
@@ -18,11 +19,16 @@ function buildTable(json, poContainer)
     headerRow.appendChild(th);
     for (let key of headers) {
         let th = document.createElement("th");
-        th.classList.add("headerrow");
-        // th.onclick = function()
-        // {
-        //     sortTable(th.cellIndex, table);
-        // }
+
+        if(key == 'id' || key == 'kind')
+        {
+            th.classList.add("clickableheaderrow");
+            th.onclick = function()
+            {
+                sortTable(th.cellIndex, table);
+            }
+        }
+
         th.appendChild(document.createTextNode(key));
         headerRow.appendChild(th);
     }
@@ -125,7 +131,7 @@ function addToPOTree(poElement, map)
 function sortTable(n, table) {
     vscode.postMessage({
         command: 'sort',
-        text: table.rows[1].getElementsByTagName("TD")[n].innerText
+        text: table.rows[0].getElementsByTagName("th")[n].innerHTML
     });  
   }
 
@@ -172,7 +178,6 @@ window.addEventListener('message', event => {
     switch (event.data.command) {
         case 'newPOs':
             buildPOView(event.data.text);
-            console.log(event.data.text.length);
             displayInvalidText(false);
             return;
         case 'rebuildPOview':
