@@ -8,6 +8,7 @@ export namespace POGController {
     export class POGCommandsHandler {
         private _client: Promise<SpecificationLanguageClient>
         private readonly _extensionUri: vscode.Uri;
+        private _lastUri: vscode.Uri;
 
         constructor(client: Promise<SpecificationLanguageClient>, extensionUri: vscode.Uri) {
             this._client = client;
@@ -32,10 +33,15 @@ export namespace POGController {
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
+            this._lastUri = uri;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
             let pos = await client.generatePO(uri);
             ProofObligationPanel.currentPanel.displayPOGS(pos);
+        }
+
+        async updatePOG() {
+            this.runPOG(this._lastUri);
         }
 
         pogViewVisible() : boolean {

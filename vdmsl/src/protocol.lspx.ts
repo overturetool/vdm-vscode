@@ -27,7 +27,7 @@ export namespace GeneratePORequest {
 }
 
 export interface POGUpdatedParams {
-	uri : string,
+	uri ?: string, 			// TODO: Remove once nick removes it from the server
 	successful : boolean
 }
 
@@ -38,6 +38,6 @@ export namespace POGUpdatedNotification {
 /**
  * The experimental capabilities that the server can reply
  */
-export interface POGExperimentalCapabilities {
+export interface ExperimentalCapabilities {
 	proofObligationProvider ?: boolean
 }
