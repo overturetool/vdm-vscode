@@ -8,7 +8,6 @@ import * as dapSupport from "./dapSupport"
 import * as path from 'path';
 import * as fs from 'fs'
 import * as net from 'net';
-import * as vscode from 'vscode';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 
@@ -22,10 +21,8 @@ import {
 	StreamInfo} from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
-var SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
-var VDMJNAME = "vdmj-4.3.0.jar"
-
-let client: SpecificationLanguageClient;
+const SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
+const VDMJNAME = "vdmj-4.3.0.jar"
 
 export async function activate(context: ExtensionContext) {
 	let clientLogFile = path.resolve(context.extensionPath, dialect.vdmDialect+'_lang_client.log');
@@ -64,10 +61,10 @@ export async function activate(context: ExtensionContext) {
 	}
 
 	let serverOptions: ServerOptions
-	let debug = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').experimentalServer;
+	let debug = workspace.getConfiguration(dialect.vdmDialect+'-lsp').experimentalServer;
 	if (debug) {
-		let defaultLspPort = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').lspPort;
-		let defaultDapPort = vscode.workspace.getConfiguration(dialect.vdmDialect+'-lsp').dapPort;
+		let defaultLspPort = workspace.getConfiguration(dialect.vdmDialect+'-lsp').lspPort;
+		let defaultDapPort = workspace.getConfiguration(dialect.vdmDialect+'-lsp').dapPort;
 
 		serverOptions = () => {
 			// Connect to language server via socket
@@ -96,7 +93,7 @@ export async function activate(context: ExtensionContext) {
 	}
 	
 	// Create the language client with the defined client options and the function to create and setup the server.
-	client = new SpecificationLanguageClient(
+	let client = new SpecificationLanguageClient(
 		dialect.vdmDialect+'-lsp', 
 		dialect.vdmDialect.toUpperCase()+' Language Server', 
 		serverOptions, 
@@ -110,9 +107,6 @@ export async function activate(context: ExtensionContext) {
 	// Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
 }
-
-
-
 
 function writeToLog(path:string, msg:string){
 	let logStream = fs.createWriteStream(path, { flags: 'w' });

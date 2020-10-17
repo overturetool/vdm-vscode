@@ -1,4 +1,3 @@
-import { Uri } from "vscode"
 import * as vscode from 'vscode'
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import path = require("path")
@@ -15,19 +14,7 @@ export namespace POGController {
             this._extensionUri = extensionUri;
         }
 
-        // async runPOGSelection(inputUri:Uri)
-        // {
-        //     let client = await this._client;
-
-        //     vscode.window.setStatusBarMessage('Running Proof Obligation Generation on Selection', 2000);
-        //     let selection = vscode.window.activeTextEditor.selection;
-
-        //     ProofObligationPanel.createOrShowPanel(this._extensionUri);
-        //     let pos = await client.generatePO(inputUri);
-        //     ProofObligationPanel.currentPanel.displayPOGS(pos);
-        // }
-
-        async runPOG(inputUri: Uri) {
+        async runPOG(inputUri: vscode.Uri) {
             let client = await this._client;
 
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
@@ -88,7 +75,7 @@ export namespace POGController {
                     enableScripts: true,
 
                     // Restrict the webview to only loading content from our extension's `resources` directory.
-                    localResourceRoots: [Uri.parse(extensionUri + '/' + 'resources')],
+                    localResourceRoots: [vscode.Uri.parse(extensionUri + '/' + 'resources')],
 
                     // Retain state when PO view goes into the background
                     retainContextWhenHidden: true
@@ -112,7 +99,7 @@ export namespace POGController {
                         case 'poid':
                             let json = message.text;
                             let po = this._pos.find(d => d.id.toString() == json);
-                            let path = Uri.parse(po.location.uri.toString()).path;
+                            let path = vscode.Uri.parse(po.location.uri.toString()).path;
 
                             let doc = await vscode.workspace.openTextDocument(path);
 
@@ -176,8 +163,8 @@ export namespace POGController {
         }
 
         private _getHtmlForWebview(webview: vscode.Webview) {
-            const scriptUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.js'));
-            const styleUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.css'));
+            const scriptUri = webview.asWebviewUri(vscode.Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.js'));
+            const styleUri = webview.asWebviewUri(vscode.Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.css'));
 
             // Use a nonce to only allow specific scripts to be run
             const nonce = getNonce();
