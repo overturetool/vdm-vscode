@@ -24,7 +24,7 @@ export namespace POGController {
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
             let pos = await client.generatePO(uri);
-            ProofObligationPanel.currentPanel.displayPOGS(pos);
+            ProofObligationPanel.currentPanel.displayNewPOS(pos);
         }
 
         async updatePOG() {
@@ -54,7 +54,10 @@ export namespace POGController {
 
         private _pos: ProofObligation[];
 
+        private _sorting = new Map<string, boolean>(); // Maps a header to a boolean telling if sorting should be done DESCENDING.
+
         public static createOrShowPanel(extensionUri: vscode.Uri) {
+            // Define which column the po view should be in
             const column = vscode.window.activeTextEditor
                 ? vscode.window.activeTextEditor.viewColumn + 1
                 : 2;
@@ -74,7 +77,7 @@ export namespace POGController {
                     // Enable javascript in the webview
                     enableScripts: true,
 
-                    // Restrict the webview to only loading content from our extension's `resources` directory.
+                    // Restrict the webview to only load content from the extension's `resources` directory.
                     localResourceRoots: [vscode.Uri.parse(extensionUri + '/' + 'resources')],
 
                     // Retain state when PO view goes into the background
@@ -97,36 +100,19 @@ export namespace POGController {
                 async message => {
                     switch (message.command) {
                         case 'poid':
-                            let json = message.text;
-                            let po = this._pos.find(d => d.id.toString() == json);
+                            // Find path of po with id
+                            let po = this._pos.find(d => d.id.toString() == message.text);
                             let path = vscode.Uri.parse(po.location.uri.toString()).path;
 
+                            // Open the specification file with the symbol responsible for the po
                             let doc = await vscode.workspace.openTextDocument(path);
 
+                            // Show the file
                             vscode.window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 })
                             return;
                         case 'sort':
-                            let header = message.text;
-                            let isNum = /^\d+$/.test(this._pos[0][header]);
-
-                            if(isNum)
-                            {
-                                this._pos.sort(function(a,b){
-                                    let aval = a[Object.keys(a).find( k => k == header)];
-                                    let bval = b[Object.keys(b).find( k => k == header)];
-                                    return aval - bval;
-                                });
-                            }
-                            
-                            else
-                            {
-                                this._pos.sort(function(a,b){
-                                    let aval = a[Object.keys(a).find( k => k == header)];
-                                    let bval = b[Object.keys(b).find( k => k == header)];
-                                    return aval.localeCompare(bval);
-                                });
-                            }
-                            this._panel.webview.postMessage({ command: "newPOs", text: this._pos });
+                            // Sort and post pos to javascript                     
+                            this._panel.webview.postMessage({ command: "rebuildPOview", text: this.sortPOs(this._pos, message.text, true) });
                             return;
                     }
                 },
@@ -140,12 +126,50 @@ export namespace POGController {
 
         public displayWarning()
         {
-            this._panel.webview.postMessage({ command: "warn" });
+            // Post display warming message to javascript
+            this._panel.webview.postMessage({ command: "posInvalid" });
         }
 
-        public displayPOGS(pos: ProofObligation[]) {
-            this._pos = pos;
+        public displayNewPOS(pos: ProofObligation[]) {
+            // Sort and post pos to javascript
+            this._pos = this.sortPOs(pos,"id",false);
             this._panel.webview.postMessage({ command: "newPOs", text: pos });
+        }
+
+        private sortPOs(pos, sortingHeader, changeSortingDirection)
+        {
+            // Add header and sorting state to sorting map
+            if(!this._sorting.has(sortingHeader))
+                this._sorting.set(sortingHeader, false)
+            else if(changeSortingDirection)
+                this._sorting.set(sortingHeader, this._sorting.get(sortingHeader) ? false : true);
+
+            // Check if values are numbers - assumes all values found in the column are of the same type
+            let isNum = /^\d+$/.test(pos[0][sortingHeader]);  
+
+            // Do number sort
+            if(isNum)
+            {
+                pos.sort(function(a,b){
+                    let aval = a[Object.keys(a).find( k => k == sortingHeader)];
+                    let bval = b[Object.keys(b).find( k => k == sortingHeader)];
+                    return aval - bval;
+                });
+            }
+            // Do string sort
+            else
+            {
+                pos.sort(function(a,b){
+                    let aval = a[Object.keys(a).find( k => k == sortingHeader)];
+                    let bval = b[Object.keys(b).find( k => k == sortingHeader)];
+                    return aval.localeCompare(bval);
+                });
+            }
+            // Change sorted direction
+            if(changeSortingDirection && this._sorting.get(sortingHeader))
+                pos.reverse();
+
+            return pos;
         }
 
         public dispose() {
@@ -185,6 +209,8 @@ export namespace POGController {
             </body>
             </html>`;
         }
+
+        
     }
 
     function getNonce() {

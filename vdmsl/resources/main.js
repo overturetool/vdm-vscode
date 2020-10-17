@@ -2,20 +2,21 @@ const vscode = acquireVsCodeApi();
 
 function buildTable(json, poContainer)
 {
-    // Access the DOM to get the table construct and add to it.
+    //Access the DOM to get the table construct and add to it.
     let table = document.createElement('table');
     table.id = "tble";
     poContainer.appendChild(table);
 
-    // Build the headers
+    //Build the headers
     let headers = Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1 && k.indexOf("group") == -1);
     let thead = table.createTHead();
     let headerRow = thead.insertRow();
 
-    // Cell for the "collapsible sign" present in the table body
+    //Cell for the "collapsible sign" present in the table body
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(""));
 
+    //Build the header row
     headerRow.appendChild(th);
     for (let key of headers) {
         let th = document.createElement("th");
@@ -33,14 +34,14 @@ function buildTable(json, poContainer)
         headerRow.appendChild(th);
     }
 
-    // Build the rows
+    // Build the data rows
     let tbdy = document.createElement("tbody");
     table.appendChild(tbdy);
     for (let element of json) {
         let mainrow = tbdy.insertRow();
         mainrow.classList.add("mainrow");
 
-        //click listener for expanding sub row
+        // click listener for expanding sub row
         mainrow.onclick = function() {
             let subrow = tbdy.getElementsByTagName('tr')[mainrow.rowIndex];
             subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
@@ -49,7 +50,7 @@ function buildTable(json, poContainer)
             signcell.innerText = signcell.innerText === "+" ? "-" : "+";     
         }
 
-        //click listener for go to
+        // click listener for go to
         mainrow.ondblclick = function() {
             vscode.postMessage({
                 command: 'poid',
@@ -62,6 +63,7 @@ function buildTable(json, poContainer)
         mainrow_signcell.classList.add("signcell");
         mainrow_signcell.appendChild(document.createTextNode("+"));
 
+        // Add data cells to the row
         for (key in element) {
             if (key != 'location' && key != 'source')
             {
@@ -71,12 +73,12 @@ function buildTable(json, poContainer)
             }
         }
         
-        // Add a "subrow" to display the source information
+        // Add a "subrow" to display the po source information
         let subrow = tbdy.insertRow();
         subrow.classList.add("subrow");
         subrow.style.display = "none";
 
-        //click listener for go to
+        // Add click listener to go-to symbol for the po
         subrow.ondblclick = function() {
             vscode.postMessage({
                 command: 'poid',
@@ -96,37 +98,37 @@ function buildTable(json, poContainer)
     }
 }
 
-function addToPOTree(poElement, map)
-{
-    let groupings = poElement.grouping;
-    let groupElement = poElement.grouping[0];
-    if(groupings.length == 1)
-    {
-        if(!map.has(groupElement))
-        {
-            map.set(groupElement, [poElement]);
-        }
-        else
-        {
-            map.get(groupElement).push(poElement);               
-        } 
-        return map;
-    }
-    else
-    {
-        poElement.grouping.shift();
-        if(!map.has(groupElement))
-        {
-            map.set(groupElement, addToPOTree(poElement,new Map()));
-        }
-        else
-        {
-            map.set(groupElement, addToPOTree(poElement, map.get(groupElement)));               
-        } 
-    }      
+// function addToPOTree(poElement, map)
+// {
+//     let groupings = poElement.grouping;
+//     let groupElement = poElement.grouping[0];
+//     if(groupings.length == 1)
+//     {
+//         if(!map.has(groupElement))
+//         {
+//             map.set(groupElement, [poElement]);
+//         }
+//         else
+//         {
+//             map.get(groupElement).push(poElement);               
+//         } 
+//         return map;
+//     }
+//     else
+//     {
+//         poElement.grouping.shift();
+//         if(!map.has(groupElement))
+//         {
+//             map.set(groupElement, addToPOTree(poElement,new Map()));
+//         }
+//         else
+//         {
+//             map.set(groupElement, addToPOTree(poElement, map.get(groupElement)));               
+//         } 
+//     }      
     
-    return map;
-}
+//     return map;
+// }
 
 function sortTable(n, table) {
     vscode.postMessage({
@@ -139,7 +141,7 @@ function buildPOView(json)
 {
     let poContainer = document.getElementById('poContainer');
 
-    //Clear the container
+    // Clear the container
     poContainer.innerHTML = "";
 
     buildTable(json, poContainer);
@@ -183,7 +185,7 @@ window.addEventListener('message', event => {
         case 'rebuildPOview':
             buildPOView(event.data.text);
             return;
-        case 'warn':
+        case 'posInvalid':
             displayInvalidText(true);
             return;
     }
