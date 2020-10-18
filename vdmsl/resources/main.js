@@ -1,10 +1,16 @@
 const vscode = acquireVsCodeApi();
 
+let hideBtn = document.getElementById('hideProvedPosBtn');
+
+let expandBtn = document.getElementById('expandPOsBtn');
+
+let expandPOs = false;
+
 function buildTable(json, poContainer)
 {
     //Access the DOM to get the table construct and add to it.
     let table = document.createElement('table');
-    table.id = "tble";
+    table.id = "poTable";
     poContainer.appendChild(table);
 
     //Build the headers
@@ -36,6 +42,7 @@ function buildTable(json, poContainer)
 
     // Build the data rows
     let tbdy = document.createElement("tbody");
+    tbdy.id = "posbody";
     table.appendChild(tbdy);
     for (let element of json) {
         let mainrow = tbdy.insertRow();
@@ -76,7 +83,8 @@ function buildTable(json, poContainer)
         // Add a "subrow" to display the po source information
         let subrow = tbdy.insertRow();
         subrow.classList.add("subrow");
-        subrow.style.display = "none";
+        if(!expandPOs)
+            subrow.style.display = "none";
 
         // Add click listener to go-to symbol for the po
         subrow.ondblclick = function() {
@@ -135,7 +143,35 @@ function sortTable(n, table) {
         command: 'sort',
         text: table.rows[0].getElementsByTagName("th")[n].innerHTML
     });  
-  }
+}
+
+function handleToggleExpandPOs()
+{
+    expandPOs = expandPOs ? false : true;
+    let tbdyRows = document.getElementById("posbody").getElementsByTagName('tr');
+
+    if(expandPOs)
+    {
+        expandBtn.textContent = "Collapse all pos"
+        for (let row of tbdyRows)
+            if(row.classList.contains("subrow"))
+                row.style.display = "table-row";
+    }
+    else
+    {
+        expandBtn.textContent = "Expand all pos"
+        for (let row of tbdyRows)
+            if(row.classList.contains("subrow"))
+                row.style.display = "none";            
+    }
+}
+
+function handleToggleProvedPOs()
+{
+    vscode.postMessage({
+        command: 'toggleProvedPOs'
+    });  
+}
 
 function buildPOView(json)
 {
@@ -145,6 +181,16 @@ function buildPOView(json)
     poContainer.innerHTML = "";
 
     buildTable(json, poContainer);
+
+    hideBtn.onclick = function() {
+        vscode.postMessage({
+            command: 'toggleProvedPOs'
+        });  
+    }
+    
+    expandBtn.onclick = function() {
+        handleToggleExpandPOs();
+    }
 
     // // Creates tree-like map structure for groupings of pos
     // let poTreeMap = new Map();
@@ -179,14 +225,20 @@ function displayInvalidText(showText)
 window.addEventListener('message', event => {
     switch (event.data.command) {
         case 'newPOs':
-            buildPOView(event.data.text);
+            buildPOView(event.data.pos);
             displayInvalidText(false);
             return;
         case 'rebuildPOview':
-            buildPOView(event.data.text);
+            buildPOView(event.data.pos);
             return;
         case 'posInvalid':
             displayInvalidText(true);
+            return;
+        case 'toggleDisplayProvedPOs':
+            if(event.data.toggle)
+                hideBtn.textContent = "Hide proved pos"
+            else
+                hideBtn.textContent = "Display proved pos"
             return;
     }
 });

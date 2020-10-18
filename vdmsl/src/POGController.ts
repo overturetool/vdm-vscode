@@ -54,7 +54,13 @@ export namespace POGController {
 
         private _pos: ProofObligation[];
 
+        private _showProvedPOs = true;
+
+        private _expandPOs = false;
+
         private _sorting = new Map<string, boolean>(); // Maps a header to a boolean telling if sorting should be done DESCENDING.
+
+        private _currentSortingHeader = "id";
 
         public static createOrShowPanel(extensionUri: vscode.Uri) {
             // Define which column the po view should be in
@@ -111,9 +117,15 @@ export namespace POGController {
                             vscode.window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 })
                             return;
                         case 'sort':
-                            // Sort and post pos to javascript                     
-                            this._panel.webview.postMessage({ command: "rebuildPOview", text: this.sortPOs(this._pos, message.text, true) });
+                            // Sort and post pos to javascript
+                            this._currentSortingHeader = message.text;                     
+                            this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, true) });
                             return;
+                        case 'toggleProvedPOs':
+                            this._showProvedPOs = this._showProvedPOs ? false : true;
+                            this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
+                            this._panel.webview.postMessage({ command: "toggleDisplayProvedPOs", toggle: this._showProvedPOs });
+                            return; 
                     }
                 },
                 null,
@@ -132,8 +144,9 @@ export namespace POGController {
 
         public displayNewPOS(pos: ProofObligation[]) {
             // Sort and post pos to javascript
-            this._pos = this.sortPOs(pos,"id",false);
-            this._panel.webview.postMessage({ command: "newPOs", text: pos });
+            this._pos = pos;
+            this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos],this._currentSortingHeader,false) });
+            this._panel.webview.postMessage({ command: "toggleDisplayProvedPOs", toggle: this._showProvedPOs });
         }
 
         private sortPOs(pos, sortingHeader, changeSortingDirection)
@@ -143,6 +156,14 @@ export namespace POGController {
                 this._sorting.set(sortingHeader, false)
             else if(changeSortingDirection)
                 this._sorting.set(sortingHeader, this._sorting.get(sortingHeader) ? false : true);
+
+
+            // Filter proved pos
+            if(!this._showProvedPOs)
+                pos = pos.filter(function( po ) {
+                    let t = po.proved !== true;
+                    return t;
+                });
 
             // Check if values are numbers - assumes all values found in the column are of the same type
             let isNum = /^\d+$/.test(pos[0][sortingHeader]);  
@@ -166,7 +187,7 @@ export namespace POGController {
                 });
             }
             // Change sorted direction
-            if(changeSortingDirection && this._sorting.get(sortingHeader))
+            if(this._sorting.get(sortingHeader))
                 pos.reverse();
 
             return pos;
@@ -203,6 +224,8 @@ export namespace POGController {
                 <link href="${styleUri}" rel="stylesheet">
             </head>
             <body>
+                <button id="expandPOsBtn">Expand all pos</button>
+                <button id="hideProvedPosBtn"></button>
                 <p id="poInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
                 <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>

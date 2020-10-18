@@ -3,6 +3,11 @@ th, td, p {
     font-size: 1rem;
 }
 
+p {
+    margin-left: 6px;
+    margin-bottom: 6px; 
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -30,4 +35,12 @@ table {
     text-align: right;
     font-size: 0.9rem;
     width: 1%;
+}
+
+.expandPOsBtn, .hideProvedPosBtn {
+    cursor: pointer;  
+    font-size: 1rem;
+    margin-top: 6px;
+    margin-left: 6px;
+    margin-bottom: 6px; 
 }
