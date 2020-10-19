@@ -17,26 +17,33 @@ export namespace POGController {
         }
 
         async runPOG(inputUri: vscode.Uri) {
-            let client = await this._client;
-
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
             this._lastUri = uri;
 
-            ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            let pos = await this.getPOFromServer(uri);
-            ProofObligationPanel.currentPanel.displayNewPOS(pos);
+            try {
+                let pos = await this.getPOFromServer(uri);
+                ProofObligationPanel.createOrShowPanel(this._extensionUri);
+                ProofObligationPanel.currentPanel.displayNewPOS(pos);
+            }
+            catch (error) {
+                vscode.window.showInformationMessage("Proof obligation generation failed. " + error);
+            }
         }
 
         async getPOFromServer(uri: Uri, range?: Range): Promise<ProofObligation[]> {
+            // Only use entries compatible with LSP
             if (range)
                 var lspRange = Range.create(range.start,range.end)
             
+            // Setup message parameters
             let params: GeneratePOParams = {
                 uri: uri.toString(),
                 range: lspRange
             };
+
+            // Send request
             const values = await (await this._client).sendRequest(GeneratePORequest.type, params);
             return values;
         }
