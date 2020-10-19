@@ -54,7 +54,7 @@ export async function activate(context: ExtensionContext) {
 					dapSupport.initDebugConfig(context, dapPort)
 				})
 				.catch((err) => {
-					writeToLog(clientLogFile, "Error in finding free dap port: " + err);
+					writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
 					return reject(err)
 				});	
 		})

@@ -225,7 +225,7 @@ function buildPOView(json)
 
 function displayInvalidText(showText)
 {
-    let txt = document.getElementById("poInvalid");
+    let txt = document.getElementById("posInvalid");
     if(showText)
         txt.style.display = 'compact';
     else

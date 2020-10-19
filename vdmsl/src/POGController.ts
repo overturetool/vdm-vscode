@@ -229,7 +229,7 @@ export namespace POGController {
             <body>
                 <button id="expandPOsBtn">Expand all proof obligations</button>
                 <button id="hideProvedPosBtn">Hide proved proof obligations</button>
-                <p id="poInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
+                <p id="posInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
                 <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
             </body>
