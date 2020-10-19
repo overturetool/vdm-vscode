@@ -60,7 +60,7 @@ function buildTable(json, poContainer)
         // click listener for go to
         mainrow.ondblclick = function() {
             vscode.postMessage({
-                command: 'poid',
+                command: 'goToSymbol',
                 text: tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[1].innerText
             });
         }
@@ -89,7 +89,7 @@ function buildTable(json, poContainer)
         // Add click listener to go-to symbol for the po
         subrow.ondblclick = function() {
             vscode.postMessage({
-                command: 'poid',
+                command: 'goToSymbol',
                 text: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 2].cells[1].innerText
             });
         }
@@ -169,7 +169,7 @@ function handleToggleExpandPOs()
 function handleToggleProvedPOs()
 {
     vscode.postMessage({
-        command: 'toggleProvedPOs'
+        command: 'toggleDisplayProvedPOs'
     });  
 }
 
@@ -180,11 +180,18 @@ function buildPOView(json)
     // Clear the container
     poContainer.innerHTML = "";
 
+    if(json.length < 1)
+    {
+        hideBtn.disabled = "disabled";
+        expandBtn.disabled = "disabled";
+        return;
+    }
+
     buildTable(json, poContainer);
 
     hideBtn.onclick = function() {
         vscode.postMessage({
-            command: 'toggleProvedPOs'
+            command: 'toggleDisplayProvedPOs'
         });  
     }
     
@@ -234,8 +241,8 @@ window.addEventListener('message', event => {
         case 'posInvalid':
             displayInvalidText(true);
             return;
-        case 'toggleDisplayProvedPOs':
-            if(event.data.toggle)
+        case 'displayProvedPOsToggled':
+            if(event.data.toggleState)
                 hideBtn.textContent = "Hide proved pos"
             else
                 hideBtn.textContent = "Display proved pos"

@@ -4,16 +4,17 @@ th, td, p {
 }
 
 p {
-    margin-left: 6px;
-    margin-bottom: 6px; 
+    margin-left: 6px; 
 }
 
 table {
+    margin-top: 10px;
     width: 100%;
     border-collapse: collapse;
 }
 
 .mainrowcell {
+    cursor:pointer;
     padding: 6px;
     border-top: 1px solid rgb(91, 91, 91);   
 }
@@ -27,7 +28,7 @@ table {
     border-right: 1px solid rgb(91, 91, 91);
 }
 
-.mainrow, .subrow, .clickableheaderrow {
+.subrow, .clickableheaderrow {
     cursor:pointer;
 }
 

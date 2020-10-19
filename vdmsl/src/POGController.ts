@@ -105,7 +105,7 @@ export namespace POGController {
             this._panel.webview.onDidReceiveMessage(
                 async message => {
                     switch (message.command) {
-                        case 'poid':
+                        case 'goToSymbol':
                             // Find path of po with id
                             let po = this._pos.find(d => d.id.toString() == message.text);
                             let path = vscode.Uri.parse(po.location.uri.toString()).path;
@@ -121,10 +121,10 @@ export namespace POGController {
                             this._currentSortingHeader = message.text;                     
                             this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, true) });
                             return;
-                        case 'toggleProvedPOs':
+                        case 'toggleDisplayProvedPOs':
                             this._showProvedPOs = this._showProvedPOs ? false : true;
                             this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
-                            this._panel.webview.postMessage({ command: "toggleDisplayProvedPOs", toggle: this._showProvedPOs });
+                            this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });
                             return; 
                     }
                 },
@@ -146,11 +146,14 @@ export namespace POGController {
             // Sort and post pos to javascript
             this._pos = pos;
             this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos],this._currentSortingHeader,false) });
-            this._panel.webview.postMessage({ command: "toggleDisplayProvedPOs", toggle: this._showProvedPOs });
+            this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });            
         }
 
         private sortPOs(pos, sortingHeader, changeSortingDirection)
         {
+            if(pos.length < 1)
+                return pos;
+
             // Add header and sorting state to sorting map
             if(!this._sorting.has(sortingHeader))
                 this._sorting.set(sortingHeader, false)
@@ -225,7 +228,7 @@ export namespace POGController {
             </head>
             <body>
                 <button id="expandPOsBtn">Expand all pos</button>
-                <button id="hideProvedPosBtn"></button>
+                <button id="hideProvedPosBtn">Hide proved pos</button>
                 <p id="poInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
                 <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
