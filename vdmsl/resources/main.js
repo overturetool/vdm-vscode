@@ -152,14 +152,14 @@ function handleToggleExpandPOs()
 
     if(expandPOs)
     {
-        expandBtn.textContent = "Collapse all pos"
+        expandBtn.textContent = "Collapse all proof obligations"
         for (let row of tbdyRows)
             if(row.classList.contains("subrow"))
                 row.style.display = "table-row";
     }
     else
     {
-        expandBtn.textContent = "Expand all pos"
+        expandBtn.textContent = "Expand all proof obligations"
         for (let row of tbdyRows)
             if(row.classList.contains("subrow"))
                 row.style.display = "none";            
@@ -182,10 +182,13 @@ function buildPOView(json)
 
     if(json.length < 1)
     {
-        hideBtn.disabled = "disabled";
-        expandBtn.disabled = "disabled";
+        hideBtn.disabled = true;
+        expandBtn.disabled = true;
         return;
     }
+
+    hideBtn.disabled = false;
+    expandBtn.disabled = false;
 
     buildTable(json, poContainer);
 
@@ -243,9 +246,9 @@ window.addEventListener('message', event => {
             return;
         case 'displayProvedPOsToggled':
             if(event.data.toggleState)
-                hideBtn.textContent = "Hide proved pos"
+                hideBtn.textContent = "Hide proved proof obligations"
             else
-                hideBtn.textContent = "Display proved pos"
+                hideBtn.textContent = "Display proved proof obligations"
             return;
     }
 });

@@ -4,16 +4,13 @@ import * as lspclient from "vscode-languageclient"
 
 
 ////////////////////////////////////////////// POG messsage extensions //////////////////////////////////////////////////
-export interface VDMSourceCode {
-	source: string;
-}
 
 export interface ProofObligation {
 	id: number;
 	name: string[];
 	type: string;
 	location: Location;
-	source: VDMSourceCode;
+	source: string | string[];
 	proved?: boolean;
 }
 

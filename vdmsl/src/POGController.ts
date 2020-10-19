@@ -241,8 +241,8 @@ export namespace POGController {
                 <link href="${styleUri}" rel="stylesheet">
             </head>
             <body>
-                <button id="expandPOsBtn">Expand all pos</button>
-                <button id="hideProvedPosBtn">Hide proved pos</button>
+                <button id="expandPOsBtn">Expand all proof obligations</button>
+                <button id="hideProvedPosBtn">Hide proved proof obligations</button>
                 <p id="poInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
                 <div id="poContainer"></div>
                 <script nonce="${nonce}" src="${scriptUri}"></script>
