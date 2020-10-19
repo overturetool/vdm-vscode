@@ -229,13 +229,13 @@ export namespace POGController {
             const styleUri = webview.asWebviewUri(vscode.Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.css'));
 
             // Use a nonce to only allow specific scripts to be run
-            const nonce = getNonce();
+            const scriptNonce = getNonce();
 
             return `<!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${scriptNonce}';">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 
                 <link href="${styleUri}" rel="stylesheet">
@@ -243,9 +243,10 @@ export namespace POGController {
             <body>
                 <button id="expandPOsBtn">Expand all proof obligations</button>
                 <button id="hideProvedPosBtn">Hide proved proof obligations</button>
-                <p id="posInvalid">Warning: Proof obligations are no longer guarenteed to be valid!</p>
+                <br>
+                <p id="posInvalid"><b>Warning:</b> Proof obligations are no longer guarenteed to be valid!</p>
                 <div id="poContainer"></div>
-                <script nonce="${nonce}" src="${scriptUri}"></script>
+                <script nonce="${scriptNonce}" src="${scriptUri}"></script>
             </body>
             </html>`;
         }

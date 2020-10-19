@@ -227,9 +227,10 @@ function displayInvalidText(showText)
 {
     let txt = document.getElementById("posInvalid");
     if(showText)
-        txt.style.display = 'compact';
+        txt.style.display = 'initial';
     else
         txt.style.display = 'none';
+
 }
 
 window.addEventListener('message', event => {
