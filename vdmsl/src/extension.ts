@@ -10,6 +10,7 @@ import * as fs from 'fs'
 import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
+import * as vscode from 'vscode'
 
 import { 
 	workspace, 
