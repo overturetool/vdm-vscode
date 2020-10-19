@@ -21,16 +21,4 @@ export class SpecificationLanguageClient extends LanguageClient
 			reject(error);
 		});
 	});
-	
-	async generatePO(uri: Uri, range?: Range): Promise<lspx.ProofObligation[]> {
-		if (range)
-			var lspRange = Range.create(range.start,range.end)
-		
-		let params: lspx.GeneratePOParams = {
-			uri: uri.toString(),
-			range: lspRange
-		};
-		const values = await this.sendRequest(lspx.GeneratePORequest.type, params);
-		return values;
-	}
 }
