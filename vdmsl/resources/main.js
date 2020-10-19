@@ -182,10 +182,13 @@ function buildPOView(json)
 
     if(json.length < 1)
     {
-        hideBtn.disabled = "disabled";
-        expandBtn.disabled = "disabled";
+        hideBtn.disabled = true;
+        expandBtn.disabled = true;
         return;
     }
+
+    hideBtn.disabled = false;
+    expandBtn.disabled = false;
 
     buildTable(json, poContainer);
 
