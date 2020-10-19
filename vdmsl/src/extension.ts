@@ -21,7 +21,7 @@ import {
 	StreamInfo} from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
-const SERVERNAME = "lsp-0.0.1-SNAPSHOT.jar"
+const SERVERNAME = "lsp-0.0.1.jar"
 const VDMJNAME = "vdmj-4.3.0.jar"
 
 export async function activate(context: ExtensionContext) {

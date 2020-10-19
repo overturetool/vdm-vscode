@@ -1,7 +1,9 @@
 import * as vscode from 'vscode'
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import path = require("path")
-import { ProofObligation } from "./protocol.lspx"
+import { GeneratePOParams, GeneratePORequest, ProofObligation } from "./protocol.lspx"
+import { Uri } from 'vscode'
+import { Range } from 'vscode-languageclient'
 
 export namespace POGController {
     export class POGCommandsHandler {
@@ -23,8 +25,20 @@ export namespace POGController {
             this._lastUri = uri;
 
             ProofObligationPanel.createOrShowPanel(this._extensionUri);
-            let pos = await client.generatePO(uri);
+            let pos = await this.getPOFromServer(uri);
             ProofObligationPanel.currentPanel.displayNewPOS(pos);
+        }
+
+        async getPOFromServer(uri: Uri, range?: Range): Promise<ProofObligation[]> {
+            if (range)
+                var lspRange = Range.create(range.start,range.end)
+            
+            let params: GeneratePOParams = {
+                uri: uri.toString(),
+                range: lspRange
+            };
+            const values = await (await this._client).sendRequest(GeneratePORequest.type, params);
+            return values;
         }
 
         async updatePOG() {
