@@ -24,24 +24,12 @@
       {
         "command": "extension.runPOG",
         "title": "Run Proof Obligation Generation"
-      },
-      {
-        "command": "extension.runPOGSelection",
-        "title": "POG: Run on selection/line"
-      },
-      {
-        "command": "extension.test",
-        "title": "POG: Test command (TODO remove this command..)"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "extension.runPOG",
-          "when": "editorLangId == vdmsl"
-        },
-        {
-          "command": "extension.runPOGSelection",
           "when": "editorLangId == vdmsl"
         }
       ],
@@ -57,11 +45,6 @@
           "when": "resourceLangId == vdmsl",
           "command": "extension.runPOG",
           "group": "verification@1"
-        },
-        {
-          "when": "resourceLangId == vdmsl && editorHasSelection",
-          "command": "extension.runPOGSelection",
-          "group": "verification@2"
         }
       ]
     },

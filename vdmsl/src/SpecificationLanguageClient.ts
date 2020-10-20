@@ -1,7 +1,6 @@
-import { ExtensionContext, Uri } from "vscode";
-import { LanguageClient, LanguageClientOptions, Range, ServerOptions } from "vscode-languageclient";
+import { ExtensionContext } from "vscode";
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { ProofObligationGenerationFeature } from "./proofObligationGeneration";
-import * as lspx from "./protocol.lspx";
 
 export class SpecificationLanguageClient extends LanguageClient
 {
