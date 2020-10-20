@@ -1,15 +1,10 @@
 import * as vscode from 'vscode'
 import { ExtensionContext, Disposable, Uri } from 'vscode';
 import { StaticFeature } from 'vscode-languageclient';
-import { ClientCapabilities, ServerCapabilities, NotificationHandler } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, ServerCapabilities } from 'vscode-languageserver-protocol';
 import { POGController } from './POGController';
 import { ExperimentalCapabilities, POGUpdatedNotification } from './protocol.lspx';
 import { SpecificationLanguageClient } from './SpecificationLanguageClient';
-
-
-
-
-
 
 /**
  * The feature that handles Proof Obligation Generation
