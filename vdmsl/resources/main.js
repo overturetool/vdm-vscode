@@ -155,14 +155,23 @@ function handleToggleExpandPOs()
         expandBtn.textContent = "Collapse all proof obligations"
         for (let row of tbdyRows)
             if(row.classList.contains("subrow"))
-                row.style.display = "table-row";
+            {
+                let signcell = tbdyRows[row.rowIndex - 2].cells[0];
+                signcell.innerText = "-";
+                row.style.display = "table-row";     
+            }
     }
     else
     {
         expandBtn.textContent = "Expand all proof obligations"
         for (let row of tbdyRows)
             if(row.classList.contains("subrow"))
-                row.style.display = "none";            
+            {
+                let signcell = tbdyRows[row.rowIndex - 2].cells[0];
+                signcell.innerText = "+";
+                row.style.display = "none";  
+            }
+          
     }
 }
 
