@@ -1,4 +1,5 @@
 td, p {
+    cursor: default;
     text-align: left;
     font-size: 1rem;
 }
@@ -33,6 +34,7 @@ table {
 }
 
 th {
+    cursor: default;
     text-align: left;
     font-size: 1.2rem;
 }
@@ -40,7 +42,6 @@ th {
 .subrow, button, .clickableheadercell {
     cursor: pointer;
 }
-
 
 .signcell {
     text-align: right;

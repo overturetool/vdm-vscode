@@ -109,14 +109,14 @@ function buildTable(pos, poContainer)
         let source = po['source'];
         // Format the source with newlines and spaces.
         if (source instanceof Array) {
-            for(i = 0; i < source.length - 1; i++)
+            for(i = 0; i < source.length; i++)
             {
-                let txt = source[i];
+                let txt = "";
                 for(l = 0; l < i; l++)
                     txt += "  ";
+                txt += source[i];
                 subrow_cell.appendChild(document.createTextNode(txt + "\n"));
             } 
-            subrow_cell.appendChild(document.createTextNode(source[source.length]));
         }
         // Add string formatted by server instead.
         else
