@@ -16,7 +16,6 @@ export interface ProofObligation {
 
 export interface GeneratePOParams {
 	uri: string;
-	range?: lspclient.Range;
 }
 
 export namespace GeneratePORequest {

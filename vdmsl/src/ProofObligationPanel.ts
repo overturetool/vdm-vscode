@@ -46,6 +46,10 @@ export class ProofObligationPanel {
         ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
     }
 
+    public static isVisible() : boolean {
+        return (this.currentPanel ? true : false);
+    }
+
     private constructor(extensionUri: Uri, panel: WebviewPanel) {
         this._panel = panel;
         this._extensionUri = extensionUri;
