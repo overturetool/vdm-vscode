@@ -1,0 +1,6 @@
+out
+server
+node_modules
+!*.jar
+*.log
+.VSCodeCounter
