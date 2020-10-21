@@ -46,10 +46,6 @@ export class ProofObligationPanel {
         ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
     }
 
-    public static isVisible(): boolean {
-        return (this.currentPanel ? true : false);
-    }
-
     private constructor(extensionUri: Uri, panel: WebviewPanel) {
         this._panel = panel;
         this._extensionUri = extensionUri;
@@ -92,9 +88,9 @@ export class ProofObligationPanel {
         this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
     }
 
-    public displayWarning() {
+    public static displayWarning() {
         // Post display warming message to javascript
-        this._panel.webview.postMessage({ command: "posInvalid" });
+        this.currentPanel._panel.webview.postMessage({ command: "posInvalid" });
     }
 
     public displayNewPOS(pos: ProofObligation[]) {
@@ -199,8 +195,6 @@ export class ProofObligationPanel {
         </body>
         </html>`;
     }
-
-
 }
 
 function getNonce() {

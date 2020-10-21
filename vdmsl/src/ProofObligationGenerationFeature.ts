@@ -1,7 +1,7 @@
 import { ExtensionContext, Disposable, Uri, window, commands } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
-import { ExperimentalCapabilities, POGUpdatedNotification, ProofObligation, GeneratePOParams, GeneratePORequest } from "./protocol.lspx";
+import { ExperimentalCapabilities, POGUpdatedNotification, GeneratePOParams, GeneratePORequest } from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class ProofObligationGenerationFeature implements StaticFeature {
@@ -46,7 +46,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     private registerPOGUpdatedNotificationHandler(): void {
         this._client.onNotification(POGUpdatedNotification.type, (params) => {
             // Only perform actions if POG View is visible
-            if (ProofObligationPanel.isVisible()) {
+            if (ProofObligationPanel.currentPanel) {
                 // If POG is possible
                 if (params.successful) {
                     // Request new POG
@@ -54,9 +54,8 @@ export class ProofObligationGenerationFeature implements StaticFeature {
                 }
                 else {
                     // Display warning that POs may be outdated
-                    ProofObligationPanel.currentPanel.displayWarning();
+                    ProofObligationPanel.displayWarning();
                 }
-
             }
         });
     }
@@ -76,8 +75,8 @@ export class ProofObligationGenerationFeature implements StaticFeature {
             // Send request
             const pos = await this._client.sendRequest(GeneratePORequest.type, params);
 
-            // Show POG View - but not if it is already visible and showPanel = false
-            if (showPanel || !ProofObligationPanel.isVisible())
+            // Create new or show existing POG View if showPanel
+            if (showPanel)
                 ProofObligationPanel.createOrShowPanel(Uri.file(this._context.extensionPath));
             ProofObligationPanel.currentPanel.displayNewPOS(pos);
         }
