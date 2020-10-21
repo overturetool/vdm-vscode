@@ -14,15 +14,17 @@ export class ProofObligationPanel {
     public static currentPanel: ProofObligationPanel | undefined;
     public static readonly viewType = 'proofObligationPanel';
 
-    public static createOrShowPanel(extensionUri: Uri) {
+    public static createOrShowPanel(extensionUri: Uri, moveFocus: boolean) {
         // Define which column the po view should be in
         const column = window.activeTextEditor
             ? window.activeTextEditor.viewColumn + 1
-            : 2;
+            : ViewColumn.Two;
 
-        // If we already have a panel, show it.
+        // Check if a panel already exists
         if (ProofObligationPanel.currentPanel) {
-            ProofObligationPanel.currentPanel._panel.reveal(column);
+            // Put panel in focus
+            if(moveFocus)
+                ProofObligationPanel.currentPanel._panel.reveal(column);
             return;
         }
 
@@ -30,7 +32,7 @@ export class ProofObligationPanel {
         const panel = window.createWebviewPanel(
             ProofObligationPanel.viewType,
             'Proof Obligations',
-            column || ViewColumn.One,
+            column,
             {
                 // Enable javascript in the webview
                 enableScripts: true,

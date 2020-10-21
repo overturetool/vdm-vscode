@@ -45,7 +45,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
 
     private registerPOGUpdatedNotificationHandler(): void {
         this._client.onNotification(POGUpdatedNotification.type, (params) => {
-            // Only perform actions if POG View is visible
+            // Only perform actions if POG View exists
             if (ProofObligationPanel.currentPanel) {
                 // If POG is possible
                 if (params.successful) {
@@ -60,7 +60,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
-    async runPOG(inputUri: Uri, showPanel: boolean = true) {
+    async runPOG(inputUri: Uri, revealPOGView: boolean = true) {
         window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
         let uri = inputUri || window.activeTextEditor?.document.uri;
@@ -75,9 +75,8 @@ export class ProofObligationGenerationFeature implements StaticFeature {
             // Send request
             const pos = await this._client.sendRequest(GeneratePORequest.type, params);
 
-            // Create new or show existing POG View if showPanel
-            if (showPanel)
-                ProofObligationPanel.createOrShowPanel(Uri.file(this._context.extensionPath));
+            // Create new view or show existing POG View
+            ProofObligationPanel.createOrShowPanel(Uri.file(this._context.extensionPath), revealPOGView);
             ProofObligationPanel.currentPanel.displayNewPOS(pos);
         }
         catch (error) {
