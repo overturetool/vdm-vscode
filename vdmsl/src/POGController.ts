@@ -185,8 +185,7 @@ export namespace POGController {
             // Filter proved pos
             if(!this._showProvedPOs)
                 pos = pos.filter(function( po ) {
-                    let t = po.proved !== true;
-                    return t;
+                    return po.proved !== true;
                 });
 
             // Check if values are numbers - assumes all values found in the column are of the same type
@@ -205,9 +204,11 @@ export namespace POGController {
             else
             {
                 pos.sort(function(a,b){
-                    let aval = a[Object.keys(a).find( k => k == sortingHeader)];
-                    let bval = b[Object.keys(b).find( k => k == sortingHeader)];
-                    return aval.localeCompare(bval);
+                    let aStringVal = a[Object.keys(a).find( k => k == sortingHeader)];
+                    let bStringVal = b[Object.keys(b).find( k => k == sortingHeader)];
+                    let aIdVal = a["id"];
+                    let bIdVal = b["id"];
+                    return aStringVal == bStringVal ? aIdVal > bIdVal ? 1 : aIdVal == bIdVal ? 0 : -1 : aStringVal.localeCompare(bStringVal);
                 });
             }
             // Change sorted direction
