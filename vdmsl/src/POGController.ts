@@ -16,7 +16,7 @@ export namespace POGController {
             this._extensionUri = extensionUri;
         }
 
-        async runPOG(inputUri: vscode.Uri) {
+        async runPOG(inputUri: vscode.Uri, showPanel: boolean = true) {
             vscode.window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
             let uri = inputUri || vscode.window.activeTextEditor?.document.uri;
@@ -24,7 +24,8 @@ export namespace POGController {
 
             try {
                 let pos = await this.getPOFromServer(uri);
-                ProofObligationPanel.createOrShowPanel(this._extensionUri);
+                if (showPanel || !this.pogViewVisible())
+                    ProofObligationPanel.createOrShowPanel(this._extensionUri);
                 ProofObligationPanel.currentPanel.displayNewPOS(pos);
             }
             catch (error) {
@@ -49,7 +50,7 @@ export namespace POGController {
         }
 
         async updatePOG() {
-            this.runPOG(this._lastUri);
+            this.runPOG(this._lastUri, false);
         }
 
         pogViewVisible() : boolean {
