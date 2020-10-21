@@ -6,7 +6,7 @@ let expandBtn = document.getElementById('expandPOsBtn');
 
 let expandPOs = false;
 
-function buildTable(json, poContainer)
+function buildTable(pos, poContainer)
 {
     //Access the DOM to get the table construct and add to it.
     let table = document.createElement('table');
@@ -14,7 +14,7 @@ function buildTable(json, poContainer)
     poContainer.appendChild(table);
 
     //Build the headers
-    let headers = Object.keys(json[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1 && k.indexOf("group") == -1);
+    let headers = Object.keys(pos[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1 && k.indexOf("group") == -1);
     let thead = table.createTHead();
     let headerRow = thead.insertRow();
 
@@ -44,7 +44,7 @@ function buildTable(json, poContainer)
     let tbdy = document.createElement("tbody");
     tbdy.id = "posbody";
     table.appendChild(tbdy);
-    for (let element of json) {
+    for (let po of pos) {
         let mainrow = tbdy.insertRow();
         mainrow.classList.add("mainrow");
 
@@ -70,13 +70,13 @@ function buildTable(json, poContainer)
         mainrow_signcell.classList.add("signcell");
         mainrow_signcell.appendChild(document.createTextNode("+"));
 
-        // Add data cells to the row
-        for (key in element) {
+        // Add data cells to the row with content
+        for (key in po) {
             if (key != 'location' && key != 'source')
             {
                 let mainrow_cell = mainrow.insertCell();
-                mainrow_cell.classList.add("mainrowcell"); 
-                mainrow_cell.appendChild(document.createTextNode(element[key]));
+                mainrow_cell.classList.add("mainrowcell");              
+                mainrow_cell.appendChild(document.createTextNode(po[key]));
             }
         }
         
@@ -102,7 +102,22 @@ function buildTable(json, poContainer)
         let subrow_cell = subrow.insertCell();
         subrow_cell.colSpan = headers.length;
         subrow_cell.classList.add("subrowcell");
-        subrow_cell.appendChild(document.createTextNode(element['source']));
+
+        let source = po['source'];
+        // Format the source with newlines and spaces.
+        if (typeof source == "string[]") {
+            for(i = 0; i < source.length - 1; i++)
+            {
+                let txt = source[i];
+                for(l = 0; l < i; l++)
+                    txt += " ";
+                subrow_cell.appendChild(document.createTextNode(txt + "\n"));
+            } 
+            subrow_cell.appendChild(document.createTextNode(source[source.length]));
+        }
+        // Add string formatted by server instead.
+        else
+            subrow_cell.appendChild(document.createTextNode(source));
     }
 }
 

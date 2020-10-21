@@ -3,6 +3,10 @@ th, td, p {
     font-size: 1rem;
 }
 
+body {
+    white-space: pre;
+}
+
 p {
     margin-top: 10px;
 }
