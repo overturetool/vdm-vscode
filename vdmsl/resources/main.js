@@ -21,21 +21,21 @@ function buildTable(pos, poContainer)
     //Cell for the "collapsible sign" present in the table body
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(""));
-
-    //Build the header row
     headerRow.appendChild(th);
+
+    //Build the rest of the header row
     for (let key of headers) {
         let th = document.createElement("th");
 
-        if(key == 'id' || key == 'kind')
+        // Enable sort on some of the headers and add a sorting sign cell
+        if(key == 'id' || key == 'kind' || key == 'name')
         {
-            th.classList.add("clickableheaderrow");
+            th.classList.add("clickableheadercell");
             th.onclick = function()
             {
-                sortTable(th.cellIndex, table);
-            }
+                sortTable(table.rows[0].getElementsByTagName("th")[th.cellIndex].innerHTML);
+            }  
         }
-
         th.appendChild(document.createTextNode(key));
         headerRow.appendChild(th);
     }
@@ -73,10 +73,13 @@ function buildTable(pos, poContainer)
         // Add data cells to the row with content
         for (key in po) {
             if (key != 'location' && key != 'source')
-            {
+            {               
                 let mainrow_cell = mainrow.insertCell();
-                mainrow_cell.classList.add("mainrowcell");              
-                mainrow_cell.appendChild(document.createTextNode(po[key]));
+                mainrow_cell.classList.add("mainrowcell");
+                let content = po[key];
+                if(key == "name")
+                    content = content.join(".");
+                mainrow_cell.appendChild(document.createTextNode(content));
             }
         }
         
@@ -105,12 +108,12 @@ function buildTable(pos, poContainer)
 
         let source = po['source'];
         // Format the source with newlines and spaces.
-        if (typeof source == "string[]") {
+        if (source instanceof Array) {
             for(i = 0; i < source.length - 1; i++)
             {
                 let txt = source[i];
                 for(l = 0; l < i; l++)
-                    txt += " ";
+                    txt += "  ";
                 subrow_cell.appendChild(document.createTextNode(txt + "\n"));
             } 
             subrow_cell.appendChild(document.createTextNode(source[source.length]));
@@ -153,10 +156,10 @@ function buildTable(pos, poContainer)
 //     return map;
 // }
 
-function sortTable(n, table) {
+function sortTable(header) {
     vscode.postMessage({
         command: 'sort',
-        text: table.rows[0].getElementsByTagName("th")[n].innerHTML
+        text: header
     });  
 }
 

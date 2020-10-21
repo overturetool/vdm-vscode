@@ -208,7 +208,14 @@ export namespace POGController {
                     let bStringVal = b[Object.keys(b).find( k => k == sortingHeader)];
                     let aIdVal = a["id"];
                     let bIdVal = b["id"];
-                    return aStringVal == bStringVal ? aIdVal > bIdVal ? 1 : aIdVal == bIdVal ? 0 : -1 : aStringVal.localeCompare(bStringVal);
+
+                    if(aStringVal instanceof Array)
+                    {
+                        aStringVal = aStringVal.join(".");
+                        bStringVal = bStringVal.join(".");
+                    }
+
+                    return aStringVal == bStringVal ? aIdVal - bIdVal : aStringVal.localeCompare(bStringVal);
                 });
             }
             // Change sorted direction
