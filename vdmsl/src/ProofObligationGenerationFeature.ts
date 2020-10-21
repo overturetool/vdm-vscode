@@ -8,7 +8,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
     private _context: ExtensionContext;
     private _runPOGDisp: Disposable;
-	private _lastUri: Uri;
+    private _lastUri: Uri;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext) {
         this._client = client;
@@ -26,7 +26,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports POG
-        if (capabilities?.experimental?.proofObligationProvider) {        
+        if (capabilities?.experimental?.proofObligationProvider) {
             this.registerPOGCommand();
             this.registerPOGUpdatedNotificationHandler();
         }
@@ -46,28 +46,28 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     private registerPOGUpdatedNotificationHandler(): void {
         this._client.onNotification(POGUpdatedNotification.type, (params) => {
             // Only perform actions if POG View is visible
-            if (ProofObligationPanel.isVisible()){
+            if (ProofObligationPanel.isVisible()) {
                 // If POG is possible
                 if (params.successful) {
                     // Request new POG
                     this.runPOG(this._lastUri, false);
                 }
-                else{
+                else {
                     // Display warning that POs may be outdated
                     ProofObligationPanel.currentPanel.displayWarning();
                 }
-                    
+
             }
         });
-	}
-	
+    }
+
     async runPOG(inputUri: Uri, showPanel: boolean = true) {
         window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
-		let uri = inputUri || window.activeTextEditor?.document.uri;
-		this._lastUri = uri;
+        let uri = inputUri || window.activeTextEditor?.document.uri;
+        this._lastUri = uri;
 
-		try {
+        try {
             // Setup message parameters
             let params: GeneratePOParams = {
                 uri: uri.toString(),
@@ -75,14 +75,14 @@ export class ProofObligationGenerationFeature implements StaticFeature {
 
             // Send request
             const pos = await this._client.sendRequest(GeneratePORequest.type, params);
-            
+
             // Show POG View - but not if it is already visible and showPanel = false
             if (showPanel || !ProofObligationPanel.isVisible())
-			    ProofObligationPanel.createOrShowPanel(Uri.file(this._context.extensionPath));
-			ProofObligationPanel.currentPanel.displayNewPOS(pos);
-		}
-		catch (error) {
-			window.showInformationMessage("Proof obligation generation failed. " + error);
-		}
+                ProofObligationPanel.createOrShowPanel(Uri.file(this._context.extensionPath));
+            ProofObligationPanel.currentPanel.displayNewPOS(pos);
+        }
+        catch (error) {
+            window.showInformationMessage("Proof obligation generation failed. " + error);
+        }
     }
 }

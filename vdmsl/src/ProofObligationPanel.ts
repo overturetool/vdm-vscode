@@ -1,6 +1,6 @@
-import{ Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview } from 'vscode'
+import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview } from 'vscode'
 import path = require("path")
-import {ProofObligation } from "./protocol.lspx"
+import { ProofObligation } from "./protocol.lspx"
 
 export class ProofObligationPanel {
     private readonly _panel: WebviewPanel;
@@ -46,7 +46,7 @@ export class ProofObligationPanel {
         ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
     }
 
-    public static isVisible() : boolean {
+    public static isVisible(): boolean {
         return (this.currentPanel ? true : false);
     }
 
@@ -74,14 +74,14 @@ export class ProofObligationPanel {
                         return;
                     case 'sort':
                         // Sort and post pos to javascript
-                        this._currentSortingHeader = message.text;                     
+                        this._currentSortingHeader = message.text;
                         this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, true) });
                         return;
                     case 'toggleDisplayProvedPOs':
                         this._showProvedPOs = this._showProvedPOs ? false : true;
                         this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
                         this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });
-                        return; 
+                        return;
                 }
             },
             null,
@@ -92,8 +92,7 @@ export class ProofObligationPanel {
         this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
     }
 
-    public displayWarning()
-    {
+    public displayWarning() {
         // Post display warming message to javascript
         this._panel.webview.postMessage({ command: "posInvalid" });
     }
@@ -102,54 +101,50 @@ export class ProofObligationPanel {
         // Sort and post pos to javascript
         this._pos = pos;
 
-        if(!this._currentSortingHeader)
+        if (!this._currentSortingHeader)
             this._currentSortingHeader = Object.keys(pos[0])[0];
 
-        this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos],this._currentSortingHeader,false) });
-        this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });            
+        this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos], this._currentSortingHeader, false) });
+        this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });
     }
 
-    private sortPOs(pos, sortingHeader, changeSortingDirection)
-    {
-        if(pos.length < 1)
+    private sortPOs(pos, sortingHeader, changeSortingDirection) {
+        if (pos.length < 1)
             return pos;
 
         // Add header and sorting state to sorting map
-        if(!this._sorting.has(sortingHeader))
+        if (!this._sorting.has(sortingHeader))
             this._sorting.set(sortingHeader, false)
-        else if(changeSortingDirection)
+        else if (changeSortingDirection)
             this._sorting.set(sortingHeader, this._sorting.get(sortingHeader) ? false : true);
 
 
         // Filter proved pos
-        if(!this._showProvedPOs)
-            pos = pos.filter(function( po ) {
+        if (!this._showProvedPOs)
+            pos = pos.filter(function (po) {
                 return po.proved !== true;
             });
 
         // Check if values are numbers - assumes all values found in the column are of the same type
-        let isNum = /^\d+$/.test(pos[0][sortingHeader]);  
+        let isNum = /^\d+$/.test(pos[0][sortingHeader]);
 
         // Do number sort
-        if(isNum)
-        {
-            pos.sort(function(a,b){
-                let aval = a[Object.keys(a).find( k => k == sortingHeader)];
-                let bval = b[Object.keys(b).find( k => k == sortingHeader)];
+        if (isNum) {
+            pos.sort(function (a, b) {
+                let aval = a[Object.keys(a).find(k => k == sortingHeader)];
+                let bval = b[Object.keys(b).find(k => k == sortingHeader)];
                 return aval - bval;
             });
         }
         // Do string sort
-        else
-        {
-            pos.sort(function(a,b){
-                let aStringVal = a[Object.keys(a).find( k => k == sortingHeader)];
-                let bStringVal = b[Object.keys(b).find( k => k == sortingHeader)];
+        else {
+            pos.sort(function (a, b) {
+                let aStringVal = a[Object.keys(a).find(k => k == sortingHeader)];
+                let bStringVal = b[Object.keys(b).find(k => k == sortingHeader)];
                 let aIdVal = a["id"];
                 let bIdVal = b["id"];
 
-                if(aStringVal instanceof Array)
-                {
+                if (aStringVal instanceof Array) {
                     aStringVal = aStringVal.join(".");
                     bStringVal = bStringVal.join(".");
                 }
@@ -158,7 +153,7 @@ export class ProofObligationPanel {
             });
         }
         // Change sorted direction
-        if(this._sorting.get(sortingHeader))
+        if (this._sorting.get(sortingHeader))
             pos.reverse();
 
         return pos;
@@ -205,7 +200,7 @@ export class ProofObligationPanel {
         </html>`;
     }
 
-    
+
 }
 
 function getNonce() {
