@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "vdmsl"
+		},
+		{
+			"path": "common"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "./node_modules/typescript/lib"
+	}
+}
