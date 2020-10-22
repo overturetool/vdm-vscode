@@ -18,7 +18,7 @@
   "activationEvents": [
     "onLanguage:vdmsl"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/vdmsl/src/extension",
   "contributes": {
     "commands": [
       {
@@ -106,7 +106,7 @@
     ],
     "debuggers": [
       {
-        "type": "vdm",
+        "type": "vdmsl",
         "label": "VDM Debug",
         "runtime": "node",
         "configurationAttributes": {
@@ -141,9 +141,9 @@
         },
         "initialConfigurations": [
           {
-            "type": "vdm",
+            "type": "vdmsl",
             "request": "launch",
-            "name": "Launch VDM Debug",
+            "name": "Launch VDM-SL Debug",
             "stopOnEntry": true,
             "noDebug": false,
             "defaultName": null
@@ -151,12 +151,12 @@
         ],
         "configurationSnippets": [
           {
-            "label": "VDM Debug: Launch",
-            "description": "A new configuration for 'debugging' a VDM project.",
+            "label": "VDM-SL Debug: Launch",
+            "description": "A new configuration for 'debugging' a VDM-SL project.",
             "body": {
-              "type": "vdm",
+              "type": "vdmsl",
               "request": "launch",
-              "name": "Launch VDM Debug",
+              "name": "Launch VDM-SL Debug",
               "stopOnEntry": true,
               "noDebug": false,
               "defaultName": null
@@ -172,6 +172,7 @@
     ]
   },
   "scripts": {
+    "preinstall": "cd ../common && npm install && cd ../vdmsl",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
@@ -185,7 +186,9 @@
     "typescript": "^4.0.2"
   },
   "dependencies": {
+    "compile": "0.0.2",
     "portfinder": "^1.0.26",
+    "run": "^1.4.0",
     "vscode-languageclient": "^6.1.3"
   }
 }
