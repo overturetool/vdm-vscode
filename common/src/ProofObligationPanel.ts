@@ -38,7 +38,7 @@ export class ProofObligationPanel {
                 enableScripts: true,
 
                 // Restrict the webview to only load content from the extension's `resources` directory.
-                localResourceRoots: [Uri.parse(extensionUri + '/' + 'resources')],
+                localResourceRoots: [ProofObligationPanel.resourcesUri(extensionUri)],
 
                 // Retain state when PO view goes into the background
                 retainContextWhenHidden: true
@@ -171,9 +171,14 @@ export class ProofObligationPanel {
         }
     }
 
+    private static resourcesUri(extensionUri: Uri){
+        let res = Uri.joinPath(extensionUri,'..','common','resources');
+        return res;
+    }
+
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.js'));
-        const styleUri = webview.asWebviewUri(Uri.parse(this._extensionUri + path.sep + 'resources' + path.sep + 'main.css'));
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'main.js'));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'main.css'));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();
