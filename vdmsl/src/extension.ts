@@ -11,12 +11,9 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import * as vscode from 'vscode'
-
-import {
-    workspace,
-    ExtensionContext
-} from 'vscode';
-
+import { 
+	workspace, 
+	ExtensionContext} from 'vscode';
 import {
     LanguageClientOptions,
     ServerOptions,
@@ -26,6 +23,7 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 const SERVERNAME = "lsp-0.0.1.jar"
 const VDMJNAME = "vdmj-4.3.0.jar"
+let client : SpecificationLanguageClient;
 
 export async function activate(context: ExtensionContext) {
     let clientLogFile = path.resolve(context.extensionPath, dialect.vdmDialect + '_lang_client.log');
@@ -115,6 +113,13 @@ export async function activate(context: ExtensionContext) {
 
     // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
     context.subscriptions.push(disposable);
+}
+
+export function deactivate(): Thenable<void> | undefined {
+	if (!client) {
+		return undefined;
+	}
+	return client.stop();
 }
 
 function writeToLog(path: string, msg: string) {
