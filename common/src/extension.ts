@@ -29,8 +29,8 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
     let clientLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
     let serverLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
     let serverMainClass = 'lsp.LSPServerStdio'
-	let vdmjPath = path.resolve(context.extensionPath,'..','common','resources', VDMJNAME);
-	let lspServerPath = path.resolve(context.extensionPath,'..','common','resources', SERVERNAME);
+	let vdmjPath = path.resolve(context.extensionPath,'resources', VDMJNAME);
+	let lspServerPath = path.resolve(context.extensionPath, 'resources', SERVERNAME);
 
     function createServer(): Promise<StreamInfo> {
         return new Promise(async (resolve, reject) => {

@@ -173,8 +173,9 @@
   },
   "scripts": {
     "preinstall": "cd ../common && npm install && cd ../vdmsl",
+    "postinstall": "node copyScript.js",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "node copyScript.js && tsc -p ./",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
@@ -187,6 +188,7 @@
   },
   "dependencies": {
     "compile": "0.0.2",
+    "fs-extra": "^9.0.1",
     "portfinder": "^1.0.26",
     "run": "^1.4.0",
     "vscode-languageclient": "^6.1.3"

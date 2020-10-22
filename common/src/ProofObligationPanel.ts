@@ -172,7 +172,7 @@ export class ProofObligationPanel {
     }
 
     private static resourcesUri(extensionUri: Uri){
-        let res = Uri.joinPath(extensionUri,'..','common','resources');
+        let res = Uri.joinPath(extensionUri,'resources');
         return res;
     }
 
