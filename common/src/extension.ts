@@ -58,7 +58,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                         writer: server.stdin
                     });
 
-                    //dapSupport.initDebugConfig(context, dapPort, vdmDialect)
+                    dapSupport.initDebugConfig(context, dapPort, vdmDialect)
                 })
                 .catch((err) => {
                     writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
