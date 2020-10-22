@@ -21,7 +21,10 @@ export class ProofObligationGenerationFeature implements StaticFeature {
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         // Client supports POG
-        capabilities.experimental = { proofObligationGeneration: true };
+        if(!capabilities.experimental)
+            capabilities.experimental = { proofObligationGeneration: true };
+        else
+            Object.assign(capabilities.experimental, {proofObligationGeneration: true});
     }
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {

@@ -1,5 +1,6 @@
 import { ExtensionContext } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
+import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
 
 export class SpecificationLanguageClient extends LanguageClient {
@@ -10,6 +11,7 @@ export class SpecificationLanguageClient extends LanguageClient {
 
         this._context = context
 
-        this.registerFeature(new ProofObligationGenerationFeature(this, this._context));
+        //this.registerFeature(new ProofObligationGenerationFeature(this, this._context));
+        this.registerFeatures([new ProofObligationGenerationFeature(this,this._context), new CombinantorialTestingFeature(this, this._context)]);
     }
 }
