@@ -18,7 +18,7 @@
   "activationEvents": [
     "onLanguage:vdmpp"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/vdmpp/src/extension",
   "contributes": {
     "commands": [
       {
@@ -106,8 +106,8 @@
     ],
     "debuggers": [
       {
-        "type": "vdm",
-        "label": "VDM Debug",
+        "type": "vdmpp",
+        "label": "VDM++ Debug",
         "runtime": "node",
         "configurationAttributes": {
           "launch": {
@@ -141,9 +141,9 @@
         },
         "initialConfigurations": [
           {
-            "type": "vdm",
+            "type": "vdmpp",
             "request": "launch",
-            "name": "Launch VDM Debug",
+            "name": "Launch VDM++ Debug",
             "stopOnEntry": true,
             "noDebug": false,
             "defaultName": null
@@ -151,12 +151,12 @@
         ],
         "configurationSnippets": [
           {
-            "label": "VDM Debug: Launch",
-            "description": "A new configuration for 'debugging' a VDM project.",
+            "label": "VDM++ Debug: Launch",
+            "description": "A new configuration for 'debugging' a VDM++ project.",
             "body": {
-              "type": "vdm",
+              "type": "vdmpp",
               "request": "launch",
-              "name": "Launch VDM Debug",
+              "name": "Launch VDM++ Debug",
               "stopOnEntry": true,
               "noDebug": false,
               "defaultName": null
@@ -172,6 +172,7 @@
     ]
   },
   "scripts": {
+    "preinstall": "cd ../common && npm install && cd ../vdmpp",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
@@ -185,7 +186,9 @@
     "typescript": "^4.0.2"
   },
   "dependencies": {
+    "compile": "0.0.2",
     "portfinder": "^1.0.26",
+    "run": "^1.4.0",
     "vscode-languageclient": "^6.1.3"
   }
 }
