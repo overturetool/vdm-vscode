@@ -24,7 +24,7 @@ export class ProofObligationPanel {
         if (ProofObligationPanel.currentPanel) {
             // Put panel in focus
             if(moveFocus)
-                ProofObligationPanel.currentPanel._panel.reveal(column);
+                ProofObligationPanel.currentPanel._panel.reveal(column, true);
             return;
         }
 
@@ -32,7 +32,10 @@ export class ProofObligationPanel {
         const panel = window.createWebviewPanel(
             ProofObligationPanel.viewType,
             'Proof Obligations',
-            column,
+            {
+                viewColumn: column,
+                preserveFocus: true
+            },
             {
                 // Enable javascript in the webview
                 enableScripts: true,
@@ -42,7 +45,7 @@ export class ProofObligationPanel {
 
                 // Retain state when PO view goes into the background
                 retainContextWhenHidden: true
-            }
+            },
         );
 
         ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
@@ -98,6 +101,12 @@ export class ProofObligationPanel {
     public displayNewPOS(pos: ProofObligation[]) {
         // Sort and post pos to javascript
         this._pos = pos;
+
+        if(pos.length < 1)
+        {
+            this._panel.webview.postMessage({ command: "newPOs", pos: pos });
+            return;
+        }
 
         if (!this._currentSortingHeader)
             this._currentSortingHeader = Object.keys(pos[0])[0];
