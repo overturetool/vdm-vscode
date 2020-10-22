@@ -107,7 +107,7 @@
     "debuggers": [
       {
         "type": "vdmsl",
-        "label": "VDM Debug",
+        "label": "VDM-SL Debug",
         "runtime": "node",
         "configurationAttributes": {
           "launch": {
