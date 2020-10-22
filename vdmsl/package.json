@@ -35,7 +35,7 @@
       ],
       "explorer/context": [
         {
-          "when": "resourceLangId == vdmsl || explorerResourceIsFolder",
+          "when": "resourceLangId == vdmsl",
           "command": "extension.runPOG",
           "group": "verification@1"
         }
