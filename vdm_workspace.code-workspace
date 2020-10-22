@@ -1,9 +1,19 @@
 {
 	"folders": [
 		{
+			"name": "vdmsl",
 			"path": "vdmsl"
 		},
 		{
+			"name": "vdmpp",
+			"path": "vdmpp"
+		},
+		{
+			"name": "vdmrt",
+			"path": "vdmrt"
+		},
+		{
+			"name": "common",
 			"path": "common"
 		}
 	],
