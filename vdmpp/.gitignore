@@ -1,6 +1,7 @@
 out
 server
 node_modules
+dist
 !*.jar
 *.log
 .VSCodeCounter
