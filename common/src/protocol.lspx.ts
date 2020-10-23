@@ -22,7 +22,6 @@ export namespace GeneratePORequest {
 }
 
 export interface POGUpdatedParams {
-    uri?: string, 			// TODO: Remove once nick removes it from the server
     successful: boolean
 }
 
