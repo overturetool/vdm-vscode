@@ -24,9 +24,9 @@ In VS Code under "Extensions -> Views and More actions... -> Install from VSIX" 
 ### Cloning git repo
 To install the extensions by cloning the git repo you must 
 
-* Open the VDM extension folder (e.g. ```cd vdmsl```)
-* Run the following bash commands in the VDM extension folder: ```npm install & npm run compile```. (*This must be performed **before** the following steps*)
-* Navigate to the VS Code extensions folder into: ...\Microsoft VS Code\resources\app\extensions.
-* Copy the VDM extension folder (e.g. 'vdmsl') into the VS Code extensions folder 
+1. Open the VDM extension folder (e.g. ```cd vdmsl```)
+1. Run the following bash commands in the VDM extension folder: ```npm install & npm run compile```. (*It is important that this performed **before** the following steps*)
+1. Navigate to the VS Code extensions folder into: ...\Microsoft VS Code\resources\app\extensions.
+1. Copy the VDM extension folder (e.g. 'vdmsl') into the VS Code extensions folder 
 
 
