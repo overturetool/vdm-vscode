@@ -9,7 +9,7 @@ For further explanation on the features see [here](https://github.com/nickbattle
 
 The syntax highlighting is borrowed from [Futa Hirahoba](https://github.com/korosuke613/vdmpp-vscode-extension)
 
-***Note:** The extension is a working progress and may contain errors*
+***Note:** The extension is a work in progress and may contain errors*
 
 ## Installing the Extension
 There are several different ways to install the extensions, some of these are listed below
@@ -29,4 +29,6 @@ To install the extensions by cloning the git repo you must
 1. Navigate to the VS Code extensions folder into: ...\Microsoft VS Code\resources\app\extensions.
 1. Copy the VDM extension folder (e.g. 'vdmsl') into the VS Code extensions folder 
 
+## Debugging using the extension
+When debugging VDM projects the extensions launches a VDMJ terminal. To execute a specification the VDMJ format must be used, an explanation of this can be found [here](https://github.com/nickbattle/vdmj/tree/master/LSP).
 
