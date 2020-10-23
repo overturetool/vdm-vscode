@@ -1,3 +1,4 @@
+import path = require("path");
 import { ExtensionContext, Disposable, Uri, window, commands } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
@@ -67,12 +68,13 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
         let uri = inputUri || window.activeTextEditor?.document.uri;
+        let dirUri = Uri.file(uri.fsPath.substring(0,uri.fsPath.lastIndexOf(path.sep)));
         this._lastUri = uri;
 
         try {
             // Setup message parameters
             let params: GeneratePOParams = {
-                uri: uri.toString(),
+                uri: dirUri.toString(),
             };
 
             // Send request
