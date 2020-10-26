@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "vdm",
+            "type": "vdmpp",
             "request": "launch",
             "name": "Launch VDM Debug",
             "stopOnEntry": true,
