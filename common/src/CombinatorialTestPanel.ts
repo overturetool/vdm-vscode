@@ -1,5 +1,7 @@
-import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview } from 'vscode'
+import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Location } from 'vscode'
 import path = require("path")
+
+import { CTSymbol, VerdictKind } from "./protocol.lspx"
 
 export class CombinatorialTestPanel {
     private readonly _panel: WebviewPanel;
@@ -70,8 +72,46 @@ export class CombinatorialTestPanel {
         this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
     }
 
-    public displayCTs() {    
-        this._panel.webview.postMessage({ command: "newCTs"});
+    public displayCTs() {
+        
+        let ctSymbols = [];
+        let iter = 0;
+        let maxGenerate = 10;
+        while(iter < maxGenerate)
+        {
+            let traceIter = 0;
+            let traces = [];
+            while(traceIter < maxGenerate)
+            {
+                let testResIter = 0;
+                let testResults = [];
+                while(testResIter < maxGenerate)
+                {
+                    let testCaseIter = 0;
+                    let testCases = [];
+                    while(testCaseIter < maxGenerate)
+                    {
+                        let testCase = {case: "Test case " + testCaseIter, result: "TEST!"};
+                        testCases.push(testCase);
+                        testCaseIter++;
+                    }
+
+                    let testResult = {id: testResIter, verdict: VerdictKind.Passed, cases: testCases};
+                    testResults.push(testResult);
+                    testResIter++;
+                }
+
+                let trace = {name: "trace " + traceIter, id: traceIter, location: null, verdict: VerdictKind.Passed, testResults: testResults};
+                traces.push(trace);
+                traceIter++;
+            }
+
+            let ctSymbol = {name: "CTSymbol " + iter, traces: traces};
+            ctSymbols.push(ctSymbol)
+            iter++;
+        }
+
+        this._panel.webview.postMessage({ command: "showCTResolved", cts: ctSymbols});
     }
 
     public dispose() {
@@ -111,72 +151,6 @@ export class CombinatorialTestPanel {
         </head>
         <body>
             <div id="ctContainer"></div>
-
-            <OL class="outerOL">
-                <LI> <details>
-                <summary>CT SYMBOL 1</summary>
-                    <UL>
-                        <details>
-                            <summary>TRACE 1</summary>                     
-                            <OL>
-                                <details>
-                                    <summary>Test 1</summary>
-                                    <p>Stuff</p>
-                                </details>
-                                <details>
-                                    <summary>Test 2</summary>
-                                    <p>Stuff</p>
-                                </details>
-                            </OL>
-                            </details>
-                        <details>
-                            <summary>TRACE 2</summary>                     
-                            <OL>
-                                <details>
-                                    <summary>Test 1</summary>
-                                    <p>Stuff</p>
-                                </details>
-                                <details>
-                                    <summary>Test 2</summary>
-                                    <p>Stuff</p>
-                                </details>
-                        </OL>
-                        </details>
-                    </UL>
-                </details>
-
-                <LI> <details>
-                <summary>CT SYMBOL 2</summary>
-                    <UL>
-                        <details>
-                            <summary>TRACE 1</summary>                     
-                            <OL>
-                                <details>
-                                    <summary>Test 1</summary>
-                                    <p>Stuff</p>
-                                </details>
-                                <details>
-                                    <summary>Test 2</summary>
-                                    <p>Stuff</p>
-                                </details>
-                            </OL>
-                            </details>
-                        <details>
-                            <summary>TRACE 1</summary>                     
-                            <OL>
-                                <details>
-                                    <summary>Test 1</summary>
-                                    <p>Stuff</p>
-                                </details>
-                                <details>
-                                    <summary>Test 2</summary>
-                                    <p>Stuff</p>
-                                </details>
-                        </OL>
-                        </details>
-                    </UL>
-                </details>
-            </OL>         
             <script nonce="${scriptNonce}" src="${scriptUri}"></script>
         </body>
         </html>`;
