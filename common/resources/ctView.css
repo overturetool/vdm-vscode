@@ -1,0 +1,10 @@
+ul, ol{
+    list-style-type: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem;
+}
+
+.outerOL{
+    padding: 0;
+}

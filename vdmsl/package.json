@@ -24,12 +24,20 @@
       {
         "command": "extension.runPOG",
         "title": "Run Proof Obligation Generation"
+      },
+      {
+        "command": "extension.runCT",
+        "title": "Run Combinatorial Tests"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "extension.runPOG",
+          "when": "editorLangId == vdmsl"
+        },
+        {
+          "command": "extension.runCT",
           "when": "editorLangId == vdmsl"
         }
       ],
@@ -177,7 +185,7 @@
     "vscode:prepublish": "npm run compile && webpack --mode production",
     "compile": "node copyScript.js && tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "webpack": "webpack --mode development",
+    "webpack": "npm run compile && webpack --mode development",
     "webpack-dev": "webpack --mode development --watch",
     "test-compile": "tsc -p ./"
   },

@@ -8,22 +8,22 @@ let expandPOs = false;
 
 function buildTable(pos, poContainer)
 {
-    //Access the DOM to get the table construct and add to it.
+    //  Access the DOM to get the table construct and add to it.
     let table = document.createElement('table');
     table.id = "poTable";
     poContainer.appendChild(table);
 
-    //Build the headers
+    //  Build the headers
     let headers = Object.keys(pos[0]).filter(k => k.indexOf("source") == -1 && k.indexOf("location") == -1 && k.indexOf("group") == -1);
     let thead = table.createTHead();
     let headerRow = thead.insertRow();
 
-    //Cell for the "collapsible sign" present in the table body
+    //  Cell for the "collapsible sign" present in the table body
     let th = document.createElement("th");
     th.appendChild(document.createTextNode(""));
     headerRow.appendChild(th);
 
-    //Build the rest of the header row
+    //  Add the rest of the header row cells
     for (let key of headers) {
         let th = document.createElement("th");
 
@@ -48,7 +48,7 @@ function buildTable(pos, poContainer)
         let mainrow = tbdy.insertRow();
         mainrow.classList.add("mainrow");
 
-        // click listener for expanding sub row
+        // Click listener for expanding sub row
         mainrow.onclick = function() {
             let subrow = tbdy.getElementsByTagName('tr')[mainrow.rowIndex];
             subrow.style.display = subrow.style.display === "none" ? "table-row" : "none"; 
@@ -57,7 +57,7 @@ function buildTable(pos, poContainer)
             signcell.innerText = signcell.innerText === "+" ? "-" : "+";     
         }
 
-        // click listener for go to
+        // Click listener for go to
         mainrow.ondblclick = function() {
             vscode.postMessage({
                 command: 'goToSymbol',
@@ -123,38 +123,6 @@ function buildTable(pos, poContainer)
             subrow_cell.appendChild(document.createTextNode(source));
     }
 }
-
-// function addToPOTree(poElement, map)
-// {
-//     let groupings = poElement.grouping;
-//     let groupElement = poElement.grouping[0];
-//     if(groupings.length == 1)
-//     {
-//         if(!map.has(groupElement))
-//         {
-//             map.set(groupElement, [poElement]);
-//         }
-//         else
-//         {
-//             map.get(groupElement).push(poElement);               
-//         } 
-//         return map;
-//     }
-//     else
-//     {
-//         poElement.grouping.shift();
-//         if(!map.has(groupElement))
-//         {
-//             map.set(groupElement, addToPOTree(poElement,new Map()));
-//         }
-//         else
-//         {
-//             map.set(groupElement, addToPOTree(poElement, map.get(groupElement)));               
-//         } 
-//     }      
-    
-//     return map;
-// }
 
 function sortTable(header) {
     vscode.postMessage({
@@ -228,26 +196,6 @@ function buildPOView(json)
     expandBtn.onclick = function() {
         handleToggleExpandPOs();
     }
-
-    // // Creates tree-like map structure for groupings of pos
-    // let poTreeMap = new Map();
-    // let nonGroupedPos = [];
-    // for (let po of Object(json))
-    // {
-    //     if(typeof po.grouping === 'undefined' || po.grouping.length < 1)
-    //     {
-    //         nonGroupedPos.push(po);
-    //     }
-    //     else
-    //     {
-    //         poTreeMap = addToPOTree(po,poTreeMap);
-    //     }
-    // }
-
-    // if(nonGroupedPos.length > 0)
-    // {
-    //     buildTable(nonGroupedPos, poContainer);
-    // }
 }
 
 function displayInvalidText(showText)

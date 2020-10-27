@@ -186,8 +186,8 @@ export class ProofObligationPanel {
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'main.js'));
-        const styleUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'main.css'));
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.js'));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.css'));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();

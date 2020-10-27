@@ -64,7 +64,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
-    async runPOG(inputUri: Uri, revealPOGView: boolean = true) {
+    private async runPOG(inputUri: Uri, revealPOGView: boolean = true) {
         window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
 
         let uri = inputUri || window.activeTextEditor?.document.uri;
