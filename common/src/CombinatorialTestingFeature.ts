@@ -51,7 +51,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         try {
             // Create new view or show existing POG View
             CombinatorialTestPanel.createOrShowPanel(Uri.file(this._context.extensionPath), revealCTView);
-            CombinatorialTestPanel.currentPanel.displayCTs();
+            CombinatorialTestPanel.currentPanel.displayTraces();
         }
         catch (error) {
             window.showInformationMessage("Proof obligation generation failed. " + error);

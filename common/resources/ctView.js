@@ -39,26 +39,30 @@ function buildTable(cts, table)
     }
 }
 
-function buildCTOutline(cts, resolve)
+function buildCTOutline(cts)
 {
     // Create the ct symbols list and add them to the view container
     let ctSymbolsList = document.createElement('ol');
     ctSymbolsList.classList.add("outerOL");
+
     let ctContainer = document.getElementById('ctContainer');
     ctContainer.appendChild(ctSymbolsList);
 
     // Populate the ct symbols list
     for(i = 0; i < cts.length; i++)
     {
+        let ctSymbol = cts[i];
         // Add a list item to ctSymbolsList list
         let ctSymbolsListItem = document.createElement('li');
         ctSymbolsList.appendChild(ctSymbolsListItem);
 
         // Add a details element to the list item - this element is the CTSymbol and contains the traces
         let ctSymbolDetail = document.createElement('details');
+        ctSymbolDetail.id = ctSymbol.name;
         ctSymbolsListItem.appendChild(ctSymbolDetail);
+
         let ctSymbolDetailSummary = document.createElement("SUMMARY");
-        ctSymbolDetailSummary.textContent = cts[i].name;
+        ctSymbolDetailSummary.textContent = ctSymbol.name;
         ctSymbolDetail.appendChild(ctSymbolDetailSummary);
 
         // Add a list to the details element 
@@ -66,38 +70,43 @@ function buildCTOutline(cts, resolve)
         ctSymbolDetail.appendChild(tracesList);
 
         // Add trace items to the list in the details element
-        let traces = cts[i].traces;
+        let traces = ctSymbol.traces;
         for(l = 0; l < traces.length; l++)
         {
+            let trace = traces[l];
+
             let tracesListItem = document.createElement('li');
             tracesList.appendChild(tracesListItem);
 
             // Add a details element to the list item - this element is the trace and contains test cases for the trace
             let tracesDetail = document.createElement('details');
-            tracesDetail.id = traces[l].id;
+            tracesDetail.id = trace.id;
             tracesListItem.appendChild(tracesDetail);
+
             let tracesDetailSummary = document.createElement("SUMMARY");
-            tracesDetailSummary.textContent = traces[l].name;
+            tracesDetailSummary.textContent = trace.name;
             tracesDetail.appendChild(tracesDetailSummary);
             
             // Function for handling user expanding the trace detail.
-            tracesDetail.onclick = function()
+            tracesDetail.ontoggle = function()
             {
-                if(tracesDetail.open)
+                if(!tracesDetail.open || tracesWithGeneratedTests.includes(tracesDetail.id))
                     return;
 
                 // Send the trace id for which tests are to be generated.
-                if(!tracesWithGeneratedTests.includes(tracesDetail.id))
-                {
-                    // Send generate traces message
-                    vscode.postMessage({
-                        command: 'generateTests',
-                        text: tracesDetail.id
-                    });
-                }
+                generateTraces(tracesDetail.id);
             }  
         }
     }
+}
+
+function generateTraces(traceId)
+{
+     // Send generate traces message
+     vscode.postMessage({
+        command: 'generateTests',
+        text: traceId
+    });
 }
 
 function updateTestGenerationProgess(newPercentage, traceId) {
@@ -108,33 +117,45 @@ function updateTestGenerationProgess(newPercentage, traceId) {
 
 function addTestsToTrace(traceId, tests)
 {
-    // A state is needed for which traces have their tests generated.
+    // A state is needed to track which traces have their tests generated.
     tracesWithGeneratedTests.push(traceId);
 
     // Add a list to the details element
-    let tracesDetail = document.getElementById(traceId); 
-    let testResultList = document.createElement('ul');
-    tracesDetail.appendChild(testResultList);
+    let tracesDetail = document.getElementById(traceId);
+    let testResultList = tracesDetail.getElementsByTagName("ul")[0];
+    if(!testResultList)
+    {
+        testResultList = document.createElement('ul');
+        tracesDetail.appendChild(testResultList);
+    }
+    else
+        testResultList.innerHTML = "";
 
     // Add test result items to the list in the details element if test cases are resolved
     for(k = 0; k < tests.length; k++)
     {
+        let test = tests[k];
         let testResultListItem = document.createElement('li');
         testResultList.appendChild(testResultListItem);
+
         // Add a details element to the list item - this element is the test result and contains the test case
         let testResultDetail = document.createElement('details');
         testResultListItem.appendChild(testResultDetail);
+        testResultDetail.id = test.id;
+
         let testResultDetailSummary = document.createElement("SUMMARY");
-        testResultDetailSummary.textContent = tests[k].id;
         testResultDetail.appendChild(testResultDetailSummary);
+        testResultDetailSummary.textContent = "test " + test.id;
 
         // Add the test cases to the details element as a table
-        let container = document.createElement('div');
         let caseTable = document.createElement('table');
-        container.appendChild(caseTable);
-        testResultDetail.appendChild(container);
-        buildTable(tests[k].cases, caseTable);
+        testResultDetail.appendChild(caseTable);
+        buildTable(test.cases, caseTable);
     }
+
+    // Workaround for screen not updating - this forces a redraw of the viewport...
+    document.getElementById('ctContainer').style.display = 'none';
+    document.getElementById('ctContainer').style.display = 'block';
 }
 
 window.addEventListener('message', event => {
@@ -142,10 +163,8 @@ window.addEventListener('message', event => {
         case 'showCTOutline':
             buildCTOutline(event.data.cts);
             return;
-        case 'testGenerationProgressUpdate':
-            updateTestGenerationProgess(event.data.generationProgress, event.data.traceId)
+        case 'testsGenerated':
+            addTestsToTrace(event.data.traceId, event.data.tests);
             return;
-        case 'testGenerated':
-            addTestsToTrace(event.data.traceId, event.data.tests)
     }
 });

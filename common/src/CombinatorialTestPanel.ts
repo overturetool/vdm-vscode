@@ -62,30 +62,30 @@ export class CombinatorialTestPanel {
                     case 'generateTests':
                         window.withProgress({
                             location: ProgressLocation.Notification,
-                            title: "I am long running!",
+                            title: "Test generation progress",
                             cancellable: true
                         }, (progress, token) => {
                             token.onCancellationRequested(() => {
-                                console.log("User canceled the long running operation");
+                                console.log("User canceled the test generation");
                             });
                 
-                            progress.report({ increment: 0 });
+                            progress.report({ increment: 0 , message: "0%"});
                 
                             setTimeout(() => {
-                                progress.report({ increment: 10, message: "I am long running! - still going..." });
+                                progress.report({ increment: 10, message: "10%"});
                             }, 1000);
                 
                             setTimeout(() => {
-                                progress.report({ increment: 40, message: "I am long running! - still going even more..." });
+                                progress.report({ increment: 40, message: "40%"});
                             }, 1500);
                 
                             setTimeout(() => {
-                                progress.report({ increment: 50, message: "I am long running! - almost there..." });
+                                progress.report({ increment: 70, message: "70%"});
                             }, 2000);
                 
                             const p = new Promise(resolve => {
                                 setTimeout(() => {
-                                    this._panel.webview.postMessage({command: "testGenerated", traceId: message.text, tests: this.generateTests()});
+                                    this._panel.webview.postMessage({command: "testsGenerated", traceId: message.text, tests: this.generateTests()});
                                     resolve();
                                 }, 2500);
                             });
@@ -129,7 +129,7 @@ export class CombinatorialTestPanel {
         return testResults;
     }
 
-    public displayCTs() {
+    public displayTraces() {
         
         let ctSymbols = [];
         let iter = 0;
@@ -147,7 +147,7 @@ export class CombinatorialTestPanel {
                 traceIter++;
             }
 
-            let ctSymbol = {name: "CTSymbol " + iter, traces: traces};
+            let ctSymbol = {name: "CTSymbol " + iter, traces: traces, id: iter};
             ctSymbols.push(ctSymbol)
             iter++;
         }
