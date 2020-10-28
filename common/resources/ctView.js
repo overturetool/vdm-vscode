@@ -2,6 +2,10 @@ const vscode = acquireVsCodeApi();
 
 let traces = [];
 
+let tracesWithGeneratedTests = [];
+
+let tracesWithExecutedTests = [];
+
 function buildTable(cts, table)
 {
     table.id = "ctTable";
@@ -70,51 +74,78 @@ function buildCTOutline(cts, resolve)
 
             // Add a details element to the list item - this element is the trace and contains test cases for the trace
             let tracesDetail = document.createElement('details');
+            tracesDetail.id = traces[l].id;
             tracesListItem.appendChild(tracesDetail);
             let tracesDetailSummary = document.createElement("SUMMARY");
             tracesDetailSummary.textContent = traces[l].name;
             tracesDetail.appendChild(tracesDetailSummary);
-
-            // Add a list to the details element 
-            let testResultList = document.createElement('ul');
-            tracesDetail.appendChild(testResultList);
-
-            // Add test result items to the list in the details element if test cases are resolved
-            if(resolve)
-            {
-                let testResults = traces[l].testResults;
-                for(k = 0; k < testResults.length; k++)
-                {
-                    console.log(testResults[k]);
-                    let testResultListItem = document.createElement('li');
-                    testResultList.appendChild(testResultListItem);
-                    // Add a details element to the list item - this element is the test result and contains the test case
-                    let testResultDetail = document.createElement('details');
-                    testResultListItem.appendChild(testResultDetail);
-                    let testResultDetailSummary = document.createElement("SUMMARY");
-                    testResultDetailSummary.textContent = testResults[k].id;
-                    testResultDetail.appendChild(testResultDetailSummary);
-
-                    // Add the test cases to the details element as a table
-                    let container = document.createElement('div');
-                    let caseTable = document.createElement('table');
-                    container.appendChild(caseTable);
-                    testResultDetail.appendChild(container);
-                    buildTable(testResults[k].cases, caseTable);
-                }
-            }
             
+            // Function for handling user expanding the trace detail.
+            tracesDetail.onclick = function()
+            {
+                if(tracesDetail.open)
+                    return;
+
+                // Send the trace id for which tests are to be generated.
+                if(!tracesWithGeneratedTests.includes(tracesDetail.id))
+                {
+                    // Send generate traces message
+                    vscode.postMessage({
+                        command: 'generateTests',
+                        text: tracesDetail.id
+                    });
+                }
+            }  
         }
+    }
+}
+
+function updateTestGenerationProgess(newPercentage, traceId) {
+    let testGenerationProgress = document.getElementById(traceId).getElementsByTagName('progress')[0];
+    if(testGenerationProgress && testGenerationProgress.style.display != 'none' && newPercentage <= testGenerationProgress.max)
+        testGenerationProgress.value = newPercentage;  
+} 
+
+function addTestsToTrace(traceId, tests)
+{
+    // A state is needed for which traces have their tests generated.
+    tracesWithGeneratedTests.push(traceId);
+
+    // Add a list to the details element
+    let tracesDetail = document.getElementById(traceId); 
+    let testResultList = document.createElement('ul');
+    tracesDetail.appendChild(testResultList);
+
+    // Add test result items to the list in the details element if test cases are resolved
+    for(k = 0; k < tests.length; k++)
+    {
+        let testResultListItem = document.createElement('li');
+        testResultList.appendChild(testResultListItem);
+        // Add a details element to the list item - this element is the test result and contains the test case
+        let testResultDetail = document.createElement('details');
+        testResultListItem.appendChild(testResultDetail);
+        let testResultDetailSummary = document.createElement("SUMMARY");
+        testResultDetailSummary.textContent = tests[k].id;
+        testResultDetail.appendChild(testResultDetailSummary);
+
+        // Add the test cases to the details element as a table
+        let container = document.createElement('div');
+        let caseTable = document.createElement('table');
+        container.appendChild(caseTable);
+        testResultDetail.appendChild(container);
+        buildTable(tests[k].cases, caseTable);
     }
 }
 
 window.addEventListener('message', event => {
     switch (event.data.command) {
         case 'showCTOutline':
-            buildCTOutline(event.data.cts, false);
+            buildCTOutline(event.data.cts);
             return;
-        case 'showCTResolved':
-            buildCTOutline(event.data.cts, true);
+        case 'testGenerationProgressUpdate':
+            updateTestGenerationProgess(event.data.generationProgress, event.data.traceId)
             return;
+        case 'testGenerated':
+            addTestsToTrace(event.data.traceId, event.data.tests)
     }
 });

@@ -34,6 +34,10 @@ details {
     display: inline-block;
 }
 
+label {
+    font-size: 0.9rem;
+}
+
 summary{
     outline: none;
-  }
+}

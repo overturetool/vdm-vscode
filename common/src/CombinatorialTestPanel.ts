@@ -1,4 +1,4 @@
-import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Location } from 'vscode'
+import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Location, ProgressLocation } from 'vscode'
 import path = require("path")
 
 import { CTSymbol, VerdictKind } from "./protocol.lspx"
@@ -59,8 +59,39 @@ export class CombinatorialTestPanel {
         this._panel.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
-                    case 'goToSymbol':
-                        
+                    case 'generateTests':
+                        window.withProgress({
+                            location: ProgressLocation.Notification,
+                            title: "I am long running!",
+                            cancellable: true
+                        }, (progress, token) => {
+                            token.onCancellationRequested(() => {
+                                console.log("User canceled the long running operation");
+                            });
+                
+                            progress.report({ increment: 0 });
+                
+                            setTimeout(() => {
+                                progress.report({ increment: 10, message: "I am long running! - still going..." });
+                            }, 1000);
+                
+                            setTimeout(() => {
+                                progress.report({ increment: 40, message: "I am long running! - still going even more..." });
+                            }, 1500);
+                
+                            setTimeout(() => {
+                                progress.report({ increment: 50, message: "I am long running! - almost there..." });
+                            }, 2000);
+                
+                            const p = new Promise(resolve => {
+                                setTimeout(() => {
+                                    this._panel.webview.postMessage({command: "testGenerated", traceId: message.text, tests: this.generateTests()});
+                                    resolve();
+                                }, 2500);
+                            });
+                
+                            return p;
+                        });
                         return;
                 }
             },
@@ -70,6 +101,32 @@ export class CombinatorialTestPanel {
 
         // Generate the html for the webview
         this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+    }
+
+
+    
+    generateTests()
+    {
+        let testResIter = 0;
+        let testResults = [];
+        let maxGenerate = 10;
+        while(testResIter < maxGenerate)
+        {
+            let testCaseIter = 0;
+            let testCases = [];
+            while(testCaseIter < maxGenerate)
+            {
+                let testCase = {case: "Test case " + testCaseIter, result: "TEST!"};
+                testCases.push(testCase);
+                testCaseIter++;
+            }
+
+            let testResult = {id: testResIter, verdict: VerdictKind.Passed, cases: testCases};
+            testResults.push(testResult);
+            testResIter++;
+        }
+
+        return testResults;
     }
 
     public displayCTs() {
@@ -83,23 +140,7 @@ export class CombinatorialTestPanel {
             let traces = [];
             while(traceIter < maxGenerate)
             {
-                let testResIter = 0;
                 let testResults = [];
-                while(testResIter < maxGenerate)
-                {
-                    let testCaseIter = 0;
-                    let testCases = [];
-                    while(testCaseIter < maxGenerate)
-                    {
-                        let testCase = {case: "Test case " + testCaseIter, result: "TEST!"};
-                        testCases.push(testCase);
-                        testCaseIter++;
-                    }
-
-                    let testResult = {id: testResIter, verdict: VerdictKind.Passed, cases: testCases};
-                    testResults.push(testResult);
-                    testResIter++;
-                }
 
                 let trace = {name: "trace " + traceIter, id: traceIter, location: null, verdict: VerdictKind.Passed, testResults: testResults};
                 traces.push(trace);
@@ -111,7 +152,7 @@ export class CombinatorialTestPanel {
             iter++;
         }
 
-        this._panel.webview.postMessage({ command: "showCTResolved", cts: ctSymbols});
+        this._panel.webview.postMessage({ command: "showCTOutline", cts: ctSymbols});
     }
 
     public dispose() {
