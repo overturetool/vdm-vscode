@@ -192,6 +192,13 @@ export class CombinatorialTestPanel {
         </head>
         <body>
             <div id="ctContainer"></div>
+
+            <body>
+                <div class="menu">
+                    <div class="menu-item" id="filtered">Full evaluation</div>
+                    <div class="menu-item" id="full">Filtered evaluation</div>              
+                </div>
+            </body>
             <script nonce="${scriptNonce}" src="${scriptUri}"></script>
         </body>
         </html>`;

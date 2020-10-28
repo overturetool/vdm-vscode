@@ -6,6 +6,10 @@ let tracesWithGeneratedTests = [];
 
 let tracesWithExecutedTests = [];
 
+let menuDisplayed = false;
+
+let menuBox = window.document.querySelector(".menu");
+
 function buildTable(cts, table)
 {
     table.id = "ctTable";
@@ -80,12 +84,27 @@ function buildCTOutline(cts)
 
             // Add a details element to the list item - this element is the trace and contains test cases for the trace
             let tracesDetail = document.createElement('details');
-            tracesDetail.id = trace.id;
+            tracesDetail.id = "" + ctSymbol.id + trace.id;
             tracesListItem.appendChild(tracesDetail);
+            tracesDetail.oncontextmenu = function() {
+                var left = arguments[0].clientX;
+                var top = arguments[0].clientY;
+                
+                menuBox.style.left = left + "px";
+                menuBox.style.top = top + "px";
+                menuBox.style.display = "block";
+                
+                arguments[0].preventDefault();
+                
+                menuDisplayed = true;
+            }
 
             let tracesDetailSummary = document.createElement("SUMMARY");
             tracesDetailSummary.textContent = trace.name;
             tracesDetail.appendChild(tracesDetailSummary);
+
+            let testResultList = document.createElement('ul');
+            tracesDetail.appendChild(testResultList);
             
             // Function for handling user expanding the trace detail.
             tracesDetail.ontoggle = function()
@@ -120,18 +139,11 @@ function addTestsToTrace(traceId, tests)
     // A state is needed to track which traces have their tests generated.
     tracesWithGeneratedTests.push(traceId);
 
-    // Add a list to the details element
+    // Get trace detail and its test list
     let tracesDetail = document.getElementById(traceId);
     let testResultList = tracesDetail.getElementsByTagName("ul")[0];
-    if(!testResultList)
-    {
-        testResultList = document.createElement('ul');
-        tracesDetail.appendChild(testResultList);
-    }
-    else
-        testResultList.innerHTML = "";
 
-    // Add test result items to the list in the details element if test cases are resolved
+    // Add test result items to the list in the details element
     for(k = 0; k < tests.length; k++)
     {
         let test = tests[k];
@@ -153,9 +165,23 @@ function addTestsToTrace(traceId, tests)
         buildTable(test.cases, caseTable);
     }
 
-    // Workaround for screen not updating - this forces a redraw of the viewport...
-    document.getElementById('ctContainer').style.display = 'none';
-    document.getElementById('ctContainer').style.display = 'block';
+    forceViewRefresh(traceId);
+}
+
+function removeTestsFromTrace(traceId)
+{
+    let tracesDetail = document.getElementById(traceId);
+    let testResultList = tracesDetail.getElementsByTagName("ul")[0];
+    testResultList.innerHTML = "";
+
+    forceViewRefresh(traceId);
+}
+
+function forceViewRefresh(elementId)
+{
+    // Workaround for screen not updating - this forces a redraw of the view...
+    document.getElementById(elementId).style.display = 'none';
+    document.getElementById(elementId).style.display = 'block';
 }
 
 window.addEventListener('message', event => {
@@ -168,3 +194,9 @@ window.addEventListener('message', event => {
             return;
     }
 });
+
+window.addEventListener("click", function() {
+    if(menuDisplayed == true){
+        menuBox.style.display = "none";
+    }
+}, true);
