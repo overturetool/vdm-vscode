@@ -1,7 +1,8 @@
 import path = require("path");
-import { commands, Disposable, ExtensionContext, Uri, window } from "vscode";
+import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
 import { ClientCapabilities, ServerCapabilities, StaticFeature } from "vscode-languageclient";
 import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
+import { CTDataProvider } from "./CTTreeDataProvider";
 import { ExperimentalCapabilities } from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
@@ -32,7 +33,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     private registerCTCommand()
     {
-        this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
+        //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
+        let treeView = window.createTreeView('combinatorialTests', {
+            treeDataProvider: new CTDataProvider(workspace.rootPath)
+        });
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
