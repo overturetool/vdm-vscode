@@ -3,22 +3,25 @@ import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "
 import { CTDataProvider } from "./CTTreeDataProvider";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, VersionedTextDocumentIdentifier } from "vscode-languageclient";
 import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
-import { ExperimentalCapabilities, TestCase, TestResult, VerdictKind, Trace, CTSymbol } from "./protocol.lspx";
+import { ExperimentalCapabilities, TestCase, TestResult, VerdictKind, Trace, CTSymbol, ctFilterOption } from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as fs from 'fs'
 import { ClientRequest } from "http";
 import * as vscode from 'vscode'
 import * as Util from "./Util"
+import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
     private _context: ExtensionContext;
     private _runCTDisp: Disposable;
     private _lastUri: Uri;
+    private _filterHandler: CTFilterHandler;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext) {
         this._client = client;
         this._context = context;
+        this._filterHandler = new VdmjCTFilterHandler(); // TODO Maybe make this constructor injection?
     }
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -32,6 +35,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         // If server supports CT
         if (capabilities?.experimental?.proofObligationProvider) { //TODO match on CT capability instead
             this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
+            this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter())
 
             // TODO Remove
             this.registerCommand('extension.saveCT', () => {
@@ -53,6 +57,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 let ctsym = {name: "classA", traces:[trace1, trace2]}
                 
                 this.saveCT(ctsym, vscode.workspace?.workspaceFolders[0].uri)
+                
             });
 
             // TODO Remove
@@ -60,7 +65,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
         }     
     }
-    
+
     private registerCTCommand()
     {
         //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
@@ -127,31 +132,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
             });
         })
     }
-
-    private setCTFilter() {
-        let inputOptions : vscode.InputBoxOptions = {
-            prompt: "Number between 0-1",
-            placeHolder: "1.0",
-            value: "1.0",
-            validateInput: (value) => {
-                let input = Number(value);
-                if (Number.isNaN(input))
-                    return "Invalid input: Not a number"
-
-                if (0 <= input  && input  <= 1)
-                    return undefined
-                else
-                    return "Invalid input: Not between 0-1"
-            }
-        }
-        vscode.window.showInputBox(inputOptions)
-
-        let quickPickOptions : vscode.QuickPickOptions = {
-            "canPickMany": false
-        }
-        vscode.window.showQuickPick(["first","second","third"],quickPickOptions)
-    }
-
-
 }
 
+export interface CTFilterHandler {
+    setCTFilter() : void;
+    getCTFilter() : ctFilterOption[];
+}
