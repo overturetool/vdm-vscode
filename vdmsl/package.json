@@ -47,6 +47,12 @@
         "title": "Run Combinatorial Tests"
       },
       {
+
+        "command": "combinatorialTests.refreshEntry",
+        "title": "Refresh",
+        "icon": "media/book.svg"      
+      },
+      {
         "command": "extension.saveCT",
         "title": "Save Combinatorial Tests"
       },
@@ -60,6 +66,13 @@
       }
     ],
     "menus": {
+      "view/title": [
+        {
+            "command": "combinatorialTests.refreshEntry",
+            "when": "view == combinatorialTests",
+            "group": "navigation"
+        }
+      ],
       "commandPalette": [
         {
           "command": "extension.runPOG",

@@ -63,15 +63,20 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // TODO Remove
             let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
-        }     
+        }
+        this.registerCTCommand();     
     }
 
     private registerCTCommand()
     {
         //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
-        let treeView = window.createTreeView('combinatorialTests', {
-            treeDataProvider: new CTDataProvider(workspace.rootPath)
-        });
+
+        const ctDataprovider = new CTDataProvider(workspace.rootPath);
+        window.registerTreeDataProvider('combinatorialTests', ctDataprovider);
+    
+        commands.registerCommand('combinatorialTests.refreshEntry', () =>
+            ctDataprovider.refresh()
+        );
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
