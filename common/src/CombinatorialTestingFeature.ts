@@ -1,10 +1,14 @@
 import path = require("path");
 import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
-import { ClientCapabilities, ServerCapabilities, StaticFeature } from "vscode-languageclient";
-import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
 import { CTDataProvider } from "./CTTreeDataProvider";
-import { ExperimentalCapabilities } from "./protocol.lspx";
+import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, VersionedTextDocumentIdentifier } from "vscode-languageclient";
+import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
+import { ExperimentalCapabilities, TestCase, TestResult, VerdictKind, Trace, CTSymbol } from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import * as fs from 'fs'
+import { ClientRequest } from "http";
+import * as vscode from 'vscode'
+import * as Util from "./Util"
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
@@ -26,11 +30,37 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
-        if (capabilities?.experimental?.proofObligationProvider) {
-            this.registerCTCommand();
+        if (capabilities?.experimental?.proofObligationProvider) { //TODO match on CT capability instead
+            this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
+
+            // TODO Remove
+            this.registerCommand('extension.saveCT', () => {
+                let case1 : TestCase = {case: "seq1", result: "1"}
+                let case2 : TestCase = {case: "seq2", result: "2"}
+                let case3 : TestCase = {case: "seq3", result: "3"}
+                let case4 : TestCase = {case: "seq4", result: "4"}
+        
+                let res1: TestResult = {id: 1, verdict: VerdictKind.Passed, cases: [case1,case2]}
+                let res2: TestResult = {id: 2, verdict: VerdictKind.Failed, cases: [case3]}
+                let res3: TestResult = {id: 3, verdict: VerdictKind.Filtered, cases: [case4]}
+                
+                let loc1: Location = {uri: "uri/location/1", range: Range.create(Position.create(1,0),Position.create(1,1))}
+                let loc2: Location = {uri: "uri/location/2", range: Range.create(Position.create(2,0),Position.create(2,1))}
+        
+                let trace1: Trace = {id: 1, name: "trace1", verdict: VerdictKind.Passed, location: loc1, testResults: [res1]}
+                let trace2: Trace = {id: 2, name: "trace2", verdict: VerdictKind.Failed, location: loc2, testResults: [res2,res3]}
+        
+                let ctsym = {name: "classA", traces:[trace1, trace2]}
+                
+                this.saveCT(ctsym, vscode.workspace?.workspaceFolders[0].uri)
+            });
+
+            // TODO Remove
+            let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
+            this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
         }     
     }
-
+    
     private registerCTCommand()
     {
         //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
@@ -65,4 +95,67 @@ export class CombinantorialTestingFeature implements StaticFeature {
             window.showInformationMessage("Proof obligation generation failed. " + error);
         }
     }
+
+    private saveCT(ctsym: CTSymbol, saveUri: Uri) {
+        // Get workspace folder from save uri
+        let workspaceFolder = vscode.workspace.getWorkspaceFolder(saveUri)
+
+        // Create full path
+        let savePath = Uri.joinPath(workspaceFolder.uri, ".generated", "Combinatorial_Testing", ctsym.name+".json").fsPath;
+
+        // Ensure that path exists
+        Util.ensureDirectoryExistence(savePath)
+        
+        // Convert data into JSON
+        let data = JSON.stringify(ctsym);
+
+        // Asynchronouse save
+        fs.writeFile(savePath, data, (err) => {
+            if (err) throw err;
+            console.log('Write call finished');
+        })
+    }
+
+    private async loadCT(filepath : string) : Promise<CTSymbol>{
+        return new Promise(async (resolve, reject) => {
+            // Asynchroniouse read of filepath
+            fs.readFile(filepath, (err, data) => {
+                if (err) {
+                    reject(err);
+                    throw err;
+                }
+
+                // Convert JSON to CTSymbol
+                let ctsym : CTSymbol = JSON.parse(data.toString());
+                return resolve(ctsym)
+            });
+        })
+    }
+
+    private setCTFilter() {
+        let inputOptions : vscode.InputBoxOptions = {
+            prompt: "Number between 0-1",
+            placeHolder: "1.0",
+            value: "1.0",
+            validateInput: (value) => {
+                let input = Number(value);
+                if (Number.isNaN(input))
+                    return "Invalid input: Not a number"
+
+                if (0 <= input  && input  <= 1)
+                    return undefined
+                else
+                    return "Invalid input: Not between 0-1"
+            }
+        }
+        vscode.window.showInputBox(inputOptions)
+
+        let quickPickOptions : vscode.QuickPickOptions = {
+            "canPickMany": false
+        }
+        vscode.window.showQuickPick(["first","second","third"],quickPickOptions)
+    }
+
+
 }
+

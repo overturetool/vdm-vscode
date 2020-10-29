@@ -1,5 +1,4 @@
-import { Location } from "vscode";
-import { NotificationType, RequestType } from "vscode-languageclient";
+import { NotificationType, RequestType, Location } from "vscode-languageclient";
 
 /**
  * The experimental capabilities that the server can reply

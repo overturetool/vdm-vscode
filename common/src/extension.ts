@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as dapSupport from "./dapSupport"
+import * as Util from "./Util"
 import * as path from 'path';
 import * as fs from 'fs'
 import * as net from 'net';
@@ -45,10 +46,10 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                     ]
 
                     // Start the LSP server
-                    let javaPath = findJavaExecutable('java');
+                    let javaPath = Util.findJavaExecutable('java');
                     if (!javaPath) {
                         vscode.window.showErrorMessage("Java runtime environment not found!")
-                        writeToLog(clientLogFile, "Java runtime environment not found!");
+                        Util.writeToLog(clientLogFile, "Java runtime environment not found!");
                         return reject("Java runtime environment not found!");
                     }
                     let server = child_process.spawn(javaPath, args);
@@ -61,7 +62,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                     dapSupport.initDebugConfig(context, dapPort, vdmDialect)
                 })
                 .catch((err) => {
-                    writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
+                    Util.writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
                     return reject(err)
                 });
         })
@@ -122,39 +123,3 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
-function writeToLog(path: string, msg: string) {
-    let logStream = fs.createWriteStream(path, { flags: 'w' });
-    logStream.write(msg);
-    logStream.close();
-}
-
-// MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
-function findJavaExecutable(binname: string) {
-    if (process.platform === 'win32')
-        binname = binname + '.exe';
-
-    // First search each JAVA_HOME bin folder
-    if (process.env['JAVA_HOME']) {
-        let workspaces = process.env['JAVA_HOME'].split(path.delimiter);
-        for (let i = 0; i < workspaces.length; i++) {
-            let binpath = path.join(workspaces[i], 'bin', binname);
-            if (fs.existsSync(binpath)) {
-                return binpath;
-            }
-        }
-    }
-
-    // Then search PATH parts
-    if (process.env['PATH']) {
-        let pathparts = process.env['PATH'].split(path.delimiter);
-        for (let i = 0; i < pathparts.length; i++) {
-            let binpath = path.join(pathparts[i], binname);
-            if (fs.existsSync(binpath)) {
-                return binpath;
-            }
-        }
-    }
-
-    // Else return the binary name directly (this will likely always fail downstream) 
-    return null;
-}

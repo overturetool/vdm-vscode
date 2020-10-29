@@ -47,10 +47,23 @@
         "title": "Run Combinatorial Tests"
       },
       {
+
         "command": "combinatorialTests.refreshEntry",
         "title": "Refresh",
         "icon": "media/book.svg"      
-    }
+      },
+      {
+        "command": "extension.saveCT",
+        "title": "Save Combinatorial Tests"
+      },
+      {
+        "command": "extension.loadCT",
+        "title": "Load Combinatorial Tests"
+      },
+      {
+        "command": "extension.setCTFilter",
+        "title": "Set Combinatorial Test Filter"
+      }
     ],
     "menus": {
       "view/title": [
