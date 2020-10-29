@@ -58,7 +58,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // TODO Remove
             let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
-        }     
+        }
+        this.registerCTCommand();     
     }
     
     private registerCTCommand()

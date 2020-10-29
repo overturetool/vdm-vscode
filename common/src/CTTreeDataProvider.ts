@@ -6,15 +6,30 @@ import { ProgressLocation, window } from 'vscode';
 export class CTDataProvider implements vscode.TreeDataProvider<CTElement> {
 
     private _onDidChangeTreeData: vscode.EventEmitter<CTElement | undefined> = new vscode.EventEmitter<CTElement | undefined>();
-    readonly onDidChangeTreeData: vscode.Event<CTElement | undefined> = this._onDidChangeTreeData.event;
+    onDidChangeTreeData: vscode.Event<CTElement> = this._onDidChangeTreeData.event;
 
-    private _tests = [];
+    private _tests = new Map<string, CTElement[]>();
 
-    private _traces = [];
+    private _traces = new Map<string, CTElement[]>();
 
-    private _symbols = [];
+    private _symbols = new Map<string, CTElement>();
 
-    constructor(private workspaceRoot: string) {}
+    constructor(private workspaceRoot: string) {
+        let ctSymbols = this.getCTSymbols();
+        for(let i = 0; i < ctSymbols.length; i++)
+        {
+            this._symbols.set(ctSymbols[i].id, ctSymbols[i]);
+        }
+
+        for(let l = 0; l < ctSymbols.length; l++)
+        {
+            this._traces.set(ctSymbols[l].id, this.getTraces(ctSymbols[l]));
+        }
+
+        this._traces.forEach((value) => {
+            value.forEach(trace => {this._tests.set(trace.id, this.getTests(trace))});
+        });
+    }
 
     getTreeItem(element): vscode.TreeItem {
         return element;
@@ -22,54 +37,18 @@ export class CTDataProvider implements vscode.TreeDataProvider<CTElement> {
 
     getChildren(element?: CTElement): Thenable<CTElement[]> {
         if(!element)
-            return Promise.resolve(this.getCTSymbols());
+            return Promise.resolve(Array.from(this._symbols.values()));
 
-        if(element.type == treeItemType.CTSymbol)
-        {
-            let traces = this.getTraces(element);
-            this._traces.push(traces);
-            return Promise.resolve(traces);
-        }
-
+        if(element.type == treeItemType.CTSymbol)       
+            return Promise.resolve(this._traces.get(element.id));
 
         if(element.type == treeItemType.Trace)
-            return  window.withProgress<CTElement[]>({
-                location: ProgressLocation.Notification,
-                title: "Test generation progress",
-                cancellable: true
-            }, (progress, token) => {
-                token.onCancellationRequested(() => {
-                    console.log("User canceled the test generation");
-                });
-    
-                progress.report({ increment: 0 , message: "0%"});
-    
-                setTimeout(() => {
-                    progress.report({ increment: 10, message: "10%"});
-                }, 1000);
-    
-                setTimeout(() => {
-                    progress.report({ increment: 40, message: "40%"});
-                }, 1500);
-    
-                setTimeout(() => {
-                    progress.report({ increment: 70, message: "70%"});
-                }, 2000);
-    
-                const p = new Promise<CTElement[]>(resolve => {
-                    setTimeout(() => {
-                        let tests = this.getTests(element);
-                        this._tests.push(tests);
-                        resolve(tests);
-                    }, 2500);
-                });
-                return p;
-            }); 
+            return Promise.resolve(this._tests.get(element.id));
 
         return Promise.resolve([]);
     }
 
-    getTests(traceElement, from = 0, to = 1000) : CTElement[] {
+    getTests(traceElement, from = 0, to = 40) : CTElement[] {
         let tests = [];
         while(from < to)
         {
@@ -119,26 +98,50 @@ export class CTDataProvider implements vscode.TreeDataProvider<CTElement> {
             token.onCancellationRequested(() => {
                 console.log("User canceled the test generation");
             });
-
+            let iter = this._traces.values();
+            let traces = iter.next();
+            let trace = traces[0];
             progress.report({ increment: 0 , message: "0%"});
+            let tests = this._tests.get(trace.id);
+            let batchSize = tests.length/4;
+            let arrIter = 0;
 
-            setTimeout(() => {
-                progress.report({ increment: 10, message: "10%"});
-            }, 1000);
+            // setTimeout(() => {
+            //     progress.report({ increment: 10, message: "10%"});
+            //     for(arrIter; arrIter < batchSize; arrIter++)
+            //     {
+            //         this._tests[arrIter].description = "Passed";
+            //     }
+            //     this._onDidChangeTreeData.fire(trace);
+            // }, 1000);
 
-            setTimeout(() => {
-                progress.report({ increment: 40, message: "40%"});
-            }, 1500);
+            // setTimeout(() => {
+            //     progress.report({ increment: 40, message: "40%"});
+            //     for(arrIter; arrIter < batchSize*2; arrIter++)
+            //     {
+            //         this._tests[arrIter].description = "Passed";
+            //     }
+            //     this._onDidChangeTreeData.fire(trace);
+            // }, 3000);
 
-            setTimeout(() => {
-                progress.report({ increment: 70, message: "70%"});
-            }, 2000);
+            // setTimeout(() => {
+            //     progress.report({ increment: 70, message: "70%"});
+            //     for(arrIter; arrIter < batchSize*3; arrIter++)
+            //     {
+            //         this._tests[arrIter].description = "Passed";
+            //     }
+            //     this._onDidChangeTreeData.fire(trace);
+            // }, 5000);
 
             const p = new Promise<CTElement[]>(resolve => {
                 setTimeout(() => {
-                    this._onDidChangeTreeData.fire(this._traces[0]);
                     resolve();
-                }, 2500);
+                    for(arrIter; arrIter < this._tests.values.length; arrIter++)
+                    {
+                        tests[arrIter].description = "Passed";
+                    }
+                    this._onDidChangeTreeData.fire(trace);
+                }, 1000);
             });
             return p;
         }); 
