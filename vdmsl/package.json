@@ -28,6 +28,18 @@
       {
         "command": "extension.runCT",
         "title": "Run Combinatorial Tests"
+      },
+      {
+        "command": "extension.saveCT",
+        "title": "Save Combinatorial Tests"
+      },
+      {
+        "command": "extension.loadCT",
+        "title": "Load Combinatorial Tests"
+      },
+      {
+        "command": "extension.setCTFilter",
+        "title": "Set Combinatorial Test Filter"
       }
     ],
     "menus": {
