@@ -34,9 +34,13 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private registerCTCommand()
     {
         //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
-        let treeView = window.createTreeView('combinatorialTests', {
-            treeDataProvider: new CTDataProvider(workspace.rootPath)
-        });
+
+        const ctDataprovider = new CTDataProvider(workspace.rootPath);
+        window.registerTreeDataProvider('combinatorialTests', ctDataprovider);
+    
+        commands.registerCommand('combinatorialTests.refreshEntry', () =>
+            ctDataprovider.refresh()
+        );
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {

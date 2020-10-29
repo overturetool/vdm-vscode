@@ -45,9 +45,21 @@
       {
         "command": "extension.runCT",
         "title": "Run Combinatorial Tests"
-      }
+      },
+      {
+        "command": "combinatorialTests.refreshEntry",
+        "title": "Refresh",
+        "icon": "media/book.svg"      
+    }
     ],
     "menus": {
+      "view/title": [
+        {
+            "command": "combinatorialTests.refreshEntry",
+            "when": "view == combinatorialTests",
+            "group": "navigation"
+        }
+      ],
       "commandPalette": [
         {
           "command": "extension.runPOG",
