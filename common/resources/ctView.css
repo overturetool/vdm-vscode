@@ -41,3 +41,24 @@ label {
 summary{
     outline: none;
 }
+
+.menu
+{
+    width: 150px;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    position: fixed;
+    display: none;
+    background-color: inherit;
+}
+
+.menu-item:hover
+{
+    background-color: #6CB5FF;
+    cursor: pointer;
+}

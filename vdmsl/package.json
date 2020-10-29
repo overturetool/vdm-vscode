@@ -20,6 +20,23 @@
   ],
   "main": "./dist/extension",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "combinatorial-testing",
+          "title": "Combinatorial testing",
+          "icon": "media/book.svg"
+        }
+      ]
+    },
+    "views": {
+      "combinatorial-testing": [
+        {
+          "id": "combinatorialTests",
+          "name": "Combinatorial tests"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "extension.runPOG",
@@ -65,6 +82,20 @@
           "when": "resourceLangId == vdmsl",
           "command": "extension.runPOG",
           "group": "verification@1"
+        }
+      ],
+      "view/item/context": [
+        {
+            "command": "extension.runPOG",
+            "when": "viewItem == trace"
+        },
+        {
+          "command": "extension.runCT",
+          "when": "viewItem == trace"
+        },
+        {
+          "command": "extension.runPOG",
+          "when": "viewItem == test"
         }
       ]
     },

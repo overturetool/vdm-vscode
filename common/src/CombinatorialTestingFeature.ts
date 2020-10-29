@@ -1,5 +1,6 @@
 import path = require("path");
-import { commands, Disposable, ExtensionContext, Uri, window } from "vscode";
+import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
+import { CTDataProvider } from "./CTTreeDataProvider";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, VersionedTextDocumentIdentifier } from "vscode-languageclient";
 import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
 import { ExperimentalCapabilities, TestCase, TestResult, VerdictKind, Trace, CTSymbol } from "./protocol.lspx";
@@ -59,6 +60,14 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
         }     
     }
+    
+    private registerCTCommand()
+    {
+        //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
+        let treeView = window.createTreeView('combinatorialTests', {
+            treeDataProvider: new CTDataProvider(workspace.rootPath)
+        });
+    }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
         let disposable = commands.registerCommand(command, callback)
@@ -76,7 +85,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         try {
             // Create new view or show existing POG View
             CombinatorialTestPanel.createOrShowPanel(Uri.file(this._context.extensionPath), revealCTView);
-            CombinatorialTestPanel.currentPanel.displayCTs();
+            CombinatorialTestPanel.currentPanel.displayTraces();
         }
         catch (error) {
             window.showInformationMessage("Proof obligation generation failed. " + error);
