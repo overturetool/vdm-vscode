@@ -174,7 +174,7 @@ export interface CTResultPair {
 /**
  * Parameters for the CT/traces request
  */
-export interface TracesParameters {
+export interface CTTracesParameters {
 	/**
 	 * An optional uri to the file/folder for which Traces should be found.
 	 */
@@ -184,8 +184,8 @@ export interface TracesParameters {
 /**
  * CT/traces request and return type.
  */
-export namespace TracesRequest {
-	export const type = new RequestType<TracesParameters, CTSymbol[] | null, void, void>('lspx/CT/traces');
+export namespace CTTracesRequest {
+	export const type = new RequestType<CTTracesParameters, CTSymbol[] | null, void, void>('lspx/CT/traces');
 }
 
 /**
