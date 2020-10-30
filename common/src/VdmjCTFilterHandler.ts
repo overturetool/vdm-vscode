@@ -1,5 +1,5 @@
 import { CTFilterHandler } from "./CombinatorialTestingFeature";
-import { ctFilterOption } from "./protocol.lspx";
+import { CTFilterOption } from "./protocol.lspx";
 import * as vscode from 'vscode'
 
 export class VdmjCTFilterHandler implements CTFilterHandler {
@@ -34,8 +34,8 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         this.showFilterOptions()
     }
 
-    getCTFilter() : ctFilterOption[] {
-        let ctFilters : ctFilterOption[] = []
+    getCTFilter() : CTFilterOption[] {
+        let ctFilters : CTFilterOption[] = []
         this._filters.forEach((v,k) => ctFilters.push({key: k, value: v}))
         return ctFilters;
     }

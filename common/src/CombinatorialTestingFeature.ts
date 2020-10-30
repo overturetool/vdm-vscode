@@ -3,7 +3,7 @@ import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "
 import { CTDataProvider } from "./CTTreeDataProvider";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, VersionedTextDocumentIdentifier } from "vscode-languageclient";
 import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
-import { ExperimentalCapabilities, TestCase, TestResult, VerdictKind, Trace, CTSymbol, ctFilterOption } from "./protocol.lspx";
+import { ExperimentalCapabilities, TestCase, VerdictKind, Trace, CTSymbol, CTFilterOption, CTResultPair } from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as fs from 'fs'
 import { ClientRequest } from "http";
@@ -23,7 +23,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         this._context = context;
         this._filterHandler = new VdmjCTFilterHandler(); // TODO Maybe make this constructor injection?
     }
-
+    
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         if(!capabilities.experimental)
             capabilities.experimental = { combinatorialTesting: true };
@@ -33,26 +33,26 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
-        if (capabilities?.experimental?.proofObligationProvider) { //TODO match on CT capability instead
+        // if (capabilities?.experimental?.combinatorialTestingProvider) { // TODO insert when available
             this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
             this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter())
 
             // TODO Remove
             this.registerCommand('extension.saveCT', () => {
-                let case1 : TestCase = {case: "seq1", result: "1"}
-                let case2 : TestCase = {case: "seq2", result: "2"}
-                let case3 : TestCase = {case: "seq3", result: "3"}
-                let case4 : TestCase = {case: "seq4", result: "4"}
+                let case1 : CTResultPair = {case: "seq1", result: "1"}
+                let case2 : CTResultPair = {case: "seq2", result: "2"}
+                let case3 : CTResultPair = {case: "seq3", result: "3"}
+                let case4 : CTResultPair = {case: "seq4", result: "4"}
         
-                let res1: TestResult = {id: 1, verdict: VerdictKind.Passed, cases: [case1,case2]}
-                let res2: TestResult = {id: 2, verdict: VerdictKind.Failed, cases: [case3]}
-                let res3: TestResult = {id: 3, verdict: VerdictKind.Filtered, cases: [case4]}
+                let res1: TestCase = {id: 1, verdict: VerdictKind.Passed, sequence: [case1,case2]}
+                let res2: TestCase = {id: 2, verdict: VerdictKind.Failed, sequence: [case3]}
+                let res3: TestCase = {id: 3, verdict: VerdictKind.Filtered, sequence: [case4]}
                 
                 let loc1: Location = {uri: "uri/location/1", range: Range.create(Position.create(1,0),Position.create(1,1))}
                 let loc2: Location = {uri: "uri/location/2", range: Range.create(Position.create(2,0),Position.create(2,1))}
         
-                let trace1: Trace = {id: 1, name: "trace1", verdict: VerdictKind.Passed, location: loc1, testResults: [res1]}
-                let trace2: Trace = {id: 2, name: "trace2", verdict: VerdictKind.Failed, location: loc2, testResults: [res2,res3]}
+                let trace1: Trace = {name: "trace1", verdict: VerdictKind.Passed, location: loc1}
+                let trace2: Trace = {name: "trace2", verdict: VerdictKind.Failed, location: loc2}
         
                 let ctsym = {name: "classA", traces:[trace1, trace2]}
                 
@@ -63,9 +63,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // TODO Remove
             let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
-        }
+        // } // TODO insert when available
+
         this.registerCTCommand();     
-    }
+    } 
 
     private registerCTCommand()
     {
@@ -102,7 +103,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
     }
 
-    private saveCT(ctsym: CTSymbol, saveUri: Uri) {
+    private saveCT(ctsym: CTSymbol, saveUri: Uri) { // TODO This needs to be changed, as the Trace type no longer include the TestCase's
         // Get workspace folder from save uri
         let workspaceFolder = vscode.workspace.getWorkspaceFolder(saveUri)
 
@@ -141,5 +142,5 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
 export interface CTFilterHandler {
     setCTFilter() : void;
-    getCTFilter() : ctFilterOption[];
+    getCTFilter() : CTFilterOption[];
 }
