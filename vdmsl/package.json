@@ -20,20 +20,26 @@
   ],
   "main": "./dist/extension",
   "contributes": {
+    "viewsWelcome": [
+      {
+        "view": "combinatorialTests",
+        "contents": "[Generate test outline](command:extension.generateCTOutline)"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "combinatorial-testing",
-          "title": "Combinatorial testing",
+          "id": "combinatorialTesting",
+          "title": "Combinatorial Testing",
           "icon": "media/book.svg"
         }
       ]
     },
     "views": {
-      "combinatorial-testing": [
+      "combinatorialTesting": [
         {
           "id": "combinatorialTests",
-          "name": "Combinatorial tests"
+          "name": "Combinatorial test view"
         }
       ]
     },
@@ -43,8 +49,16 @@
         "title": "Run Proof Obligation Generation"
       },
       {
-        "command": "extension.runCT",
-        "title": "Run Combinatorial Tests"
+        "command":  "extension.generateCTOutline",
+        "title": "Generatesthe outline for combinatorial tests for the project"
+      },
+      {
+        "command":  "extension.generateCTsForTrace",
+        "title": "Generates the combinatorial tests for a trace"
+      },
+      {
+        "command":  "extension.executeCTsForTrace",
+        "title": "Executes the combinatorial tests for a trace"
       },
       {
         "command": "extension.filterPassedCTs",
@@ -53,12 +67,6 @@
       {
         "command": "extension.filterInconclusiveCTs",
         "title": "Filter inconclusive CTs"
-      },
-      {
-
-        "command": "combinatorialTests.refreshEntry",
-        "title": "Refresh",
-        "icon": "media/book.svg"      
       },
       {
         "command": "extension.saveCT",
@@ -74,20 +82,13 @@
       }
     ],
     "menus": {
-      "view/title": [
-        {
-            "command": "combinatorialTests.refreshEntry",
-            "when": "view == combinatorialTests",
-            "group": "navigation"
-        }
-      ],
       "commandPalette": [
         {
           "command": "extension.runPOG",
           "when": "editorLangId == vdmsl"
         },
         {
-          "command": "extension.runCT",
+          "command": "extension.generateCTOutline",
           "when": "editorLangId == vdmsl"
         },
         {
@@ -117,10 +118,6 @@
         {
             "command": "extension.runPOG",
             "when": "viewItem == trace"
-        },
-        {
-          "command": "extension.runCT",
-          "when": "viewItem == trace"
         },
         {
           "command": "extension.runPOG",
