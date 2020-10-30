@@ -1,5 +1,5 @@
 import { CTFilterHandler } from "./CombinatorialTestingFeature";
-import { ctFilterOption } from "./protocol.lspx";
+import { CTFilterOption } from "./protocol.lspx";
 import * as vscode from 'vscode'
 
 export class VdmjCTFilterHandler implements CTFilterHandler {
@@ -34,8 +34,8 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         this.showFilterOptions()
     }
 
-    getCTFilter() : ctFilterOption[] {
-        let ctFilters : ctFilterOption[] = []
+    getCTFilter() : CTFilterOption[] {
+        let ctFilters : CTFilterOption[] = []
         this._filters.forEach((v,k) => ctFilters.push({key: k, value: v}))
         return ctFilters;
     }
@@ -51,7 +51,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         showOptions.push("OK");
 
         vscode.window.showQuickPick(showOptions).then(res => {
-            if (res == "OK")
+            if (res == undefined || res == "OK")  // Exit on 'esc' or 'OK'
                 return;
             else if (res == "Reset")
                 this.resetFilters()
@@ -71,7 +71,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         let showOptions : string[] = [];
         this._traceReductionTypes.forEach(v => showOptions.push(v))
         vscode.window.showQuickPick(showOptions).then(res => {
-            // this._filters.set("reduction", res);
+            if (res == undefined)
+                return;
+
             for (let [k,v] of this._traceReductionTypes){
                 if (v == res){
                     this._filters.set("reduction", k);
@@ -103,6 +105,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             }
         }
         vscode.window.showInputBox(inputOptions).then(res => {
+            if (res == undefined)
+                return;
+
             this._filters.set("seed",res);
             this.showFilterOptions();
         })
@@ -128,6 +133,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             }
         }
         vscode.window.showInputBox(inputOptions).then(res => {
+            if (res == undefined)
+                return;
+
             this._filters.set("limit",res);
             this.showFilterOptions();
         })
