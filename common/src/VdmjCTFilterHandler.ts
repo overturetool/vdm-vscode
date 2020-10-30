@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 
 export class VdmjCTFilterHandler implements CTFilterHandler {
     private _traceReductionTypes = new Map<string, string>([
-        ["R","Random"],
+        ["R", "Random"],
         ["NV", "No variables"],
         ["VN", "Variable names"],
         ["VV", "Variable value"]
@@ -16,47 +16,58 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         ["limit", "Subset Limitation (%)"]
     ]);
     private _filterKeyTypesReverse = new Map<string, string>();
-    private _filtersDefault = new Map<string, string|boolean|number>([
+    private _filtersDefault = new Map<string, string | boolean | number>([
         ["reduction", "R"],
         ["seed", 999],
         ["limit", 100]
     ]);
-    private _filters = new Map<string, string|boolean|number>();
+    private _filters = new Map<string, string | boolean | number>();
+    private _inSetup: boolean = false;
 
-    constructor(){
-        this._traceReductionTypes.forEach((v,k) => this._traceReductionTypesReverse.set(v,k))
-        this._filterKeyTypes.forEach((v,k) => this._filterKeyTypesReverse.set(v,k))
-            
+    constructor() {
+        this._traceReductionTypes.forEach((v, k) => this._traceReductionTypesReverse.set(v, k))
+        this._filterKeyTypes.forEach((v, k) => this._filterKeyTypesReverse.set(v, k))
+
         this.resetFilters();
     }
 
     setCTFilter() {
-        this.showFilterOptions()
+        this.showFilterOptions();
     }
 
-    getCTFilter() : CTFilterOption[] {
-        let ctFilters : CTFilterOption[] = []
-        this._filters.forEach((v,k) => ctFilters.push({key: k, value: v}))
-        return ctFilters;
+    getCTFilter(): Promise<CTFilterOption[]> {
+        return new Promise<CTFilterOption[]>(async (resolve, reject) => {
+            // Wait for setup to be over
+            while (this._inSetup) { }
+
+            // Convert to protocol type
+            let ctFilters: CTFilterOption[] = []
+            this._filters.forEach((v, k) => ctFilters.push({ key: k, value: v }))
+            return ctFilters;
+        })
+
     }
 
     private resetFilters() {
-        this._filtersDefault.forEach((v,k) => this._filters.set(k,v))
+        this._filtersDefault.forEach((v, k) => this._filters.set(k, v))
     }
 
-    private showFilterOptions() : void {
-        let showOptions : string[] = [];
-        this._filterKeyTypes.forEach((v,k) => showOptions.push(v + ': ' + (k == "reduction" ? this._traceReductionTypes.get(this._filters.get(k).toString()) : this._filters.get(k))));
+    private showFilterOptions(): void {
+        let showOptions: string[] = [];
+        this._filterKeyTypes.forEach((v, k) => showOptions.push(v + ': ' + (k == "reduction" ? this._traceReductionTypes.get(this._filters.get(k).toString()) : this._filters.get(k))));
         showOptions.push("Reset");
         showOptions.push("OK");
 
+        this._inSetup = true;
         vscode.window.showQuickPick(showOptions).then(res => {
-            if (res == undefined || res == "OK")  // Exit on 'esc' or 'OK'
+            if (res == undefined || res == "OK") {  // Exit on 'esc' or 'OK'
+                this._inSetup = false;
                 return;
+            }
             else if (res == "Reset")
                 this.resetFilters()
             else {
-                let filterKey = this._filterKeyTypesReverse.get(res.substring(0,res.indexOf(':')));
+                let filterKey = this._filterKeyTypesReverse.get(res.substring(0, res.indexOf(':')));
                 if (filterKey == "reduction")
                     this.showReduction();
                 else if (filterKey == "seed")
@@ -68,14 +79,14 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
     }
 
     private showReduction() {
-        let showOptions : string[] = [];
+        let showOptions: string[] = [];
         this._traceReductionTypes.forEach(v => showOptions.push(v))
         vscode.window.showQuickPick(showOptions).then(res => {
             if (res == undefined)
                 return;
 
-            for (let [k,v] of this._traceReductionTypes){
-                if (v == res){
+            for (let [k, v] of this._traceReductionTypes) {
+                if (v == res) {
                     this._filters.set("reduction", k);
                     continue;
                 }
@@ -86,18 +97,18 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
     }
 
     private showSeed() {
-        let inputOptions : vscode.InputBoxOptions = {
-            prompt: "Set "+this._filterKeyTypes.get("seed"),
+        let inputOptions: vscode.InputBoxOptions = {
+            prompt: "Set " + this._filterKeyTypes.get("seed"),
             placeHolder: "999",
             // value: "999",
             validateInput: (input) => {
                 let num = Number(input);
                 if (Number.isNaN(num))
                     return "Invalid input: Not a number"
-                
+
                 if (!Number.isInteger(num))
                     return "Invalid input: Not an integer"
-               
+
                 if (num > 0)
                     return undefined
                 else
@@ -108,25 +119,25 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             if (res == undefined)
                 return;
 
-            this._filters.set("seed",res);
+            this._filters.set("seed", res);
             this.showFilterOptions();
         })
     }
 
     private showLimit() {
-        let inputOptions : vscode.InputBoxOptions = {
-            prompt: "Set "+this._filterKeyTypes.get("limit"),
+        let inputOptions: vscode.InputBoxOptions = {
+            prompt: "Set " + this._filterKeyTypes.get("limit"),
             placeHolder: "100",
             // value: "100",
             validateInput: (input) => {
                 let num = Number(input);
                 if (Number.isNaN(num))
                     return "Invalid input: Not a number"
-                
+
                 if (!Number.isInteger(num))
                     return "Invalid input: Not an integer"
 
-                if (1 <= num  && num  <= 100)
+                if (1 <= num && num <= 100)
                     return undefined
                 else
                     return "Invalid input: Not between 1-100"
@@ -136,7 +147,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             if (res == undefined)
                 return;
 
-            this._filters.set("limit",res);
+            this._filters.set("limit", res);
             this.showFilterOptions();
         })
     }
