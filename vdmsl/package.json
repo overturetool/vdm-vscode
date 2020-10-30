@@ -47,6 +47,14 @@
         "title": "Run Combinatorial Tests"
       },
       {
+        "command": "extension.filterPassedCTs",
+        "title": "Filter passed CTs"
+      },
+      {
+        "command": "extension.filterInconclusiveCTs",
+        "title": "Filter inconclusive CTs"
+      },
+      {
 
         "command": "combinatorialTests.refreshEntry",
         "title": "Refresh",
@@ -81,6 +89,14 @@
         {
           "command": "extension.runCT",
           "when": "editorLangId == vdmsl"
+        },
+        {
+          "command": "extension.filterPassedCTs",
+          "title": "Filter passed CTs"
+        },
+        {
+          "command": "extension.filterInconclusiveCTs",
+          "title": "Filter inconclusive CTs"
         }
       ],
       "explorer/context": [
