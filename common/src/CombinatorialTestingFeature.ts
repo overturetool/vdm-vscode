@@ -1,14 +1,13 @@
-import path = require("path");
-import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
-import { CTDataProvider } from "./CTTreeDataProvider";
-import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, VersionedTextDocumentIdentifier } from "vscode-languageclient";
-import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
-import { ExperimentalCapabilities, TestCase, VerdictKind, Trace, CTSymbol, CTFilterOption, CTResultPair, NumberRange } from "./protocol.lspx";
-import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import * as fs from 'fs'
-import { ClientRequest } from "http";
-import * as vscode from 'vscode'
+import * as path from 'path';
+import * as fs from 'fs';
+import * as vscode from 'vscode';
 import * as Util from "./Util"
+import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
+import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature} from "vscode-languageclient";
+import { CTDataProvider } from "./CTTreeDataProvider";
+
+import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
+import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 
 export class CombinantorialTestingFeature implements StaticFeature {
@@ -45,15 +44,15 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 let case3 : CTResultPair = {case: "seq3", result: "3"}
                 let case4 : CTResultPair = {case: "seq4", result: "4"}
         
-                let res1: TestCase = {id: 1, verdict: VerdictKind.Passed, sequence: [case1,case2]}
-                let res2: TestCase = {id: 2, verdict: VerdictKind.Failed, sequence: [case3]}
-                let res3: TestCase = {id: 3, verdict: VerdictKind.Filtered, sequence: [case4]}
+                let res1: CTTestCase = {id: 1, verdict: VerdictKind.Passed, sequence: [case1,case2]}
+                let res2: CTTestCase = {id: 2, verdict: VerdictKind.Failed, sequence: [case3]}
+                let res3: CTTestCase = {id: 3, verdict: VerdictKind.Filtered, sequence: [case4]}
                 
                 let loc1: Location = {uri: "uri/location/1", range: Range.create(Position.create(1,0),Position.create(1,1))}
                 let loc2: Location = {uri: "uri/location/2", range: Range.create(Position.create(2,0),Position.create(2,1))}
         
-                let trace1: Trace = {name: "trace1", verdict: VerdictKind.Passed, location: loc1}
-                let trace2: Trace = {name: "trace2", verdict: VerdictKind.Failed, location: loc2}
+                let trace1: CTTrace = {name: "trace1", verdict: VerdictKind.Passed, location: loc1}
+                let trace2: CTTrace = {name: "trace2", verdict: VerdictKind.Failed, location: loc2}
         
                 let ctsym = {name: "classA", traces:[trace1, trace2]}
                 
@@ -72,7 +71,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     } 
 
 
-    private updateTestVerdictsInView(tests: TestCase[], trace: Trace)
+    private updateTestVerdictsInView(tests: CTTestCase[], trace: CTTrace)
     {
         this._ctDataprovider.updateTestVerdicts(tests, trace);
     }
@@ -118,9 +117,74 @@ export class CombinantorialTestingFeature implements StaticFeature {
             });
         })
     }
+
+    private async requestTraces(uri?: Uri){
+        window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
+
+        try {
+            // Setup message parameters
+            let params: CTTracesParameters;
+            if (uri)
+                params.uri = uri.toString();
+
+            // Send request
+            const symbols = await this._client.sendRequest(CTTracesRequest.type, params);
+            
+            // FIXME Send to CT tree data provider 
+            // FIXME Open CT view if not already open 
+        }
+        catch (err) {
+            window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
+        }
+    }
+
+    private async requestGenerate(name: string){
+        window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
+
+        try {
+            // Setup message parameters
+            let params: CTGenerateParameters = {name: name};
+
+            // Send request
+            // TODO Add loading information message
+            const numberOfTests = await this._client.sendRequest(CTGenerateRequest.type, params);
+            
+            // FIXME Inform CT tree data provider of number of tests
+        }
+        catch (err) {
+            window.showInformationMessage("Combinatorial Test - generation request failed. " + err);
+        }
+    }
+
+    private async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
+        window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
+
+        try {
+            // Setup message parameters
+            let params: CTExecuteParameters = {name: name};
+            if (filtered){
+                this._filterHandler.setCTFilter();
+                params.filter = await this._filterHandler.getCTFilter();
+            }
+            if (range)
+                params.range = range;
+            
+
+            // Send request
+            // TODO Add loading information message
+            const numberOfTests = await this._client.sendRequest(CTExecuteRequest.type, params);
+            
+            // FIXME Inform CT tree data provider of number of tests
+        }
+        catch (err) {
+            window.showInformationMessage("Combinatorial Test - generation request failed. " + err);
+        }
+    }
+
+    
 }
 
 export interface CTFilterHandler {
     setCTFilter() : void;
-    getCTFilter() : CTFilterOption[];
+    getCTFilter() : Promise<CTFilterOption[]>;
 }
