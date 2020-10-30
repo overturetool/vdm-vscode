@@ -37,7 +37,9 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
         return new Promise(async (resolve, reject) => {
             portfinder.getPortPromise()
                 .then((dapPort) => {
-                    let args = [
+                    let JVMArguments = workspace.getConfiguration(vdmDialect + '-lsp').JVMArguments;
+                    let args : string[] = [
+                        JVMArguments,
                         '-Dlog.filename=' + serverLogFile,
                         '-cp', vdmjPath + path.delimiter + lspServerPath,
                         serverMainClass,

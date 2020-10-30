@@ -127,6 +127,11 @@
           "default": "verbose",
           "description": "Traces the communication between VS Code and the language server."
         },
+        "vdmsl-lsp.JVMArguments": {
+          "type": "string",
+          "default": "-Xmx2g",
+          "description": "JVM arguments used when launching the server."
+        },
         "vdmsl-lsp.experimentalServer": {
           "type": "boolean",
           "default": false,
