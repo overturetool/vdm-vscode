@@ -71,7 +71,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         let showOptions : string[] = [];
         this._traceReductionTypes.forEach(v => showOptions.push(v))
         vscode.window.showQuickPick(showOptions).then(res => {
-            // this._filters.set("reduction", res);
+            if (res == undefined)
+                return;
+
             for (let [k,v] of this._traceReductionTypes){
                 if (v == res){
                     this._filters.set("reduction", k);
@@ -103,6 +105,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             }
         }
         vscode.window.showInputBox(inputOptions).then(res => {
+            if (res == undefined)
+                return;
+
             this._filters.set("seed",res);
             this.showFilterOptions();
         })
@@ -128,6 +133,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             }
         }
         vscode.window.showInputBox(inputOptions).then(res => {
+            if (res == undefined)
+                return;
+
             this._filters.set("limit",res);
             this.showFilterOptions();
         })
