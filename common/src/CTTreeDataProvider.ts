@@ -7,15 +7,15 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
     onDidChangeTreeData: Event<CTElement> = this._onDidChangeTreeData.event;
 
     private _symbols: CTElement[] = []; // Keep reference to the root objects
-    private _batchSize: number = 100;
+    private _groupSize: number = 100;
     private _filterPassedTests: boolean = false;
     private _filterInconclusiveTests: boolean = false;
 
-    constructor(symbols?: CTSymbol[], batchSize?: number) {
+    constructor(symbols?: CTSymbol[], groupSize?: number) {
         if(symbols)
             this.updateOutline(symbols);
-        if(batchSize)
-            this._batchSize = batchSize;
+        if(groupSize)
+            this._groupSize = groupSize;
     }
 
     public filterPassedTests(): any
@@ -45,23 +45,23 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         if(!traceElement)
             return;
 
-        // Remove old test batches and their tests
+        // Remove old test groupes and their tests
         traceElement.getChildren().splice(0,traceElement.getChildren().length);
         traceElement.description = false;
 
-        // Generate test elements and add to trace in batches
-        let testBatches: CTElement[] = [];
-        let batchIterator = -1;
+        // Generate test elements and add to trace in groupes
+        let testgroupes: CTElement[] = [];
+        let groupIterator = -1;
         for(let i = 0; i < numOfTests; i++)
         {
-            if(i % this._batchSize == 0)
+            if(i % this._groupSize == 0)
             {
-                batchIterator++;
-                testBatches.push(new CTElement("test batch", treeItemType.TestBtach, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._batchSize * (batchIterator+1)));
+                groupIterator++;
+                testgroupes.push(new CTElement("test group", treeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1)));
             }
-            testBatches[batchIterator].getChildren().push(new CTElement("" + (i+1), treeItemType.Test, TreeItemCollapsibleState.None, "n/a"));
+            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), treeItemType.Test, TreeItemCollapsibleState.None, "n/a"));
         }
-        traceElement.setChildren(testBatches);
+        traceElement.setChildren(testgroupes);
         
         // Fire element change event with trace element
         this._onDidChangeTreeData.fire(traceElement);
@@ -101,12 +101,12 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         if(!traceElement)
             return;
 
-        // Go through test batches and update individual test verdicts
-        let batches = traceElement.getChildren();
+        // Go through test groupes and update individual test verdicts
+        let groupes = traceElement.getChildren();
         tests.forEach(testCase => {
-            for(let batchIter = 0; batchIter < batches.length; batchIter++)
+            for(let groupIter = 0; groupIter < groupes.length; groupIter++)
             {
-                let testElement = batches[batchIter].getChildren().find(testEle => testEle.label === testCase.id + "");
+                let testElement = groupes[groupIter].getChildren().find(testEle => testEle.label === testCase.id + "");
                 if(testElement)
                 {
                     testElement.description = VerdictKind[testCase.verdict];               
@@ -172,7 +172,7 @@ enum treeItemType
     CTSymbol = "ctSymbol",
     Trace = "trace",
     Test = "test",
-    TestBtach = "testBatch"
+    TestGroup = "testgroup"
 }
 
 class CTElement extends TreeItem {
