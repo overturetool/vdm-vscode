@@ -51,7 +51,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         showOptions.push("OK");
 
         vscode.window.showQuickPick(showOptions).then(res => {
-            if (res == undefined || res == "OK")  // Exit on 'esc' of 'OK'
+            if (res == undefined || res == "OK")  // Exit on 'esc' or 'OK'
                 return;
             else if (res == "Reset")
                 this.resetFilters()
