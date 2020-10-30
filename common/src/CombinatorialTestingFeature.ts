@@ -5,7 +5,7 @@ import * as Util from "./Util"
 import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature} from "vscode-languageclient";
 import { CTDataProvider } from "./CTTreeDataProvider";
-import { CombinatorialTestPanel } from "./CombinatorialTestPanel";
+
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
@@ -16,11 +16,13 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _runCTDisp: Disposable;
     private _lastUri: Uri;
     private _filterHandler: CTFilterHandler;
+    private _ctDataprovider: CTDataProvider;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext) {
         this._client = client;
         this._context = context;
         this._filterHandler = new VdmjCTFilterHandler(); // TODO Maybe make this constructor injection?
+        this._ctDataprovider = new CTDataProvider();
     }
     
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -33,7 +35,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
         // if (capabilities?.experimental?.combinatorialTestingProvider) { // TODO insert when available
-            this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
             this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter())
 
             // TODO Remove
@@ -64,19 +65,15 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
         // } // TODO insert when available
 
-        this.registerCTCommand();     
+        //this.registerCommand("extension.generateCTOutline", () => {this.generateCTOutline()});
+        //this.registerCommand("extension.generateCTsForTrace", () => {this.generateCTsForTrace()}); --- how do we pass the correct trace name here?
+        //this.registerCommand("extension.executeCTsForTrace", () => {this.executeCTsForTrace()}); --- how do we pass the correct trace name here?
     } 
 
-    private registerCTCommand()
-    {
-        //this.registerCommand('extension.runCT', (inputUri: Uri) => this.runCT(inputUri));
 
-        const ctDataprovider = new CTDataProvider(workspace.rootPath);
-        window.registerTreeDataProvider('combinatorialTests', ctDataprovider);
-    
-        commands.registerCommand('combinatorialTests.refreshEntry', () =>
-            ctDataprovider.refresh()
-        );
+    private updateTestVerdictsInView(tests: CTTestCase[], trace: CTTrace)
+    {
+        this._ctDataprovider.updateTestVerdicts(tests, trace);
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -84,23 +81,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
         this._context.subscriptions.push(disposable);
         return disposable;
     };
-
-    private async runCT(inputUri: Uri, revealCTView: boolean = true) {
-        window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
-
-        let uri = inputUri || window.activeTextEditor?.document.uri;
-        let dirUri = Uri.file(uri.fsPath.substring(0,uri.fsPath.lastIndexOf(path.sep)));
-        this._lastUri = uri;
-
-        try {
-            // Create new view or show existing POG View
-            CombinatorialTestPanel.createOrShowPanel(Uri.file(this._context.extensionPath), revealCTView);
-            CombinatorialTestPanel.currentPanel.displayTraces();
-        }
-        catch (error) {
-            window.showInformationMessage("Proof obligation generation failed. " + error);
-        }
-    }
 
     private saveCT(ctsym: CTSymbol, saveUri: Uri) { // TODO This needs to be changed, as the Trace type no longer include the TestCase's
         // Get workspace folder from save uri
