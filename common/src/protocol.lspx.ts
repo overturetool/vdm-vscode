@@ -5,42 +5,73 @@ import { NotificationType, RequestType, Location } from "vscode-languageclient";
  */
 export interface ExperimentalCapabilities {
     proofObligationProvider?: boolean;
-    combinatorialTestingProvider: boolean;
+    combinatorialTestingProvider?: boolean;
 }
 
-
+////////////////////// Proof Obligation Generation (POG) /////////////////////////////
 /**
- * Proof Obligation Generation interfaces and namespaces for extension messages
+ * Parameters describing a Proof Obligation (PO) and meta data.
  */
 export interface ProofObligation {
-    id: number;
-    name: string[];
-    type: string;
-    location: Location;
+	/**
+	 * Unique identifier of the PO.
+	 */
+	id: number;
+	/**
+	 * Name of the PO. Array describe the hieracy of the name, e.g. ["classA", "function1"].
+	 */
+	name: string[];
+	/**
+	 * Type of the PO.
+	 */
+	type: string;
+	/**
+	 * Location where the PO applies
+	 */
+	location: Location;
+	/**
+	 * Source code of the PO. String array can be used to provide visual formatting information, e.g. the PO view can put a "\n\t" between each string in the array 
+	 */
     source: string | string[];
     proved?: boolean;
 }
 
+/**
+ * Parameters for the POG/generate request
+ */
 export interface GeneratePOParams {
+	/**
+	 * Uri to the file/folder for which Proof Obligations should be generated.
+	 */
     uri: string;
 }
 
-export interface POGUpdatedParams {
-    successful: boolean
-}
-
+/**
+ * POG/generate request and return type.
+ */
 export namespace GeneratePORequest {
     export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void, void>('lspx/POG/generate');
 }
 
+/**
+ * Parameters for the POG/updated request.
+ */
+export interface POGUpdatedParams {
+	/**
+	 * Describes the state of the specification. True if POG is possible, False if not, e.g. the specification is not type-correct.
+	 */
+    successful: boolean
+}
+
+/**
+ * POG/updated notification. Sent by the server when there has been a change in the specification.
+ */
 export namespace POGUpdatedNotification {
     export const type = new NotificationType<POGUpdatedParams>('lspx/POG/updated')
 }
 
-/**
- * Combinatorial Testing interfaces and namespaces for extension messages
- */
 
+////////////////////// Combinatorial Testing (CT) ///////////////////////////////////
 export interface ctFilterOption {
 	key: string,                
 	value: string | number | boolean
