@@ -27,8 +27,7 @@ export class VdmConfigurationProvider implements vscode.DebugConfigurationProvid
         // if launch.json is missing or empty
         if (!config.type && !config.request && !config.name) {
             const editor = vscode.window.activeTextEditor;
-            if (editor && editor.document.languageId === this.dialect) {   // TODO figure out if debug configurations should be language specific or if this is fine
-			// if (editor && editor.document.languageId.startsWith("vdm")) {
+            if (editor && editor.document.languageId === this.dialect) {
                 config.type = this.dialect;
                 config.name = 'Launch';
                 config.request = 'launch';
