@@ -68,12 +68,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
         //this.registerCommand("extension.generateCTOutline", () => {this.generateCTOutline()});
         //this.registerCommand("extension.generateCTsForTrace", () => {this.generateCTsForTrace()}); --- how do we pass the correct trace name here?
         //this.registerCommand("extension.executeCTsForTrace", () => {this.executeCTsForTrace()}); --- how do we pass the correct trace name here?
-    } 
-
-
-    private updateTestVerdictsInView(tests: CTTestCase[], trace: CTTrace)
-    {
-        this._ctDataprovider.updateTestVerdicts(tests, trace);
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -130,8 +124,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // Send request
             const symbols = await this._client.sendRequest(CTTracesRequest.type, params);
             
-            // FIXME Send to CT tree data provider 
-            // FIXME Open CT view if not already open 
+            // Pass CTSymbols to ct data provider to build the tree outline
+            this._ctDataprovider.updateOutline(symbols);
         }
         catch (err) {
             window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
@@ -149,7 +143,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // TODO Add loading information message
             const numberOfTests = await this._client.sendRequest(CTGenerateRequest.type, params);
             
-            // FIXME Inform CT tree data provider of number of tests
+            // Pass the number of tests to ct data provider to add them to the tree
+            this._ctDataprovider.setNumberOfTests(numberOfTests, name);
         }
         catch (err) {
             window.showInformationMessage("Combinatorial Test - generation request failed. " + err);
@@ -172,16 +167,15 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             // TODO Add loading information message
-            const numberOfTests = await this._client.sendRequest(CTExecuteRequest.type, params);
+            const tests = await this._client.sendRequest(CTExecuteRequest.type, params);
             
-            // FIXME Inform CT tree data provider of number of tests
+            // Pass a new test batch to ct data provider to update test verdicts
+            this._ctDataprovider.updateTestVerdicts(tests, name);
         }
         catch (err) {
             window.showInformationMessage("Combinatorial Test - generation request failed. " + err);
         }
-    }
-
-    
+    } 
 }
 
 export interface CTFilterHandler {
