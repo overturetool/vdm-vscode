@@ -1,5 +1,5 @@
-import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams } from "vscode-languageclient";
-
+import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, RequestHandler, Declaration, DeclarationLink, DeclarationParams } from "vscode-languageclient";
+import {ProtocolRequestType} from "vscode-languageserver-protocol/lib/messages";
 /**
  * The experimental capabilities that the server can reply.
  */
@@ -108,13 +108,13 @@ export interface CTSymbol {
 	/**
 	 * Traces in the group.
 	 */
-	traces: Trace[];
+	traces: CTTrace[];
 }
 
 /**
  * Overview information about a trace
  */
-export interface Trace {
+export interface CTTrace {
 	/**
 	 * Fully qualified name of the trace.
 	 */
@@ -132,7 +132,7 @@ export interface Trace {
 /**
  * Test case information.
  */
-export interface TestCase {
+export interface CTTestCase {
 	/**
 	 * ID of the test case.
 	 */
@@ -226,6 +226,16 @@ export interface CTExecuteParameters extends WorkDoneProgressParams, PartialResu
 /**
  * CT/execute request and return type.
  */
-export namespace CTExecuteRequest {
-	export const type = new RequestType<CTExecuteParameters, TestCase[] | null, void, void>('lspx/CT/execute');
+// export namespace CTExecuteRequest {
+// 	export const type = new RequestType<CTExecuteParameters, CTTestCase[] | null, void, void>('lspx/CT/execute');
+// }
+
+// export namespace CTExecuteProgress {
+// 	export const type = new ProgressType<ProgressParams<CTTestCase[]>>();
+// }
+
+export declare namespace CTExecuteRequest {
+    const method: 'lspx/CT/execute';
+    const type: ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, null>;
+    const resultType: ProgressType<CTTestCase[]>;
 }
