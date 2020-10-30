@@ -1,5 +1,5 @@
 import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
-import { CTSymbol, TestCase, Trace, VerdictKind } from './protocol.lspx';
+import { CTSymbol, CTTestCase, CTTrace, VerdictKind } from './protocol.lspx';
 
 export class CTDataProvider implements TreeDataProvider<CTElement> {
 
@@ -30,14 +30,14 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         this._onDidChangeTreeData.fire(null);
     }
 
-    public setNumberOfTests(numOfTests: number, trace: Trace)
+    public setNumberOfTests(numberOfTests: number, traceName: string)
     {
         let traceElement: CTElement;
 
         // Find trace element
         for(let i = 0; i < this._symbols.length; i++)
         {
-            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === trace.name);
+            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === traceName);
             if(traceElement)
                 break;
         }
@@ -52,7 +52,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         // Generate test elements and add to trace in groupes
         let testgroupes: CTElement[] = [];
         let groupIterator = -1;
-        for(let i = 0; i < numOfTests; i++)
+        for(let i = 0; i < numberOfTests; i++)
         {
             if(i % this._groupSize == 0)
             {
@@ -67,7 +67,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         this._onDidChangeTreeData.fire(traceElement);
     }
 
-    public updateTraceVerdict(trace: Trace)
+    public updateTraceVerdict(trace: CTTrace)
     {
         let traceElement: CTElement;
 
@@ -86,14 +86,14 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         traceElement.description = VerdictKind[trace.verdict]
     }
 
-    public updateTestVerdicts(tests: TestCase[], trace: Trace)
+    public updateTestVerdicts(tests: CTTestCase[], traceName: string)
     {
         let traceElement: CTElement;
 
         // Find trace element
         for(let i = 0; i < this._symbols.length; i++)
         {
-            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === trace.name);
+            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === traceName);
             if(traceElement)
                 break;
         }
