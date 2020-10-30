@@ -79,6 +79,18 @@
       {
         "command": "extension.setCTFilter",
         "title": "Set Combinatorial Test Filter"
+      },
+      {
+        "command": "extension.filteredEvaluation",
+        "title": "Execute tests with filter"
+      },
+      {
+        "command": "extension.fullEvaluation",
+        "title": "Execute tests without filter"
+      },
+      {
+        "command": "extension.SendToInterpreter",
+        "title": "Send test to interpreter"
       }
     ],
     "menus": {
@@ -116,12 +128,27 @@
       ],
       "view/item/context": [
         {
-            "command": "extension.runPOG",
+            "command": "extension.filteredEvaluation",
             "when": "viewItem == trace"
         },
         {
-          "command": "extension.runPOG",
+          "command": "extension.fullEvaluation",
+          "when": "viewItem == trace"
+      },
+        {
+          "command": "extension.SendToInterpreter",
           "when": "viewItem == test"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "extension.filterPassedCTs"
+        },
+        {
+          "command": "extension.filterInconclusiveCTs"
+        },
+        {
+          "command": "extension.setCTFilter"
         }
       ]
     },
