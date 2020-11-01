@@ -70,7 +70,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         
 
             this.registerCommand("extension.generateCTOutline",     () => this.requestTraces());
-            this.registerCommand("extension.generateCTsForTrace",   () => this.requestGenerate()); //TODO how do we pass the correct trace name here?
+            this.registerCommand("extension.generateCTsForTrace",   () => this.requestGenerate());
             this.registerCommand("extension.executeCTsForTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
 
             this.registerCommand("extension.filterPassedCTs",       () => this._ctDataprovider.filterPassedTests());
@@ -125,7 +125,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     private async requestTraces(uri?: Uri){
-        uri = window.activeTextEditor.document.uri; // FIXME remove when Nick server does not crash without
         window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
 
         try {
@@ -151,12 +150,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         try {
             // Prompt user selection of trace if non was specified
             if (name == undefined){
-                let traces = this._ctDataprovider.getTraceNames();
-                if (traces.length < 1)
-                    window.showInformationMessage("Request failed: No traces available")
-                else {
-                    await window.showQuickPick(traces, {canPickMany: false}).then(trace => name = trace)
-                }
+                name = await this.uiSelectTrace();
             }
 
             // If user did exit the selection abort request
@@ -203,6 +197,19 @@ export class CombinantorialTestingFeature implements StaticFeature {
             window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     } 
+
+    private async uiSelectTrace() : Promise<string> {
+        return new Promise<string>(async resolve => {
+            let traces = this._ctDataprovider.getTraceNames();
+            let res : string;
+            if (traces.length < 1)
+                window.showInformationMessage("Request failed: No traces available")
+            else {
+                await window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
+            }
+            resolve(res)
+        });
+    }
 }
 
 export interface CTFilterHandler {
