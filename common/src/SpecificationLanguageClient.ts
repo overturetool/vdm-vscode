@@ -2,6 +2,7 @@ import { ExtensionContext } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
+import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 
 export class SpecificationLanguageClient extends LanguageClient {
     private _context: ExtensionContext;
@@ -12,6 +13,6 @@ export class SpecificationLanguageClient extends LanguageClient {
         this._context = context
 
         //this.registerFeature(new ProofObligationGenerationFeature(this, this._context));
-        this.registerFeatures([new ProofObligationGenerationFeature(this,this._context), new CombinantorialTestingFeature(this, this._context)]);
+        this.registerFeatures([new ProofObligationGenerationFeature(this,this._context), new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler())]);
     }
 }
