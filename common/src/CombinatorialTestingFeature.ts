@@ -32,7 +32,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
-        // if (capabilities?.experimental?.combinatorialTestingProvider) { // TODO insert when available
+        if (capabilities?.experimental?.combinatorialTestProvider) { 
             // Register data provider for CT View
             window.registerTreeDataProvider('combinatorialTests', this._ctDataprovider);
 
@@ -76,10 +76,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this.registerCommand("extension.sendToInterpreter",     () => this.sendToInterpreter("test")); //TODO how do we pass the correct test here?
             this.registerCommand("extension.filterPassedCTs",       () => this._ctDataprovider.filterPassedTests());
             this.registerCommand("extension.filterInconclusiveCTs", () => this._ctDataprovider.filterInconclusiveTests());
-
-
-        // TODO Further command registration needed here: extension.SendToInterpreter, extension.fullEvaluation, extension.filteredEvaluation
-        // } // TODO insert when available
+        }
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {

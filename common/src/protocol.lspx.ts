@@ -5,7 +5,7 @@ import {ProtocolRequestType} from "vscode-languageserver-protocol/lib/messages";
  */
 export interface ExperimentalCapabilities {
 	proofObligationProvider?: boolean;
-	combinatorialTestingProvider?: boolean;
+	combinatorialTestProvider?: boolean;
 }
 
 ////////////////////// Proof Obligation Generation (POG) /////////////////////////////
