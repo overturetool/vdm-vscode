@@ -35,6 +35,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
         // if (capabilities?.experimental?.combinatorialTestingProvider) { // TODO insert when available
+            // Register data provider for CT View
+            window.registerTreeDataProvider('combinatorialTests', this._ctDataprovider);
+
+
             this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter())
 
             // TODO Remove
@@ -63,21 +67,19 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // TODO Remove
             let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
-        // } // TODO insert when available
+        
 
-        this.registerCommand("extension.generateCTOutline", () => {this.requestTraces()});
-        this.registerCommand("extension.generateCTsForTrace", () => {this.requestGenerate("test")}); //TODO how do we pass the correct trace name here?
-        this.registerCommand("extension.executeCTsForTrace", () => {this.requestExecute("test")}); //TODO how do we pass the correct trace name here?
+            this.registerCommand("extension.generateCTOutline",     () => this.requestTraces());
+            this.registerCommand("extension.generateCTsForTrace",   () => this.requestGenerate()); //TODO how do we pass the correct trace name here?
+            this.registerCommand("extension.executeCTsForTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
 
-        this.registerCommand("extension.filterPassedCTs", () =>
-            this._ctDataprovider.filterPassedTests()
-        );
+            this.registerCommand("extension.filterPassedCTs",       () => this._ctDataprovider.filterPassedTests());
+            this.registerCommand("extension.filterInconclusiveCTs", () => this._ctDataprovider.filterInconclusiveTests());
 
-        this.registerCommand("extension.filterInconclusiveCTs", () =>
-            this._ctDataprovider.filterInconclusiveTests()
-        );
 
         // TODO Further command registration needed here: extension.SendToInterpreter, extension.fullEvaluation, extension.filteredEvaluation
+
+        // } // TODO insert when available
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -86,7 +88,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         return disposable;
     };
 
-    private saveCT(ctsym: CTSymbol, saveUri: Uri) { // TODO This needs to be changed, as the Trace type no longer include the TestCase's
+    private saveCT(ctsym: CTSymbol, saveUri: Uri) { // FIXME This needs to be changed, as the Trace type no longer include the TestCase's
         // Get workspace folder from save uri
         let workspaceFolder = vscode.workspace.getWorkspaceFolder(saveUri)
 
@@ -123,11 +125,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     private async requestTraces(uri?: Uri){
+        uri = window.activeTextEditor.document.uri; // FIXME remove when Nick server does not crash without
         window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
 
         try {
             // Setup message parameters
-            let params: CTTracesParameters;
+            let params: CTTracesParameters = {};
             if (uri)
                 params.uri = uri.toString();
 
@@ -142,10 +145,24 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
     }
 
-    private async requestGenerate(name: string){
+    private async requestGenerate(name?: string){
         window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
 
         try {
+            // Prompt user selection of trace if non was specified
+            if (name == undefined){
+                let traces = this._ctDataprovider.getTraceNames();
+                if (traces.length < 1)
+                    window.showInformationMessage("Request failed: No traces available")
+                else {
+                    await window.showQuickPick(traces, {canPickMany: false}).then(trace => name = trace)
+                }
+            }
+
+            // If user did exit the selection abort request
+            if (name == undefined)
+                return;
+
             // Setup message parameters
             let params: CTGenerateParameters = {name: name};
 
@@ -157,7 +174,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.setNumberOfTests(numberOfTests, name);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - generation request failed. " + err);
+            window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     }
 
@@ -183,7 +200,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.updateTestVerdicts(tests, name);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - generation request failed. " + err);
+            window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     } 
 }

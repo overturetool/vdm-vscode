@@ -165,6 +165,14 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
 
         return Promise.resolve(elementsToReturn);
     }
+
+    getTraceNames(): string[] {
+        let res : string[] = [];
+        this._symbols.forEach((symbol) => {
+            symbol.getChildren().forEach(trace => res.push(trace.label));
+        })
+        return res;
+    }
 }
 
 enum treeItemType
