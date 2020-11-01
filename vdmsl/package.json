@@ -64,6 +64,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command":  "extension.executeTrace",
+        "title": "Execute Trace",
+        "category": "VDM",
+        "icon": "$(run-all)"
+      },
+      {
         "command":  "extension.fullCTexecution",
         "title": "Full Evaluation",
         "category": "VDM",

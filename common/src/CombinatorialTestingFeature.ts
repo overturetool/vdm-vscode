@@ -78,7 +78,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             this.registerCommand("extension.getCTOutline",          () => this.requestTraces());
             this.registerCommand("extension.generateCTsForTrace",   (e) => this.requestGenerate(e));
-            this.registerCommand("extension.executeCTsForTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
+            this.registerCommand("extension.executeTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
 
             this.registerCommand("extension.sendToInterpreter",     () => this.sendToInterpreter("test")); //TODO how do we pass the correct test here?
             this.registerCommand("extension.filterPassedCTs",       () => this._ctDataprovider.filterPassedTests());
