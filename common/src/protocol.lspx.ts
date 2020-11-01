@@ -202,7 +202,7 @@ export interface CTGenerateParameters {
  * CT/generate request and return type.
  */
 export namespace CTGenerateRequest {
-	export const type = new RequestType<CTGenerateParameters, number | null, void, void>('lspx/CT/generate');
+	export const type = new RequestType<CTGenerateParameters, {numberOfTests: number} | null, void, void>('lspx/CT/generate');
 }
 
 /**
@@ -226,16 +226,16 @@ export interface CTExecuteParameters extends WorkDoneProgressParams, PartialResu
 /**
  * CT/execute request and return type.
  */
-// export namespace CTExecuteRequest {
-// 	export const type = new RequestType<CTExecuteParameters, CTTestCase[] | null, void, void>('lspx/CT/execute');
-// }
+export namespace CTExecuteRequest {
+	export const type = new RequestType<CTExecuteParameters, CTTestCase[] | null, void, void>('lspx/CT/execute');
+}
 
 // export namespace CTExecuteProgress {
 // 	export const type = new ProgressType<ProgressParams<CTTestCase[]>>();
 // }
 
-export declare namespace CTExecuteRequest {
-    const method: 'lspx/CT/execute';
-    const type: ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, null>;
-    const resultType: ProgressType<CTTestCase[]>;
-}
+// export declare namespace CTExecuteRequest {
+//     const method: 'lspx/CT/execute';
+//     const type: ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, null>;
+//     const resultType: ProgressType<CTTestCase[]>;
+// }
