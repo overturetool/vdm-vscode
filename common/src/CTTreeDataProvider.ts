@@ -176,6 +176,9 @@ enum treeItemType
 }
 
 class CTElement extends TreeItem {
+    
+    private _children: CTElement[] = [];
+
     constructor(
     public readonly label: string,
     public readonly type: treeItemType,
@@ -189,8 +192,6 @@ class CTElement extends TreeItem {
         else
             super.description = description;
     }
-
-    private _children: CTElement[] = [];
 
     public getChildren(): CTElement[]
     {
