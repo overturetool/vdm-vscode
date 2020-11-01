@@ -162,10 +162,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             // TODO Add loading information message
-            const numberOfTests = await this._client.sendRequest(CTGenerateRequest.type, params);
+            const res = await this._client.sendRequest(CTGenerateRequest.type, params);
             
             // Pass the number of tests to ct data provider to add them to the tree
-            this._ctDataprovider.setNumberOfTests(numberOfTests, name);
+            this._ctDataprovider.setNumberOfTests(res.numberOfTests, name);
         }
         catch (err) {
             window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
