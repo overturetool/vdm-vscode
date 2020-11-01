@@ -49,10 +49,10 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         traceElement.getChildren().splice(0,traceElement.getChildren().length);
         traceElement.description = false;
 
-        // Generate test elements and add to trace in groupes
+        // Generate test elements and add to trace in groups
         let testgroupes: CTElement[] = [];
         let groupIterator = -1;
-        for(let i = 0; i < numberOfTests; i++)
+        for(var i = 0; i < numberOfTests; i++)
         {
             if(i % this._groupSize == 0)
             {
@@ -61,6 +61,11 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
             }
             testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), treeItemType.Test, TreeItemCollapsibleState.None, "n/a"));
         }
+
+        // Match desciption of group to number of tests for last group.
+        testgroupes[groupIterator].description = ((groupIterator*this._groupSize)+1) + "-" + ((groupIterator*this._groupSize) + (i % this._groupSize));
+
+        // Set the test groups for the trace
         traceElement.setChildren(testgroupes);
         
         // Fire element change event with trace element
