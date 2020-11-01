@@ -57,8 +57,12 @@
         "title": "Generates the combinatorial tests for a trace"
       },
       {
-        "command":  "extension.executeCTsForTrace",
-        "title": "Executes the combinatorial tests for a trace"
+        "command":  "extension.fullCTexecution",
+        "title": "Executes all combinatorial tests for a trace"
+      },
+      {
+        "command":  "extension.filteredCTexecution",
+        "title": "Executes a filtered subset of combinatorial tests for a trace"
       },
       {
         "command": "extension.filterPassedCTs",
@@ -81,15 +85,7 @@
         "title": "Set Combinatorial Test Filter"
       },
       {
-        "command": "extension.filteredEvaluation",
-        "title": "Execute tests with filter"
-      },
-      {
-        "command": "extension.fullEvaluation",
-        "title": "Execute tests without filter"
-      },
-      {
-        "command": "extension.SendToInterpreter",
+        "command": "extension.sendToInterpreter",
         "title": "Send test to interpreter"
       }
     ],
@@ -102,14 +98,6 @@
         {
           "command": "extension.generateCTOutline",
           "when": "editorLangId == vdmsl"
-        },
-        {
-          "command": "extension.filterPassedCTs",
-          "title": "Filter passed CTs"
-        },
-        {
-          "command": "extension.filterInconclusiveCTs",
-          "title": "Filter inconclusive CTs"
         }
       ],
       "explorer/context": [
@@ -128,15 +116,15 @@
       ],
       "view/item/context": [
         {
-            "command": "extension.filteredEvaluation",
-            "when": "viewItem == trace"
+          "command": "extension.filteredCTexecution",
+          "when": "viewItem == trace"
         },
         {
-          "command": "extension.fullEvaluation",
+          "command": "extension.fullCTexecution",
           "when": "viewItem == trace"
-      },
+        },
         {
-          "command": "extension.SendToInterpreter",
+          "command": "extension.sendToInterpreter",
           "when": "viewItem == test"
         }
       ],

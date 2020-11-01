@@ -15,13 +15,11 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _context: ExtensionContext;
     private _runCTDisp: Disposable;
     private _lastUri: Uri;
-    private _filterHandler: CTFilterHandler;
     private _ctDataprovider: CTDataProvider;
 
-    constructor(client: SpecificationLanguageClient, context: ExtensionContext) {
+    constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
         this._context = context;
-        this._filterHandler = new VdmjCTFilterHandler(); // TODO Maybe make this constructor injection?
         this._ctDataprovider = new CTDataProvider();
     }
     
@@ -68,17 +66,22 @@ export class CombinantorialTestingFeature implements StaticFeature {
             let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
             this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
         
+        	if(this._filterHandler)
+            {
+                this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter());
+                this.registerCommand("extension.filteredCTexecution", () => {this.requestExecute("test", true)}); //TODO how do we pass the correct trace name here?
+            }
 
             this.registerCommand("extension.generateCTOutline",     () => this.requestTraces());
             this.registerCommand("extension.generateCTsForTrace",   () => this.requestGenerate());
             this.registerCommand("extension.executeCTsForTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
 
+            this.registerCommand("extension.sendToInterpreter",     () => this.sendToInterpreter("test")); //TODO how do we pass the correct test here?
             this.registerCommand("extension.filterPassedCTs",       () => this._ctDataprovider.filterPassedTests());
             this.registerCommand("extension.filterInconclusiveCTs", () => this._ctDataprovider.filterInconclusiveTests());
 
 
         // TODO Further command registration needed here: extension.SendToInterpreter, extension.fullEvaluation, extension.filteredEvaluation
-
         // } // TODO insert when available
     }
 
@@ -122,6 +125,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 return resolve(ctsym)
             });
         })
+    }
+
+    private async sendToInterpreter(test?){
+
     }
 
     private async requestTraces(uri?: Uri){
