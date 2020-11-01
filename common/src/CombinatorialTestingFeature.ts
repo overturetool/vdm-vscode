@@ -36,9 +36,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // Register data provider for CT View
             window.registerTreeDataProvider('combinatorialTests', this._ctDataprovider);
 
-
-            this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter())
-
             // TODO Remove
             this.registerCommand('extension.saveCT', () => {
                 let case1 : CTResultPair = {case: "seq1", result: "1"}
