@@ -22,8 +22,8 @@
   "contributes": {
     "viewsWelcome": [
       {
-        "view": "combinatorialTests",
-        "contents": "[Generate test outline](command:extension.generateCTOutline)"
+        "view": "ctView",
+        "contents": "[Generate test outline](command:extension.getCTOutline)"
       }
     ],
     "viewsContainers": {
@@ -38,55 +38,75 @@
     "views": {
       "combinatorialTesting": [
         {
-          "id": "combinatorialTests",
-          "name": "Combinatorial test view"
+          "id": "ctView",
+          "name": "Combinatorial test view",
+          "when": "vdm-ct-show-view == true"
         }
       ]
     },
     "commands": [
       {
         "command": "extension.runPOG",
-        "title": "Run Proof Obligation Generation"
+        "title": "Run Proof Obligation Generation",
+        "category": "VDM",
+        "icon": "$(run)"
       },
       {
-        "command":  "extension.generateCTOutline",
-        "title": "Generatesthe outline for combinatorial tests for the project"
+        "command":  "extension.getCTOutline",
+        "title": "Generatesthe outline for combinatorial tests for the project",
+        "category": "VDM",
+        "icon": "$(refresh)"
       },
       {
         "command":  "extension.generateCTsForTrace",
-        "title": "Generates the combinatorial tests for a trace"
+        "title": "Generate Tests",
+        "category": "VDM",
+        "icon": "$(refresh)"
       },
       {
         "command":  "extension.fullCTexecution",
-        "title": "Executes all combinatorial tests for a trace"
+        "title": "Full Evaluation",
+        "category": "VDM",
+        "icon": "$(run)"
       },
       {
         "command":  "extension.filteredCTexecution",
-        "title": "Executes a filtered subset of combinatorial tests for a trace"
+        "title": "Filtered Evaluation",
+        "category": "VDM",
+        "icon": "$(filter)"
       },
       {
         "command": "extension.filterPassedCTs",
-        "title": "Filter passed CTs"
+        "title": "Filter passed CTs",
+        "category": "VDM",
+        "icon": "$(filter)"
       },
       {
         "command": "extension.filterInconclusiveCTs",
-        "title": "Filter inconclusive CTs"
+        "title": "Filter inconclusive CTs",
+        "category": "VDM"
       },
       {
         "command": "extension.saveCT",
-        "title": "Save Combinatorial Tests"
+        "title": "Save Combinatorial Tests",
+        "category": "VDM"
       },
       {
         "command": "extension.loadCT",
-        "title": "Load Combinatorial Tests"
+        "title": "Load Combinatorial Tests",
+        "category": "VDM"
       },
       {
         "command": "extension.setCTFilter",
-        "title": "Set Combinatorial Test Filter"
+        "title": "Set Combinatorial Test Filter",
+        "category": "VDM",
+        "icon": "$(gear)"
       },
       {
         "command": "extension.sendToInterpreter",
-        "title": "Send test to interpreter"
+        "title": "Send test to interpreter",
+        "category": "VDM",
+        "icon": "$(debug-alt)"
       }
     ],
     "menus": {
@@ -96,7 +116,7 @@
           "when": "editorLangId == vdmsl"
         },
         {
-          "command": "extension.generateCTOutline",
+          "command": "extension.getCTOutline",
           "when": "editorLangId == vdmsl"
         }
       ],
@@ -116,28 +136,61 @@
       ],
       "view/item/context": [
         {
-          "command": "extension.filteredCTexecution",
-          "when": "viewItem == trace"
+          "command": "extension.fullCTexecution",
+          "when": "viewItem == trace",
+          "group": "ctView@0"
         },
         {
-          "command": "extension.fullCTexecution",
-          "when": "viewItem == trace"
+          "command": "extension.filteredCTexecution",
+          "when": "viewItem == trace",
+          "group": "ctView@1"
+        },
+        {
+          "command": "extension.generateCTsForTrace",
+          "when": "viewItem == trace",
+          "group": "ctView@2"
         },
         {
           "command": "extension.sendToInterpreter",
-          "when": "viewItem == test"
+          "when": "viewItem == test",
+          "group": "ctView@0"
+        },
+        {
+          "command": "extension.fullCTexecution",
+          "when": "viewItem == trace",
+          "group": "inline@0"
+        },
+        {
+          "command": "extension.filteredCTexecution",
+          "when": "viewItem == trace",
+          "group": "inline@1"
+        },
+        {
+          "command": "extension.generateCTsForTrace",
+          "when": "viewItem == trace",
+          "group": "inline@2"
+        },
+        {
+          "command": "extension.sendToInterpreter",
+          "when": "viewItem == test",
+          "group": "inline@0"
         }
       ],
       "view/title": [
         {
-          "command": "extension.filterPassedCTs"
+          "command": "extension.setCTFilter",
+          "when": "view =~ /combinatorialTests/ && vdm-ct-show-set-execute-filter-button == true",
+          "group": "navigation@1"
         },
         {
-          "command": "extension.filterInconclusiveCTs"
+          "command": "extension.filterPassedCTs",
+          "when": "view =~ /combinatorialTests/ && vdm-ct-show-filter-button == true"
         },
         {
-          "command": "extension.setCTFilter"
+          "command": "extension.filterInconclusiveCTs",
+          "when": "view =~ /combinatorialTests/ && vdm-ct-show-filter-button == true"
         }
+        
       ]
     },
     "configuration": {

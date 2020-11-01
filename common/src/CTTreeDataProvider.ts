@@ -180,7 +180,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
     }
 }
 
-enum treeItemType
+export enum treeItemType
 {
     CTSymbol = "ctSymbol",
     Trace = "trace",
@@ -188,7 +188,7 @@ enum treeItemType
     TestGroup = "testgroup"
 }
 
-class CTElement extends TreeItem {
+export class CTElement extends TreeItem {
     
     private _children: CTElement[] = [];
 

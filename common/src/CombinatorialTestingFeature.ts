@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as Util from "./Util"
 import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature} from "vscode-languageclient";
-import { CTDataProvider } from "./CTTreeDataProvider";
+import { CTDataProvider, CTElement, treeItemType } from "./CTTreeDataProvider";
 
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
@@ -16,11 +16,11 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _runCTDisp: Disposable;
     private _lastUri: Uri;
     private _ctDataprovider: CTDataProvider;
+    private _ctTreeView : vscode.TreeView<CTElement>;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
         this._context = context;
-        this._ctDataprovider = new CTDataProvider();
     }
     
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -33,8 +33,15 @@ export class CombinantorialTestingFeature implements StaticFeature {
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
         if (capabilities?.experimental?.combinatorialTestProvider) { 
+            this.setButtonsAndContext()
+
             // Register data provider for CT View
-            window.registerTreeDataProvider('combinatorialTests', this._ctDataprovider);
+            this._ctDataprovider = new CTDataProvider();
+            this._ctTreeView = window.createTreeView('ctView', {treeDataProvider: this._ctDataprovider})
+            this._context.subscriptions.push(this._ctTreeView);
+
+            this._context.subscriptions.push( this._ctTreeView.onDidExpandElement(e => this.requestGenerate(e.element)));
+
 
             // TODO Remove
             this.registerCommand('extension.saveCT', () => {
@@ -69,8 +76,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 this.registerCommand("extension.filteredCTexecution", () => {this.requestExecute("test", true)}); //TODO how do we pass the correct trace name here?
             }
 
-            this.registerCommand("extension.generateCTOutline",     () => this.requestTraces());
-            this.registerCommand("extension.generateCTsForTrace",   () => this.requestGenerate());
+            this.registerCommand("extension.getCTOutline",          () => this.requestTraces());
+            this.registerCommand("extension.generateCTsForTrace",   (e) => this.requestGenerate(e));
             this.registerCommand("extension.executeCTsForTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
 
             this.registerCommand("extension.sendToInterpreter",     () => this.sendToInterpreter("test")); //TODO how do we pass the correct test here?
@@ -145,13 +152,22 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
     }
 
-    private async requestGenerate(name?: string){
+    private async requestGenerate(element?: CTElement){
+        // If there is an element but it's not a trace, abort.
+        if (element != undefined && element.type != treeItemType.Trace){
+            return;
+        }
+
         window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
+        let name : string;
 
         try {
             // Prompt user selection of trace if non was specified
-            if (name == undefined){
+            if (element == undefined){
                 name = await this.uiSelectTrace();
+            }
+            else {
+                name = element.label;
             }
 
             // If user did exit the selection abort request
@@ -210,6 +226,13 @@ export class CombinantorialTestingFeature implements StaticFeature {
             }
             resolve(res)
         });
+    }
+    
+
+    private setButtonsAndContext(){
+        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );
+        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-filter-button', true );
+        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-set-execute-filter-button', true );
     }
 }
 
