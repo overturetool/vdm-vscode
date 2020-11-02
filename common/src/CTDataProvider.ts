@@ -58,7 +58,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
             if(i % this._groupSize == 0)
             {
                 groupIterator++;
-                testgroupes.push(new CTElement("test group", treeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1), traceElement));
+                testgroupes.push(new CTElement("test group", CTtreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1), traceElement));
             }
             testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), CTtreeItemType.Test, TreeItemCollapsibleState.None, "n/a", traceElement));
         }

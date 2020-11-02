@@ -291,7 +291,7 @@ class CTTreeView {
     }
 
     onDidExpandElement(e : CTElement){
-        if (e.type == treeItemType.Trace){
+        if (e.type == CTtreeItemType.Trace){
             // TODO Load tests from file and 
 
             if (e.getChildren().length < 1){
@@ -331,7 +331,7 @@ class CTTreeView {
     }
 
     private execute(e: CTElement, filter: boolean){
-        if (e.type == treeItemType.TestGroup){
+        if (e.type == CTtreeItemType.TestGroup){
             // Find range from group description
             let strRange : string[] = e.description.toString().split('-');
             let range : NumberRange = {
@@ -342,7 +342,7 @@ class CTTreeView {
             // Request execute with range
             this._ctFeature.requestExecute(e.getParent().label, filter, range)
         }
-        else if (e.type == treeItemType.Trace){
+        else if (e.type == CTtreeItemType.Trace){
             // Request execute
             this._ctFeature.requestExecute(e.label, filter)
         }
