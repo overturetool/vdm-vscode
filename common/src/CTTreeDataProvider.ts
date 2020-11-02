@@ -145,6 +145,10 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         this._onDidChangeTreeData.fire(null);
     }
 
+    public getSymbols(): CTElement[]{
+        return this._symbols;
+    }
+
     public clearOutline()
     {
         this._symbols = [];

@@ -3,7 +3,7 @@ import { CTResultPair } from "./protocol.lspx";
 
 export class CTResultTreeDataProvider implements TreeDataProvider<ResultElement> {
 
-    private _resultPairs: CTResultPair[] = [];
+    private _testSequenceResults: CTResultPair[] = [];
 
     private _onDidChangeTreeData: EventEmitter<ResultElement | undefined> = new EventEmitter<ResultElement | undefined>();
     onDidChangeTreeData: Event<ResultElement> = this._onDidChangeTreeData.event;
@@ -16,27 +16,27 @@ export class CTResultTreeDataProvider implements TreeDataProvider<ResultElement>
         if(element)
             return [];
         
-        return this.convertToResultElements(this._resultPairs);
+        return this.convertToResultElements(this._testSequenceResults);
     }
 
     private convertToResultElements(resultPairs: CTResultPair[]): ResultElement[]{
         return resultPairs.map(rs => new ResultElement(rs.case, rs.result));
     }
 
-    public getResultPairs(){
-        return this._resultPairs;
+    public getTestSequenceResults(){
+        return this._testSequenceResults;
     }
 
-    public setResultPairs(resultPairs: CTResultPair[]){
+    public setTestSequenceResults(resultPairs: CTResultPair[]){
         if(!resultPairs)
             return;
 
-        this._resultPairs = resultPairs;
+        this._testSequenceResults = resultPairs;
         this._onDidChangeTreeData.fire(null);
     }
 }
 
-export class ResultElement extends TreeItem {
+class ResultElement extends TreeItem {
 
     constructor(
     public readonly label: string,
