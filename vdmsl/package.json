@@ -44,7 +44,7 @@
           "when": "vdm-ct-show-view == true"
         },
         {
-          "id": "testResultView",
+          "id": "ctResultView",
           "name": "Results",
           "when": "vdm-ct-show-view == true"
         }
@@ -104,12 +104,23 @@
         "group": "inline@2"
       },
       {
+        "command": "extension.goToTrace",
+        "when": "viewItem == trace",
+        "group": "inline@3"
+      },
+      {
         "command": "extension.ctSendToInterpreter",
         "when": "viewItem == test",
         "group": "inline@0"
       }
     ],
     "commands": [
+      {
+        "command": "extension.goToTrace",
+        "title": "Go to trace location in specification",
+        "category": "VDM",
+        "icon": "$(go-to-file)"
+      },
       {
         "command": "extension.runPOG",
         "title": "Run Proof Obligation Generation",

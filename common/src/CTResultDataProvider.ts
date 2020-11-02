@@ -1,26 +1,26 @@
 import { Event, EventEmitter, ProviderResult, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { CTResultPair } from "./protocol.lspx";
 
-export class CTResultTreeDataProvider implements TreeDataProvider<ResultElement> {
+export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 
     private _testSequenceResults: CTResultPair[] = [];
 
-    private _onDidChangeTreeData: EventEmitter<ResultElement | undefined> = new EventEmitter<ResultElement | undefined>();
-    onDidChangeTreeData: Event<ResultElement> = this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: EventEmitter<CTResultElement | undefined> = new EventEmitter<CTResultElement | undefined>();
+    onDidChangeTreeData: Event<CTResultElement> = this._onDidChangeTreeData.event;
 
-    getTreeItem(element: ResultElement): TreeItem | Thenable<TreeItem> {
+    getTreeItem(element: CTResultElement): TreeItem | Thenable<TreeItem> {
         return element;
     }
 
-    getChildren(element?: ResultElement): ProviderResult<ResultElement[]> {
+    getChildren(element?: CTResultElement): ProviderResult<CTResultElement[]> {
         if(element)
             return [];
         
         return this.convertToResultElements(this._testSequenceResults);
     }
 
-    private convertToResultElements(resultPairs: CTResultPair[]): ResultElement[]{
-        return resultPairs.map(rs => new ResultElement(rs.case, rs.result));
+    private convertToResultElements(resultPairs: CTResultPair[]): CTResultElement[]{
+        return resultPairs.map(rs => new CTResultElement(rs.case, rs.result));
     }
 
     public getTestSequenceResults(){
@@ -36,7 +36,7 @@ export class CTResultTreeDataProvider implements TreeDataProvider<ResultElement>
     }
 }
 
-class ResultElement extends TreeItem {
+export class CTResultElement extends TreeItem {
 
     constructor(
     public readonly label: string,

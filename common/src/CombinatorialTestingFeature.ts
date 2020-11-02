@@ -3,18 +3,18 @@ import * as vscode from 'vscode';
 import * as Util from "./Util"
 import { commands, Disposable, ExtensionContext, Uri, window as Window } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
-import { CTDataProvider, CTElement, treeItemType } from "./CTTreeDataProvider";
+import { CTDataProvider, CTElement, treeItemType } from "./CTDataProvider";
 
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import { CTResultTreeDataProvider } from './CTResultTreeDataProvider';
+import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
     private _context: ExtensionContext;
     private _ctDataprovider: CTDataProvider;
     private _ctTreeView : CTTreeView;
-    private _ctResultDataprovider: CTResultTreeDataProvider;
+    private _ctResultDataprovider: CTResultDataProvider;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
@@ -33,7 +33,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         if (capabilities?.experimental?.combinatorialTestProvider) { 
             // Register data provider and view
             this._ctDataprovider = new CTDataProvider();
-            this._ctResultDataprovider = new CTResultTreeDataProvider();
+            this._ctResultDataprovider = new CTResultDataProvider();
             this._ctTreeView = new CTTreeView(this, this._context, this._ctDataprovider, this._ctResultDataprovider, true);
 
             // Set filter
@@ -161,37 +161,46 @@ export interface CTFilterHandler {
 }
 
 class CTTreeView {
-    private _view: vscode.TreeView<CTElement>;
+    private _testView: vscode.TreeView<CTElement>;
+    private _resultView: vscode.TreeView<CTResultElement>;
     public currentTraceName: string;
+    private _traces: CTTrace[] = [];
     private _testResults = new Map<string, testSequenceResults[]>(); // Maps a trace label to test results of a test sequence
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
         private _context:ExtensionContext, 
-        private _provider: CTDataProvider, 
-        private readonly _resultProvider: CTResultTreeDataProvider, 
+        private _testProvider: CTDataProvider, 
+        private readonly _resultProvider: CTResultDataProvider, 
         canFilter: boolean = false
         ){
 
-        // Create view
-        let options : vscode.TreeViewOptions<CTElement> = {
-            treeDataProvider: this._provider, 
+        // Create test view
+        let testview_options : vscode.TreeViewOptions<CTElement> = {
+            treeDataProvider: this._testProvider, 
             showCollapseAll: true
         }
-        this._view = Window.createTreeView('ctView', options)
-        this._context.subscriptions.push(this._view);
+        this._testView = Window.createTreeView('ctView', testview_options)
+        this._context.subscriptions.push(this._testView);
+
+        // Create results view
+        let resultview_options : vscode.TreeViewOptions<CTResultElement> = {
+            treeDataProvider: this._resultProvider, 
+            showCollapseAll: true
+        }
+        this._resultView = Window.createTreeView('ctResultView', resultview_options)
+        this._context.subscriptions.push(this._resultView);
 
         // Register view behavior
-        this._context.subscriptions.push(this._view.onDidExpandElement(e => this.onDidExpandElement(e.element)));
-        this._context.subscriptions.push(this._view.onDidCollapseElement(e => this.onDidCollapseElement(e.element)));
-        this._context.subscriptions.push(this._view.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
+        this._context.subscriptions.push(this._testView.onDidExpandElement(e => this.onDidExpandElement(e.element)));
+        this._context.subscriptions.push(this._testView.onDidCollapseElement(e => this.onDidCollapseElement(e.element)));
+        this._context.subscriptions.push(this._testView.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
 
         // Set button behavior
         this.setButtonsAndContext(canFilter);
 
         // Show view
         vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );
-
     }
 
     public setTestResults(traceName: string, testCases: CTTestCase[]){
@@ -215,6 +224,10 @@ class CTTreeView {
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctViewTreeFilter",      ()  => this.ctViewTreeFilter());
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
+        this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
+    }
+    ctGoToTrace(e:any): any {
+        throw new Error('Method not implemented.');
     }
     ctFilteredExecute(e: any): any {
         throw new Error('Method not implemented.');
@@ -262,12 +275,12 @@ class CTTreeView {
             return;
 
         // Set and show the test sequence in the test view
-        this._resultProvider.setTestSequenceResults(this._testResults.get(this.currentTraceName).find(rs => rs.testId == e.label).resultPair);
+        this._resultProvider.setTestSequenceResults(this._testResults.get(e.getParent().label).find(rs => rs.testId == e.label).resultPair);
     }
 
     async selectTraceName() : Promise<string> {
         return new Promise<string>(async resolve => {
-            let traces = this._provider.getTraceNames();
+            let traces = this._testProvider.getTraceNames();
             let res : string;
             if (traces.length < 1)
                 Window.showInformationMessage("Request failed: No traces available")
