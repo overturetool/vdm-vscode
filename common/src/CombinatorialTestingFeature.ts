@@ -12,8 +12,6 @@ import { CTResultTreeDataProvider } from './CTResultTreeDataProvider';
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
     private _context: ExtensionContext;
-    private _runCTDisp: Disposable;
-    private _lastUri: Uri;
     private _ctDataprovider: CTDataProvider;
     private _ctTreeView : CTTreeView;
     private _ctResultDataprovider: CTResultTreeDataProvider;
@@ -33,53 +31,15 @@ export class CombinantorialTestingFeature implements StaticFeature {
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
         if (capabilities?.experimental?.combinatorialTestProvider) { 
-            this.setButtonsAndContext()
-
             // Register data provider and view
             this._ctDataprovider = new CTDataProvider();
             this._ctResultDataprovider = new CTResultTreeDataProvider();
-            this._ctTreeView = new CTTreeView(this._context, this._ctDataprovider, this._ctResultDataprovider);
+            this._ctTreeView = new CTTreeView(this, this._context, this._ctDataprovider, this._ctResultDataprovider, true);
 
-            // TODO Remove
-            this.registerCommand('extension.saveCT', () => {
-                let case1 : CTResultPair = {case: "seq1", result: "1"}
-                let case2 : CTResultPair = {case: "seq2", result: "2"}
-                let case3 : CTResultPair = {case: "seq3", result: "3"}
-                let case4 : CTResultPair = {case: "seq4", result: "4"}
-        
-                let res1: CTTestCase = {id: 1, verdict: VerdictKind.Passed, sequence: [case1,case2]}
-                let res2: CTTestCase = {id: 2, verdict: VerdictKind.Failed, sequence: [case3]}
-                let res3: CTTestCase = {id: 3, verdict: VerdictKind.Filtered, sequence: [case4]}
-                
-                let loc1: Location = {uri: "uri/location/1", range: Range.create(Position.create(1,0),Position.create(1,1))}
-                let loc2: Location = {uri: "uri/location/2", range: Range.create(Position.create(2,0),Position.create(2,1))}
-        
-                let trace1: CTTrace = {name: "trace1", verdict: VerdictKind.Passed, location: loc1}
-                let trace2: CTTrace = {name: "trace2", verdict: VerdictKind.Failed, location: loc2}
-        
-                let ctsym = {name: "classA", traces:[trace1, trace2]}
-                
-                this.saveCT(ctsym, vscode.workspace?.workspaceFolders[0].uri)
-                
-            });
+            // Set filter
+            if (this._filterHandler)
+                this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
 
-            // TODO Remove
-            let filepath = Uri.joinPath( vscode.workspace?.workspaceFolders[0].uri, ".generated", "Combinatorial_Testing", "classA"+".json").fsPath;
-            this.registerCommand('extension.loadCT', () => this.loadCT(filepath));
-        
-        	if(this._filterHandler)
-            {
-                this.registerCommand('extension.setCTFilter', () => this._filterHandler.setCTFilter());
-                this.registerCommand("extension.filteredCTexecution", () => {this.requestExecute("test", true)}); //TODO how do we pass the correct trace name here?
-            }
-
-            this.registerCommand("extension.getCTOutline",          () => this.requestTraces());
-            this.registerCommand("extension.generateCTsForTrace",   (e) => this.requestGenerate(e));
-            this.registerCommand("extension.executeTrace",    () => this.requestExecute("DEFAULT`Test2")); //TODO how do we pass the correct trace name here?
-
-            this.registerCommand("extension.sendToInterpreter",     () => this.sendToInterpreter("test")); //TODO how do we pass the correct test here?
-            this.registerCommand("extension.filterPassedCTs",       () => this._ctDataprovider.filterPassedTests());
-            this.registerCommand("extension.filterInconclusiveCTs", () => this._ctDataprovider.filterInconclusiveTests());
         }
     }
 
@@ -88,6 +48,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
         this._context.subscriptions.push(disposable);
         return disposable;
     };
+
+    
 
     private saveCT(ctsym: CTSymbol, saveUri: Uri) { // FIXME This needs to be changed, as the Trace type no longer include the TestCase's
         // Get workspace folder from save uri
@@ -125,11 +87,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         })
     }
 
-    private async sendToInterpreter(test?){
-
-    }
-
-    private async requestTraces(uri?: Uri){
+    public async requestTraces(uri?: Uri){
         Window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
 
         try {
@@ -149,28 +107,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
     }
 
-    private async requestGenerate(element?: CTElement){
-        // If there is an element but it's not a trace, abort.
-        if (element != undefined && element.type != treeItemType.Trace){
-            return;
-        }
-
+    public async requestGenerate(name: string){
         Window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
-        let name : string;
 
         try {
-            // Prompt user selection of trace if non was specified
-            if (element == undefined){
-                name = await this.uiSelectTrace();
-            }
-            else {
-                name = element.label;
-            }
-
-            // If user did exit the selection abort request
-            if (name == undefined)
-                return;
-
             // Setup message parameters
             let params: CTGenerateParameters = {name: name};
 
@@ -186,7 +126,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
     }
 
-    private async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
+    public async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
         Window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
 
         try {
@@ -213,25 +153,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     } 
-
-    private async uiSelectTrace() : Promise<string> {
-        return new Promise<string>(async resolve => {
-            let traces = this._ctDataprovider.getTraceNames();
-            let res : string;
-            if (traces.length < 1)
-                Window.showInformationMessage("Request failed: No traces available")
-            else {
-                await Window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
-            }
-            resolve(res)
-        });
-    }
-
-    private setButtonsAndContext(){
-        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );
-        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-filter-button', true );
-        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-set-execute-filter-button', true );
-    }
 }
 
 export interface CTFilterHandler {
@@ -240,19 +161,21 @@ export interface CTFilterHandler {
 }
 
 class CTTreeView {
-    private _context: ExtensionContext;
     private _view: vscode.TreeView<CTElement>;
-    private _testProvider: CTDataProvider;
     public currentTraceName: string;
     private _testResults = new Map<string, testSequenceResults[]>(); // Maps a trace label to test results of a test sequence
 
-    constructor(context:ExtensionContext, testProvider: CTDataProvider, private readonly _resultProvider: CTResultTreeDataProvider){
-        this._context = context;
-        this._testProvider = testProvider;
+    constructor(
+        private _ctFeature: CombinantorialTestingFeature, 
+        private _context:ExtensionContext, 
+        private _provider: CTDataProvider, 
+        private readonly _resultProvider: CTResultTreeDataProvider, 
+        canFilter: boolean = false
+        ){
 
         // Create view
         let options : vscode.TreeViewOptions<CTElement> = {
-            treeDataProvider: this._testProvider, 
+            treeDataProvider: this._provider, 
             showCollapseAll: true
         }
         this._view = Window.createTreeView('ctView', options)
@@ -260,22 +183,68 @@ class CTTreeView {
 
         // Register view behavior
         this._context.subscriptions.push(this._view.onDidExpandElement(e => this.onDidExpandElement(e.element)));
+        this._context.subscriptions.push(this._view.onDidCollapseElement(e => this.onDidCollapseElement(e.element)));
         this._context.subscriptions.push(this._view.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
 
+        // Set button behavior
+        this.setButtonsAndContext(canFilter);
 
-        // Display buttons
-        this.setButtonsAndContext();
+        // Show view
+        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );
+
     }
 
     public setTestResults(traceName: string, testCases: CTTestCase[]){
         this._testResults.set(traceName, testCases.map(tc => {return {testId: tc.id+"", resultPair: tc.sequence};}))
     }
 
-    setButtonsAndContext(){
+    setButtonsAndContext(canFilter: boolean){
+        ///// Show options ///////
+        if (canFilter){
+            vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-filter-button', true );
+            vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-set-execute-filter-button', true );
+        }
 
+        ///// Command registration //////
+        if(canFilter) {
+            this.registerCommand("extension.ctFilteredExecute", (e) => this.ctFilteredExecute(e));
+        }
+        this.registerCommand("extension.ctRebuildOutline",      (e) => this.ctRebuildOutline(e));
+        this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
+        this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
+        this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
+        this.registerCommand("extension.ctViewTreeFilter",      ()  => this.ctViewTreeFilter());
+        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
+    }
+    ctFilteredExecute(e: any): any {
+        throw new Error('Method not implemented.');
+    }
+    ctRebuildOutline(e: any): any {
+        this._ctFeature.requestTraces();
+    }
+    ctFullExecute(): any {
+        throw new Error('Method not implemented.');
+    }
+    ctExecute(e: any): any {
+        throw new Error('Method not implemented.');
+    }
+    ctGenerate(e: any): any {
+        throw new Error('Method not implemented.');
+    }
+    ctViewTreeFilter(): any {
+        throw new Error('Method not implemented.');
+    }
+    ctSendToInterpreter(e: any): any {
+        throw new Error('Method not implemented.');
     }
 
     onDidExpandElement(e : CTElement){
+        if (e.type == treeItemType.CTSymbol){
+            // TODO Load traces from file if possible
+        }
+        else if (e.type == treeItemType.Trace){
+        }
+
         
     }
 
@@ -295,6 +264,25 @@ class CTTreeView {
         // Set and show the test sequence in the test view
         this._resultProvider.setTestSequenceResults(this._testResults.get(this.currentTraceName).find(rs => rs.testId == e.label).resultPair);
     }
+
+    async selectTraceName() : Promise<string> {
+        return new Promise<string>(async resolve => {
+            let traces = this._provider.getTraceNames();
+            let res : string;
+            if (traces.length < 1)
+                Window.showInformationMessage("Request failed: No traces available")
+            else {
+                await Window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
+            }
+            resolve(res)
+        });
+    }
+
+    private registerCommand = (command: string, callback: (...args: any[]) => any) => {
+        let disposable = commands.registerCommand(command, callback)
+        this._context.subscriptions.push(disposable);
+        return disposable;
+    };
 }
 
 interface testSequenceResults{
