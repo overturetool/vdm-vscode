@@ -38,14 +38,20 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
             portfinder.getPortPromise()
                 .then((dapPort) => {
                     let JVMArguments = workspace.getConfiguration(vdmDialect + '-lsp').JVMArguments;
-                    let args : string[] = [
-                        JVMArguments,
+                    let args : string[] = [];
+
+                    // Workaround for server crashing on JVMAArguments..
+                    if(JVMArguments != "")
+                    {
+                        args.push(JVMArguments);
+                    }
+                    args = args.concat([
                         '-Dlog.filename=' + serverLogFile,
                         '-cp', vdmjPath + path.delimiter + lspServerPath,
                         serverMainClass,
                         '-' + vdmDialect,
                         '-dap', dapPort.toString()
-                    ]
+                    ]);
 
                     // Start the LSP server
                     let javaPath = Util.findJavaExecutable('java');

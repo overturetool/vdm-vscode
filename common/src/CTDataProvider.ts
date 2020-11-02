@@ -1,3 +1,4 @@
+import { trace } from 'console';
 import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { CTSymbol, CTTestCase, CTTrace, VerdictKind } from './protocol.lspx';
 
@@ -59,7 +60,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
                 groupIterator++;
                 testgroupes.push(new CTElement("test group", treeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1)));
             }
-            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), treeItemType.Test, TreeItemCollapsibleState.None, "n/a"));
+            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), treeItemType.Test, TreeItemCollapsibleState.None, "n/a", traceElement));
         }
 
         // Match desciption of group to number of tests for last group.
@@ -106,7 +107,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         if(!traceElement)
             return;
 
-        // Go through test groupes and update individual test verdicts
+        // Iterate over test groupes and update individual test verdicts
         let groupes = traceElement.getChildren();
         tests.forEach(testCase => {
             for(let groupIter = 0; groupIter < groupes.length; groupIter++)
@@ -126,7 +127,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
 
     public updateOutline(ctSymbols: CTSymbol[])
     {
-        // Go through each ctsymbol and its traces and convert to CTElement types and replace existing items or add as needed.
+        // Iterate over each ctsymbols traces and convert to CTElement types and replace existing items or add as needed.
         ctSymbols.forEach(ctSymbol => {
             let index = this._symbols.findIndex(s => s.label === ctSymbol.name);
                 
@@ -136,7 +137,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
             else
             {
                 let ctElement = new CTElement(ctSymbol.name, treeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed); 
-                ctElement.setChildren(ctSymbol.traces.map(t => new CTElement(t.name, treeItemType.Trace, TreeItemCollapsibleState.Collapsed)))  
+                ctElement.setChildren(ctSymbol.traces.map(t => new CTElement(t.name, treeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", ctElement)))  
                 this._symbols.push(ctElement);
             }        
         });
@@ -167,6 +168,8 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
             return Promise.resolve(this._symbols);
         
         let elementsToReturn = element.getChildren();
+
+        // Filter passed and/or inconclusive tests if true
         if(this._filterPassedTests)
             elementsToReturn = elementsToReturn.filter(e => e.type != treeItemType.Test || e.description != VerdictKind[VerdictKind.Passed]);
         if(this._filterInconclusiveTests)
@@ -195,13 +198,12 @@ export enum treeItemType
 export class CTElement extends TreeItem {
     
     private _children: CTElement[] = [];
-
     constructor(
     public readonly label: string,
     public readonly type: treeItemType,
     public readonly collapsibleState: TreeItemCollapsibleState,
-    description = ""
-    ) {
+    description = "",
+    private readonly _parent: CTElement = undefined ) {
         super(label, collapsibleState);
         super.contextValue = type;
         if(description === "")
@@ -210,18 +212,19 @@ export class CTElement extends TreeItem {
             super.description = description;
     }
 
-    public getChildren(): CTElement[]
-    {
+    public getParent(): CTElement{
+        return this._parent;
+    }
+
+    public getChildren(): CTElement[]{
         return this._children
     }
 
-    public setChildren(children: CTElement[])
-    {
+    public setChildren(children: CTElement[]){
         this._children = children;
     }
 
-    public updateChildren(children: CTElement[])
-    {
+    public updateChildren(children: CTElement[]){
         children.forEach(newChild => {
             let index = this._children.findIndex(oldChild => oldChild.label === newChild.label); 
             if (index > -1)
@@ -231,8 +234,7 @@ export class CTElement extends TreeItem {
         });
     }
 
-    public removeChildren(labels: string[])
-    {
+    public removeChildren(labels: string[]){
         labels.forEach(label => {
             let index = this._children.findIndex(child => child.label === label); 
             if (index > -1)
