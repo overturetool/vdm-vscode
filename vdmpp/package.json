@@ -65,7 +65,7 @@
         },
         "vdmpp-lsp.JVMArguments": {
           "type": "string",
-          "default": "-Xmx2g",
+          "default": "",
           "description": "JVM arguments used when launching the server."
         },
         "vdmpp-lsp.experimentalServer": {
