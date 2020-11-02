@@ -65,7 +65,7 @@
         "command": "extension.ctViewTreeFilter",
         "when": "view =~ /ctView/",
         "group": "navigation@2"
-      }        
+      }
     ],
     "view/item/context": [
       {
@@ -123,31 +123,31 @@
         "icon": "$(gear)"
       },
       {
-        "command":  "extension.ctRebuildOutline",
+        "command": "extension.ctRebuildOutline",
         "title": "Rebuild Trace Outline",
         "category": "VDM",
         "icon": "$(refresh)"
       },
       {
-        "command":  "extension.ctFullExecute",
+        "command": "extension.ctFullExecute",
         "title": "Execute All Tests",
         "category": "VDM",
         "icon": "$(run-all)"
       },
       {
-        "command":  "extension.ctExecute",
+        "command": "extension.ctExecute",
         "title": "Full Evaluation",
         "category": "VDM",
         "icon": "$(run)"
       },
       {
-        "command":  "extension.ctFilteredExecute",
+        "command": "extension.ctFilteredExecute",
         "title": "Filtered Evaluation",
         "category": "VDM",
         "icon": "$(filter)"
       },
       {
-        "command":  "extension.ctGenerate",
+        "command": "extension.ctGenerate",
         "title": "Generate Tests",
         "category": "VDM",
         "icon": "$(refresh)"
@@ -157,7 +157,7 @@
         "title": "Filter Tree",
         "category": "VDM",
         "icon": "$(filter)"
-      }, 
+      },
       {
         "command": "extension.ctSendToInterpreter",
         "title": "Send test to interpreter",
@@ -180,30 +180,29 @@
           "when": "false"
         },
         {
-          "command":  "extension.ctFullExecute",
+          "command": "extension.ctFullExecute",
           "when": "false"
         },
         {
-          "command":  "extension.ctExecute",
+          "command": "extension.ctExecute",
           "when": "false"
         },
         {
-          "command":  "extension.ctFilteredExecute",
+          "command": "extension.ctFilteredExecute",
           "when": "false"
         },
         {
-          "command":  "extension.ctGenerate",
+          "command": "extension.ctGenerate",
           "when": "false"
         },
         {
-          "command":  "extension.ctViewTreeFilter",
+          "command": "extension.ctViewTreeFilter",
           "when": "false"
         },
         {
-          "command":  "extension.ctSendToInterpreter",
+          "command": "extension.ctSendToInterpreter",
           "when": "false"
         }
-        
       ],
       "explorer/context": [
         {
