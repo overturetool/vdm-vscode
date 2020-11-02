@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
-import { commands, Disposable, ExtensionContext, Uri, window as Window } from "vscode";
+import { commands, Disposable, ExtensionContext, Uri, window, window as Window, workspace } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
 import { CTDataProvider, CTElement, treeItemType } from "./CTDataProvider";
-
+import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
@@ -226,8 +226,17 @@ class CTTreeView {
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
-    ctGoToTrace(e:any): any {
-        throw new Error('Method not implemented.');
+    async ctGoToTrace(e:any): Promise<any> {
+        let trace: CTTrace = this._traces.find(t => t.name = e.label);
+
+        // Find path of po with id
+        let path = Uri.parse(trace.location.uri.toString()).path;
+
+        // Open the specification file with the symbol responsible for the po
+        let doc = await workspace.openTextDocument(path);
+        
+        // Show the file
+        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
     }
     ctFilteredExecute(e: any): any {
         throw new Error('Method not implemented.');

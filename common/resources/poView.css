@@ -39,7 +39,7 @@ th {
     font-size: 1.2rem;
 }
 
-.subrow, button, .clickableheadercell {
+.subrow, .subrowcell, button, .clickableheadercell {
     cursor: pointer;
 }
 
