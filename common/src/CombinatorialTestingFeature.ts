@@ -14,7 +14,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _runCTDisp: Disposable;
     private _lastUri: Uri;
     private _ctDataprovider: CTDataProvider;
-    private _ctTreeView : vscode.TreeView<CTElement>;
+    private _ctTreeView : CTTreeView;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
@@ -33,12 +33,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
         if (capabilities?.experimental?.combinatorialTestProvider) { 
             this.setButtonsAndContext()
 
-            // Register data provider for CT View
+            // Register data provider and view
             this._ctDataprovider = new CTDataProvider();
-            this._ctTreeView = Window.createTreeView('ctView', {treeDataProvider: this._ctDataprovider})
-            this._context.subscriptions.push(this._ctTreeView);
-
-            this._context.subscriptions.push( this._ctTreeView.onDidExpandElement(e => this.requestGenerate(e.element)));
+            this._ctTreeView = new CTTreeView(this._context, this._ctDataprovider)
 
 
             // TODO Remove
@@ -237,4 +234,47 @@ export class CombinantorialTestingFeature implements StaticFeature {
 export interface CTFilterHandler {
     setCTFilter() : void;
     getCTFilter() : Promise<CTFilterOption[]>;
+}
+
+class CTTreeView {
+    private _context: ExtensionContext;
+    private _view: vscode.TreeView<CTElement>;
+    private _provider: CTDataProvider;
+
+    constructor(context:ExtensionContext, provider: CTDataProvider){
+        this._context = context;
+        this._provider = provider;
+
+        // Create view
+        let options : vscode.TreeViewOptions<CTElement> = {
+            treeDataProvider: this._provider, 
+            showCollapseAll: true
+        }
+        this._view = Window.createTreeView('ctView', options)
+        this._context.subscriptions.push(this._view);
+
+        // Register view behavior
+        this._context.subscriptions.push(this._view.onDidExpandElement(e => this.onDidExpandElement(e.element)));
+        this._context.subscriptions.push(this._view.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
+
+
+        // Display buttons
+        this.setButtonsAndContext();
+    }
+
+    setButtonsAndContext(){
+
+    }
+
+    onDidExpandElement(e : CTElement){
+        
+    }
+
+    onDidCollapseElement(e : CTElement){
+        // Currently no intended behavior
+    }
+
+    onDidChangeSelection(e : CTElement){
+        // TODO For test case, view the test sequence
+    }
 }
