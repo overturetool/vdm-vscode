@@ -1,14 +1,12 @@
-import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
-import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
+import { commands, Disposable, ExtensionContext, Uri, window as Window } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature} from "vscode-languageclient";
 import { CTDataProvider, CTElement, treeItemType } from "./CTTreeDataProvider";
 
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
@@ -16,7 +14,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _runCTDisp: Disposable;
     private _lastUri: Uri;
     private _ctDataprovider: CTDataProvider;
-    private _ctTreeView : vscode.TreeView<CTElement>;
+    private _ctTreeView : CTTreeView;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
@@ -35,12 +33,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
         if (capabilities?.experimental?.combinatorialTestProvider) { 
             this.setButtonsAndContext()
 
-            // Register data provider for CT View
+            // Register data provider and view
             this._ctDataprovider = new CTDataProvider();
-            this._ctTreeView = window.createTreeView('ctView', {treeDataProvider: this._ctDataprovider})
-            this._context.subscriptions.push(this._ctTreeView);
-
-            this._context.subscriptions.push(this._ctTreeView.onDidExpandElement(e => this.requestGenerate(e.element)));
+            this._ctTreeView = new CTTreeView(this._context, this._ctDataprovider)
 
             // TODO Remove
             this.registerCommand('extension.saveCT', () => {
@@ -132,7 +127,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     private async requestTraces(uri?: Uri){
-        window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
+        Window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
 
         try {
             // Setup message parameters
@@ -147,7 +142,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.updateOutline(symbols);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
+            Window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
         }
     }
 
@@ -157,7 +152,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             return;
         }
 
-        window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
+        Window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
         let name : string;
 
         try {
@@ -184,12 +179,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.setNumberOfTests(res.numberOfTests, name);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     }
 
     private async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
-        window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
+        Window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
 
         try {
             // Setup message parameters
@@ -210,7 +205,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.updateTestVerdicts(tests, name);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     } 
 
@@ -219,9 +214,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
             let traces = this._ctDataprovider.getTraceNames();
             let res : string;
             if (traces.length < 1)
-                window.showInformationMessage("Request failed: No traces available")
+                Window.showInformationMessage("Request failed: No traces available")
             else {
-                await window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
+                await Window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
             }
             resolve(res)
         });
@@ -237,4 +232,47 @@ export class CombinantorialTestingFeature implements StaticFeature {
 export interface CTFilterHandler {
     setCTFilter() : void;
     getCTFilter() : Promise<CTFilterOption[]>;
+}
+
+class CTTreeView {
+    private _context: ExtensionContext;
+    private _view: vscode.TreeView<CTElement>;
+    private _provider: CTDataProvider;
+
+    constructor(context:ExtensionContext, provider: CTDataProvider){
+        this._context = context;
+        this._provider = provider;
+
+        // Create view
+        let options : vscode.TreeViewOptions<CTElement> = {
+            treeDataProvider: this._provider, 
+            showCollapseAll: true
+        }
+        this._view = Window.createTreeView('ctView', options)
+        this._context.subscriptions.push(this._view);
+
+        // Register view behavior
+        this._context.subscriptions.push(this._view.onDidExpandElement(e => this.onDidExpandElement(e.element)));
+        this._context.subscriptions.push(this._view.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
+
+
+        // Display buttons
+        this.setButtonsAndContext();
+    }
+
+    setButtonsAndContext(){
+
+    }
+
+    onDidExpandElement(e : CTElement){
+        
+    }
+
+    onDidCollapseElement(e : CTElement){
+        // Currently no intended behavior
+    }
+
+    onDidChangeSelection(e : CTElement){
+        // TODO For test case, view the test sequence
+    }
 }

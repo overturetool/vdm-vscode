@@ -11,8 +11,10 @@ export class SpecificationLanguageClient extends LanguageClient {
         super(id, name, serverOptions, clientOptions, forceDebug);
 
         this._context = context
-
-        //this.registerFeature(new ProofObligationGenerationFeature(this, this._context));
-        this.registerFeatures([new ProofObligationGenerationFeature(this,this._context), new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler())]);
+        
+        this.registerFeatures([
+            new ProofObligationGenerationFeature(this,this._context), 
+            new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler())
+        ]);
     }
 }
