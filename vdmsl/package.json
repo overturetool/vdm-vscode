@@ -20,95 +20,6 @@
   ],
   "main": "./dist/extension",
   "contributes": {
-    "viewsWelcome": [
-      {
-        "view": "ctView",
-        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
-      }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "combinatorialTesting",
-          "title": "Combinatorial Testing",
-          "icon": "media/book.svg",
-          "when": "vdm-ct-show-view == true"
-        }
-      ]
-    },
-    "views": {
-      "combinatorialTesting": [
-        {
-          "id": "ctView",
-          "name": "Tests",
-          "when": "vdm-ct-show-view == true"
-        },
-        {
-          "id": "testResultView",
-          "name": "Results",
-          "when": "vdm-ct-show-view == true"
-        }
-      ]
-    },
-    "view/title": [
-      {
-        "command": "extension.ctFullExecute",
-        "when": "view =~ /ctView/",
-        "group": "navigation@0"
-      },
-      {
-        "command": "extension.ctSetFilter",
-        "when": "view =~ /ctView/ && vdm-ct-show-set-execute-filter-button == true",
-        "group": "navigation@1"
-      },
-      {
-        "command": "extension.ctViewTreeFilter",
-        "when": "view =~ /ctView/",
-        "group": "navigation@2"
-      }        
-    ],
-    "view/item/context": [
-      {
-        "command": "extension.ctExecute",
-        "when": "viewItem == trace",
-        "group": "ctView@0"
-      },
-      {
-        "command": "extension.ctFilteredExecute",
-        "when": "viewItem == trace",
-        "group": "ctView@1"
-      },
-      {
-        "command": "extension.ctGenerate",
-        "when": "viewItem == trace",
-        "group": "ctView@2"
-      },
-      {
-        "command": "extension.ctSendToInterpreter",
-        "when": "viewItem == test",
-        "group": "ctView@0"
-      },
-      {
-        "command": "extension.ctExecute",
-        "when": "viewItem == trace",
-        "group": "inline@0"
-      },
-      {
-        "command": "extension.ctFilteredExecute",
-        "when": "viewItem == trace",
-        "group": "inline@1"
-      },
-      {
-        "command": "extension.ctGenerate",
-        "when": "viewItem == trace",
-        "group": "inline@2"
-      },
-      {
-        "command": "extension.ctSendToInterpreter",
-        "when": "viewItem == test",
-        "group": "inline@0"
-      }
-    ],
     "commands": [
       {
         "command": "extension.runPOG",
@@ -165,7 +76,110 @@
         "icon": "$(debug-alt)"
       }
     ],
+    "viewsWelcome": [
+      {
+        "view": "ctView",
+        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "combinatorialTesting",
+          "title": "Combinatorial Testing",
+          "icon": "media/book.svg",
+          "when": "vdm-ct-show-view == true"
+        }
+      ]
+    },
+    "views": {
+      "combinatorialTesting": [
+        {
+          "id": "ctView",
+          "name": "Tests",
+          "when": "vdm-ct-show-view == true"
+        },
+        {
+          "id": "testResultView",
+          "name": "Results",
+          "when": "vdm-ct-show-view == true"
+        }
+      ]
+    },
     "menus": {
+      "view/title": [
+        {
+          "command": "extension.ctFullExecute",
+          "when": "view =~ /ctView/",
+          "group": "navigation@0"
+        },
+        {
+          "command": "extension.ctSetFilter",
+          "when": "view =~ /ctView/ && vdm-ct-show-set-execute-filter-button == true",
+          "group": "navigation@1"
+        },
+        {
+          "command": "extension.ctViewTreeFilter",
+          "when": "view =~ /ctView/",
+          "group": "navigation@2"
+        }        
+      ],
+      "view/item/context": [
+        {
+          "command": "extension.ctExecute",
+          "when": "viewItem == trace",
+          "group": "ctView@0"
+        },
+        {
+          "command": "extension.ctFilteredExecute",
+          "when": "viewItem == trace",
+          "group": "ctView@1"
+        },
+        {
+          "command": "extension.ctGenerate",
+          "when": "viewItem == trace",
+          "group": "ctView@2"
+        },
+        {
+          "command": "extension.ctSendToInterpreter",
+          "when": "viewItem == test",
+          "group": "ctView@0"
+        },
+        {
+          "command": "extension.ctExecute",
+          "when": "viewItem == trace",
+          "group": "inline@0"
+        },
+        {
+          "command": "extension.ctFilteredExecute",
+          "when": "viewItem == trace",
+          "group": "inline@1"
+        },
+        {
+          "command": "extension.ctGenerate",
+          "when": "viewItem == trace",
+          "group": "inline@2"
+        },
+        {
+          "command": "extension.ctSendToInterpreter",
+          "when": "viewItem == test",
+          "group": "inline@0"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceLangId == vdmsl",
+          "command": "extension.runPOG",
+          "group": "verification@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "resourceLangId == vdmsl",
+          "command": "extension.runPOG",
+          "group": "verification@1"
+        }
+      ],
       "commandPalette": [
         {
           "command": "extension.runPOG",
@@ -202,21 +216,6 @@
         {
           "command":  "extension.ctSendToInterpreter",
           "when": "false"
-        }
-        
-      ],
-      "explorer/context": [
-        {
-          "when": "resourceLangId == vdmsl",
-          "command": "extension.runPOG",
-          "group": "verification@1"
-        }
-      ],
-      "editor/context": [
-        {
-          "when": "resourceLangId == vdmsl",
-          "command": "extension.runPOG",
-          "group": "verification@1"
         }
       ]
     },
