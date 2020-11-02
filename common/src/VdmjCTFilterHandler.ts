@@ -4,22 +4,23 @@ import * as vscode from 'vscode'
 
 export class VdmjCTFilterHandler implements CTFilterHandler {
     private _traceReductionTypes = new Map<string, string>([
-        ["R", "Random"],
-        ["NV", "No variables"],
-        ["VN", "Variable names"],
-        ["VV", "Variable value"]
+        ["NONE", "None"],
+        ["RANDOM", "Random"],
+        ["SHAPES_NOVARS", "No variables"],
+        ["SHAPES_VARNAMES", "Variable names"],
+        ["SHAPES_VARVALUES", "Variable value"]
     ]);
     private _traceReductionTypesReverse = new Map<string, string>();
     private _filterKeyTypes = new Map<string, string>([
-        ["reduction", "Trace Reduction Type"],
-        ["seed", "Trace Filtering Seed"],
-        ["limit", "Subset Limitation (%)"]
+        ["trace reduction type", "Trace Reduction Type"],
+        ["trace filtering seed", "Trace Filtering Seed"],
+        ["subset limitation", "Subset Limitation (%)"]
     ]);
     private _filterKeyTypesReverse = new Map<string, string>();
     private _filtersDefault = new Map<string, string | boolean | number>([
-        ["reduction", "R"],
-        ["seed", 999],
-        ["limit", 100]
+        ["trace reduction type", "RANDOM"],
+        ["trace filtering seed", 999],
+        ["subset limitation", 100]
     ]);
     private _filters = new Map<string, string | boolean | number>();
     private _inSetup: boolean = false;
@@ -35,17 +36,14 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         this.showFilterOptions();
     }
 
-    getCTFilter(): Promise<CTFilterOption[]> {
-        return new Promise<CTFilterOption[]>(async (resolve, reject) => {
-            // Wait for setup to be over
-            while (this._inSetup) { }
+    getCTFilter(): CTFilterOption[] {
+        // Wait for setup to be over
+        while (this._inSetup) { }
 
-            // Convert to protocol type
-            let ctFilters: CTFilterOption[] = []
-            this._filters.forEach((v, k) => ctFilters.push({ key: k, value: v }))
-            return ctFilters;
-        })
-
+        // Convert to protocol type
+        let ctFilters: CTFilterOption[] = []
+        this._filters.forEach((v, k) => ctFilters.push({ key: k, value: v }))
+        return (ctFilters);
     }
 
     private resetFilters() {
@@ -54,7 +52,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
 
     private showFilterOptions(): void {
         let showOptions: string[] = [];
-        this._filterKeyTypes.forEach((v, k) => showOptions.push(v + ': ' + (k == "reduction" ? this._traceReductionTypes.get(this._filters.get(k).toString()) : this._filters.get(k))));
+        this._filterKeyTypes.forEach((v, k) => showOptions.push(v + ': ' + (k == "trace reduction type" ? this._traceReductionTypes.get(this._filters.get(k).toString()) : this._filters.get(k))));
         showOptions.push("Reset");
         showOptions.push("OK");
 
@@ -68,11 +66,11 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
                 this.resetFilters()
             else {
                 let filterKey = this._filterKeyTypesReverse.get(res.substring(0, res.indexOf(':')));
-                if (filterKey == "reduction")
+                if (filterKey == "trace reduction type")
                     this.showReduction();
-                else if (filterKey == "seed")
+                else if (filterKey == "trace filtering seed")
                     this.showSeed();
-                else if (filterKey == "limit")
+                else if (filterKey == "subset limitation")
                     this.showLimit();
             }
         })
@@ -87,7 +85,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
 
             for (let [k, v] of this._traceReductionTypes) {
                 if (v == res) {
-                    this._filters.set("reduction", k);
+                    this._filters.set("trace reduction type", k);
                     continue;
                 }
             }
@@ -98,7 +96,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
 
     private showSeed() {
         let inputOptions: vscode.InputBoxOptions = {
-            prompt: "Set " + this._filterKeyTypes.get("seed"),
+            prompt: "Set " + this._filterKeyTypes.get("trace filtering seed"),
             placeHolder: "999",
             // value: "999",
             validateInput: (input) => {
@@ -119,14 +117,14 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             if (res == undefined)
                 return;
 
-            this._filters.set("seed", res);
+            this._filters.set("trace filtering seed", res);
             this.showFilterOptions();
         })
     }
 
     private showLimit() {
         let inputOptions: vscode.InputBoxOptions = {
-            prompt: "Set " + this._filterKeyTypes.get("limit"),
+            prompt: "Set " + this._filterKeyTypes.get("subset limitation"),
             placeHolder: "100",
             // value: "100",
             validateInput: (input) => {
@@ -147,7 +145,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             if (res == undefined)
                 return;
 
-            this._filters.set("limit", res);
+            this._filters.set("subset limitation", res);
             this.showFilterOptions();
         })
     }

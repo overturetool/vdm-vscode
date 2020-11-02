@@ -91,7 +91,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // Setup message parameters
             let params: CTExecuteParameters = {name: name};
             if (filtered){
-                this._filterHandler.setCTFilter();
                 params.filter = await this._filterHandler.getCTFilter();
             }
             if (range)
@@ -115,7 +114,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
 export interface CTFilterHandler {
     setCTFilter() : void;
-    getCTFilter() : Promise<CTFilterOption[]>;
+    getCTFilter() : CTFilterOption[];
 }
 
 class CTTreeView {
@@ -296,7 +295,7 @@ class CTTreeView {
     }
 
     async ctFilteredExecute(e: CTElement): Promise<void>  {
-        throw new Error('Method not implemented.');
+        this.execute(e, true)
     }
 
     async ctRebuildOutline(): Promise<void> {
@@ -323,15 +322,7 @@ class CTTreeView {
     }
 
     async ctExecute(e: CTElement): Promise<void> {
-        if (e.type == CTtreeItemType.TestGroup){
-
-        }
-        else if (e.type == CTtreeItemType.Trace){
-
-        }
-        else {
-            throw new Error("CT Execute called on invalid element")
-        }
+        this.execute(e, false);
     }
 
     async ctGenerate(e: CTElement): Promise<void> {
@@ -354,16 +345,13 @@ class CTTreeView {
     }
 
     onDidExpandElement(e : CTElement){
-        if (e.type == CTtreeItemType.CTSymbol){
-            // TODO Load traces from file if possible
-        }
-        else if (e.type == CTtreeItemType.Trace){
+        if (e.type == CTtreeItemType.Trace){
             // TODO Load tests from file and 
 
             if (e.getChildren().length < 1){
-
+                this.ctGenerate(e);
             }
-        }      
+        }        
     }
 
     onDidCollapseElement(e : CTElement){
@@ -395,6 +383,27 @@ class CTTreeView {
             }
             resolve(res)
         });
+    }
+
+    private execute(e: CTElement, filter: boolean){
+        if (e.type == CTtreeItemType.TestGroup){
+            // Find range from group description
+            let strRange : string[] = e.description.toString().split('-');
+            let range : NumberRange = {
+                start: Number(strRange[0]),
+                end: Number(strRange[1])
+            };
+
+            // Request execute with range
+            this._ctFeature.requestExecute(e.getParent().label, filter, range)
+        }
+        else if (e.type == CTtreeItemType.Trace){
+            // Request execute
+            this._ctFeature.requestExecute(e.label, filter)
+        }
+        else {
+            throw new Error("CT Execute called on invalid element")
+        }
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
