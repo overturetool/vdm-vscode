@@ -40,7 +40,12 @@
       "combinatorialTesting": [
         {
           "id": "ctView",
-          "name": "",
+          "name": "Tests",
+          "when": "vdm-ct-show-view == true"
+        },
+        {
+          "id": "testResultView",
+          "name": "Results",
           "when": "vdm-ct-show-view == true"
         }
       ]

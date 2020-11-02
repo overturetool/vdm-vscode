@@ -2,17 +2,19 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
 import { commands, Disposable, ExtensionContext, Uri, window as Window } from "vscode";
-import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature} from "vscode-languageclient";
+import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
 import { CTDataProvider, CTElement, treeItemType } from "./CTTreeDataProvider";
 
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { CTResultTreeDataProvider } from './CTResultTreeDataProvider';
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
     private _context: ExtensionContext;
     private _ctDataprovider: CTDataProvider;
     private _ctTreeView : CTTreeView;
+    private _ctResultDataprovider: CTResultTreeDataProvider;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
@@ -31,7 +33,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
         if (capabilities?.experimental?.combinatorialTestProvider) { 
             // Register data provider and view
             this._ctDataprovider = new CTDataProvider();
-            this._ctTreeView = new CTTreeView(this, this._context, this._ctDataprovider, (this._filterHandler != undefined));
+            this._ctResultDataprovider = new CTResultTreeDataProvider();
+            this._ctTreeView = new CTTreeView(this, this._context, this._ctDataprovider, this._ctResultDataprovider, true);
 
             // Set filter
             if (this._filterHandler)
@@ -139,7 +142,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             // TODO Add loading information message
+            let trace = this._ctTreeView.currentTraceName;
             const tests = await this._client.sendRequest(CTExecuteRequest.type, params);
+            this._ctTreeView.setTestResults(trace, tests)
             
             // Pass a new test batch to ct data provider to update test verdicts
             this._ctDataprovider.updateTestVerdicts(tests, name);
@@ -156,15 +161,17 @@ export interface CTFilterHandler {
 }
 
 class CTTreeView {
-    private _context: ExtensionContext;
     private _view: vscode.TreeView<CTElement>;
-    private _provider: CTDataProvider;
-    private _ctFeature: CombinantorialTestingFeature; // TODO Maybe do this another way
+    public currentTraceName: string;
+    private _testResults = new Map<string, testSequenceResults[]>(); // Maps a trace label to test results of a test sequence
 
-    constructor(ctFeature: CombinantorialTestingFeature, context:ExtensionContext, provider: CTDataProvider, canFilter: boolean = false){
-        this._ctFeature = ctFeature;
-        this._context = context;
-        this._provider = provider;
+    constructor(
+        private _ctFeature: CombinantorialTestingFeature, 
+        private _context:ExtensionContext, 
+        private _provider: CTDataProvider, 
+        private readonly _resultProvider: CTResultTreeDataProvider, 
+        canFilter: boolean = false
+        ){
 
         // Create view
         let options : vscode.TreeViewOptions<CTElement> = {
@@ -187,6 +194,10 @@ class CTTreeView {
 
     }
 
+    public setTestResults(traceName: string, testCases: CTTestCase[]){
+        this._testResults.set(traceName, testCases.map(tc => {return {testId: tc.id+"", resultPair: tc.sequence};}))
+    }
+
     setButtonsAndContext(canFilter: boolean){
         ///// Show options ///////
         if (canFilter){
@@ -196,14 +207,14 @@ class CTTreeView {
 
         ///// Command registration //////
         if(canFilter) {
-            this.registerCommand("extension.ctFilteredExecute",     (e) => this.ctFilteredExecute(e));
+            this.registerCommand("extension.ctFilteredExecute", (e) => this.ctFilteredExecute(e));
         }
         this.registerCommand("extension.ctRebuildOutline",      (e) => this.ctRebuildOutline(e));
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctViewTreeFilter",      ()  => this.ctViewTreeFilter());
-        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e)); //TODO how do we pass the correct test here?
+        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
     }
     ctFilteredExecute(e: any): any {
         throw new Error('Method not implemented.');
@@ -242,7 +253,16 @@ class CTTreeView {
     }
 
     onDidChangeSelection(e : CTElement){
-        // TODO For test case, view the test sequence
+        // Keep track of the current selected trace
+        if(e.type == treeItemType.Trace)
+            this.currentTraceName = e.label;
+
+        // Guard access to the test view
+        if(e.type != treeItemType.Test || !this._testResults.has(this.currentTraceName))
+            return;
+
+        // Set and show the test sequence in the test view
+        this._resultProvider.setTestSequenceResults(this._testResults.get(this.currentTraceName).find(rs => rs.testId == e.label).resultPair);
     }
 
     async selectTraceName() : Promise<string> {
@@ -263,4 +283,9 @@ class CTTreeView {
         this._context.subscriptions.push(disposable);
         return disposable;
     };
+}
+
+interface testSequenceResults{
+    testId: string,
+    resultPair: CTResultPair[]
 }
