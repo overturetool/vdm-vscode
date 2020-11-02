@@ -30,8 +30,8 @@
       "activitybar": [
         {
           "id": "combinatorialTesting",
-          "title": "Combinatorial Testing",
-          "icon": "media/book.svg"
+          "title": "Combinatorial Testing View",
+          "icon": "$(book)"
         }
       ]
     },
@@ -39,7 +39,12 @@
       "combinatorialTesting": [
         {
           "id": "ctView",
-          "name": "Combinatorial test view",
+          "name": "Tests",
+          "when": "vdm-ct-show-view == true"
+        },
+        {
+          "id": "testResultView",
+          "name": "Results",
           "when": "vdm-ct-show-view == true"
         }
       ]
@@ -52,31 +57,31 @@
         "icon": "$(run)"
       },
       {
-        "command":  "extension.getCTOutline",
+        "command": "extension.getCTOutline",
         "title": "Generatesthe outline for combinatorial tests for the project",
         "category": "VDM",
         "icon": "$(refresh)"
       },
       {
-        "command":  "extension.generateCTsForTrace",
+        "command": "extension.generateCTsForTrace",
         "title": "Generate Tests",
         "category": "VDM",
         "icon": "$(refresh)"
       },
       {
-        "command":  "extension.executeTrace",
+        "command": "extension.executeTrace",
         "title": "Execute Trace",
         "category": "VDM",
         "icon": "$(run-all)"
       },
       {
-        "command":  "extension.fullCTexecution",
+        "command": "extension.fullCTexecution",
         "title": "Full Evaluation",
         "category": "VDM",
         "icon": "$(run)"
       },
       {
-        "command":  "extension.filteredCTexecution",
+        "command": "extension.filteredCTexecution",
         "title": "Filtered Evaluation",
         "category": "VDM",
         "icon": "$(filter)"
@@ -196,7 +201,6 @@
           "command": "extension.filterInconclusiveCTs",
           "when": "view =~ /combinatorialTests/ && vdm-ct-show-filter-button == true"
         }
-        
       ]
     },
     "configuration": {

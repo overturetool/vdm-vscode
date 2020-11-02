@@ -40,8 +40,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctTreeView = window.createTreeView('ctView', {treeDataProvider: this._ctDataprovider})
             this._context.subscriptions.push(this._ctTreeView);
 
-            this._context.subscriptions.push( this._ctTreeView.onDidExpandElement(e => this.requestGenerate(e.element)));
-
+            this._context.subscriptions.push(this._ctTreeView.onDidExpandElement(e => this.requestGenerate(e.element)));
 
             // TODO Remove
             this.registerCommand('extension.saveCT', () => {
@@ -227,7 +226,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             resolve(res)
         });
     }
-    
 
     private setButtonsAndContext(){
         vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );

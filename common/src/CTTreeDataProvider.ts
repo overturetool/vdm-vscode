@@ -153,7 +153,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         this._onDidChangeTreeData.fire(null);
     }
 
-    getTreeItem(element): TreeItem {
+    getTreeItem(element: CTElement): TreeItem {
         return element;
     }
 
