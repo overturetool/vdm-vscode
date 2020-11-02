@@ -1,14 +1,12 @@
-import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
-import { commands, Disposable, ExtensionContext, Uri, window, workspace } from "vscode";
+import { commands, Disposable, ExtensionContext, Uri, window as Window } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature} from "vscode-languageclient";
 import { CTDataProvider, CTElement, treeItemType } from "./CTTreeDataProvider";
 
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
@@ -37,7 +35,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Register data provider for CT View
             this._ctDataprovider = new CTDataProvider();
-            this._ctTreeView = window.createTreeView('ctView', {treeDataProvider: this._ctDataprovider})
+            this._ctTreeView = Window.createTreeView('ctView', {treeDataProvider: this._ctDataprovider})
             this._context.subscriptions.push(this._ctTreeView);
 
             this._context.subscriptions.push( this._ctTreeView.onDidExpandElement(e => this.requestGenerate(e.element)));
@@ -133,7 +131,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     private async requestTraces(uri?: Uri){
-        window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
+        Window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
 
         try {
             // Setup message parameters
@@ -148,7 +146,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.updateOutline(symbols);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
+            Window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
         }
     }
 
@@ -158,7 +156,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             return;
         }
 
-        window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
+        Window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
         let name : string;
 
         try {
@@ -185,12 +183,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.setNumberOfTests(res.numberOfTests, name);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     }
 
     private async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
-        window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
+        Window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
 
         try {
             // Setup message parameters
@@ -211,7 +209,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             this._ctDataprovider.updateTestVerdicts(tests, name);
         }
         catch (err) {
-            window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
         }
     } 
 
@@ -220,9 +218,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
             let traces = this._ctDataprovider.getTraceNames();
             let res : string;
             if (traces.length < 1)
-                window.showInformationMessage("Request failed: No traces available")
+                Window.showInformationMessage("Request failed: No traces available")
             else {
-                await window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
+                await Window.showQuickPick(traces, {canPickMany: false}).then(trace => res = trace)
             }
             resolve(res)
         });
