@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as Util from "./Util"
 import { commands, Disposable, ExtensionContext, Uri, window, window as Window, workspace } from "vscode";
 import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
-import { CTDataProvider, CTElement, treeItemType } from "./CTDataProvider";
+import { CTDataProvider, CTElement, CTtreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
@@ -98,7 +98,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             const symbols = await this._client.sendRequest(CTTracesRequest.type, params);
-            
             return symbols;
         }
         catch (err) {
@@ -116,7 +115,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // Send request
             // TODO Add loading information message
             const res = await this._client.sendRequest(CTGenerateRequest.type, params);
-            
             return res.numberOfTests;
         }
         catch (err) {
@@ -224,13 +222,19 @@ class CTTreeView {
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
-    async ctGoToTrace(e:any): Promise<any> {
-        let trace: CTTrace = this._traces.find(t => t.name = e.label);
+    async ctGoToTrace(e:CTElement): Promise<any> {
 
-        // Find path of po with id
+        if(e.type != CTtreeItemType.Trace)
+            return;
+
+        let trace: CTTrace = this._traces.find(t => t.name = e.label);
+        if(!trace)
+            return;
+
+        // Find path of trace
         let path = Uri.parse(trace.location.uri.toString()).path;
 
-        // Open the specification file with the symbol responsible for the po
+        // Open the specification file containing the trace
         let doc = await workspace.openTextDocument(path);
         
         // Show the file
@@ -247,6 +251,9 @@ class CTTreeView {
         // Pass CTSymbols to ct data provider to build the tree outline
         this._testProvider.updateOutline(symbols);
 
+        // Keep traces for go to functionality
+        this._traces = [].concat(...symbols.map(symbol => symbol.traces));
+
         // TODO maybe do a check on loaded files here?
     }
 
@@ -262,10 +269,10 @@ class CTTreeView {
     }
 
     async ctExecute(e: CTElement): Promise<void> {
-        if (e.type == treeItemType.TestGroup){
+        if (e.type == CTtreeItemType.TestGroup){
 
         }
-        else if (e.type == treeItemType.Trace){
+        else if (e.type == CTtreeItemType.Trace){
 
         }
         else {
@@ -293,10 +300,10 @@ class CTTreeView {
     }
 
     onDidExpandElement(e : CTElement){
-        if (e.type == treeItemType.CTSymbol){
+        if (e.type == CTtreeItemType.CTSymbol){
             // TODO Load traces from file if possible
         }
-        else if (e.type == treeItemType.Trace){
+        else if (e.type == CTtreeItemType.Trace){
             // TODO Load tests from file and 
 
             if (e.getChildren().length < 1){
@@ -313,11 +320,11 @@ class CTTreeView {
 
     onDidChangeSelection(e : CTElement){
         // Keep track of the current selected trace
-        if(e.type == treeItemType.Trace)
+        if(e.type == CTtreeItemType.Trace)
             this.currentTraceName = e.label;
 
         // Guard access to the test view
-        if(e.type != treeItemType.Test || !this._testResults.has(this.currentTraceName))
+        if(e.type != CTtreeItemType.Test || !this._testResults.has(this.currentTraceName))
             return;
 
         // Set and show the test sequence in the test view

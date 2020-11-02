@@ -58,9 +58,9 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
             if(i % this._groupSize == 0)
             {
                 groupIterator++;
-                testgroupes.push(new CTElement("test group", treeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1)));
+                testgroupes.push(new CTElement("test group", CTtreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1)));
             }
-            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), treeItemType.Test, TreeItemCollapsibleState.None, "n/a", traceElement));
+            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), CTtreeItemType.Test, TreeItemCollapsibleState.None, "n/a", traceElement));
         }
 
         // Match desciption of group to number of tests for last group.
@@ -132,12 +132,12 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
             let index = this._symbols.findIndex(s => s.label === ctSymbol.name);
                 
             if (index > -1)
-                this._symbols[index].updateChildren(ctSymbol.traces.map(t => new CTElement(t.name, treeItemType.Trace, TreeItemCollapsibleState.Collapsed)));
+                this._symbols[index].updateChildren(ctSymbol.traces.map(t => new CTElement(t.name, CTtreeItemType.Trace, TreeItemCollapsibleState.Collapsed)));
 
             else
             {
-                let ctElement = new CTElement(ctSymbol.name, treeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed); 
-                ctElement.setChildren(ctSymbol.traces.map(t => new CTElement(t.name, treeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", ctElement)))  
+                let ctElement = new CTElement(ctSymbol.name, CTtreeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed); 
+                ctElement.setChildren(ctSymbol.traces.map(t => new CTElement(t.name, CTtreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", ctElement)))  
                 this._symbols.push(ctElement);
             }        
         });
@@ -171,9 +171,9 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
 
         // Filter passed and/or inconclusive tests if true
         if(this._filterPassedTests)
-            elementsToReturn = elementsToReturn.filter(e => e.type != treeItemType.Test || e.description != VerdictKind[VerdictKind.Passed]);
+            elementsToReturn = elementsToReturn.filter(e => e.type != CTtreeItemType.Test || e.description != VerdictKind[VerdictKind.Passed]);
         if(this._filterInconclusiveTests)
-            elementsToReturn = elementsToReturn.filter(e => e.type != treeItemType.Test || e.description != VerdictKind[VerdictKind.Inconclusive]);
+            elementsToReturn = elementsToReturn.filter(e => e.type != CTtreeItemType.Test || e.description != VerdictKind[VerdictKind.Inconclusive]);
 
         return Promise.resolve(elementsToReturn);
     }
@@ -187,7 +187,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
     }
 }
 
-export enum treeItemType
+export enum CTtreeItemType
 {
     CTSymbol = "ctSymbol",
     Trace = "trace",
@@ -200,7 +200,7 @@ export class CTElement extends TreeItem {
     private _children: CTElement[] = [];
     constructor(
     public readonly label: string,
-    public readonly type: treeItemType,
+    public readonly type: CTtreeItemType,
     public readonly collapsibleState: TreeItemCollapsibleState,
     description = "",
     private readonly _parent: CTElement = undefined ) {

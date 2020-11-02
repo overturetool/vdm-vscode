@@ -167,6 +167,11 @@
           "group": "inline@2"
         },
         {
+          "command": "extension.goToTrace",
+          "when": "viewItem == trace",
+          "group": "inline@3"
+        },
+        {
           "command": "extension.ctSendToInterpreter",
           "when": "viewItem == test",
           "group": "inline@0"
