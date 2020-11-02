@@ -87,7 +87,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         })
     }
 
-    public async requestTraces(uri?: Uri){
+    public async requestTraces(uri?: Uri) : Promise<CTSymbol[]>{
         Window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
 
         try {
@@ -99,15 +99,14 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // Send request
             const symbols = await this._client.sendRequest(CTTracesRequest.type, params);
             
-            // Pass CTSymbols to ct data provider to build the tree outline
-            this._ctDataprovider.updateOutline(symbols);
+            return symbols;
         }
         catch (err) {
             Window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
         }
     }
 
-    public async requestGenerate(name: string){
+    public async requestGenerate(name: string) : Promise<number> {
         Window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
 
         try {
@@ -118,8 +117,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // TODO Add loading information message
             const res = await this._client.sendRequest(CTGenerateRequest.type, params);
             
-            // Pass the number of tests to ct data provider to add them to the tree
-            this._ctDataprovider.setNumberOfTests(res.numberOfTests, name);
+            return res.numberOfTests;
         }
         catch (err) {
             Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
@@ -218,7 +216,7 @@ class CTTreeView {
         if(canFilter) {
             this.registerCommand("extension.ctFilteredExecute", (e) => this.ctFilteredExecute(e));
         }
-        this.registerCommand("extension.ctRebuildOutline",      (e) => this.ctRebuildOutline(e));
+        this.registerCommand("extension.ctRebuildOutline",      () => this.ctRebuildOutline());
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
@@ -238,25 +236,59 @@ class CTTreeView {
         // Show the file
         window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
     }
-    ctFilteredExecute(e: any): any {
+
+    async ctFilteredExecute(e: CTElement): Promise<void>  {
         throw new Error('Method not implemented.');
     }
-    ctRebuildOutline(e: any): any {
-        this._ctFeature.requestTraces();
+
+    async ctRebuildOutline(): Promise<void> {
+        const symbols = await this._ctFeature.requestTraces();
+
+        // Pass CTSymbols to ct data provider to build the tree outline
+        this._testProvider.updateOutline(symbols);
+
+        // TODO maybe do a check on loaded files here?
     }
-    ctFullExecute(): any {
+
+    async ctFullExecute(): Promise<void> {
+        // TODO Maybe switch symbol for a "cancel" symbol and include another command?
+
+        // Run Execute on all traces of all symbols
+        await this._testProvider.getSymbols().forEach(async symbol => {
+            await symbol.getChildren().forEach(async trace => {
+                await this.ctExecute(trace);
+            })
+        })
+    }
+
+    async ctExecute(e: CTElement): Promise<void> {
+        if (e.type == treeItemType.TestGroup){
+
+        }
+        else if (e.type == treeItemType.Trace){
+
+        }
+        else {
+            throw new Error("CT Execute called on invalid element")
+        }
+    }
+
+    async ctGenerate(e: CTElement): Promise<void> {
+        // Request generate from server
+        const num = await this._ctFeature.requestGenerate(e.label);
+        
+        // Pass the number of tests to ct data provider to add them to the tree
+        this._testProvider.setNumberOfTests(num, e.label);
+
+        // TODO maybe do a check on loaded files here?
+    }
+
+    ctViewTreeFilter(): void {
+        // TODO View the two filtering options and select one
         throw new Error('Method not implemented.');
     }
-    ctExecute(e: any): any {
-        throw new Error('Method not implemented.');
-    }
-    ctGenerate(e: any): any {
-        throw new Error('Method not implemented.');
-    }
-    ctViewTreeFilter(): any {
-        throw new Error('Method not implemented.');
-    }
-    ctSendToInterpreter(e: any): any {
+
+    ctSendToInterpreter(e: CTElement): void {
         throw new Error('Method not implemented.');
     }
 
@@ -265,6 +297,11 @@ class CTTreeView {
             // TODO Load traces from file if possible
         }
         else if (e.type == treeItemType.Trace){
+            // TODO Load tests from file and 
+
+            if (e.getChildren().length < 1){
+
+            }
         }
 
         
