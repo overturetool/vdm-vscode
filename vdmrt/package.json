@@ -178,9 +178,9 @@
   },
   "scripts": {
     "preinstall": "cd ../common && npm install && cd ../vdmrt",
-    "postinstall": "node copyScript.js",
+    "postinstall": "cd ../common && node copyScript.js vdmrt",
     "vscode:prepublish": "npm run compile && webpack --mode production",
-    "compile": "node copyScript.js && tsc -p ./",
+    "compile": "cd ../common && node copyScript.js vdmrt && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "webpack": "webpack --mode development",
     "webpack-dev": "webpack --mode development --watch",

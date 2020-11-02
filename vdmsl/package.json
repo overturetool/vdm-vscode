@@ -333,9 +333,9 @@
   },
   "scripts": {
     "preinstall": "cd ../common && npm install && cd ../vdmsl",
-    "postinstall": "node copyScript.js",
+    "postinstall": "cd ../common && node copyScript.js vdmsl",
     "vscode:prepublish": "npm run compile && webpack --mode production",
-    "compile": "node copyScript.js && tsc -p ./",
+    "compile": "cd ../common && node copyScript.js vdmsl && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "webpack": "npm run compile && webpack --mode development",
     "webpack-dev": "webpack --mode development --watch",
