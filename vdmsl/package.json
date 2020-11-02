@@ -127,12 +127,12 @@
       "view/item/context": [
         {
           "command": "extension.ctExecute",
-          "when": "viewItem == trace",
+          "when": "viewItem == trace || viewItem == testgroup",
           "group": "ctView@0"
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace",
+          "when": "viewItem == trace || viewItem == testgroup",
           "group": "ctView@1"
         },
         {
@@ -147,12 +147,12 @@
         },
         {
           "command": "extension.ctExecute",
-          "when": "viewItem == trace",
+          "when": "viewItem == trace || viewItem == testgroup",
           "group": "inline@0"
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace",
+          "when": "viewItem == trace || viewItem == testgroup",
           "group": "inline@1"
         },
         {
