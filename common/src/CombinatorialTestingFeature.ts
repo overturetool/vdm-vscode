@@ -130,8 +130,11 @@ class CTTreeView {
         private readonly _resultProvider: CTResultDataProvider, 
         canFilter: boolean = false
         ){
-        
-        this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath ), ".generated", "Combinatorial Testing");
+        // Set save path and load cts
+        this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath), ".generated", "Combinatorial Testing");
+        this.loadCTs().then(cts => {
+            this._combinatorialTests = cts;
+        }).catch(err => {}); // TODO display message if there was an error loading cts from file.
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<CTElement> = {
@@ -268,10 +271,32 @@ class CTTreeView {
         // Pass CTSymbols to ct data provider to build the tree outline
         this._testProvider.updateOutline(symbols);
 
-        // Keep data for later lookup and save functionality
-        this._combinatorialTests = symbols.map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
+        // Check if existing outline matches servers
+        let traceOutlines = symbols.map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
+        if(!this.ctOutlinesMatch(traceOutlines, this._combinatorialTests))
+            this._combinatorialTests = traceOutlines;
+    }
 
-        // TODO maybe do a check on loaded files here?
+    private ctOutlinesMatch(ctSymbols1:completeCT[], ctSymbols2:completeCT[]): boolean{
+        if(ctSymbols1.length != ctSymbols2.length)
+            return false;
+        
+        for(let i = 0; i < ctSymbols1.length; i++)
+        {
+            let traces1 = ctSymbols1[i].traces;
+            let traces2 = ctSymbols2[i].traces;
+            if(traces1.length != traces2.length)
+                return false;
+            
+            for(let l = 0; l < traces1.length; l++)
+            {
+                let trace1 = traces1[l];
+                let trace2 = traces2[l];
+                if(trace1.trace.name != trace2.trace.name)
+                    return false;
+            }
+        }
+        return true;
     }
 
     async ctFullExecute(): Promise<void> {
@@ -293,16 +318,19 @@ class CTTreeView {
         // Request generate from server
         const num = await this._ctFeature.requestGenerate(viewElement.label);
         
-        // Instatiate testcases for traces.
+        // Check if number of tests from server matches local number of tests
         let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
-        for(let i = 1; i <= num; i++)
-        {
-            traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
-        }
+        if(!traceWithTestResults || traceWithTestResults.testCases.length != num)
+            // Instatiate testcases for traces.
+            for(let i = 1; i <= num; i++)
+                traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
+   
 
         // Pass the number of tests to ct data provider to add them to the tree
         this._testProvider.setNumberOfTests(num, viewElement.label);
-        // TODO maybe do a check on loaded files here?
+
+        // Set test verdicts - "n/a" if these have just been generated above.
+        this._testProvider.updateTestVerdicts(traceWithTestResults.testCases, traceWithTestResults.trace.name);             
     }
 
     ctViewTreeFilter(): void {
