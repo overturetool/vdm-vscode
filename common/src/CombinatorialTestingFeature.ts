@@ -72,8 +72,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     public async requestGenerate(name: string) : Promise<number> {
-        Window.setStatusBarMessage('Generating test cases', 2000); // TODO match time with request time
-
         try {
             // Setup message parameters
             let params: CTGenerateParameters = {name: name};
@@ -94,8 +92,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             Window.showInformationMessage("Combinatorial Test - execute request failed: An execution is already running");
             return;
         }
-
-        Window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
 
         // Generate cancel token
         this._cancelToken = new CancellationTokenSource();
@@ -369,6 +365,9 @@ class CTTreeView {
     }
 
     async ctGenerate(viewElement: CTElement) {
+        // Set status bar
+        let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
+
         // Setup loading window
         window.withProgress({
             location: {viewId: "ctView"},
@@ -398,6 +397,9 @@ class CTTreeView {
                 // Set test verdicts - "n/a" if these have just been generated above.
                 this._testProvider.updateTestVerdicts(traceWithTestResults.testCases, traceWithTestResults.trace.name);      
                 
+                // Remove status bar message
+                statusBarMessage.dispose();
+
                 // Resolve action
                 resolve();
             });
@@ -459,6 +461,9 @@ class CTTreeView {
         if (e.type != CTtreeItemType.Trace && e.type != CTtreeItemType.TestGroup)
             throw new Error("CT Execute called on invalid element")
 
+        // Set status bar
+        let statusBarMessage = Window.setStatusBarMessage('Executing test cases');
+
         // Setup loading window
         window.withProgress({
             location: ProgressLocation.Notification,
@@ -493,6 +498,9 @@ class CTTreeView {
                     await this._ctFeature.requestExecute(e.getParent().label, filter, range)
                 }
                 
+                // Remove status bar message
+                statusBarMessage.dispose();
+
                 // Resolve action
                 resolve();
             });
