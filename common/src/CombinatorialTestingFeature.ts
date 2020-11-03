@@ -221,7 +221,7 @@ class CTTreeView {
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
-    async ctGoToTrace(e:CTElement): Promise<any> {
+    async ctGoToTrace(e:CTElement) {
 
         if(e.type != CTtreeItemType.Trace)
             return;
@@ -240,11 +240,11 @@ class CTTreeView {
         window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
     }
 
-    async ctFilteredExecute(e: CTElement): Promise<void>  {
+    async ctFilteredExecute(e: CTElement) {
         this.execute(e, true)
     }
 
-    async ctRebuildOutline(): Promise<void> {
+    async ctRebuildOutline() {
         const symbols = await this._ctFeature.requestTraces();
 
         // Pass CTSymbols to ct data provider to build the tree outline
@@ -256,7 +256,7 @@ class CTTreeView {
         // TODO maybe do a check on loaded files here?
     }
 
-    async ctFullExecute(): Promise<void> {
+    async ctFullExecute() {
         // TODO Maybe switch symbol for a "cancel" symbol and include another command?
 
         // Run Execute on all traces of all symbols
@@ -267,11 +267,11 @@ class CTTreeView {
         })
     }
 
-    async ctExecute(e: CTElement): Promise<void> {
+    async ctExecute(e: CTElement) {
         this.execute(e, false);
     }
 
-    async ctGenerate(e: CTElement): Promise<void> {
+    async ctGenerate(e: CTElement) {
         // Request generate from server
         const num = await this._ctFeature.requestGenerate(e.label);
         
@@ -330,8 +330,17 @@ class CTTreeView {
         });
     }
 
-    private execute(e: CTElement, filter: boolean){
-        if (e.type == CTtreeItemType.TestGroup){
+    private async execute(e: CTElement, filter: boolean){
+        if (e.type == CTtreeItemType.Trace){
+            // Check if we have generated first
+            if (e.getChildren().length < 1) {
+                await this.ctGenerate(e);
+            }
+
+            // Request execute
+            this._ctFeature.requestExecute(e.label, filter)
+        }
+        else if (e.type == CTtreeItemType.TestGroup){
             // Find range from group description
             let strRange : string[] = e.description.toString().split('-');
             let range : NumberRange = {
@@ -341,11 +350,7 @@ class CTTreeView {
 
             // Request execute with range
             this._ctFeature.requestExecute(e.getParent().label, filter, range)
-        }
-        else if (e.type == CTtreeItemType.Trace){
-            // Request execute
-            this._ctFeature.requestExecute(e.label, filter)
-        }
+        } 
         else {
             throw new Error("CT Execute called on invalid element")
         }
