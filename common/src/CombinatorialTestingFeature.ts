@@ -17,7 +17,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _ctTreeView : CTTreeView;
     private _ctResultDataprovider: CTResultDataProvider;
     private _cancelToken: CancellationTokenSource;
-    private _executeTrace : string;
     private _generateCalls : number = 0;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
@@ -150,10 +149,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 params.range = range;
 
             // Setup partial result handler
-            this._executeTrace = name;
             let partialResultToken = this.generateToken();
             params.partialResultToken = partialResultToken
-            var partialResultHandlerDisposable = this._client.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests));
+            var partialResultHandlerDisposable = this._client.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests, name));
 
             // Send request
             // TODO Add loading information message
@@ -172,20 +170,17 @@ export class CombinantorialTestingFeature implements StaticFeature {
             Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
         }
 
-        // Clear cancel token
+        // Clean-up
         this._cancelToken.dispose();
         this._cancelToken = undefined;
-
-        // Clear partial result
-        this._executeTrace = undefined;
         partialResultHandlerDisposable?.dispose();
     } 
 
-    private handleExecutePartialResult(tests: CTTestCase[]){
-        if (this._executeTrace)
-            this._ctTreeView.setTestResults(this._executeTrace, tests);
+    private handleExecutePartialResult(tests: CTTestCase[], trace: string){
+        if (tests)
+            this._ctTreeView.setTestResults(trace, tests);
         else
-            Window.showInformationMessage("CT Received Progress without an active trace");
+            Window.showInformationMessage("CT Received Progress without any tests");
     }
 
     private generateToken() : string {
