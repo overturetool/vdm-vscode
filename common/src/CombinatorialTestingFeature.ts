@@ -117,6 +117,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             // TODO Add loading information message
+            this._ctTreeView.showCancelButton(true);
             const tests = await this._client.sendRequest(CTExecuteRequest.type, params, this._cancelToken.token);
 
             // If not using progress token, update test results
@@ -136,6 +137,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         this._cancelToken.dispose();
         this._cancelToken = undefined;
         partialResultHandlerDisposable?.dispose();
+        this._ctTreeView.showCancelButton(false);
     } 
 
     private handleExecutePartialResult(tests: CTTestCase[], trace: string){
@@ -269,6 +271,7 @@ class CTTreeView {
             vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-filter-button', true );
             vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-set-execute-filter-button', true );
         }
+        this.showCancelButton(false);
 
         ///// Command registration //////
         if(canFilter) {
@@ -282,6 +285,12 @@ class CTTreeView {
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter());
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
+
+    showCancelButton(show: boolean) {
+        vscode.commands.executeCommand('setContext', 'vdm-ct-show-run-buttons', !show);
+        vscode.commands.executeCommand('setContext', 'vdm-ct-show-cancel-button', show);
+    }
+    
     async ctGoToTrace(e:CTElement) {
 
         if(e.type != CTtreeItemType.Trace)
