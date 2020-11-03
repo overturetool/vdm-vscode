@@ -7,3 +7,4 @@ resources
 *.log
 .VSCodeCounter
 dist/**
+/.generated

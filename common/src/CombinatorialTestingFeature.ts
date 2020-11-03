@@ -296,7 +296,7 @@ class CTTreeView {
         if(e.type != CTtreeItemType.Trace)
             return;
 
-        let trace: CTTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(t => t.name == e.label);
+        let trace: CTTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == e.label).trace;
         if(!trace)
             return;
 
