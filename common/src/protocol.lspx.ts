@@ -226,16 +226,17 @@ export interface CTExecuteParameters extends WorkDoneProgressParams, PartialResu
 /**
  * CT/execute request and return type.
  */
-export namespace CTExecuteRequest {
-	export const type = new RequestType<CTExecuteParameters, CTTestCase[] | null, void, void>('lspx/CT/execute');
-}
+// export namespace CTExecuteRequest {
+// 	export const type = new RequestType<CTExecuteParameters, CTTestCase[] | null, void, void>('lspx/CT/execute');
+// }
 
 // export namespace CTExecuteProgress {
 // 	export const type = new ProgressType<ProgressParams<CTTestCase[]>>();
 // }
 
-// export declare namespace CTExecuteRequest {
-//     const method: 'lspx/CT/execute';
-//     const type: ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, null>;
-//     const resultType: ProgressType<CTTestCase[]>;
-// }
+export namespace CTExecuteRequest {
+    export const method = 'lspx/CT/execute';
+    export const type = new ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, void>(method);
+    export const resultType = new ProgressType<CTTestCase[]>();
+}
+

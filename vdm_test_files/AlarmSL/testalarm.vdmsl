@@ -45,6 +45,13 @@ operations
 Run: Expert ==> set of Period
 Run(e) == return ExpertIsOnDuty(e, plant1);
 
+functions
+
+op1: nat -> nat
+op1(x) ==
+  x
+
+
 traces 
 
   Test1: let a in set alarms
@@ -61,3 +68,9 @@ traces
          in
            ExpertIsOnDuty(ex,plant1)
  
+  Test3: 
+    let a in set {1, ..., 100} in
+      let b in set {1, ..., 100} in
+        (
+          op1(a); op1(b);
+        );

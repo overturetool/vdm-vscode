@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
 import { commands, Disposable, ExtensionContext, Uri, window, window as Window, workspace } from "vscode";
-import { ClientCapabilities, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
+import { CancellationTokenSource, ClientCapabilities, ErrorCodes, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
 import { CTDataProvider, CTElement, CTtreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
@@ -15,6 +15,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _ctDataprovider: CTDataProvider;
     private _ctTreeView : CTTreeView;
     private _ctResultDataprovider: CTResultDataProvider;
+    private _cancelToken: CancellationTokenSource;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
@@ -40,6 +41,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             if (this._filterHandler)
                 this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
 
+            this.registerCommand('extension.ctCancel', () => this._cancelToken?.cancel() );
         }
     }
 
@@ -123,7 +125,17 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     public async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
+        // Check if already running an execution
+        if (this._cancelToken){
+            Window.showInformationMessage("Combinatorial Test - execute request failed: An execution is already running");
+            return;
+        }
+
         Window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
+
+        // Generate tokens
+        this._cancelToken = new CancellationTokenSource();
+        this._context.subscriptions.push(this._cancelToken);
 
         try {
             // Setup message parameters
@@ -133,21 +145,33 @@ export class CombinantorialTestingFeature implements StaticFeature {
             }
             if (range)
                 params.range = range;
-            
 
             // Send request
             // TODO Add loading information message
-            let trace = this._ctTreeView.currentTraceName;
-            const tests = await this._client.sendRequest(CTExecuteRequest.type, params);
-            this._ctTreeView.setTestResults(trace, tests)
-            
-            // Pass a new test batch to ct data provider to update test verdicts
-            this._ctDataprovider.updateTestVerdicts(tests, name);
+            const tests = await this._client.sendRequest(CTExecuteRequest.type, params, this._cancelToken.token);
+
+            // If not using progress token, update test results
+            if (test != null)
+                this._ctTreeView.setTestResults(name, tests)
         }
         catch (err) {
-            Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            if (err?.code == ErrorCodes.RequestCancelled){
+                if (err?.data != null){
+                    this._ctTreeView.setTestResults(name, err.data);
+                }
+            }
+            Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
         }
+
+        // Remove tokens
+        this._cancelToken.dispose();
+        this._cancelToken = undefined;
     } 
+
+    private handleExecuteProgress(tests: CTTestCase[]){
+
+        
+    }
 }
 
 export interface CTFilterHandler {
@@ -199,7 +223,11 @@ class CTTreeView {
     }
 
     public setTestResults(traceName: string, testCases: CTTestCase[]){
+        // Store result sequences
         this._testResults.set(traceName, testCases.map(tc => {return {testId: tc.id+"", resultPair: tc.sequence};}))
+
+        // Pass a new test batch to ct data provider to update test verdicts
+        this._testProvider.updateTestVerdicts(testCases, traceName);
     }
 
     setButtonsAndContext(canFilter: boolean){
