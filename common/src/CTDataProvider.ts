@@ -107,7 +107,9 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         }
 
         if(!traceElement)
-            return; // TODO should probably throw an error here or something to tell that it's not possible
+            throw new Error("Unable to locate trace with updated test verdicts in view");
+
+
 
         // Iterate over test groupes and update individual test verdicts
         let groupes = traceElement.getChildren();
