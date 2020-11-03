@@ -8,6 +8,7 @@ import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
+import { time } from 'console';
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
@@ -16,6 +17,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _ctTreeView : CTTreeView;
     private _ctResultDataprovider: CTResultDataProvider;
     private _cancelToken: CancellationTokenSource;
+    private _executeTrace : string;
+    private _generateCalls : number = 0;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
         this._client = client;
@@ -133,7 +136,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
         Window.setStatusBarMessage('Executing test cases', 2000); // TODO match time with request time
 
-        // Generate tokens
+        // Generate cancel token
         this._cancelToken = new CancellationTokenSource();
         this._context.subscriptions.push(this._cancelToken);
 
@@ -146,12 +149,18 @@ export class CombinantorialTestingFeature implements StaticFeature {
             if (range)
                 params.range = range;
 
+            // Setup partial result handler
+            this._executeTrace = name;
+            let partialResultToken = this.generateToken();
+            params.partialResultToken = partialResultToken
+            var partialResultHandlerDisposable = this._client.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests));
+
             // Send request
             // TODO Add loading information message
             const tests = await this._client.sendRequest(CTExecuteRequest.type, params, this._cancelToken.token);
 
             // If not using progress token, update test results
-            if (test != null)
+            if (tests != null)
                 this._ctTreeView.setTestResults(name, tests)
         }
         catch (err) {
@@ -163,14 +172,24 @@ export class CombinantorialTestingFeature implements StaticFeature {
             Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
         }
 
-        // Remove tokens
+        // Clear cancel token
         this._cancelToken.dispose();
         this._cancelToken = undefined;
+
+        // Clear partial result
+        this._executeTrace = undefined;
+        partialResultHandlerDisposable?.dispose();
     } 
 
-    private handleExecuteProgress(tests: CTTestCase[]){
+    private handleExecutePartialResult(tests: CTTestCase[]){
+        if (this._executeTrace)
+            this._ctTreeView.setTestResults(this._executeTrace, tests);
+        else
+            Window.showInformationMessage("CT Received Progress without an active trace");
+    }
 
-        
+    private generateToken() : string {
+        return "CombinatorialTestToken-"+Date.now().toString()+(this._generateCalls++).toString();
     }
 }
 
