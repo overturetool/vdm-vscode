@@ -1,14 +1,13 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
-import { commands, Disposable, ExtensionContext, Uri, window, window as Window, workspace } from "vscode";
-import { CancellationTokenSource, ClientCapabilities, ErrorCodes, Location, Position, Range, ServerCapabilities, StaticFeature, Trace} from "vscode-languageclient";
+import { commands, ExtensionContext, Uri, window, window as Window, workspace } from "vscode";
+import { CancellationTokenSource, ClientCapabilities, ErrorCodes, ServerCapabilities, StaticFeature} from "vscode-languageclient";
 import { CTDataProvider, CTElement, CTtreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
-import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
+import { ExperimentalCapabilities, CTTestCase, CTTrace, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
-import { time, trace } from 'console';
 import path = require('path');
 
 export class CombinantorialTestingFeature implements StaticFeature {
@@ -174,7 +173,7 @@ class CTTreeView {
         this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath), ".generated", "Combinatorial Testing");
         this.loadCTs().then(cts => {
             this._combinatorialTests = cts;
-        }).catch(err => {}); // TODO display message if there was an error loading cts from file.
+        }).catch(() => {}); // TODO display message if there was an error loading cts from file.
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<CTElement> = {
@@ -194,7 +193,7 @@ class CTTreeView {
 
         // Register view behavior
         this._context.subscriptions.push(this._testView.onDidExpandElement(e => this.onDidExpandElement(e.element)));
-        this._context.subscriptions.push(this._testView.onDidCollapseElement(e => this.onDidCollapseElement(e.element)));
+        this._context.subscriptions.push(this._testView.onDidCollapseElement(e => this.onDidCollapseElement()));
         this._context.subscriptions.push(this._testView.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
 
         // Set button behavior
@@ -280,7 +279,7 @@ class CTTreeView {
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctViewTreeFilter",      ()  => this.ctViewTreeFilter());
-        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
+        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter());
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
     async ctGoToTrace(e:CTElement) {
@@ -379,7 +378,7 @@ class CTTreeView {
         throw new Error('Method not implemented.');
     }
 
-    ctSendToInterpreter(e: CTElement): void {
+    ctSendToInterpreter(): void {
         throw new Error('Method not implemented.');
     }
 
@@ -393,7 +392,7 @@ class CTTreeView {
         }        
     }
 
-    onDidCollapseElement(e : CTElement){
+    onDidCollapseElement(){
         // Currently no intended behavior
     }
 
