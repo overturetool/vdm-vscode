@@ -122,7 +122,12 @@
       "view/title": [
         {
           "command": "extension.ctFullExecute",
-          "when": "view =~ /ctView/",
+          "when": "view =~ /ctView/ && vdm-ct-show-run-buttons == true",
+          "group": "navigation@0"
+        },
+        {
+          "command": "extension.ctCancel",
+          "when": "view =~ /ctView/ && vdm-ct-show-cancel-button == true",
           "group": "navigation@0"
         },
         {
@@ -144,12 +149,12 @@
       "view/item/context": [
         {
           "command": "extension.ctExecute",
-          "when": "viewItem == trace || viewItem == testgroup",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "ctView@0"
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace || viewItem == testgroup",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "ctView@1"
         },
         {
@@ -159,17 +164,17 @@
         },
         {
           "command": "extension.ctSendToInterpreter",
-          "when": "viewItem == test",
+          "when": "viewItem == test && vdm-ct-show-run-buttons == true",
           "group": "ctView@0"
         },
         {
           "command": "extension.ctExecute",
-          "when": "viewItem == trace || viewItem == testgroup",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@0"
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace || viewItem == testgroup",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
         },
         {
@@ -184,7 +189,7 @@
         },
         {
           "command": "extension.ctSendToInterpreter",
-          "when": "viewItem == test",
+          "when": "viewItem == test && vdm-ct-show-run-buttons == true",
           "group": "inline@0"
         }
       ],
