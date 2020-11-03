@@ -8,6 +8,8 @@ import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { ExperimentalCapabilities, CTTestCase, VerdictKind, CTTrace, CTSymbol, CTFilterOption, CTResultPair, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
+import { trace } from 'console';
+import path = require('path');
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _client: SpecificationLanguageClient;
@@ -102,9 +104,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             let traceName = this._ctTreeView.currentTraceName;
             const tests = await this._client.sendRequest(CTExecuteRequest.type, params);
             this._ctTreeView.setTestResults(traceName, tests)
-            
-            // Pass a new test batch to ct data provider to update test verdicts
-            this._ctDataprovider.updateTestVerdicts(tests, name);
         }
         catch (err) {
             Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
@@ -121,8 +120,8 @@ class CTTreeView {
     private _testView: vscode.TreeView<CTElement>;
     private _resultView: vscode.TreeView<CTResultElement>;
     public currentTraceName: string;
-    private _ctSymbols: CTSymbol[] = [];
-    private _testResults: traceWithTestResults[] = []; // Maps a trace label to test results of a test sequence
+    private _combinatorialTests: completeCT[] = [];
+    private readonly _savePath: Uri;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -131,6 +130,8 @@ class CTTreeView {
         private readonly _resultProvider: CTResultDataProvider, 
         canFilter: boolean = false
         ){
+        
+        this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath ), ".generated", "Combinatorial Testing");
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<CTElement> = {
@@ -160,101 +161,64 @@ class CTTreeView {
         vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );
     }
 
-    private saveCTs(saveUri: Uri) {
-        // Get workspace folder from save uri
-        let workspaceFolder = vscode.workspace.getWorkspaceFolder(saveUri);
-
-        this._ctSymbols.forEach(symbol => {            
+    private saveCTs() {            
+        this._combinatorialTests.forEach(ct => {
             // Create full path
-            let savePath = Uri.joinPath(workspaceFolder.uri, ".generated", "Combinatorial_Testing", symbol.name+".json").fsPath;
+            let path = Uri.joinPath(this._savePath, ct.symbolName+".json").fsPath;
 
             // Ensure that path exists
-            Util.ensureDirectoryExistence(savePath)
-            
-            // Add test and test results
-            symbol.traces.forEach(t => {
-                let tracesWithTestResults = [];
-                // if(this._testResults.find(tr => tr))
-                // {
-                //     let test = this._testResults.get(t.name)
-                //     t.test = 
-                // }
-
-            });
-
+            Util.ensureDirectoryExistence(path)
+        
             // Convert data into JSON
-            let json = JSON.stringify(symbol);
+            let json = JSON.stringify(ct);
 
             // Asynchronouse save
-            fs.writeFile(savePath, json, (err) => {
+            fs.writeFile(path, json, (err) => {
                 if (err) throw err;
                 console.log('Write call finished');
             })
-        });       
+        });                   
     }
 
-    private saveSymbols(saveUri: Uri) {
-        // Get workspace folder from save uri
-        let workspaceFolder = vscode.workspace.getWorkspaceFolder(saveUri);
-
-        // Create full path
-        let savePath = Uri.joinPath(workspaceFolder.uri, ".generated", "Combinatorial_Testing", "ctSymbols.json").fsPath;
-
-        // Ensure that path exists
-        Util.ensureDirectoryExistence(savePath)
-
-        // Convert data into JSON
-        let json = JSON.stringify(this._ctSymbols);
-
-        // Asynchronouse save
-        fs.writeFile(savePath, json, (err) => {
-            if (err) throw err;
-            console.log('Write call finished');
-        })       
-    }
-
-
-    private async loadCT(filepath : string) : Promise<CTSymbol>{
+    private async loadCTs() : Promise<completeCT[]>{
         return new Promise(async (resolve, reject) => {
             // Asynchroniouse read of filepath
-            fs.readFile(filepath, (err, data) => {
-                if (err) {
-                    reject(err);
-                    throw err;
+            let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
+            let completeCTs: completeCT[] = [];
+            files.forEach(f => {
+                let file:fs.Dirent = f;
+                if(file.isFile && file.name.includes(".json"))
+                {
+                    let ctFile = fs.readFileSync(this._savePath.fsPath + path.sep + file.name).toString();
+                    try{
+                        completeCTs.push(JSON.parse(ctFile));
+                    }
+                    catch(err)
+                    {
+                        reject(err);
+                        throw err;
+                    }
                 }
-
-                // Convert JSON to CTSymbol
-                let ctsym : CTSymbol = JSON.parse(data.toString());
-                return resolve(ctsym)
             });
+            resolve(completeCTs);
         })
     }
 
     public setTestResults(traceName: string, testCases: CTTestCase[]){
-        let oldTraceWithResults = this._testResults.find(twr => twr.trace.name == traceName);
-        let trace;
-        this._ctSymbols.some(symbol => symbol.traces.some(tr => {
-            if(tr.name == traceName)
-            {
-                trace == tr;
-                return true;
-            }
-            else
-                return false;
-            }));
-        if(!oldTraceWithResults){     
-            this._testResults.push({trace: trace, cases: testCases});
-        }
-        else
+        let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
+
+        // Update test results for trace
+        for(let i = 0; i < testCases.length; i++)
         {
-            testCases.forEach(newTc => {
-                let oldTc = oldTraceWithResults.cases.find(tc => tc.id == newTc.id);
-                if(oldTc)
-                    oldTc = oldTc;
-                else
-                    oldTraceWithResults.cases.push(newTc);
-            });
+            let newTestCase: CTTestCase = testCases[i];
+            let oldTestCase: CTTestCase = traceWithResult.testCases.find(tc => tc.id == newTestCase.id);
+            oldTestCase.sequence = newTestCase.sequence;
+            oldTestCase.verdict = newTestCase.verdict;
         }
+    
+        // Pass a new test batch to ct data provider to update test verdicts
+        this._testProvider.updateTestVerdicts(testCases, traceName);
+        this.saveCTs();
     }
 
     setButtonsAndContext(canFilter: boolean){
@@ -280,7 +244,7 @@ class CTTreeView {
         if(e.type != CTtreeItemType.Trace)
             return;
 
-        let trace: CTTrace = [].concat(...this._ctSymbols.map(symbol => symbol.traces)).find(t => t.name = e.label);
+        let trace: CTTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(t => t.name == e.label);
         if(!trace)
             return;
 
@@ -304,8 +268,8 @@ class CTTreeView {
         // Pass CTSymbols to ct data provider to build the tree outline
         this._testProvider.updateOutline(symbols);
 
-        // Keep traces for later lookup and save functionality
-        this._ctSymbols = symbols;
+        // Keep data for later lookup and save functionality
+        this._combinatorialTests = symbols.map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
 
         // TODO maybe do a check on loaded files here?
     }
@@ -325,13 +289,19 @@ class CTTreeView {
         this.execute(e, false);
     }
 
-    async ctGenerate(e: CTElement): Promise<void> {
+    async ctGenerate(viewElement: CTElement): Promise<void> {
         // Request generate from server
-        const num = await this._ctFeature.requestGenerate(e.label);
+        const num = await this._ctFeature.requestGenerate(viewElement.label);
         
-        // Pass the number of tests to ct data provider to add them to the tree
-        this._testProvider.setNumberOfTests(num, e.label);
+        // Instatiate testcases for traces.
+        let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
+        for(let i = 1; i <= num; i++)
+        {
+            traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
+        }
 
+        // Pass the number of tests to ct data provider to add them to the tree
+        this._testProvider.setNumberOfTests(num, viewElement.label);
         // TODO maybe do a check on loaded files here?
     }
 
@@ -358,18 +328,19 @@ class CTTreeView {
         // Currently no intended behavior
     }
 
-    onDidChangeSelection(e : CTElement){
+    onDidChangeSelection(viewElement : CTElement){
         // Keep track of the current selected trace
-        if(e.type == CTtreeItemType.Trace)
-            this.currentTraceName = e.label;
+        if(viewElement.type == CTtreeItemType.Trace)
+            this.currentTraceName = viewElement.label;
 
         // Guard access to the test view
-        let testResults = this._testResults.find(tr => tr.trace.name == e.getParent().label);
-        if(e.type != CTtreeItemType.Test || !testResults)
-            return;
+        if(viewElement.type == CTtreeItemType.Test){
+            // Get the trace label name from the view items grandparent and find the corresponding trace in _combinatorialTests
+            let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.getParent().getParent().label);
 
-        // Set and show the test sequence in the test view
-        this._resultProvider.setTestSequenceResults(testResults.cases.find(testResult => testResult.id+"" == e.label).sequence);
+            // Set and show the test sequence in the test view
+            this._resultProvider.setTestSequenceResults(traceWithTestResults.testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);
+        }
     }
 
     async selectTraceName() : Promise<string> {
@@ -420,5 +391,5 @@ interface completeCT{
 
 interface traceWithTestResults{
     trace: CTTrace,
-    cases: CTTestCase[]
+    testCases: CTTestCase[]
 }
