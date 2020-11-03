@@ -80,6 +80,12 @@
         "title": "Send test to interpreter",
         "category": "VDM",
         "icon": "$(debug-alt)"
+      },
+      {
+        "command": "extension.ctCancel",
+        "title": "Cancel Combinatorial Test Request",
+        "category": "VDM",
+        "icon": "$(stop)"
       }
     ],
     "viewsWelcome": [
@@ -128,6 +134,11 @@
           "command": "extension.ctViewTreeFilter",
           "when": "view =~ /ctView/",
           "group": "navigation@2"
+        },
+        {
+          "command": "extension.ctRebuildOutline",
+          "when": "view =~ /ctView/",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
