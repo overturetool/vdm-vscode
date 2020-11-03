@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
-import { commands, ExtensionContext, Uri, window, window as Window, workspace } from "vscode";
+import { commands, ExtensionContext, ProgressLocation, Uri, window, window as Window, workspace } from "vscode";
 import { CancellationTokenSource, ClientCapabilities, ErrorCodes, ServerCapabilities, StaticFeature} from "vscode-languageclient";
 import { CTDataProvider, CTElement, CTtreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
@@ -43,7 +43,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             if (this._filterHandler)
                 this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
 
-            this.registerCommand('extension.ctCancel', () => this._cancelToken?.cancel() );
+            this.registerCommand('extension.ctCancel', () => this.cancelExecution());
         }
     }
 
@@ -116,7 +116,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             var partialResultHandlerDisposable = this._client.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests, name));
 
             // Send request
-            // TODO Add loading information message
             this._ctTreeView.showCancelButton(true);
             const tests = await this._client.sendRequest(CTExecuteRequest.type, params, this._cancelToken.token);
 
@@ -130,7 +129,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
                     this._ctTreeView.setTestResults(name, err.data);
                 }
             }
-            Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
+            else {
+                Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
+            }
         }
 
         // Clean-up
@@ -139,6 +140,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
         partialResultHandlerDisposable?.dispose();
         this._ctTreeView.showCancelButton(false);
     } 
+
+    cancelExecution(){
+        this._cancelToken?.cancel();
+    }
 
     private handleExecutePartialResult(tests: CTTestCase[], trace: string){
         if (tests)
@@ -364,22 +369,39 @@ class CTTreeView {
     }
 
     async ctGenerate(viewElement: CTElement) {
-        // Request generate from server
-        const num = await this._ctFeature.requestGenerate(viewElement.label);
+        // Setup loading window
+        window.withProgress({
+            location: {viewId: "ctView"},
+            title: "Running test generation",
+            cancellable: false
+        }, (progress, token) => {
+            token.onCancellationRequested(() => {
+                console.log("User canceled the test generation");
+            });
+
+            // Do the generate request
+            return new Promise(async resolve => {
+                // Request generate from server
+                const num = await this._ctFeature.requestGenerate(viewElement.label);
+                
+                // Check if number of tests from server matches local number of tests
+                let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
+                if(!traceWithTestResults || traceWithTestResults.testCases.length != num)
+                    // Instatiate testcases for traces.
+                    for(let i = 1; i <= num; i++)
+                        traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
         
-        // Check if number of tests from server matches local number of tests
-        let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
-        if(!traceWithTestResults || traceWithTestResults.testCases.length != num)
-            // Instatiate testcases for traces.
-            for(let i = 1; i <= num; i++)
-                traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
-   
 
-        // Pass the number of tests to ct data provider to add them to the tree
-        this._testProvider.setNumberOfTests(num, viewElement.label);
+                // Pass the number of tests to ct data provider to add them to the tree
+                this._testProvider.setNumberOfTests(num, viewElement.label);
 
-        // Set test verdicts - "n/a" if these have just been generated above.
-        this._testProvider.updateTestVerdicts(traceWithTestResults.testCases, traceWithTestResults.trace.name);             
+                // Set test verdicts - "n/a" if these have just been generated above.
+                this._testProvider.updateTestVerdicts(traceWithTestResults.testCases, traceWithTestResults.trace.name);      
+                
+                // Resolve action
+                resolve();
+            });
+        });
     }
 
     ctViewTreeFilter(): void {
@@ -434,29 +456,48 @@ class CTTreeView {
     }
 
     private async execute(e: CTElement, filter: boolean){
-        if (e.type == CTtreeItemType.Trace){
-            // Check if we have generated first
-            if (e.getChildren().length < 1) {
-                await this.ctGenerate(e);
-            }
-
-            // Request execute
-            this._ctFeature.requestExecute(e.label, filter)
-        }
-        else if (e.type == CTtreeItemType.TestGroup){
-            // Find range from group description
-            let strRange : string[] = e.description.toString().split('-');
-            let range : NumberRange = {
-                start: Number(strRange[0]),
-                end: Number(strRange[1])
-            };
-
-            // Request execute with range
-            this._ctFeature.requestExecute(e.getParent().label, filter, range)
-        } 
-        else {
+        if (e.type != CTtreeItemType.Trace && e.type != CTtreeItemType.TestGroup)
             throw new Error("CT Execute called on invalid element")
-        }
+
+        // Setup loading window
+        window.withProgress({
+            location: ProgressLocation.Notification,
+            title: "Running test generation",
+            cancellable: true
+        }, (progress, token) => {
+            token.onCancellationRequested(() => {
+                console.log("User canceled the test execution");
+                this._ctFeature.cancelExecution();
+            });
+
+            // Do the execute request
+            return new Promise(async resolve => {
+                if (e.type == CTtreeItemType.Trace){
+                    // Check if we have generated first
+                    if (e.getChildren().length < 1) {
+                        await this.ctGenerate(e);
+                    }
+        
+                    // Request execute
+                    await this._ctFeature.requestExecute(e.label, filter)
+                }
+                else if (e.type == CTtreeItemType.TestGroup){
+                    // Find range from group description
+                    let strRange : string[] = e.description.toString().split('-');
+                    let range : NumberRange = {
+                        start: Number(strRange[0]),
+                        end: Number(strRange[1])
+                    };
+        
+                    // Request execute with range
+                    await this._ctFeature.requestExecute(e.getParent().label, filter, range)
+                }
+                
+                // Resolve action
+                resolve();
+            });
+        });
+        
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
