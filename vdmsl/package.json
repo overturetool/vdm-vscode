@@ -258,7 +258,7 @@
         },
         "vdmsl-lsp.JVMArguments": {
           "type": "string",
-          "default": "",
+          "default": "-Xmx2g",
           "description": "JVM arguments used when launching the server."
         },
         "vdmsl-lsp.experimentalServer": {

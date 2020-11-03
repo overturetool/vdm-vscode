@@ -3,7 +3,7 @@ import { CTResultPair } from "./protocol.lspx";
 
 export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 
-    private _testSequenceResults: CTResultPair[] = [];
+    private _testSequenceResults: CTResultElement[] = [];
 
     private _onDidChangeTreeData: EventEmitter<CTResultElement | undefined> = new EventEmitter<CTResultElement | undefined>();
     onDidChangeTreeData: Event<CTResultElement> = this._onDidChangeTreeData.event;
@@ -16,7 +16,7 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
         if(element)
             return [];
         
-        return this.convertToResultElements(this._testSequenceResults);
+        return this._testSequenceResults;
     }
 
     private convertToResultElements(resultPairs: CTResultPair[]): CTResultElement[]{
@@ -31,7 +31,7 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
         if(!resultPairs)
             return;
 
-        this._testSequenceResults = resultPairs;
+        this._testSequenceResults = this.convertToResultElements(resultPairs);
         this._onDidChangeTreeData.fire(null);
     }
 }

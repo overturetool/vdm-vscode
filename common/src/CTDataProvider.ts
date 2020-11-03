@@ -53,14 +53,16 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
         // Generate test elements and add to trace in groups
         let testgroupes: CTElement[] = [];
         let groupIterator = -1;
+        let group;
         for(var i = 0; i < numberOfTests; i++)
         {
             if(i % this._groupSize == 0)
             {
                 groupIterator++;
-                testgroupes.push(new CTElement("test group", CTtreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1), traceElement));
+                group = new CTElement("test group", CTtreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1), traceElement);
+                testgroupes.push(group);
             }
-            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), CTtreeItemType.Test, TreeItemCollapsibleState.None, "n/a", traceElement));
+            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), CTtreeItemType.Test, TreeItemCollapsibleState.None, "n/a", group));
         }
 
         // Match desciption of group to number of tests for last group.
@@ -115,7 +117,7 @@ export class CTDataProvider implements TreeDataProvider<CTElement> {
                 let testElement = groupes[groupIter].getChildren().find(testEle => testEle.label === testCase.id + "");
                 if(testElement)
                 {
-                    testElement.description = VerdictKind[testCase.verdict];               
+                    testElement.description = testCase.verdict == null ? "n/a" : VerdictKind[testCase.verdict];               
                     break;
                 }
             }          
