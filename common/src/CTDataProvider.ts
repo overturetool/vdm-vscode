@@ -8,6 +8,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
     private _minGroupSize: number = 100;
+    private _maxGroupSize: number = 10000;
     private _groupSizePercentage = 0.1;
     private _filterPassedTests: boolean = false;
     private _filterInconclusiveTests: boolean = false;
@@ -73,7 +74,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             // Generate test groups
             let testGroups: TestViewElement[] = [];
             let percentageSize = numberOfTests * this._groupSizePercentage;
-            let groupSize = this._minGroupSize > percentageSize ? this._minGroupSize : percentageSize;
+            let groupSize = this._minGroupSize > percentageSize ? this._minGroupSize : percentageSize > this._maxGroupSize ? this._maxGroupSize: percentageSize;
             let groups = Math.ceil(numberOfTests/groupSize);
             for(let i = 0; i < groups; i++)
             {
