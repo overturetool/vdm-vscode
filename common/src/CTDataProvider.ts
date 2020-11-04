@@ -1,197 +1,111 @@
-import { trace } from 'console';
+import { timeStamp, trace } from 'console';
+import { performance } from 'perf_hooks';
 import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
-import { CTSymbol, CTTestCase, CTTrace, VerdictKind } from './protocol.lspx';
+import { CTTreeView } from './CombinatorialTestingFeature';
+import { NumberRange, VerdictKind } from './protocol.lspx';
 
-export class CTDataProvider implements TreeDataProvider<CTElement> {
+export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
-    private _onDidChangeTreeData: EventEmitter<CTElement | undefined> = new EventEmitter<CTElement | undefined>();
-    onDidChangeTreeData: Event<CTElement> = this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: EventEmitter<TestViewElement | undefined> = new EventEmitter<TestViewElement | undefined>();
+    onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
-    private _symbols: CTElement[] = []; // Keep reference to the root objects
-    private _groupSize: number = 100;
+    private _groupSize: number = 1000;
     private _filterPassedTests: boolean = false;
     private _filterInconclusiveTests: boolean = false;
+    private _roots: TestViewElement[];
 
-    constructor(symbols?: CTSymbol[], groupSize?: number) {
-        if(symbols)
-            this.updateOutline(symbols);
-        if(groupSize)
-            this._groupSize = groupSize;
+    constructor(
+        private _ctView: CTTreeView) {
+    }
+
+    public rebuildViewFromElement(viewElement?: TestViewElement)
+    {
+        this._onDidChangeTreeData.fire(viewElement);
     }
 
     public filterPassedTests(): any
     {
         this._filterPassedTests = this._filterPassedTests ? false : true;
-        this._onDidChangeTreeData.fire(null);
+        this._roots.forEach(symbolElement => {
+            symbolElement.getChildren().forEach(traceElement => traceElement.getChildren().forEach(groupElement => {
+                this._onDidChangeTreeData.fire(groupElement);
+            }))    
+        });
     }
 
     public filterInconclusiveTests(): any
     {
         this._filterInconclusiveTests = this._filterInconclusiveTests ? false : true;
-        this._onDidChangeTreeData.fire(null);
-    }
-
-    public setNumberOfTests(numberOfTests: number, traceName: string)
-    {
-        let traceElement: CTElement;
-
-        // Find trace element
-        for(let i = 0; i < this._symbols.length; i++)
-        {
-            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === traceName);
-            if(traceElement)
-                break;
-        }
-
-        if(!traceElement)
-            return;
-
-        // Remove old test groupes and their tests
-        traceElement.getChildren().splice(0,traceElement.getChildren().length);
-        traceElement.description = false;
-
-        // Generate test elements and add to trace in groups
-        let testgroupes: CTElement[] = [];
-        let groupIterator = -1;
-        let group;
-        for(var i = 0; i < numberOfTests; i++)
-        {
-            if(i % this._groupSize == 0)
-            {
-                groupIterator++;
-                group = new CTElement("test group", CTtreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (i+1) + "-" + this._groupSize * (groupIterator+1), traceElement);
-                testgroupes.push(group);
-            }
-            testgroupes[groupIterator].getChildren().push(new CTElement("" + (i+1), CTtreeItemType.Test, TreeItemCollapsibleState.None, "n/a", group));
-        }
-
-        // Match desciption of group to number of tests for last group.
-        testgroupes[groupIterator].description = ((groupIterator*this._groupSize)+1) + "-" + ((groupIterator*this._groupSize) + (i % this._groupSize));
-
-        // Set the test groups for the trace
-        traceElement.setChildren(testgroupes);
-        
-        // Fire element change event with trace element
-        this._onDidChangeTreeData.fire(traceElement);
-    }
-
-    public updateTraceVerdict(trace: CTTrace)
-    {
-        let traceElement: CTElement;
-
-        // Find trace element
-        for(let i = 0; i < this._symbols.length; i++)
-        {
-            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === trace.name);
-            if(traceElement)
-                break;
-        }
-
-        if(!traceElement || !trace.verdict)
-            return;
-
-        // Set trace verdict
-        traceElement.description = VerdictKind[trace.verdict]
-    }
-
-    public updateTestVerdicts(tests: CTTestCase[], traceName: string)
-    {
-        let traceElement: CTElement;
-
-        // Find trace element
-        for(let i = 0; i < this._symbols.length; i++)
-        {
-            traceElement = this._symbols[i].getChildren().find(traceEle => traceEle.label === traceName);
-            if(traceElement)
-                break;
-        }
-
-        if(!traceElement)
-            throw new Error("Unable to locate trace with updated test verdicts in view");
-
-
-
-        // Iterate over test groupes and update individual test verdicts
-        let groupes = traceElement.getChildren();
-        tests.forEach(testCase => {
-            for(let groupIter = 0; groupIter < groupes.length; groupIter++)
-            {
-                let testElement = groupes[groupIter].getChildren().find(testEle => testEle.label === testCase.id + "");
-                if(testElement)
-                {
-                    testElement.description = testCase.verdict == null ? "n/a" : VerdictKind[testCase.verdict];               
-                    break;
-                }
-            }          
+        this._roots.forEach(symbolElement => {
+            symbolElement.getChildren().forEach(traceElement => traceElement.getChildren().forEach(groupElement => {
+                if(groupElement.collapsibleState == TreeItemCollapsibleState.Expanded)
+                this._onDidChangeTreeData.fire(groupElement);
+            }))    
         });
-
-        // Fire element change event with trace element
-        this._onDidChangeTreeData.fire(traceElement);
     }
 
-    public updateOutline(ctSymbols: CTSymbol[])
-    {
-        // Iterate over each ctsymbols traces and convert to CTElement types and replace existing items or add as needed.
-        ctSymbols.forEach(ctSymbol => {
-            let index = this._symbols.findIndex(s => s.label === ctSymbol.name);
-                
-            if (index > -1)
-                this._symbols[index].updateChildren(ctSymbol.traces.map(t => new CTElement(t.name, CTtreeItemType.Trace, TreeItemCollapsibleState.Collapsed)));
-
-            else
-            {
-                let ctElement = new CTElement(ctSymbol.name, CTtreeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed); 
-                ctElement.setChildren(ctSymbol.traces.map(t => new CTElement(t.name, CTtreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", ctElement)))  
-                this._symbols.push(ctElement);
-            }        
-        });
-        
-        // Fire event telling the view that the root (CTSymbols) has changed by passing null
-        this._onDidChangeTreeData.fire(null);
+    getRoots(): TestViewElement[] {
+        return this._roots;
     }
 
-    public getSymbols(): CTElement[]{
-        return this._symbols;
-    }
-
-    public clearOutline()
-    {
-        this._symbols = [];
-
-        // Fire event telling the view that the CTSymbols (roots) have changed by passing null
-        this._onDidChangeTreeData.fire(null);
-    }
-
-    getTreeItem(element: CTElement): TreeItem {
+    getTreeItem(element: TestViewElement): TreeItem {
         return element;
     }
 
-    getChildren(element?: CTElement): Thenable<CTElement[]> {
+    getChildren(element?: TestViewElement): Thenable<TestViewElement[]> {
         // Handle root query
-        if(!element)
-            return Promise.resolve(this._symbols);
-        
-        let elementsToReturn = element.getChildren();
+        if(!element){
+            let symbolNames = this._ctView.getSymbolNames();
+            this._roots = symbolNames.map(symbolName => new TestViewElement(symbolName, TreeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed));
+            return Promise.resolve(this._roots);
+        }
 
-        // Filter passed and/or inconclusive tests if true
-        if(this._filterPassedTests)
-            elementsToReturn = elementsToReturn.filter(e => e.type != CTtreeItemType.Test || e.description != VerdictKind[VerdictKind.Passed]);
-        if(this._filterInconclusiveTests)
-            elementsToReturn = elementsToReturn.filter(e => e.type != CTtreeItemType.Test || e.description != VerdictKind[VerdictKind.Inconclusive]);
+        if(element.type == TreeItemType.CTSymbol)
+        {
+            let ctTraces = this._ctView.getTraces(element.label);
+            element.setChildren(ctTraces.map(trace => new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)));
 
-        return Promise.resolve(elementsToReturn);
-    }
+            return Promise.resolve(element.getChildren());
+        }
 
-    getTraceNames(): string[] {
-        let res : string[] = [];
-        this._symbols.forEach((symbol) => {
-            symbol.getChildren().forEach(trace => res.push(trace.label));
-        })
-        return res;
+        if(element.type == TreeItemType.Trace)
+        {
+            let numberOfTests: number = this._ctView.getNumberOftests(element.label);
+
+            // Generate test groups
+            let testGroups: TestViewElement[] = [];
+            let iterMax = Math.ceil(numberOfTests/this._groupSize);
+            for(let i = 0; i < iterMax; i++)
+            {
+                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (1 + i * this._groupSize) + "-" + ((i+1) * this._groupSize), element));
+            }
+            element.setChildren(testGroups);
+
+            return Promise.resolve(element.getChildren());
+        }
+
+        if(element.type == TreeItemType.TestGroup)
+        {
+            // Generate test views for the group
+            let strRange : string[] = element.description.toString().split('-');
+            let range: NumberRange = {start: parseInt(strRange[0])-1, end: parseInt(strRange[1])};
+            let testsViewElements = this._ctView.getTestResults(range, element.getParent().label).map(testCase => new TestViewElement(testCase.id+"", TreeItemType.Test, TreeItemCollapsibleState.None, testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", element));
+            
+            if(this._filterPassedTests)
+                testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed]);        
+
+            if(this._filterInconclusiveTests)
+                testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Inconclusive]);
+
+            return Promise.resolve(testsViewElements);
+        }
+
+        // Handle default
+        return Promise.resolve([])
     }
 }
 
-export enum CTtreeItemType
+export enum TreeItemType
 {
     CTSymbol = "ctSymbol",
     Trace = "trace",
@@ -199,15 +113,14 @@ export enum CTtreeItemType
     TestGroup = "testgroup"
 }
 
-export class CTElement extends TreeItem {
-    
-    private _children: CTElement[] = [];
+export class TestViewElement extends TreeItem {
+    private _children: TestViewElement[] = [];
     constructor(
     public readonly label: string,
-    public readonly type: CTtreeItemType,
+    public readonly type: TreeItemType,
     public readonly collapsibleState: TreeItemCollapsibleState,
     description = "",
-    private readonly _parent: CTElement = undefined ) {
+    private readonly _parent: TestViewElement = undefined) {
         super(label, collapsibleState);
         super.contextValue = type;
         if(description === "")
@@ -216,33 +129,15 @@ export class CTElement extends TreeItem {
             super.description = description;
     }
 
-    public getParent(): CTElement{
+    public getParent(): TestViewElement {
         return this._parent;
     }
 
-    public getChildren(): CTElement[]{
-        return this._children
+    public getChildren(): TestViewElement[]{
+        return this._children;
     }
 
-    public setChildren(children: CTElement[]){
-        this._children = children;
-    }
-
-    public updateChildren(children: CTElement[]){
-        children.forEach(newChild => {
-            let index = this._children.findIndex(oldChild => oldChild.label === newChild.label); 
-            if (index > -1)
-                this._children[index] = newChild;
-            else
-                this._children.push(newChild);
-        });
-    }
-
-    public removeChildren(labels: string[]){
-        labels.forEach(label => {
-            let index = this._children.findIndex(child => child.label === label); 
-            if (index > -1)
-                this._children.splice(index,1);    
-        });
+    public setChildren(testViewElements: TestViewElement[]){
+        this._children = testViewElements;
     }
 }
