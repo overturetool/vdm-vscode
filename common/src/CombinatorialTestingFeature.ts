@@ -125,6 +125,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
             }
         }
+        finally{
+            this._ctTreeView.saveCTs();
+        }
 
         // Clean-up
         this._cancelToken.dispose();
@@ -225,7 +228,7 @@ export class CTTreeView {
         return traceWithResult.testCases.slice(range.start, range.end);
     }
 
-    private saveCTs() {            
+    public saveCTs() {            
         this._combinatorialTests.forEach(ct => {
             // Create full path
             let path = Uri.joinPath(this._savePath, ct.symbolName+".json").fsPath;
@@ -272,6 +275,7 @@ export class CTTreeView {
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         let startIndex = testCases[0].id;
         let endindex = testCases[testCases.length-1].id;
+
         // Update test results for trace
         for(let i = 0; i < testCases.length; i++)
         {
@@ -280,6 +284,8 @@ export class CTTreeView {
             oldTestCase.sequence = newTestCase.sequence;
             oldTestCase.verdict = newTestCase.verdict;
         }
+
+        // Find the group element that should update its view
         let groupElement = this._currentlyExecutingTraceViewItem.getChildren().find(ge => {
             let strRange : string[] = ge.description.toString().split('-');
             if(parseInt(strRange[0]) >= startIndex && parseInt(strRange[0]) <= endindex)
@@ -447,9 +453,6 @@ export class CTTreeView {
     }
 
     onDidChangeSelection(viewElement : TestViewElement){
-        // Keep track of the current selected trace
-        if(viewElement.type == TreeItemType.Trace)
-            this.currentTraceName = viewElement.label;
 
         // Guard access to the test view
         if(viewElement.type == TreeItemType.Test){

@@ -74,10 +74,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
             // Generate test groups
             let testGroups: TestViewElement[] = [];
-            let iterMax = Math.ceil(numberOfTests/this._groupSize);
-            for(let i = 0; i < iterMax; i++)
+            let groups = Math.ceil(numberOfTests/this._groupSize);
+            let numberOfTestsInGroup = this._groupSize >= numberOfTests ? numberOfTests : this._groupSize;
+            for(let i = 0; i < groups; i++)
             {
-                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (1 + i * this._groupSize) + "-" + ((i+1) * this._groupSize), element));
+                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (1 + i * this._groupSize) + "-" + (this._groupSize >= numberOfTests ? numberOfTests + this._groupSize * i : this._groupSize * (i+1)), element));
+                numberOfTests -= this._groupSize;
             }
             element.setChildren(testGroups);
 
