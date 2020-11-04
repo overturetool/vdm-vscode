@@ -1,5 +1,3 @@
-import { timeStamp, trace } from 'console';
-import { performance } from 'perf_hooks';
 import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { CTTreeView } from './CombinatorialTestingFeature';
 import { NumberRange, VerdictKind } from './protocol.lspx';
@@ -9,7 +7,8 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     private _onDidChangeTreeData: EventEmitter<TestViewElement | undefined> = new EventEmitter<TestViewElement | undefined>();
     onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
-    private _groupSize: number = 1000;
+    private _minGroupSize: number = 100;
+    private _groupSizePercentage = 0.1;
     private _filterPassedTests: boolean = false;
     private _filterInconclusiveTests: boolean = false;
     private _roots: TestViewElement[];
@@ -38,7 +37,6 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._filterInconclusiveTests = this._filterInconclusiveTests ? false : true;
         this._roots.forEach(symbolElement => {
             symbolElement.getChildren().forEach(traceElement => traceElement.getChildren().forEach(groupElement => {
-                if(groupElement.collapsibleState == TreeItemCollapsibleState.Expanded)
                 this._onDidChangeTreeData.fire(groupElement);
             }))    
         });
@@ -74,12 +72,13 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
             // Generate test groups
             let testGroups: TestViewElement[] = [];
-            let groups = Math.ceil(numberOfTests/this._groupSize);
-            let numberOfTestsInGroup = this._groupSize >= numberOfTests ? numberOfTests : this._groupSize;
+            let percentageSize = numberOfTests * this._groupSizePercentage;
+            let groupSize = this._minGroupSize > percentageSize ? this._minGroupSize : percentageSize;
+            let groups = Math.ceil(numberOfTests/groupSize);
             for(let i = 0; i < groups; i++)
             {
-                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (1 + i * this._groupSize) + "-" + (this._groupSize >= numberOfTests ? numberOfTests + this._groupSize * i : this._groupSize * (i+1)), element));
-                numberOfTests -= this._groupSize;
+                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (1 + i * groupSize) + "-" + (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1)), element));
+                numberOfTests -= groupSize;
             }
             element.setChildren(testGroups);
 

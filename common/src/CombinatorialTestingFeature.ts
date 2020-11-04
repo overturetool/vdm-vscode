@@ -344,6 +344,8 @@ export class CTTreeView {
     }
 
     async ctRebuildOutline() {
+        if(this._testProvider.getRoots().length > 0)
+            this._combinatorialTests = [];
         const symbols = await this._ctFeature.requestTraces();
 
         // Check if existing outline matches servers
@@ -442,10 +444,10 @@ export class CTTreeView {
         throw new Error('Method not implemented.');
     }
 
-    onDidExpandElement(e : TestViewElement){
-        if (e.type == TreeItemType.Trace){
-            this.ctGenerate(e);
-        }        
+    onDidExpandElement(viewElement : TestViewElement){
+        if (viewElement.type == TreeItemType.Trace){
+            this.ctGenerate(viewElement);
+        }
     }
 
     onDidCollapseElement(){
