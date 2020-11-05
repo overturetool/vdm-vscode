@@ -61,7 +61,7 @@
         "command": "extension.ctFilteredExecute",
         "title": "Filtered Evaluation",
         "category": "VDM",
-        "icon": "$(filter)"
+        "icon": "$(microscope)"
       },
       {
         "command": "extension.ctGenerate",
