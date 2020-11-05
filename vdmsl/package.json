@@ -70,8 +70,8 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "extension.toggleFilteringForTestGroup",
-        "title": "Toggle filtering of passed and inconclusive tests in group",
+        "command": "extension.toggleFilteringForTestGroups",
+        "title": "Toggle filtering of passed and inconclusive tests",
         "category": "VDM",
         "icon": "$(list-filter)"
       },
@@ -128,17 +128,22 @@
         {
           "command": "extension.ctCancel",
           "when": "view =~ /ctView/ && vdm-ct-show-cancel-button == true",
-          "group": "navigation@0"
+          "group": "navigation@1"
         },
         {
           "command": "extension.ctSetFilter",
           "when": "view =~ /ctView/ && vdm-ct-show-set-execute-filter-button == true",
-          "group": "navigation@1"
+          "group": "navigation@2"
+        },
+        {
+          "command": "extension.toggleFilteringForTestGroups",
+          "when": "view =~ /ctView/ && vdm-ct-show-run-buttons == true",
+          "group": "navigation@3"
         },
         {
           "command": "extension.ctRebuildOutline",
           "when": "view =~ /ctView/",
-          "group": "navigation@3"
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -171,11 +176,6 @@
           "command": "extension.ctFilteredExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
-        },
-        {
-          "command": "extension.toggleFilteringForTestGroup",
-          "when": "viewItem == testgroup && vdm-ct-show-run-buttons == true",
-          "group": "inline@2"
         },
         {
           "command": "extension.ctGenerate",
@@ -237,7 +237,7 @@
           "when": "false"
         },
         {
-          "command": "extension.toggleFilteringForTestGroup",
+          "command": "extension.toggleFilteringForTestGroups",
           "when": "false"
         },
         {

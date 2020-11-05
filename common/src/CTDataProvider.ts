@@ -11,6 +11,9 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     private _maxGroupSize: number = 1000;
     private _groupSizePercentage = 0.1;
     private _roots: TestViewElement[];
+    private _currentlyExpandedGroups: TestViewElement[] = [];
+    private _cashedGroups: TestViewElement[] = [];
+    private _filter: boolean = false;
 
     constructor(
         private _ctView: CTTreeView) {
@@ -21,10 +24,23 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public toggleFilteringForTestGroup(viewElement: TestViewElement): any
+    public toggleFilteringForTestGroups(): any
     {
-        viewElement.Filter = viewElement.Filter ? false : true;
-        this._onDidChangeTreeData.fire(viewElement);
+        this._filter = this._filter ? false : true;
+        this._currentlyExpandedGroups.forEach(group => {
+            this._onDidChangeTreeData.fire(group);
+        });
+    }
+
+    public elementExpanded(element: TestViewElement){
+        if(this._currentlyExpandedGroups.indexOf(element) == -1)
+            this._currentlyExpandedGroups.push(element);
+    }
+
+    public elementCollapsed(element: TestViewElement){
+        let elementIndex = this._currentlyExpandedGroups.indexOf(element);
+        if(elementIndex != -1)
+            this._currentlyExpandedGroups.splice(elementIndex,1);
     }
 
     getRoots(): TestViewElement[] {
@@ -72,12 +88,14 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
         if(element.type == TreeItemType.TestGroup)
         {
+            if(this._cashedGroups.indexOf(element) == -1)
+                this._cashedGroups.push(element);
             // Generate test views for the group
             let strRange : string[] = element.description.toString().split('-');
             let range: NumberRange = {start: parseInt(strRange[0])-1, end: parseInt(strRange[1])};
             let testsViewElements = this._ctView.getTestResults(range, element.getParent().label).map(testCase => new TestViewElement(testCase.id+"", TreeItemType.Test, TreeItemCollapsibleState.None, testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", element));
             
-            if(element.Filter)
+            if(this._filter)           
                 testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed] && twe.description != VerdictKind[VerdictKind.Inconclusive]);
 
             return Promise.resolve(testsViewElements);
@@ -98,8 +116,6 @@ export enum TreeItemType
 
 export class TestViewElement extends TreeItem {
     // For checking if a testgroup is filtered
-    public Filter = false;
-
     private _children: TestViewElement[] = [];
     constructor(
     public readonly label: string,

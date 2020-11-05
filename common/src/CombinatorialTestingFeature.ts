@@ -315,7 +315,7 @@ export class CTTreeView {
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
-        this.registerCommand("extension.toggleFilteringForTestGroup",      (e)  => this._testProvider.toggleFilteringForTestGroup(e));
+        this.registerCommand("extension.toggleFilteringForTestGroups",      ()  => this._testProvider.toggleFilteringForTestGroups());
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
@@ -445,12 +445,20 @@ export class CTTreeView {
     }
 
     onDidExpandElement(viewElement : TestViewElement){
-        if (viewElement.type == TreeItemType.Trace)
-            this.ctGenerate(viewElement);               
-    }
+        if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1)
+            this.ctGenerate(viewElement);
+        
+        if (viewElement.type == TreeItemType.TestGroup)
+        {
+            this._testProvider.elementExpanded(viewElement);
+            this._testProvider.rebuildViewFromElement(viewElement);
+        }
+    }   
 
     onDidCollapseElement(viewElement : TestViewElement){
-        throw new Error('Method not implemented.');
+        //throw new Error('Method not implemented.');
+        if (viewElement.type == TreeItemType.TestGroup)
+            this._testProvider.elementCollapsed(viewElement);
     }
 
     onDidChangeSelection(viewElement : TestViewElement){
