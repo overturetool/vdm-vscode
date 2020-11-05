@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
 import { commands, ExtensionContext, ProgressLocation, Uri, window, window as Window, workspace } from "vscode";
-import { CancellationTokenSource, ClientCapabilities, ErrorCodes, ServerCapabilities, StaticFeature} from "vscode-languageclient";
+import { CancellationTokenSource, ClientCapabilities, ErrorCodes, ProgressType, ServerCapabilities, StaticFeature, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressOptions, WorkDoneProgressReport} from "vscode-languageclient";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { ExperimentalCapabilities, CTTestCase, CTTrace, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
@@ -16,6 +16,8 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _ctTreeView : CTTreeView;
     private _cancelToken: CancellationTokenSource;
     private _generateCalls : number = 0;
+    private _supportWorkDone = false;
+    private _progress: number = 0;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext, 
         private _filterHandler?: CTFilterHandler, 
@@ -33,7 +35,11 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports CT
-        if (capabilities?.experimental?.combinatorialTestProvider) { 
+        if (capabilities?.experimental?.combinatorialTestProvider) {
+            // Check if support work done progress
+            if (WorkDoneProgressOptions.hasWorkDoneProgress(capabilities?.experimental?.combinatorialTestProvider))
+                this._supportWorkDone = capabilities?.experimental?.combinatorialTestProvider.workDoneProgress
+
             // Register data provider and view
             this._ctTreeView = new CTTreeView(this, this._context, true);
 
@@ -84,7 +90,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
     }
 
-    public async requestExecute(name: string, filtered: boolean = false, range?: NumberRange){
+    public async requestExecute(name: string, filtered: boolean = false, range?: NumberRange, progress?: vscode.Progress<{ message?: string; increment?: number }>){
         // Check if already running an execution
         if (this._cancelToken){
             Window.showInformationMessage("Combinatorial Test - execute request failed: An execution is already running");
@@ -108,6 +114,14 @@ export class CombinantorialTestingFeature implements StaticFeature {
             let partialResultToken = this.generateToken();
             params.partialResultToken = partialResultToken
             var partialResultHandlerDisposable = this._client.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests, name));
+
+            // Setup work done  progress handler
+            if (this._supportWorkDone){
+                this._progress = 0;
+                let workDoneTokenToken = this.generateToken();
+                params.workDoneToken = workDoneTokenToken;
+                var workDoneProgressHandlerDisposable = this._client.onProgress(WorkDoneProgress.type, workDoneTokenToken, (value) => this.handleExecuteWorkDoneProgress(value, progress));
+            }
 
             // Send request
             this._ctTreeView.showCancelButton(true);
@@ -135,6 +149,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         this._cancelToken.dispose();
         this._cancelToken = undefined;
         partialResultHandlerDisposable?.dispose();
+        workDoneProgressHandlerDisposable?.dispose();
         this._ctTreeView.showCancelButton(false);
     } 
 
@@ -152,6 +167,15 @@ export class CombinantorialTestingFeature implements StaticFeature {
         else
             Window.showInformationMessage("CT Received Progress without any tests");
     }
+
+    private handleExecuteWorkDoneProgress(value: any, progress: vscode.Progress<{ message?: string; increment?: number }>){
+        if (value?.percentage){
+            progress.report({message: value.message, increment: (value.percentage - this._progress)})
+            this._progress = value.percentage
+        }
+            
+    }
+
 
     private generateToken() : string {
         return "CombinatorialTestToken-"+Date.now().toString()+(this._generateCalls++).toString();
@@ -496,7 +520,7 @@ export class CTTreeView {
 
         
                     // Request execute
-                    await this._ctFeature.requestExecute(viewElement.label, filter)
+                    await this._ctFeature.requestExecute(viewElement.label, filter, undefined, progress)
                 }
                 else if (viewElement.type == TreeItemType.TestGroup){
                     // Reference the trace view item for which tests are being executed

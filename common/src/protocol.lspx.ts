@@ -1,11 +1,11 @@
-import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, RequestHandler, Declaration, DeclarationLink, DeclarationParams } from "vscode-languageclient";
+import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions } from "vscode-languageclient";
 import {ProtocolRequestType} from "vscode-languageserver-protocol/lib/messages";
 /**
  * The experimental capabilities that the server can reply.
  */
 export interface ExperimentalCapabilities {
 	proofObligationProvider?: boolean;
-	combinatorialTestProvider?: boolean;
+	combinatorialTestProvider?: boolean | WorkDoneProgressOptions;
 }
 
 ////////////////////// Proof Obligation Generation (POG) /////////////////////////////
