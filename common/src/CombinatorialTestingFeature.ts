@@ -129,6 +129,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
         finally{
             this._ctTreeView.saveCTs();
+            this._ctTreeView.testExecutionFinished();
         }
 
         // Clean-up
@@ -280,6 +281,11 @@ export class CTTreeView {
         })
     }
 
+    public testExecutionFinished()
+    {
+        this.rebuildExpandedGroupViews();
+    }
+
     public addNewTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         // Update test results for tests in the trace
@@ -298,10 +304,10 @@ export class CTTreeView {
 
         // Set the new start test number of the _testCaseBatchRange and rebuild expanded test group views effected by the changed data.
         this._testCaseBatchRange.start = testCases[testCases.length-1].id;
-        this.rebuildExpandedGroupView();
+        this.rebuildExpandedGroupViews();
     }
 
-    rebuildExpandedGroupView(){
+    rebuildExpandedGroupViews(){
         // Find the group element(s) that should update its view.
         this._currentlyExecutingTraceViewItem.getChildren().forEach(ge => {
             // Get group range from the groups label.
