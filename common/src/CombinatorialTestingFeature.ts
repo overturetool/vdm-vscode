@@ -17,7 +17,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
     private _cancelToken: CancellationTokenSource;
     private _generateCalls : number = 0;
 
-    constructor(client: SpecificationLanguageClient, context: ExtensionContext, private _filterHandler?: CTFilterHandler) {
+    constructor(client: SpecificationLanguageClient, context: ExtensionContext, 
+        private _filterHandler?: CTFilterHandler, 
+        private _interpreterHandler?: CTInterpreterHandler) {
         this._client = client;
         this._context = context;
     }
@@ -140,6 +142,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
         this._cancelToken?.cancel();
     }
 
+    sendToInterpreter(trace: string, test:number){
+        this._interpreterHandler.sendToInterpreter(trace,test);
+    }
+
     private handleExecutePartialResult(tests: CTTestCase[], trace: string){
         if (tests)
             this._ctTreeView.setTestResults(trace, tests);
@@ -153,8 +159,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
 }
 
 export interface CTFilterHandler {
-    setCTFilter() : void;
-    getCTFilter() : CTFilterOption[];
+    setCTFilter(): void;
+    getCTFilter(): CTFilterOption[];
+}
+
+export interface CTInterpreterHandler {
+    sendToInterpreter(trace : string, test : number): void;
 }
 
 export class CTTreeView {
@@ -306,7 +316,7 @@ export class CTTreeView {
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.toggleFilteringForTestGroup",      (e)  => this._testProvider.toggleFilteringForTestGroup(e));
-        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter());
+        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
 
@@ -428,8 +438,10 @@ export class CTTreeView {
         });
     }
 
-    ctSendToInterpreter(): void {
-        throw new Error('Method not implemented.');
+    ctSendToInterpreter(e: TestViewElement): void {
+        let trace = e.getParent().getParent().label;
+        let test = Number(e.label);
+        this._ctFeature.sendToInterpreter(trace, test);
     }
 
     onDidExpandElement(viewElement : TestViewElement){

@@ -3,6 +3,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-lan
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
 import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
+import { VdmjCTInterpreterHandler } from "./VdmjCTInterpreterHandler";
 
 export class SpecificationLanguageClient extends LanguageClient {
     private _context: ExtensionContext;
@@ -14,7 +15,7 @@ export class SpecificationLanguageClient extends LanguageClient {
         
         this.registerFeatures([
             new ProofObligationGenerationFeature(this,this._context), 
-            new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler())
+            new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
         ]);
     }
 }
