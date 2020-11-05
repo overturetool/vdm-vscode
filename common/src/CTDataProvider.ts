@@ -22,6 +22,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
+    public rebuildExpandedGroup(viewElement: TestViewElement){
+        if(this._currentlyExpandedGroups.findIndex(ceg => ceg.getParent().label == viewElement.getParent().label && ceg.description == viewElement.description) == -1)
+            return;
+        this._onDidChangeTreeData.fire(viewElement);
+    }
+
     public toggleFilteringForTestGroups(): any
     {
         this._filter = this._filter ? false : true;
