@@ -271,25 +271,22 @@ export class CTTreeView {
 
     public setTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
-        let startIndex = testCases[0].id;
-        let endindex = testCases[testCases.length-1].id;
-
-        // Update test results for trace
+        // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
         {
-            let newTestCase: CTTestCase = testCases[i];
-            let oldTestCase: CTTestCase = traceWithResult.testCases.find(tc => tc.id == newTestCase.id);
-            oldTestCase.sequence = newTestCase.sequence;
-            oldTestCase.verdict = newTestCase.verdict;
+            let oldTestCase: CTTestCase = traceWithResult.testCases.find(tc => tc.id == testCases[i].id);
+            oldTestCase.sequence = testCases[i].sequence;
+            oldTestCase.verdict = testCases[i].verdict;
         }
 
-        // Find the group element that should update its view
-        let groupElement = this._currentlyExecutingTraceViewItem.getChildren().find(ge => {
-            let strRange : string[] = ge.description.toString().split('-');
-            if(parseInt(strRange[0]) >= startIndex && parseInt(strRange[0]) <= endindex)
-                return true;
+        // // Find the group element(s) that should update its view
+        this._currentlyExecutingTraceViewItem.getChildren().forEach(ge => {
+            // Get group range from the groups label
+            let numberRange : number[] = ge.description.toString().split('-').map(str => parseInt(str));
+            // Notify of data changes for the group view if test ids are within group range
+            if(numberRange[0] <= testCases[testCases.length-1].id && numberRange[1] >= testCases[0].id)
+                this._testProvider.rebuildViewFromElement(ge);
         });
-        this._testProvider.rebuildViewFromElement(groupElement);
     }
 
     setButtonsAndContext(canFilter: boolean){
@@ -445,15 +442,9 @@ export class CTTreeView {
     }
 
     onDidChangeSelection(viewElement : TestViewElement){
-
-        // Guard access to the test view
-        if(viewElement.type == TreeItemType.Test){
-            // Get the trace label name from the view items grandparent and find the corresponding trace in _combinatorialTests
-            let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.getParent().getParent().label);
-
-            // Set and show the test sequence in the test view
-            this._resultProvider.setTestSequenceResults(traceWithTestResults.testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);
-        }
+        if(viewElement.type == TreeItemType.Test)
+            // Get the trace label name from the view items grandparent and find the corresponding trace in _combinatorialTests and set/show the test sequence in the result view
+            this._resultProvider.setTestSequenceResults([].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.getParent().getParent().label).testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);     
     }
 
     private async execute(viewElement: TestViewElement, filter: boolean){
@@ -462,9 +453,6 @@ export class CTTreeView {
 
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Executing test cases');
-
-        // Reference the trace view item for which tests are being executed
-        this._currentlyExecutingTraceViewItem = viewElement;
 
         // Setup loading window
         window.withProgress({
@@ -480,6 +468,9 @@ export class CTTreeView {
             // Do the execute request
             return new Promise(async resolve => {
                 if (viewElement.type == TreeItemType.Trace){
+                    // Reference the trace view item for which tests are being executed
+                    this._currentlyExecutingTraceViewItem = viewElement;
+
                     // Check if we have generated first
                         await this.ctGenerate(viewElement);
 
@@ -488,6 +479,9 @@ export class CTTreeView {
                     await this._ctFeature.requestExecute(viewElement.label, filter)
                 }
                 else if (viewElement.type == TreeItemType.TestGroup){
+                    // Reference the trace view item for which tests are being executed
+                    this._currentlyExecutingTraceViewItem = viewElement.getParent();
+
                     // Find range from group description
                     let strRange : string[] = viewElement.description.toString().split('-');
                     let range : NumberRange = {
