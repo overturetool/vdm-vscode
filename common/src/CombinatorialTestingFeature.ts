@@ -129,12 +129,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // If not using progress token, update test results
             if (tests != null)
-                this._ctTreeView.setTestResults(name, tests)
+                this._ctTreeView.addNewTestResults(name, tests)
         }
         catch (err) {
             if (err?.code == ErrorCodes.RequestCancelled){
                 if (err?.data != null){
-                    this._ctTreeView.setTestResults(name, err.data);
+                    this._ctTreeView.addNewTestResults(name, err.data);
                 }
             }
             else {
@@ -143,6 +143,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
         finally{
             this._ctTreeView.saveCTs();
+            this._ctTreeView.testExecutionFinished();
         }
 
         // Clean-up
@@ -163,7 +164,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     private handleExecutePartialResult(tests: CTTestCase[], trace: string){
         if (tests)
-            this._ctTreeView.setTestResults(trace, tests);
+            this._ctTreeView.addNewTestResults(trace, tests);
         else
             Window.showInformationMessage("CT Received Progress without any tests");
     }
@@ -200,7 +201,8 @@ export class CTTreeView {
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
     private _currentlyExecutingTraceViewItem: TestViewElement;
-    public FilterTests: boolean = false;
+    private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
+    private _batchSizeModifier: number = 0.2;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -303,7 +305,12 @@ export class CTTreeView {
         })
     }
 
-    public setTestResults(traceName: string, testCases: CTTestCase[]){
+    public testExecutionFinished()
+    {
+        this.rebuildExpandedGroupViews();
+    }
+
+    public addNewTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
@@ -313,16 +320,29 @@ export class CTTreeView {
             oldTestCase.verdict = testCases[i].verdict;
         }
 
-        // // Find the group element(s) that should update its view
-        this._currentlyExecutingTraceViewItem.getChildren().forEach(ge => {
-            // Get group range from the groups label
-            let numberRange : number[] = ge.description.toString().split('-').map(str => parseInt(str));
-            // Notify of data changes for the group view if test ids are within group range
-            if(numberRange[0] <= testCases[testCases.length-1].id && numberRange[1] >= testCases[0].id)
-                this._testProvider.rebuildViewFromElement(ge);
-        });
+        // If difference between current start and end value of _testCaseBatchRange is smaller than the difference between the start and end value of a group(i.e. the group size) * a percentage modifier then return.
+        this._testCaseBatchRange.end = testCases[testCases.length-1].id;
+        let numberRange : number[] = this._currentlyExecutingTraceViewItem.getChildren()[0].description.toString().split('-').map(str => parseInt(str));
+        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (numberRange[1] - numberRange[0]) * this._batchSizeModifier)
+            return;
+
+        // Set the new start test number of the _testCaseBatchRange and rebuild expanded test group views effected by the changed data.
+        this._testCaseBatchRange.start = testCases[testCases.length-1].id;
+        this.rebuildExpandedGroupViews();
     }
 
+    rebuildExpandedGroupViews(){
+        // Find the group element(s) that should update its view.
+        this._currentlyExecutingTraceViewItem.getChildren().forEach(ge => {
+            // Get group range from the groups label.
+            let numberRange : number[] = ge.description.toString().split('-').map(str => parseInt(str));
+            // Notify of data changes for the group view if batch range is within group range.
+            if(numberRange[0] <= this._testCaseBatchRange.end && numberRange[1] >= this._testCaseBatchRange.start)
+                // Function only rebuilds group view if it is expanded.
+                this._testProvider.rebuildExpandedGroup(ge);
+        });
+    }
+     
     setButtonsAndContext(canFilter: boolean){
         ///// Show options ///////
         if (canFilter){
