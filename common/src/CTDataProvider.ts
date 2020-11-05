@@ -8,13 +8,11 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
     private _minGroupSize: number = 100;
-    private _maxGroupSize: number = 1000;
+    private _maxGroupSize: number = 10000;
     private _groupSizePercentage = 0.1;
     private _roots: TestViewElement[];
     private _currentlyExpandedGroups: TestViewElement[] = [];
-    private _cashedGroups: TestViewElement[] = [];
     private _filter: boolean = false;
-
     constructor(
         private _ctView: CTTreeView) {
     }
@@ -88,8 +86,6 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
         if(element.type == TreeItemType.TestGroup)
         {
-            if(this._cashedGroups.indexOf(element) == -1)
-                this._cashedGroups.push(element);
             // Generate test views for the group
             let strRange : string[] = element.description.toString().split('-');
             let range: NumberRange = {start: parseInt(strRange[0])-1, end: parseInt(strRange[1])};

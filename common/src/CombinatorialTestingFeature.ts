@@ -113,12 +113,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // If not using progress token, update test results
             if (tests != null)
-                this._ctTreeView.setTestResults(name, tests)
+                this._ctTreeView.addNewTestResults(name, tests)
         }
         catch (err) {
             if (err?.code == ErrorCodes.RequestCancelled){
                 if (err?.data != null){
-                    this._ctTreeView.setTestResults(name, err.data);
+                    this._ctTreeView.addNewTestResults(name, err.data);
                 }
             }
             else {
@@ -142,7 +142,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     private handleExecutePartialResult(tests: CTTestCase[], trace: string){
         if (tests)
-            this._ctTreeView.setTestResults(trace, tests);
+            this._ctTreeView.addNewTestResults(trace, tests);
         else
             Window.showInformationMessage("CT Received Progress without any tests");
     }
@@ -166,7 +166,7 @@ export class CTTreeView {
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
     private _currentlyExecutingTraceViewItem: TestViewElement;
-    public FilterTests: boolean = false;
+    private _intermediateTestResultBatch: CTTestCase[] = [];
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -269,7 +269,7 @@ export class CTTreeView {
         })
     }
 
-    public setTestResults(traceName: string, testCases: CTTestCase[]){
+    public addNewTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
@@ -277,17 +277,8 @@ export class CTTreeView {
             let oldTestCase: CTTestCase = traceWithResult.testCases.find(tc => tc.id == testCases[i].id);
             oldTestCase.sequence = testCases[i].sequence;
             oldTestCase.verdict = testCases[i].verdict;
-        }
-
-        // // Find the group element(s) that should update its view
-        this._currentlyExecutingTraceViewItem.getChildren().forEach(ge => {
-            // Get group range from the groups label
-            let numberRange : number[] = ge.description.toString().split('-').map(str => parseInt(str));
-            // Notify of data changes for the group view if test ids are within group range
-            if(numberRange[0] <= testCases[testCases.length-1].id && numberRange[1] >= testCases[0].id)
-                this._testProvider.rebuildViewFromElement(ge);
-        });
-    }
+        } 
+    }  
 
     setButtonsAndContext(canFilter: boolean){
         ///// Show options ///////
