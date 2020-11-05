@@ -136,6 +136,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 if (err?.data != null){
                     this._ctTreeView.addNewTestResults(name, err.data);
                 }
+                throw err;
             }
             else {
                 Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
@@ -144,14 +145,14 @@ export class CombinantorialTestingFeature implements StaticFeature {
         finally{
             this._ctTreeView.saveCTs();
             this._ctTreeView.testExecutionFinished();
-        }
 
-        // Clean-up
-        this._cancelToken.dispose();
-        this._cancelToken = undefined;
-        partialResultHandlerDisposable?.dispose();
-        workDoneProgressHandlerDisposable?.dispose();
-        this._ctTreeView.showCancelButton(false);
+            // Clean-up
+            this._cancelToken.dispose();
+            this._cancelToken = undefined;
+            partialResultHandlerDisposable?.dispose();
+            workDoneProgressHandlerDisposable?.dispose();
+            this._ctTreeView.showCancelButton(false);
+        }
     } 
 
     cancelExecution(){
@@ -428,14 +429,18 @@ export class CTTreeView {
     }
 
     async ctFullExecute() {
-        // TODO Maybe switch symbol for a "cancel" symbol and include another command?
+        let cancled: boolean = false;
 
         // Run Execute on all traces of all symbols
-        await this._testProvider.getRoots().forEach(async symbolElement => {
-            await symbolElement.getChildren().forEach(async traceElement => { 
-                await this.ctExecute(traceElement);
-            })
-        });
+        for (const symbol of await this._testProvider.getChildren()) {
+            for (const trace of await this._testProvider.getChildren(symbol)) {
+                await this.execute(trace, false).catch(() => {cancled = true});
+                if (cancled){
+                    return;
+                }
+            }
+        }
+        
     }
 
     async ctExecute(viewElement: TestViewElement) {
@@ -519,7 +524,7 @@ export class CTTreeView {
         let statusBarMessage = Window.setStatusBarMessage('Executing test cases');
 
         // Setup loading window
-        window.withProgress({
+        return window.withProgress({
             location: ProgressLocation.Notification,
             title: "Running test generation",
             cancellable: true
@@ -530,38 +535,42 @@ export class CTTreeView {
             });
 
             // Do the execute request
-            return new Promise(async resolve => {
-                if (viewElement.type == TreeItemType.Trace){
-                    // Reference the trace view item for which tests are being executed
-                    this._currentlyExecutingTraceViewItem = viewElement;
+            return new Promise(async (resolve, reject) => {
+                try {
+                    if (viewElement.type == TreeItemType.Trace){
+                        // Reference the trace view item for which tests are being executed
+                        this._currentlyExecutingTraceViewItem = viewElement;
 
-                    // Check if we have generated first
+                        // Check if we have generated first
                         await this.ctGenerate(viewElement);
 
-        
-                    // Request execute
-                    await this._ctFeature.requestExecute(viewElement.label, filter, undefined, progress)
-                }
-                else if (viewElement.type == TreeItemType.TestGroup){
-                    // Reference the trace view item for which tests are being executed
-                    this._currentlyExecutingTraceViewItem = viewElement.getParent();
+                        // Request execute
+                        await this._ctFeature.requestExecute(viewElement.label, filter, undefined, progress)
+                    }
+                    else if (viewElement.type == TreeItemType.TestGroup){
+                        // Reference the trace view item for which tests are being executed
+                        this._currentlyExecutingTraceViewItem = viewElement.getParent();
 
-                    // Find range from group description
-                    let strRange : string[] = viewElement.description.toString().split('-');
-                    let range : NumberRange = {
-                        start: Number(strRange[0]),
-                        end: Number(strRange[1])
-                    };
-        
-                    // Request execute with range
-                    await this._ctFeature.requestExecute(viewElement.getParent().label, filter, range)
-                }
-                
-                // Remove status bar message
-                statusBarMessage.dispose();
+                        // Find range from group description
+                        let strRange : string[] = viewElement.description.toString().split('-');
+                        let range : NumberRange = {
+                            start: Number(strRange[0]),
+                            end: Number(strRange[1])
+                        };
+            
+                        // Request execute with range
+                        await this._ctFeature.requestExecute(viewElement.getParent().label, filter, range)
+                    }
 
-                // Resolve action
-                resolve();
+                    // Resolve action
+                    resolve();
+
+                } catch(error) {
+                    reject(error)
+                } finally {
+                    // Remove status bar message
+                    statusBarMessage.dispose();
+                }
             });
         });
         
