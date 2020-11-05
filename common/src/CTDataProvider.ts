@@ -1,4 +1,5 @@
-import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { off } from 'process';
+import { Event, EventEmitter, ThemeIcon, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { CTTreeView } from './CombinatorialTestingFeature';
 import { NumberRange, VerdictKind } from './protocol.lspx';
 
@@ -100,6 +101,16 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             if(this._filter)           
                 testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed] && twe.description != VerdictKind[VerdictKind.Inconclusive]);
 
+            testsViewElements.forEach(twe => {
+                if(twe.description == VerdictKind[VerdictKind.Passed])
+                    twe.iconPath = new ThemeIcon("check");
+                else if(twe.description == VerdictKind[VerdictKind.Failed])
+                    twe.iconPath = new ThemeIcon("close");
+                else if(twe.description == VerdictKind[VerdictKind.Inconclusive])
+                    twe.iconPath = new ThemeIcon("issues");
+                else if(twe.description == VerdictKind[VerdictKind.Filtered])
+                    twe.iconPath = new ThemeIcon("remove");
+            });
             return Promise.resolve(testsViewElements);
         }
 
