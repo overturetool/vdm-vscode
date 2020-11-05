@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as dapSupport from "./dapSupport"
+import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
 import * as Util from "./Util"
 import * as path from 'path';
 import * as fs from 'fs'

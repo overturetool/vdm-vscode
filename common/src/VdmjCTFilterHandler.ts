@@ -117,7 +117,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             if (res == undefined)
                 return;
 
-            this._filters.set("trace filtering seed", res);
+            this._filters.set("trace filtering seed", Number(res));
             this.showFilterOptions();
         })
     }
@@ -145,7 +145,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
             if (res == undefined)
                 return;
 
-            this._filters.set("subset limitation", res);
+            this._filters.set("subset limitation", Number(res));
             this.showFilterOptions();
         })
     }
