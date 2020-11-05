@@ -137,7 +137,7 @@
         },
         {
           "command": "extension.toggleFilteringForTestGroups",
-          "when": "view =~ /ctView/ && vdm-ct-show-run-buttons == true",
+          "when": "view =~ /ctView/",
           "group": "navigation@3"
         },
         {
