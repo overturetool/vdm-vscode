@@ -70,10 +70,10 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "extension.ctViewTreeFilter",
-        "title": "Filter Tree",
+        "command": "extension.toggleFilteringForTestGroup",
+        "title": "Toggle filtering of passed and inconclusive tests in group",
         "category": "VDM",
-        "icon": "$(filter)"
+        "icon": "$(list-filter)"
       },
       {
         "command": "extension.ctSendToInterpreter",
@@ -136,11 +136,6 @@
           "group": "navigation@1"
         },
         {
-          "command": "extension.ctViewTreeFilter",
-          "when": "view =~ /ctView/",
-          "group": "navigation@2"
-        },
-        {
           "command": "extension.ctRebuildOutline",
           "when": "view =~ /ctView/",
           "group": "navigation@3"
@@ -176,6 +171,11 @@
           "command": "extension.ctFilteredExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
+        },
+        {
+          "command": "extension.toggleFilteringForTestGroup",
+          "when": "viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "group": "inline@2"
         },
         {
           "command": "extension.ctGenerate",
@@ -237,7 +237,7 @@
           "when": "false"
         },
         {
-          "command": "extension.ctViewTreeFilter",
+          "command": "extension.toggleFilteringForTestGroup",
           "when": "false"
         },
         {

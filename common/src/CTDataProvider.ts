@@ -8,10 +8,8 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
     private _minGroupSize: number = 100;
-    private _maxGroupSize: number = 10000;
+    private _maxGroupSize: number = 1000;
     private _groupSizePercentage = 0.1;
-    private _filterPassedTests: boolean = false;
-    private _filterInconclusiveTests: boolean = false;
     private _roots: TestViewElement[];
 
     constructor(
@@ -23,24 +21,10 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public filterPassedTests(): any
+    public toggleFilteringForTestGroup(viewElement: TestViewElement): any
     {
-        this._filterPassedTests = this._filterPassedTests ? false : true;
-        this._roots.forEach(symbolElement => {
-            symbolElement.getChildren().forEach(traceElement => traceElement.getChildren().forEach(groupElement => {
-                this._onDidChangeTreeData.fire(groupElement);
-            }))    
-        });
-    }
-
-    public filterInconclusiveTests(): any
-    {
-        this._filterInconclusiveTests = this._filterInconclusiveTests ? false : true;
-        this._roots.forEach(symbolElement => {
-            symbolElement.getChildren().forEach(traceElement => traceElement.getChildren().forEach(groupElement => {
-                this._onDidChangeTreeData.fire(groupElement);
-            }))    
-        });
+        viewElement.Filter = viewElement.Filter ? false : true;
+        this._onDidChangeTreeData.fire(viewElement);
     }
 
     getRoots(): TestViewElement[] {
@@ -93,11 +77,8 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             let range: NumberRange = {start: parseInt(strRange[0])-1, end: parseInt(strRange[1])};
             let testsViewElements = this._ctView.getTestResults(range, element.getParent().label).map(testCase => new TestViewElement(testCase.id+"", TreeItemType.Test, TreeItemCollapsibleState.None, testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", element));
             
-            if(this._filterPassedTests)
-                testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed]);        
-
-            if(this._filterInconclusiveTests)
-                testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Inconclusive]);
+            if(element.Filter)
+                testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed] && twe.description != VerdictKind[VerdictKind.Inconclusive]);
 
             return Promise.resolve(testsViewElements);
         }
@@ -116,6 +97,9 @@ export enum TreeItemType
 }
 
 export class TestViewElement extends TreeItem {
+    // For checking if a testgroup is filtered
+    public Filter = false;
+
     private _children: TestViewElement[] = [];
     constructor(
     public readonly label: string,

@@ -166,6 +166,7 @@ export class CTTreeView {
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
     private _currentlyExecutingTraceViewItem: TestViewElement;
+    public FilterTests: boolean = false;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -178,9 +179,6 @@ export class CTTreeView {
 
         // Set save path and load cts
         this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath), ".generated", "Combinatorial Testing");
-        this.loadCTs().then(cts => {
-            this._combinatorialTests = cts;
-        }).catch(() => {}); // TODO display message if there was an error loading cts from file.
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<TestViewElement> = {
@@ -200,7 +198,7 @@ export class CTTreeView {
 
         // Register view behavior
         this._context.subscriptions.push(this._testView.onDidExpandElement(e => this.onDidExpandElement(e.element)));
-        this._context.subscriptions.push(this._testView.onDidCollapseElement(e => this.onDidCollapseElement()));
+        this._context.subscriptions.push(this._testView.onDidCollapseElement(e => this.onDidCollapseElement(e.element)));
         this._context.subscriptions.push(this._testView.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
 
         // Set button behavior
@@ -310,7 +308,7 @@ export class CTTreeView {
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
-        this.registerCommand("extension.ctViewTreeFilter",      ()  => this.ctViewTreeFilter());
+        this.registerCommand("extension.toggleFilteringForTestGroup",      (e)  => this._testProvider.toggleFilteringForTestGroup(e));
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter());
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
@@ -345,13 +343,16 @@ export class CTTreeView {
 
     async ctRebuildOutline() {
         if(this._testProvider.getRoots().length > 0)
-            this._combinatorialTests = [];
-        const symbols = await this._ctFeature.requestTraces();
-
-        // Check if existing outline matches servers
-        let traceOutlines = symbols.map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
-        if(!this.ctOutlinesMatch(traceOutlines, this._combinatorialTests))
-            this._combinatorialTests = traceOutlines;
+            this._combinatorialTests = (await this._ctFeature.requestTraces()).map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
+        else
+        {
+            await Promise.all([this.loadCTs().catch(r => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
+                {
+                    // Check if existing outline matches servers
+                    let traceOutlines = res[1].map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
+                    this._combinatorialTests = !this.ctOutlinesMatch(traceOutlines,  res[0]) ? traceOutlines : res[0];
+                });
+        }          
 
         // Notify tree view of data update
         this._testProvider.rebuildViewFromElement();
@@ -363,16 +364,12 @@ export class CTTreeView {
         
         for(let i = 0; i < ctSymbols1.length; i++)
         {
-            let traces1 = ctSymbols1[i].traces;
-            let traces2 = ctSymbols2[i].traces;
-            if(traces1.length != traces2.length)
+            if(ctSymbols1[i].traces.length != ctSymbols2[i].traces.length)
                 return false;
             
-            for(let l = 0; l < traces1.length; l++)
+            for(let l = 0; l < ctSymbols1[i].traces.length; l++)
             {
-                let trace1 = traces1[l];
-                let trace2 = traces2[l];
-                if(trace1.trace.name != trace2.trace.name)
+                if(ctSymbols1[i].traces[l].trace.name != ctSymbols2[i].traces[l].trace.name)
                     return false;
             }
         }
@@ -387,7 +384,7 @@ export class CTTreeView {
             await symbolElement.getChildren().forEach(async traceElement => { 
                 await this.ctExecute(traceElement);
             })
-        })
+        });
     }
 
     async ctExecute(viewElement: TestViewElement) {
@@ -411,15 +408,15 @@ export class CTTreeView {
             // Do the generate request
             return new Promise(async resolve => {
                 // Request generate from server
-                const num = await this._ctFeature.requestGenerate(viewElement.label);
+                const numberOfTests = await this._ctFeature.requestGenerate(viewElement.label);
                 
                 // Check if number of tests from server matches local number of tests
                 let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
-                if(traceWithTestResults.testCases.length != num)
+                if(traceWithTestResults.testCases.length != numberOfTests)
                 {
                     traceWithTestResults.testCases = [];
                     // Instatiate testcases for traces.
-                    for(let i = 1; i <= num; i++)
+                    for(let i = 1; i <= numberOfTests; i++)
                         traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
                 }            
         
@@ -434,24 +431,17 @@ export class CTTreeView {
         });
     }
 
-    ctViewTreeFilter(): void {
-        // TODO View the two filtering options and select one
-        //throw new Error('Method not implemented.');
-        this._testProvider.filterPassedTests();
-    }
-
     ctSendToInterpreter(): void {
         throw new Error('Method not implemented.');
     }
 
     onDidExpandElement(viewElement : TestViewElement){
-        if (viewElement.type == TreeItemType.Trace){
-            this.ctGenerate(viewElement);
-        }
+        if (viewElement.type == TreeItemType.Trace)
+            this.ctGenerate(viewElement);               
     }
 
-    onDidCollapseElement(){
-        // Currently no intended behavior
+    onDidCollapseElement(viewElement : TestViewElement){
+        throw new Error('Method not implemented.');
     }
 
     onDidChangeSelection(viewElement : TestViewElement){
