@@ -74,11 +74,11 @@ traces
         (
           op1(a); op1(b);
         );
-  
+        
   Test4: 
-    let a in set {1, ..., 100} in
-      let b in set {1, ..., 100} in
-        let c in set {1, ..., 100} in
-        (
-          op1(a); op1(b); op1(c);
-        );
+  let a in set {1, ..., 100} in
+    let b in set {1, ..., 100} in
+      let c in set {1, ..., 10} in
+      (
+        op1(a); op1(b); op1(c);
+      );

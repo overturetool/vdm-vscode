@@ -35,9 +35,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     public toggleFilteringForTestGroups(): any
     {
         this._filter = this._filter ? false : true;
-        this._currentlyExpandedGroups.forEach(group => {
-            this._onDidChangeTreeData.fire(group);
-        });
+        this._roots.forEach(symbol => symbol.getChildren().forEach(trace => trace.getChildren().forEach(group => this.rebuildViewElementIfExpanded(group))));
     }
 
     public handleElementExpanded(element: TestViewElement){
@@ -67,7 +65,11 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         if(element.type == TreeItemType.CTSymbol)
         {
             let ctTraces = this._ctView.getTraces(element.label);
-            element.setChildren(ctTraces.map(trace => new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)));
+            element.setChildren(ctTraces.map(trace => {
+                let tve = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)
+                tve.iconPath = !trace.verdict ? null : trace.verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
+                return tve;
+            }));
 
             return Promise.resolve(element.getChildren());
         }
