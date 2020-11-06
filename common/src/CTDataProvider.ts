@@ -18,12 +18,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         private _ctView: CTTreeView) {
     }
 
-    public rebuildViewFromElement(viewElement?: TestViewElement)
+    public async rebuildViewFromElement(viewElement?: TestViewElement)
     {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public rebuildExpandedGroup(viewElement: TestViewElement){
+    public async rebuildGroupIfVisible(viewElement: TestViewElement){
         if(this._currentlyExpandedGroups.findIndex(ceg => ceg.getParent().label == viewElement.getParent().label && ceg.description == viewElement.description) == -1)
             return;
         this._onDidChangeTreeData.fire(viewElement);
