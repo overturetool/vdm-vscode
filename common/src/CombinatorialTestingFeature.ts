@@ -313,7 +313,7 @@ export class CTTreeView {
         this.rebuildExpandedGroupViews();
     }
 
-    public addNewTestResults(traceName: string, testCases: CTTestCase[]){
+    public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
@@ -329,7 +329,7 @@ export class CTTreeView {
         // Generate groups for the trace if they are not generated yet and reference the first group to get its group size.
         let group = this._currentlyExecutingTraceViewItem.getChildren()[0];
         if(!group)
-            group = this._testProvider.getChildren(this._currentlyExecutingTraceViewItem)[0];
+            group = (await this._testProvider.getChildren(this._currentlyExecutingTraceViewItem))[0];
         let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
 
         // Return if batch size isn't big enough to warrent a view update.
