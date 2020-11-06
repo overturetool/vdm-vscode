@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
-import * as Util from "./Util"
+import * as util from "./Util"
 import * as path from 'path';
 import * as fs from 'fs'
 import * as net from 'net';
@@ -21,22 +21,22 @@ import {
 } from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
-const SERVERNAME = "lsp-0.0.1.jar"
-const VDMJNAME = "vdmj-4.3.0.jar"
-
 let client : SpecificationLanguageClient;
 
 export async function activate(context: ExtensionContext, vdmDialect : string) {
     let clientLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
     let serverLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
     let serverMainClass = 'lsp.LSPServerStdio'
-	let vdmjPath = path.resolve(context.extensionPath,'resources', VDMJNAME);
-	let lspServerPath = path.resolve(context.extensionPath, 'resources', SERVERNAME);
+	let vdmjPath = util.recursiveVDMJPathSearch(path.resolve(context.extensionPath, "resources"));
+    let lspServerPath = util.recursiveLSPPathSearch(path.resolve(context.extensionPath, "resources"));
+    if(!vdmjPath || !lspServerPath)
+        return;
 
     function createServer(): Promise<StreamInfo> {
         return new Promise(async (resolve, reject) => {
             portfinder.getPortPromise()
                 .then((dapPort) => {
+
                     let args : string[] = [];
                     let JVMArguments = workspace.getConfiguration(vdmDialect + '-lsp').JVMArguments;
                     if(JVMArguments != "")
@@ -51,10 +51,10 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                     ]);
 
                     // Start the LSP server
-                    let javaPath = Util.findJavaExecutable('java');
+                    let javaPath = util.findJavaExecutable('java');
                     if (!javaPath) {
                         vscode.window.showErrorMessage("Java runtime environment not found!")
-                        Util.writeToLog(clientLogFile, "Java runtime environment not found!");
+                        util.writeToLog(clientLogFile, "Java runtime environment not found!");
                         return reject("Java runtime environment not found!");
                     }
                     let server = child_process.spawn(javaPath, args);
@@ -67,7 +67,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                     dapSupport.initDebugConfig(context, dapPort, vdmDialect)
                 })
                 .catch((err) => {
-                    Util.writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
+                    util.writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
                     return reject(err)
                 });
         })

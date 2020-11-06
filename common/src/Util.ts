@@ -10,6 +10,40 @@ export function ensureDirectoryExistence(filePath) {
     fs.mkdirSync(dirname);
 }
 
+export function recursiveVDMJPathSearch(resourcesPath: string): string {
+    if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory() )
+        return null;
+
+    let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
+    for(let i = 0; i < elementsInFolder.length; i++)
+    {
+        let element: fs.Dirent = elementsInFolder[i];
+        let fullElementPath =  path.resolve(resourcesPath, element.name);
+        if(fs.lstatSync(fullElementPath).isDirectory() )
+            fullElementPath = recursiveVDMJPathSearch(fullElementPath);
+        else if(fullElementPath.indexOf('vdmj') != -1 && fullElementPath.indexOf(".jar") != -1)
+            return fullElementPath;
+    }
+    return null;
+}
+
+export function recursiveLSPPathSearch(resourcesPath: string): string {
+    if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory() )
+    return null;
+
+    let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
+    for(let i = 0; i < elementsInFolder.length; i++)
+    {
+        let element: fs.Dirent = elementsInFolder[i];
+        let fullElementPath =  path.resolve(resourcesPath, element.name);
+        if(fs.lstatSync(fullElementPath).isDirectory() )
+            fullElementPath = recursiveVDMJPathSearch(fullElementPath);
+        else if(fullElementPath.indexOf('lsp') != -1 && fullElementPath.indexOf(".jar") != -1)
+            return fullElementPath;
+    }
+    return null;
+}
+
 export function writeToLog(path: string, msg: string) {
     let logStream = fs.createWriteStream(path, { flags: 'w' });
     logStream.write(msg);
