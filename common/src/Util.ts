@@ -21,7 +21,7 @@ export function recursiveVDMJPathSearch(resourcesPath: string): string {
         let fullElementPath =  path.resolve(resourcesPath, element.name);
         if(fs.lstatSync(fullElementPath).isDirectory() )
             fullElementPath = recursiveVDMJPathSearch(fullElementPath);
-        else if(fullElementPath.indexOf('vdmj') != -1 && fullElementPath.indexOf(".jar") != -1)
+        else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(/vdmj.*jar/i) != -1)
             return fullElementPath;
     }
     return null;
@@ -38,7 +38,7 @@ export function recursiveLSPPathSearch(resourcesPath: string): string {
         let fullElementPath =  path.resolve(resourcesPath, element.name);
         if(fs.lstatSync(fullElementPath).isDirectory() )
             fullElementPath = recursiveVDMJPathSearch(fullElementPath);
-        else if(fullElementPath.indexOf('lsp') != -1 && fullElementPath.indexOf(".jar") != -1)
+            else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(/lsp.*jar/i) != -1)
             return fullElementPath;
     }
     return null;
