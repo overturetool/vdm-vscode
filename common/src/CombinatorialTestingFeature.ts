@@ -324,10 +324,17 @@ export class CTTreeView {
             oldTestCase.verdict = testCases[i].verdict;
         }
 
-        // If difference between current start and end value of _testCaseBatchRange is smaller than the difference between the start and end value of a group(i.e. the group size) * a percentage modifier then return.
+        // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
-        let numberRange : number[] = this._currentlyExecutingTraceViewItem.getChildren()[0].description.toString().split('-').map(str => parseInt(str));
-        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (numberRange[1] - numberRange[0]) * this._batchSizeModifier)
+
+        // Generate groups for the trace if they are not generated yet and reference the first group to get its group size.
+        let group = this._currentlyExecutingTraceViewItem.getChildren()[0];
+        if(!group)
+            group = this._testProvider.getChildren(this._currentlyExecutingTraceViewItem)[0];
+        let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
+
+        // Return if batch size isn't big enough to warrent a view update.
+        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (groupSizeRange[1] - groupSizeRange[0]) * this._batchSizeModifier)
             return;
 
         // Set the new start test number of the _testCaseBatchRange and rebuild expanded test group views effected by the changed data.
