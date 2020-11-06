@@ -81,7 +81,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             let params: CTGenerateParameters = {name: name};
 
             // Send request
-            // TODO Add loading information message
             const res = await this._client.sendRequest(CTGenerateRequest.type, params);
             return res.numberOfTests;
         }
@@ -214,7 +213,7 @@ export class CTTreeView {
         this._testProvider = new CTDataProvider(this);
         this._resultProvider = new CTResultDataProvider();
 
-        // Set save path and load cts
+        // Set save path and load cts     // TODO correct this when implementing workspaces
         this._savePath = Uri.joinPath(workspace.workspaceFolders[0].uri, ".generated", "Combinatorial Testing");
 
         // Create test view
@@ -234,7 +233,7 @@ export class CTTreeView {
         this._context.subscriptions.push(this._resultView);
 
         // Register view behavior
-        this._context.subscriptions.push(this._testView.onDidExpandElement(e => this.onDidExpandElement(e.element)));
+        this._context.subscriptions.push(this._testView.onDidExpandElement(  e => this.onDidExpandElement(e.element)));
         this._context.subscriptions.push(this._testView.onDidCollapseElement(e => this.onDidCollapseElement(e.element)));
         this._context.subscriptions.push(this._testView.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
 
