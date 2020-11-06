@@ -213,8 +213,8 @@ export class CTTreeView {
         this._testProvider = new CTDataProvider(this);
         this._resultProvider = new CTResultDataProvider();
 
-        // Set save path and load cts    // TODO correct this when implementing workspaces
-        this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath), ".generated", "Combinatorial Testing");
+        // Set save path and load cts     // TODO correct this when implementing workspaces
+        this._savePath = Uri.joinPath(workspace.workspaceFolders[0].uri, ".generated", "Combinatorial Testing");
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<TestViewElement> = {
@@ -284,8 +284,11 @@ export class CTTreeView {
     private async loadCTs() : Promise<completeCT[]>{
         return new Promise(async (resolve, reject) => {
             // Asynchroniouse read of filepath
-            let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
             let completeCTs: completeCT[] = [];
+            if (!fs.existsSync(this._savePath.fsPath))
+                return resolve(completeCTs);
+            let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
+
             files.forEach(f => {
                 let file:fs.Dirent = f;
                 if(file.isFile && file.name.includes(".json"))
@@ -320,10 +323,17 @@ export class CTTreeView {
             oldTestCase.verdict = testCases[i].verdict;
         }
 
-        // If difference between current start and end value of _testCaseBatchRange is smaller than the difference between the start and end value of a group(i.e. the group size) * a percentage modifier then return.
+        // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
-        let numberRange : number[] = this._currentlyExecutingTraceViewItem.getChildren()[0].description.toString().split('-').map(str => parseInt(str));
-        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (numberRange[1] - numberRange[0]) * this._batchSizeModifier)
+
+        // Generate groups for the trace if they are not generated yet and reference the first group to get its group size.
+        let group = this._currentlyExecutingTraceViewItem.getChildren()[0];
+        if(!group)
+            group = this._testProvider.getChildren(this._currentlyExecutingTraceViewItem)[0];
+        let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
+
+        // Return if batch size isn't big enough to warrent a view update.
+        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (groupSizeRange[1] - groupSizeRange[0]) * this._batchSizeModifier)
             return;
 
         // Set the new start test number of the _testCaseBatchRange and rebuild expanded test group views effected by the changed data.
