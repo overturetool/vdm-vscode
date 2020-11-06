@@ -14,13 +14,13 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 
     getChildren(element?: CTResultElement): ProviderResult<CTResultElement[]> {
         if(element)
-            return [];
+            return element.children;
         
         return this._testSequenceResults;
     }
 
     private convertToResultElements(resultPairs: CTResultPair[]): CTResultElement[]{
-        return resultPairs.map(rs => new CTResultElement(rs.case, rs.result));
+        return resultPairs.map(rp => new CTResultElement(rp.case, [new CTResultElement(!rp.result ? "n/a" : rp.result, [], TreeItemCollapsibleState.None)], TreeItemCollapsibleState.Expanded));
     }
 
     public getTestSequenceResults(){
@@ -37,12 +37,15 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 }
 
 export class CTResultElement extends TreeItem {
-
     constructor(
     public readonly label: string,
-    description: string | boolean
-    ) {
+    public children: CTResultElement[],
+    public readonly collapsibleState?,
+    public description = "") {
         super(label, TreeItemCollapsibleState.None);
-       super.description = description;
+        if(description === "")
+            super.description = false;
+        else
+            super.description = description;
     }
 }

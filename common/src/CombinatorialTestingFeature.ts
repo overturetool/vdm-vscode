@@ -253,10 +253,10 @@ export class CTTreeView {
         return [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName).testCases.length;
     }
 
-    public getTestResults(range: NumberRange, traceName: string): CTTestCase[]{
+    public getTestResults(testIdRange: NumberRange, traceName: string): CTTestCase[]{
         let traces = [].concat(...this._combinatorialTests.map(symbol => symbol.traces));
         let traceWithResult = traces.find(twr => twr.trace.name == traceName);
-        return traceWithResult.testCases.slice(range.start, range.end);
+        return traceWithResult.testCases.slice(testIdRange.start-1, testIdRange.end);
     }
 
     public saveCTs() {            
@@ -333,7 +333,7 @@ export class CTTreeView {
             oldTestCase.verdict = testCases[i].verdict;
         }
         // Handle if user has executed all test groups manually.
-        if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length].id)
+        if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id)
         {
             this.testExecutionFinished();
         }

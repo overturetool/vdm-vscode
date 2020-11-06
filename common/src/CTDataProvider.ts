@@ -1,5 +1,4 @@
-import { off } from 'process';
-import { Event, EventEmitter, ExtensionContext, ThemeIcon, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { Event, EventEmitter, ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { CTTreeView } from './CombinatorialTestingFeature';
 import { NumberRange, VerdictKind } from './protocol.lspx';
 import {Icons} from './Icons'
@@ -13,7 +12,6 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     private _maxGroupSize: number = 5000;
     private _groupSizePercentage = 0.1;
     private _roots: TestViewElement[];
-    private _currentlyExpandedGroups: TestViewElement[] = [];
     private _filter: boolean = false;
     private _icons: Icons;
     constructor(
@@ -66,9 +64,9 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         {
             let ctTraces = this._ctView.getTraces(element.label);
             element.setChildren(ctTraces.map(trace => {
-                let tve = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)
-                tve.iconPath = !trace.verdict ? null : trace.verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
-                return tve;
+                let traceViewElement = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)
+                traceViewElement.iconPath = !trace.verdict ? null : trace.verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
+                return traceViewElement;
             }));
 
             return Promise.resolve(element.getChildren());
@@ -85,7 +83,11 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             let groups = Math.ceil(numberOfTests/groupSize);
             for(let i = 0; i < groups; i++)
             {
-                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, i < element.getChildren().length ? element.getChildren()[i].ExpandedState : TreeItemCollapsibleState.Collapsed, (1 + i * groupSize) + "-" + (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1)), element));
+                let testIdRange: NumberRange = {start: (1 + i * groupSize), end: (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1))};
+                let groupViewElement = new TestViewElement("test group", TreeItemType.TestGroup, i < element.getChildren().length ? element.getChildren()[i].ExpandedState : TreeItemCollapsibleState.Collapsed, testIdRange.start + "-" + testIdRange.end, element);
+                let testCasesForGroup = this._ctView.getTestResults(testIdRange, element.label);
+                groupViewElement.iconPath = !testCasesForGroup || testCasesForGroup.some(tc => !tc.verdict) ? null : testCasesForGroup.some(tc => tc.verdict == VerdictKind.Passed) ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
+                testGroups.push(groupViewElement);
                 numberOfTests -= groupSize;
             }
             element.setChildren(testGroups);
@@ -97,8 +99,8 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         {
             // Generate test views for the group
             let strRange : string[] = element.description.toString().split('-');
-            let range: NumberRange = {start: parseInt(strRange[0])-1, end: parseInt(strRange[1])};
-            let testsViewElements = this._ctView.getTestResults(range, element.getParent().label).map(testCase => new TestViewElement(testCase.id+"", TreeItemType.Test, TreeItemCollapsibleState.None, testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", element));
+            let testIdRange: NumberRange = {start: parseInt(strRange[0]), end: parseInt(strRange[1])};
+            let testsViewElements = this._ctView.getTestResults(testIdRange, element.getParent().label).map(testCase => new TestViewElement(testCase.id+"", TreeItemType.Test, TreeItemCollapsibleState.None, testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", element));
             
             if(this._filter)           
                 testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed] && twe.description != VerdictKind[VerdictKind.Inconclusive]);
@@ -137,7 +139,7 @@ export class TestViewElement extends TreeItem {
     public readonly label: string,
     public readonly type: TreeItemType,
     public readonly collapsibleState: TreeItemCollapsibleState,
-    description = "",
+    public description = "",
     private readonly _parent: TestViewElement = undefined) {
         super(label, collapsibleState);
         super.contextValue = type;

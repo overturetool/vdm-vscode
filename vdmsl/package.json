@@ -113,7 +113,7 @@
         },
         {
           "id": "ctResultView",
-          "name": "Results",
+          "name": "Test Sequence Results",
           "when": "vdm-ct-show-view == true"
         }
       ]
