@@ -444,6 +444,7 @@ export class CTTreeView {
         // Run Execute on all traces of all symbols
         for (const symbol of await this._testProvider.getChildren()) {
             for (const trace of await this._testProvider.getChildren(symbol)) {
+                await this.ctGenerate(trace)
                 await this.execute(trace, false).catch(() => {cancled = true});
                 if (cancled){
                     return;
@@ -462,7 +463,7 @@ export class CTTreeView {
         let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
 
         // Setup loading window
-        window.withProgress({
+        return window.withProgress({
             location: {viewId: "ctView"},
             title: "Running test generation",
             cancellable: false
@@ -552,7 +553,8 @@ export class CTTreeView {
                         this._currentlyExecutingTraceViewItem = viewElement;
 
                         // Check if we have generated first
-                        await this.ctGenerate(viewElement);
+                        if ((await this._testProvider.getChildren(viewElement)).length < 1)
+                            await this.ctGenerate(viewElement);
 
                         // Request execute
                         await this._ctFeature.requestExecute(viewElement.label, filter, undefined, progress)
