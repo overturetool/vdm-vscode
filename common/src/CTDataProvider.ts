@@ -1,7 +1,8 @@
 import { off } from 'process';
-import { Event, EventEmitter, ThemeIcon, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { Event, EventEmitter, ExtensionContext, ThemeIcon, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { CTTreeView } from './CombinatorialTestingFeature';
 import { NumberRange, VerdictKind } from './protocol.lspx';
+import {Icons} from './Icons'
 
 export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
@@ -14,8 +15,11 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     private _roots: TestViewElement[];
     private _currentlyExpandedGroups: TestViewElement[] = [];
     private _filter: boolean = false;
+    private _icons: Icons;
     constructor(
-        private _ctView: CTTreeView) {
+        private _ctView: CTTreeView,
+        private _context: ExtensionContext) {
+            this._icons = new Icons(this._context);
     }
 
     public rebuildViewFromElement(viewElement?: TestViewElement)
@@ -103,13 +107,13 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
             testsViewElements.forEach(twe => {
                 if(twe.description == VerdictKind[VerdictKind.Passed])
-                    twe.iconPath = new ThemeIcon("check");
+                    twe.iconPath = this._icons.getIcon("passed.svg"); 
                 else if(twe.description == VerdictKind[VerdictKind.Failed])
-                    twe.iconPath = new ThemeIcon("close");
+                    twe.iconPath = this._icons.getIcon("failed.svg"); 
                 else if(twe.description == VerdictKind[VerdictKind.Inconclusive])
-                    twe.iconPath = new ThemeIcon("issues");
+                    twe.iconPath = this._icons.getIcon("inconclusive.svg");
                 else if(twe.description == VerdictKind[VerdictKind.Filtered])
-                    twe.iconPath = new ThemeIcon("remove");
+                    twe.iconPath = this._icons.getIcon("filtered.svg");
             });
             return Promise.resolve(testsViewElements);
         }

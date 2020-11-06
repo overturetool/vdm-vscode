@@ -11,20 +11,17 @@ import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 
 export class CombinantorialTestingFeature implements StaticFeature {
-    private _client: SpecificationLanguageClient;
-    private _context: ExtensionContext;
     private _ctTreeView : CTTreeView;
     private _cancelToken: CancellationTokenSource;
     private _generateCalls : number = 0;
     private _supportWorkDone = false;
     private _progress: number = 0;
 
-    constructor(client: SpecificationLanguageClient, context: ExtensionContext, 
+    constructor(
+        private _client: SpecificationLanguageClient, 
+        private _context: ExtensionContext, 
         private _filterHandler?: CTFilterHandler, 
-        private _interpreterHandler?: CTInterpreterHandler) {
-        this._client = client;
-        this._context = context;
-    }
+        private _interpreterHandler?: CTInterpreterHandler) {}
     
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         if(!capabilities.experimental)
@@ -210,7 +207,7 @@ export class CTTreeView {
         canFilter: boolean = false
         ){
 
-        this._testProvider = new CTDataProvider(this);
+        this._testProvider = new CTDataProvider(this, this._context);
         this._resultProvider = new CTResultDataProvider();
 
         // Set save path and load cts     // TODO correct this when implementing workspaces

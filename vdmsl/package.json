@@ -99,7 +99,7 @@
         {
           "id": "combinatorialTesting",
           "title": "Combinatorial Testing",
-          "icon": "media/book.svg",
+          "icon": "media/ctView.svg",
           "when": "vdm-ct-show-view == true"
         }
       ]
