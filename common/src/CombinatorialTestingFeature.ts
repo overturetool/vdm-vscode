@@ -377,6 +377,7 @@ export class CTTreeView {
     showCancelButton(show: boolean) {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-run-buttons', !show);
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-cancel-button', show);
+        this._testProvider.rebuildViewFromElement();
     }
     
     async ctGoToTrace(viewElement:TestViewElement) {
