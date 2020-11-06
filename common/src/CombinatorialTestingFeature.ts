@@ -215,7 +215,7 @@ export class CTTreeView {
         this._resultProvider = new CTResultDataProvider();
 
         // Set save path and load cts
-        this._savePath = Uri.joinPath(Uri.parse(this._context.extensionPath), ".generated", "Combinatorial Testing");
+        this._savePath = Uri.joinPath(workspace.workspaceFolders[0].uri, ".generated", "Combinatorial Testing");
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<TestViewElement> = {
@@ -285,8 +285,11 @@ export class CTTreeView {
     private async loadCTs() : Promise<completeCT[]>{
         return new Promise(async (resolve, reject) => {
             // Asynchroniouse read of filepath
-            let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
             let completeCTs: completeCT[] = [];
+            if (!fs.existsSync(this._savePath.fsPath))
+                return resolve(completeCTs);
+            let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
+
             files.forEach(f => {
                 let file:fs.Dirent = f;
                 if(file.isFile && file.name.includes(".json"))
