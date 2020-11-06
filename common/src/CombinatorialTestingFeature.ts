@@ -315,7 +315,7 @@ export class CTTreeView {
         this._testCaseBatchRange.start = 0;
     }
 
-    public addNewTestResults(traceName: string, testCases: CTTestCase[]){
+    public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
@@ -329,8 +329,8 @@ export class CTTreeView {
 
         // Generate groups for the trace if they are not generated yet and reference the first group to get its group size.
         let group = this._currentlyExecutingTraceViewItem.getChildren()[0];
-        // if(!group)
-        //     group = (await this._testProvider.getChildren(this._currentlyExecutingTraceViewItem))[0];
+        if(!group)
+            group = (await this._testProvider.getChildren(this._currentlyExecutingTraceViewItem))[0];
         let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
 
         // Return if batch size isn't big enough to warrent a view update.
@@ -350,7 +350,7 @@ export class CTTreeView {
             // Notify of data changes for the group view if batch range is within group range.
             if(numberRange[0] <= this._testCaseBatchRange.end && numberRange[1] >= this._testCaseBatchRange.start)
                 // Function only rebuilds group view if it is expanded.
-                this._testProvider.rebuildGroupIfVisible(ge);
+                this._testProvider.rebuildViewElementIfExpanded(ge);
         });
     }
      
@@ -513,16 +513,13 @@ export class CTTreeView {
             this.ctGenerate(viewElement);
         
         if (viewElement.type == TreeItemType.TestGroup)
-        {
-            this._testProvider.elementExpanded(viewElement);
             this._testProvider.rebuildViewFromElement(viewElement);
-        }
+
+        this._testProvider.handleElementExpanded(viewElement);
     }   
 
     onDidCollapseElement(viewElement : TestViewElement){
-        //throw new Error('Method not implemented.');
-        if (viewElement.type == TreeItemType.TestGroup)
-            this._testProvider.elementCollapsed(viewElement);
+        this._testProvider.handleElementCollapsed(viewElement);
     }
 
     onDidChangeSelection(viewElement : TestViewElement){
