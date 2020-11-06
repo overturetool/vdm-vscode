@@ -18,12 +18,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         private _ctView: CTTreeView) {
     }
 
-    public async rebuildViewFromElement(viewElement?: TestViewElement)
+    public rebuildViewFromElement(viewElement?: TestViewElement)
     {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public async rebuildViewElementIfExpanded(viewElement: TestViewElement){
+    public rebuildViewElementIfExpanded(viewElement: TestViewElement){
         if(viewElement.ExpandedState == TreeItemCollapsibleState.Expanded)
             this._onDidChangeTreeData.fire(viewElement);
     }
