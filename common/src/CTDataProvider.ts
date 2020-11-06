@@ -27,10 +27,9 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public rebuildExpandedGroup(viewElement: TestViewElement){
-        if(this._currentlyExpandedGroups.findIndex(ceg => ceg.getParent().label == viewElement.getParent().label && ceg.description == viewElement.description) == -1)
-            return;
-        this._onDidChangeTreeData.fire(viewElement);
+    public rebuildViewElementIfExpanded(viewElement: TestViewElement){
+        if(viewElement.ExpandedState == TreeItemCollapsibleState.Expanded)
+            this._onDidChangeTreeData.fire(viewElement);
     }
 
     public toggleFilteringForTestGroups(): any
@@ -41,15 +40,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         });
     }
 
-    public elementExpanded(element: TestViewElement){
-        if(this._currentlyExpandedGroups.indexOf(element) == -1)
-            this._currentlyExpandedGroups.push(element);
+    public handleElementExpanded(element: TestViewElement){
+        element.ExpandedState = TreeItemCollapsibleState.Expanded;
     }
 
-    public elementCollapsed(element: TestViewElement){
-        let elementIndex = this._currentlyExpandedGroups.indexOf(element);
-        if(elementIndex != -1)
-            this._currentlyExpandedGroups.splice(elementIndex,1);
+    public handleElementCollapsed(element: TestViewElement){
+        element.ExpandedState = TreeItemCollapsibleState.Collapsed;
     }
 
     getRoots(): TestViewElement[] {
@@ -87,7 +83,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             let groups = Math.ceil(numberOfTests/groupSize);
             for(let i = 0; i < groups; i++)
             {
-                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, TreeItemCollapsibleState.Collapsed, (1 + i * groupSize) + "-" + (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1)), element));
+                testGroups.push(new TestViewElement("test group", TreeItemType.TestGroup, i < element.getChildren().length ? element.getChildren()[i].ExpandedState : TreeItemCollapsibleState.Collapsed, (1 + i * groupSize) + "-" + (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1)), element));
                 numberOfTests -= groupSize;
             }
             element.setChildren(testGroups);
@@ -134,6 +130,7 @@ export enum TreeItemType
 export class TestViewElement extends TreeItem {
     // For checking if a testgroup is filtered
     private _children: TestViewElement[] = [];
+    public ExpandedState: TreeItemCollapsibleState;
     constructor(
     public readonly label: string,
     public readonly type: TreeItemType,
@@ -146,6 +143,7 @@ export class TestViewElement extends TreeItem {
             super.description = false;
         else
             super.description = description;
+        this.ExpandedState = collapsibleState;
     }
 
     public getParent(): TestViewElement {

@@ -307,10 +307,12 @@ export class CTTreeView {
 
     public testExecutionFinished()
     {
-        this.rebuildExpandedGroupViews();
+        //this.rebuildExpandedGroupViews();
+        this._testCaseBatchRange.end = 0;
+        this._testCaseBatchRange.start = 0;
     }
 
-    public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
+    public addNewTestResults(traceName: string, testCases: CTTestCase[]){
         let traceWithResult = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
@@ -319,14 +321,13 @@ export class CTTreeView {
             oldTestCase.sequence = testCases[i].sequence;
             oldTestCase.verdict = testCases[i].verdict;
         }
-
         // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
 
         // Generate groups for the trace if they are not generated yet and reference the first group to get its group size.
         let group = this._currentlyExecutingTraceViewItem.getChildren()[0];
-        if(!group)
-            group = (await this._testProvider.getChildren(this._currentlyExecutingTraceViewItem))[0];
+        // if(!group)
+        //     group = (await this._testProvider.getChildren(this._currentlyExecutingTraceViewItem))[0];
         let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
 
         // Return if batch size isn't big enough to warrent a view update.
@@ -346,7 +347,7 @@ export class CTTreeView {
             // Notify of data changes for the group view if batch range is within group range.
             if(numberRange[0] <= this._testCaseBatchRange.end && numberRange[1] >= this._testCaseBatchRange.start)
                 // Function only rebuilds group view if it is expanded.
-                this._testProvider.rebuildExpandedGroup(ge);
+                this._testProvider.rebuildViewElementIfExpanded(ge);
         });
     }
      
@@ -374,7 +375,8 @@ export class CTTreeView {
     showCancelButton(show: boolean) {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-run-buttons', !show);
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-cancel-button', show);
-        this._testProvider.rebuildViewFromElement();
+        if(!show)
+            this._testProvider.rebuildViewFromElement();
     }
     
     async ctGoToTrace(viewElement:TestViewElement) {
@@ -402,14 +404,14 @@ export class CTTreeView {
 
     async ctRebuildOutline() {
         if(this._testProvider.getRoots().length > 0)
-            this._combinatorialTests = (await this._ctFeature.requestTraces()).map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
+            this._combinatorialTests = this.filterSymbols((await this._ctFeature.requestTraces()), this._combinatorialTests);
+            
         else
         {
             await Promise.all([this.loadCTs().catch(r => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
                 {
-                    // Check if existing outline matches servers
-                    let traceOutlines = res[1].map(symbol => {return {symbolName: symbol.name, traces: symbol.traces.map(trace => {return {trace: trace, testCases: []}})}});
-                    this._combinatorialTests = !this.ctOutlinesMatch(traceOutlines,  res[0]) ? traceOutlines : res[0];
+                    // Filter loaded data so it matches servers
+                    this._combinatorialTests = this.filterSymbols(res[1], res[0]);
                 });
         }          
 
@@ -417,22 +419,21 @@ export class CTTreeView {
         this._testProvider.rebuildViewFromElement();
     }
 
-    private ctOutlinesMatch(ctSymbols1:completeCT[], ctSymbols2:completeCT[]): boolean{
-        if(ctSymbols1.length != ctSymbols2.length)
-            return false;
-        
-        for(let i = 0; i < ctSymbols1.length; i++)
-        {
-            if(ctSymbols1[i].traces.length != ctSymbols2[i].traces.length)
-                return false;
+    private filterSymbols(trueSymbols:CTSymbol[], symbolsToFilter:completeCT[]): completeCT[] {
+        return trueSymbols.map(serverSymbol => {
+            let localCT = symbolsToFilter.find(ct => ct.symbolName == serverSymbol.name)
+            if(!localCT)
+                return {symbolName: serverSymbol.name, traces: serverSymbol.traces.map(trace => {return {trace: trace, testCases: []}})};
             
-            for(let l = 0; l < ctSymbols1[i].traces.length; l++)
-            {
-                if(ctSymbols1[i].traces[l].trace.name != ctSymbols2[i].traces[l].trace.name)
-                    return false;
-            }
-        }
-        return true;
+            localCT.traces = serverSymbol.traces.map(serverTrace => {
+                let traceIndex = localCT.traces.findIndex(t => t.trace.name == serverTrace.name);
+                if(traceIndex != -1)
+                    return localCT.traces[traceIndex];
+                else
+                    return {trace: serverTrace, testCases: []}
+            });               
+            return localCT;
+        });
     }
 
     async ctFullExecute() {
@@ -447,8 +448,7 @@ export class CTTreeView {
                     return;
                 }
             }
-        }
-        
+        }    
     }
 
     async ctExecute(viewElement: TestViewElement) {
@@ -458,6 +458,10 @@ export class CTTreeView {
     async ctGenerate(viewElement: TestViewElement) {
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
+        [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).testCases.forEach(testCase => {
+            testCase.verdict = null;
+            testCase.sequence = [];
+        });
 
         // Setup loading window
         return window.withProgress({
@@ -506,16 +510,13 @@ export class CTTreeView {
             this.ctGenerate(viewElement);
         
         if (viewElement.type == TreeItemType.TestGroup)
-        {
-            this._testProvider.elementExpanded(viewElement);
             this._testProvider.rebuildViewFromElement(viewElement);
-        }
+
+        this._testProvider.handleElementExpanded(viewElement);
     }   
 
     onDidCollapseElement(viewElement : TestViewElement){
-        //throw new Error('Method not implemented.');
-        if (viewElement.type == TreeItemType.TestGroup)
-            this._testProvider.elementCollapsed(viewElement);
+        this._testProvider.handleElementCollapsed(viewElement);
     }
 
     onDidChangeSelection(viewElement : TestViewElement){
@@ -550,7 +551,7 @@ export class CTTreeView {
                         this._currentlyExecutingTraceViewItem = viewElement;
 
                         // Check if we have generated first
-                        if ((await this._testProvider.getChildren(viewElement)).length < 1)
+                        if (viewElement.getChildren().length < 1)
                             await this.ctGenerate(viewElement);
 
                         // Request execute
