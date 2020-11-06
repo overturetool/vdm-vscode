@@ -170,7 +170,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     private handleExecuteWorkDoneProgress(value: any, progress: vscode.Progress<{ message?: string; increment?: number }>){
-        if (value?.percentage){
+        if (value?.percentage != undefined){
             progress.report({message: value.message, increment: (value.percentage - this._progress)})
             this._progress = value.percentage
         }
