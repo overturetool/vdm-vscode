@@ -170,7 +170,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     }
 
     private handleExecuteWorkDoneProgress(value: any, progress: vscode.Progress<{ message?: string; increment?: number }>){
-        if (value?.percentage){
+        if (value?.percentage != undefined){
             progress.report({message: value.message, increment: (value.percentage - this._progress)})
             this._progress = value.percentage
         }
@@ -445,6 +445,7 @@ export class CTTreeView {
         // Run Execute on all traces of all symbols
         for (const symbol of await this._testProvider.getChildren()) {
             for (const trace of await this._testProvider.getChildren(symbol)) {
+                await this.ctGenerate(trace)
                 await this.execute(trace, false).catch(() => {cancled = true});
                 if (cancled){
                     return;
@@ -467,7 +468,7 @@ export class CTTreeView {
         });
 
         // Setup loading window
-        window.withProgress({
+        return window.withProgress({
             location: {viewId: "ctView"},
             title: "Running test generation",
             cancellable: false
@@ -554,7 +555,8 @@ export class CTTreeView {
                         this._currentlyExecutingTraceViewItem = viewElement;
 
                         // Check if we have generated first
-                        await this.ctGenerate(viewElement);
+                        if ((await this._testProvider.getChildren(viewElement)).length < 1)
+                            await this.ctGenerate(viewElement);
 
                         // Request execute
                         await this._ctFeature.requestExecute(viewElement.label, filter, undefined, progress)
