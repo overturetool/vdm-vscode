@@ -32,6 +32,8 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
     if(!vdmjPath || !lspServerPath)
         return;
 
+    extensionLanguage = vdmDialect;
+
     function createServer(): Promise<StreamInfo> {
         return new Promise(async (resolve, reject) => {
             portfinder.getPortPromise()
@@ -128,3 +130,4 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
+export var extensionLanguage: string;

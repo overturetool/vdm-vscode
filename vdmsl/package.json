@@ -91,31 +91,30 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "combinatorialTesting",
+          "id": "vdmsl-combinatorialTesting",
           "title": "Combinatorial Testing",
           "icon": "media/ctView.svg",
-          "when": "vdm-ct-show-view == true"
+          "when": "vdmsl-ct-show-view == true"
         }
       ]
     },
     "views": {
-      "combinatorialTesting": [
+      "vdmsl-combinatorialTesting": [
         {
-          "id": "ctView",
+          "id": "vdmsl-ctView",
           "name": "Tests",
-          "when": "vdm-ct-show-view == true"
+          "when": "vdmsl-ct-show-view == true"
         },
         {
-          "id": "ctResultView",
+          "id": "vdmsl-ctResultView",
           "name": "Test Sequence Results",
-          "when": "vdm-ct-show-view == true"
+          "when": "vdmsl-ct-show-view == true"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "ctView",
-        "when": "resourceLangId == vdmsl",
+        "view": "vdmsl-ctView",
         "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
       }
     ],
@@ -123,27 +122,27 @@
       "view/title": [
         {
           "command": "extension.ctFullExecute",
-          "when": "view =~ /ctView/ && vdm-ct-show-run-buttons == true",
+          "when": "view =~ /vdmsl-ctView/ && vdm-ct-show-run-buttons == true",
           "group": "navigation@0"
         },
         {
           "command": "extension.ctCancel",
-          "when": "view =~ /ctView/ && vdm-ct-show-cancel-button == true",
+          "when": "view =~ /vdmsl-ctView/ && vdm-ct-show-cancel-button == true",
           "group": "navigation@1"
         },
         {
           "command": "extension.ctSetFilter",
-          "when": "view =~ /ctView/ && vdm-ct-show-set-execute-filter-button == true",
+          "when": "view =~ /vdmsl-ctView/ && vdm-ct-show-set-execute-filter-button == true",
           "group": "navigation@2"
         },
         {
           "command": "extension.toggleFilteringForTestGroups",
-          "when": "view =~ /ctView/",
+          "when": "view =~ /vdmsl-ctView/",
           "group": "navigation@3"
         },
         {
           "command": "extension.ctRebuildOutline",
-          "when": "view =~ /ctView/",
+          "when": "view =~ /vdmsl-ctView/",
           "group": "navigation@4"
         }
       ],
@@ -151,46 +150,46 @@
         {
           "command": "extension.ctExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
-          "group": "ctView@0"
+          "group": "vdmsl-ctView@0"
         },
         {
           "command": "extension.ctFilteredExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
-          "group": "ctView@1"
+          "group": "vdmsl-ctView@1"
         },
         {
           "command": "extension.ctGenerate",
           "when": "viewItem == trace",
-          "group": "ctView@2"
+          "group": "vdmsl-ctView@2"
         },
         {
           "command": "extension.ctSendToInterpreter",
           "when": "viewItem == test && vdm-ct-show-run-buttons == true",
-          "group": "ctView@0"
+          "group": "vdmsl-ctView@0"
         },
         {
           "command": "extension.ctExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "when": "resourceLangId == vdmsl && viewItem == trace && vdm-ct-show-run-buttons == true || resourceLangId == vdmsl && viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@0"
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "when": "resourceLangId == vdmsl && viewItem == trace && vdm-ct-show-run-buttons == true || resourceLangId == vdmsl && viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
         },
         {
           "command": "extension.ctGenerate",
-          "when": "viewItem == trace",
+          "when": "resourceLangId == vdmsl && viewItem == trace",
           "group": "inline@2"
         },
         {
           "command": "extension.goToTrace",
-          "when": "viewItem == trace",
+          "when": "resourceLangId == vdmsl && viewItem == trace",
           "group": "inline@3"
         },
         {
           "command": "extension.ctSendToInterpreter",
-          "when": "viewItem == test && vdm-ct-show-run-buttons == true",
+          "when": "resourceLangId == vdmsl && viewItem == test && vdm-ct-show-run-buttons == true",
           "group": "inline@0"
         }
       ],

@@ -8,6 +8,7 @@ import { CTTestCase, CTTrace, CTSymbol, NumberRange, VerdictKind} from "./protoc
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
+import {extensionLanguage} from './extension'
 
 export class CTTreeView {
     private _testView: vscode.TreeView<TestViewElement>;
@@ -38,7 +39,7 @@ export class CTTreeView {
             treeDataProvider: this._testProvider, 
             showCollapseAll: true
         }
-        this._testView = Window.createTreeView('ctView', testview_options)
+        this._testView = Window.createTreeView(extensionLanguage+'-ctView', testview_options);
         this._context.subscriptions.push(this._testView);
 
         // Create results view
@@ -46,7 +47,7 @@ export class CTTreeView {
             treeDataProvider: this._resultProvider, 
             showCollapseAll: true
         }
-        this._resultView = Window.createTreeView('ctResultView', resultview_options)
+        this._resultView = Window.createTreeView(extensionLanguage+'-ctResultView', resultview_options);
         this._context.subscriptions.push(this._resultView);
 
         // Register view behavior
@@ -58,7 +59,7 @@ export class CTTreeView {
         this.setButtonsAndContext(canFilter);
 
         // Show view
-        vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-view', true );
+        vscode.commands.executeCommand( 'setContext', extensionLanguage+'-ct-show-view', true );
     }
 
     public getSymbolNames(): string[]{
