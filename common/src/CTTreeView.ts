@@ -20,7 +20,7 @@ export class CTTreeView {
     private _resultProvider: CTResultDataProvider;
     private _currentlyExecutingTraceViewItem: TestViewElement;
     private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
-    private _batchSizeModifier: number = 0.2;
+    private _batchSizeModifier: number = 1;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -157,7 +157,6 @@ export class CTTreeView {
         if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id)
             this.testExecutionFinished();
 
-
         // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
 
@@ -171,21 +170,11 @@ export class CTTreeView {
         if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (groupSizeRange[1] - groupSizeRange[0]) * this._batchSizeModifier)
             return;
 
-        // Set the new start test number of the _testCaseBatchRange and rebuild expanded test group views effected by the changed data.
+        // Set the new start test number of the _testCaseBatchRange
         this._testCaseBatchRange.start = testCases[testCases.length-1].id;
-        this.rebuildExpandedGroupViewsInRange(this._testCaseBatchRange.start, this._testCaseBatchRange.end);
-    }
 
-    rebuildExpandedGroupViewsInRange(start: number, end: number){
-        // Find the group element(s) that should update its view.
-        this._currentlyExecutingTraceViewItem.getChildren().forEach(ge => {
-            // Get group range from the groups label.
-            let numberRange : number[] = ge.description.toString().split('-').map(str => parseInt(str));
-            // Notify of data changes for the group view if batch range is within group range.
-            if(numberRange[0] <= end && numberRange[1] >= start)
-                // Function only rebuilds group view if it is expanded.
-                this._testProvider.rebuildViewElementIfExpanded(ge);
-        });
+        // Rebuild the trace view to update verdict for the group and its tests
+        this._testProvider.rebuildViewElementIfExpanded(this._currentlyExecutingTraceViewItem);
     }
      
     setButtonsAndContext(canFilter: boolean){

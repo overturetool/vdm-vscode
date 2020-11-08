@@ -74,7 +74,11 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                 let index = oldTraces.findIndex(t => t.label == trace.name);
                 let traceViewElement = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)
                 if(index != -1)
+                {
                     traceViewElement.setChildren(oldTraces[index].getChildren());
+                    traceViewElement.ExpandedState = oldTraces[index].ExpandedState;
+                }
+
                 traceViewElement.iconPath = !trace.verdict ? null : trace.verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
                 return traceViewElement;
             }));
