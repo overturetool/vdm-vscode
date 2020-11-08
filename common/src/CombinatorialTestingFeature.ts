@@ -32,12 +32,20 @@ export class CombinantorialTestingFeature implements StaticFeature {
             if (WorkDoneProgressOptions.hasWorkDoneProgress(capabilities?.experimental?.combinatorialTestProvider))
                 this._supportWorkDone = capabilities?.experimental?.combinatorialTestProvider.workDoneProgress
 
-            // Register data provider and view
-            this._ctTreeView = new CTTreeView(this, this._context, true);
+            
+            
 
             // Set filter
-            if (this._filterHandler)
+            if (this._filterHandler){
                 this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
+                // Register view
+                this._ctTreeView = new CTTreeView(this, this._context, true);
+            }
+            else{ 
+                // Register view
+                this._ctTreeView = new CTTreeView(this, this._context, false);
+            }
+
 
             this.registerCommand('extension.ctCancel', () => this.cancelExecution());
         }
