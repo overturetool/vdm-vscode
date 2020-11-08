@@ -1,4 +1,3 @@
-import path = require('path');
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as Util from "./Util"
@@ -7,6 +6,7 @@ import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider"
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { CTTestCase, CTTrace, CTSymbol, NumberRange, VerdictKind} from "./protocol.lspx";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
+import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
 
 export class CTTreeView {
@@ -139,7 +139,7 @@ export class CTTreeView {
         else
             traceWithFinishedTestExecution.trace.verdict = VerdictKind.Failed;
         
-        // This rebuilds any group views within the remaining range of executed test cases and rebuild the trace to show the verdict
+        // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
         this._testProvider.rebuildViewFromElement(this._testProvider.getRoots().find(symbolElement => symbolElement.getChildren().some(c => c.label == traceWithFinishedTestExecution.trace.name)));
     }
 
@@ -154,9 +154,8 @@ export class CTTreeView {
         }
         // Handle if user has executed all test groups manually.
         if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id)
-        {
             this.testExecutionFinished();
-        }
+
 
         // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
@@ -346,13 +345,12 @@ export class CTTreeView {
     }
 
     onDidExpandElement(viewElement : TestViewElement){
+        this._testProvider.handleElementExpanded(viewElement);
         if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1)
             this.ctGenerate(viewElement);
         
         if (viewElement.type == TreeItemType.TestGroup)
             this._testProvider.rebuildViewFromElement(viewElement);
-
-        this._testProvider.handleElementExpanded(viewElement);
     }   
 
     onDidCollapseElement(viewElement : TestViewElement){
