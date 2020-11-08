@@ -1,7 +1,7 @@
 import { Event, EventEmitter, ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from 'vscode';
-import { CTTreeView } from './CombinatorialTestingFeature';
+import { CTTreeView } from './CTTreeView';
 import { NumberRange, VerdictKind } from './protocol.lspx';
-import {Icons} from './Icons'
+import { Icons } from './Icons'
 
 export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
