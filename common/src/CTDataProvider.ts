@@ -9,7 +9,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
     private _minGroupSize: number = 100;
-    private _maxGroupSize: number = 5000;
+    private _maxGroupSize: number = 1000;
     private _groupSizePercentage = 0.1;
     private _roots: TestViewElement[];
     private _filter: boolean = false;

@@ -263,16 +263,11 @@ export class CTTreeView {
     }
 
     async ctFullExecute() {
-        let cancled: boolean = false;
-
         // Run Execute on all traces of all symbols
-        for (const symbol of await this._testProvider.getChildren()) {
-            for (const trace of await this._testProvider.getChildren(symbol)) {
-                await this.ctGenerate(trace)
-                await this.execute(trace, false).catch(() => {cancled = true});
-                if (cancled){
-                    return;
-                }
+        for (const symbol of this._testProvider.getRoots()) {
+            for (const trace of symbol.getChildren()) {
+                await this.ctGenerate(trace);
+                await this.execute(trace, false).catch(() => {return;});
             }
         }    
     }
