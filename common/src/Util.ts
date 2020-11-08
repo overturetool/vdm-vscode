@@ -10,7 +10,7 @@ export function ensureDirectoryExistence(filePath) {
     fs.mkdirSync(dirname);
 }
 
-export function recursiveVDMJPathSearch(resourcesPath: string): string {
+export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.search](string: string): number; }): string {
     if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory() )
         return null;
 
@@ -20,25 +20,8 @@ export function recursiveVDMJPathSearch(resourcesPath: string): string {
         let element: fs.Dirent = elementsInFolder[i];
         let fullElementPath =  path.resolve(resourcesPath, element.name);
         if(fs.lstatSync(fullElementPath).isDirectory() )
-            fullElementPath = recursiveVDMJPathSearch(fullElementPath);
-        else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(/vdmj.*jar/i) != -1)
-            return fullElementPath;
-    }
-    return null;
-}
-
-export function recursiveLSPPathSearch(resourcesPath: string): string {
-    if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory() )
-    return null;
-
-    let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
-    for(let i = 0; i < elementsInFolder.length; i++)
-    {
-        let element: fs.Dirent = elementsInFolder[i];
-        let fullElementPath =  path.resolve(resourcesPath, element.name);
-        if(fs.lstatSync(fullElementPath).isDirectory() )
-            fullElementPath = recursiveVDMJPathSearch(fullElementPath);
-            else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(/lsp.*jar/i) != -1)
+            fullElementPath = recursivePathSearch(fullElementPath, searcher);
+        else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1) //TODO shouldn't this be /lsp*.jar/ ?
             return fullElementPath;
     }
     return null;

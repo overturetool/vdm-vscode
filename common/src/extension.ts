@@ -27,8 +27,8 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
     let clientLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
     let serverLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
     let serverMainClass = 'lsp.LSPServerStdio'
-	let vdmjPath = util.recursiveVDMJPathSearch(path.resolve(context.extensionPath, "resources"));
-    let lspServerPath = util.recursiveLSPPathSearch(path.resolve(context.extensionPath, "resources"));
+	let vdmjPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i); // TODO shouldn't it be /vdmj*.jar/ ?
+    let lspServerPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i); // TODO shouldn't it be /lsp*.jar/ ?
     if(!vdmjPath || !lspServerPath)
         return;
 
