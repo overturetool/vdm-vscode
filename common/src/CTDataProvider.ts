@@ -56,15 +56,25 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         // Handle root query
         if(!element){
             let symbolNames = this._ctView.getSymbolNames();
-            this._roots = symbolNames.map(symbolName => new TestViewElement(symbolName, TreeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed));
+            this._roots = symbolNames.map(symbolName => {
+                let newSymbol = new TestViewElement(symbolName, TreeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed);
+                let oldSymbolIndex = this._roots.findIndex(symbol => newSymbol.label == symbol.label);
+                if(oldSymbolIndex != -1)
+                    newSymbol.setChildren(this._roots[oldSymbolIndex].getChildren());
+                return newSymbol;
+            });
             return Promise.resolve(this._roots);
         }
 
         if(element.type == TreeItemType.CTSymbol)
         {
             let ctTraces = this._ctView.getTraces(element.label);
+            let oldTraces = element.getChildren();
             element.setChildren(ctTraces.map(trace => {
+                let index = oldTraces.findIndex(t => t.label == trace.name);
                 let traceViewElement = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)
+                if(index != -1)
+                    traceViewElement.setChildren(oldTraces[index].getChildren());
                 traceViewElement.iconPath = !trace.verdict ? null : trace.verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
                 return traceViewElement;
             }));
