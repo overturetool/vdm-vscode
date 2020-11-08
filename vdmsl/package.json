@@ -22,16 +22,16 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.goToTrace",
-        "title": "Go to trace",
-        "category": "VDM",
-        "icon": "$(go-to-file)"
-      },
-      {
         "command": "extension.runPOG",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
         "icon": "$(run)"
+      },
+      {
+        "command": "extension.goToTrace",
+        "title": "Go to trace",
+        "category": "VDM",
+        "icon": "$(go-to-file)"
       },
       {
         "command": "extension.ctSetFilter",
@@ -88,12 +88,6 @@
         "icon": "$(stop)"
       }
     ],
-    "viewsWelcome": [
-      {
-        "view": "ctView",
-        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
-      }
-    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -118,6 +112,13 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "ctView",
+        "when": "resourceLangId == vdmsl",
+        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
+      }
+    ],
     "menus": {
       "view/title": [
         {
@@ -195,15 +196,15 @@
       ],
       "explorer/context": [
         {
-          "when": "resourceLangId == vdmsl",
           "command": "extension.runPOG",
+          "when": "resourceLangId == vdmsl",
           "group": "verification@1"
         }
       ],
       "editor/context": [
         {
-          "when": "resourceLangId == vdmsl",
           "command": "extension.runPOG",
+          "when": "resourceLangId == vdmsl",
           "group": "verification@1"
         }
       ],
