@@ -73,7 +73,7 @@
         "command": "extension.toggleFilteringForTestGroups",
         "title": "Toggle filtering of passed and inconclusive tests",
         "category": "VDM",
-        "icon": "$(list-filter)"
+        "icon": "$(filter)"
       },
       {
         "command": "extension.ctSendToInterpreter",
