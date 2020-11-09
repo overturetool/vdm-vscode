@@ -91,7 +91,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "vdmsl-combinatorialTesting",
+          "id": "combinatorialTesting",
           "title": "Combinatorial Testing",
           "icon": "media/ctView.svg",
           "when": "vdmsl-ct-show-view == true"
@@ -99,7 +99,7 @@
       ]
     },
     "views": {
-      "vdmsl-combinatorialTesting": [
+      "combinatorialTesting": [
         {
           "id": "vdmsl-ctView",
           "name": "Tests",
