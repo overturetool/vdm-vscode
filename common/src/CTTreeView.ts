@@ -193,9 +193,13 @@ export class CTTreeView {
         if(canFilter) {
             this.registerCommand("extension.ctFilteredExecute", (e) => this.execute(e, true));
         }
-        this.registerCommand("extension.ctRebuildOutline",      () => this.ctRebuildOutline());
+        this.registerCommand("extension.ctRebuildOutline",      ()  => this.ctRebuildOutline());
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
-        this.registerCommand("extension.ctExecute",             (e) => this.execute(e, false));
+        this.registerCommand("extension.ctExecute",             (e) => {try{this.execute(e, false)}
+        catch(err){ 
+            
+        } 
+    });
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
         this.registerCommand("extension.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
