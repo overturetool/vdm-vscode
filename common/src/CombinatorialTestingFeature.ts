@@ -30,22 +30,14 @@ export class CombinantorialTestingFeature implements StaticFeature {
         if (capabilities?.experimental?.combinatorialTestProvider) {
             // Check if support work done progress
             if (WorkDoneProgressOptions.hasWorkDoneProgress(capabilities?.experimental?.combinatorialTestProvider))
-                this._supportWorkDone = capabilities?.experimental?.combinatorialTestProvider.workDoneProgress
-
-            
-            
+                this._supportWorkDone = capabilities?.experimental?.combinatorialTestProvider.workDoneProgress                
 
             // Set filter
-            if (this._filterHandler){
+            if (this._filterHandler)
                 this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
-                // Register view
-                this._ctTreeView = new CTTreeView(this, this._context, true);
-            }
-            else{ 
-                // Register view
-                this._ctTreeView = new CTTreeView(this, this._context, false);
-            }
-
+                
+            // Register view
+            this._ctTreeView = new CTTreeView(this, this._context, !!this._filterHandler);
 
             this.registerCommand('extension.ctCancel', () => this.cancelExecution());
         }
@@ -123,7 +115,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             }
 
             // Send request
-            this._ctTreeView.showCancelButton(true);
             const tests = await this._client.sendRequest(CTExecuteRequest.type, params, this._cancelToken.token);
 
             // If not using progress token, update test results
@@ -142,15 +133,11 @@ export class CombinantorialTestingFeature implements StaticFeature {
             }
         }
         finally{
-            this._ctTreeView.saveCTs();
-            this._ctTreeView.testExecutionFinished();
-
             // Clean-up
             this._cancelToken.dispose();
             this._cancelToken = undefined;
             partialResultHandlerDisposable?.dispose();
             workDoneProgressHandlerDisposable?.dispose();
-            this._ctTreeView.showCancelButton(false);
         }
     } 
 
@@ -176,7 +163,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
             
     }
-
 
     private generateToken() : string {
         return "CombinatorialTestToken-"+Date.now().toString()+(this._generateCalls++).toString();

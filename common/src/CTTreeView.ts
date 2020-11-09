@@ -126,7 +126,7 @@ export class CTTreeView {
         })
     }
 
-    public testExecutionFinished()
+    private testExecutionFinished()
     {   
         if(!this._isExecuting)
             return;
@@ -145,7 +145,8 @@ export class CTTreeView {
             traceWithFinishedTestExecution.trace.verdict = VerdictKind.Failed;
         
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
-        this._testProvider.rebuildViewFromElement(this._testProvider.getRoots().find(symbolElement => symbolElement.getChildren().some(c => c.label == traceWithFinishedTestExecution.trace.name)));
+        //this._testProvider.rebuildViewFromElement(this._testProvider.getRoots().find(symbolElement => symbolElement.getChildren().some(c => c.label == traceWithFinishedTestExecution.trace.name)));
+        this._testProvider.rebuildViewFromElement();
     }
 
     public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
@@ -158,8 +159,10 @@ export class CTTreeView {
             oldTestCase.verdict = testCases[i].verdict;
         }
         // Handle if user has executed all test groups manually.
-        if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id)
+        if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id){
             this.testExecutionFinished();
+            return;
+        }
 
         // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
@@ -181,7 +184,7 @@ export class CTTreeView {
         this._testProvider.rebuildViewFromElement(this._currentlyExecutingTraceViewItem);
     }
      
-    setButtonsAndContext(canFilter: boolean){
+    private setButtonsAndContext(canFilter: boolean){
         ///// Show options ///////
         if (canFilter){
             vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-filter-button', true );
@@ -192,11 +195,11 @@ export class CTTreeView {
 
         ///// Command registration //////
         if(canFilter) {
-            this.registerCommand("extension.ctFilteredExecute", (e) => this.ctFilteredExecute(e));
+            this.registerCommand("extension.ctFilteredExecute", (e) => this.execute(e, true));
         }
         this.registerCommand("extension.ctRebuildOutline",      () => this.ctRebuildOutline());
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
-        this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
+        this.registerCommand("extension.ctExecute",             (e) => this.execute(e, false));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
         this.registerCommand("extension.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
@@ -204,23 +207,17 @@ export class CTTreeView {
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
 
-    showCancelButton(show: boolean) {
+    private showCancelButton(show: boolean) {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-run-buttons', !show);
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-cancel-button', show);
-        if(!show)
-            this._testProvider.rebuildViewFromElement();
     }
 
-    showTreeFilterButton(show: boolean) {
+    private showTreeFilterButton(show: boolean) {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-enable-filter-button', show);
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-disable-filter-button', !show);
     }
 
-    async ctFilteredExecute(viewElement: TestViewElement) {
-        this.execute(viewElement, true)
-    }
-
-    async ctRebuildOutline() {
+    private async ctRebuildOutline() {
         if(this._testProvider.getRoots().length > 0)
             this._combinatorialTests = this.filterSymbols((await this._ctFeature.requestTraces()), this._combinatorialTests);
             
@@ -254,7 +251,7 @@ export class CTTreeView {
         });
     }
 
-    async ctFullExecute() {
+    private async ctFullExecute() {
         // Run Execute on all traces of all symbols
         for (const symbol of this._testProvider.getRoots()) {
             for (const trace of symbol.getChildren()) {
@@ -264,11 +261,7 @@ export class CTTreeView {
         }    
     }
 
-    async ctExecute(viewElement: TestViewElement) {
-        this.execute(viewElement, false);
-    }
-
-    async ctGenerate(viewElement: TestViewElement) {
+    private async ctGenerate(viewElement: TestViewElement) {
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
 
@@ -315,7 +308,7 @@ export class CTTreeView {
         });
     }
 
-    async ctTreeFilter(enable:boolean){
+    private async ctTreeFilter(enable:boolean){
         // Change button 
         this.showTreeFilterButton(!enable)
 
@@ -323,13 +316,13 @@ export class CTTreeView {
         this._testProvider.filterTree(enable)
     }
     
-    ctSendToInterpreter(e: TestViewElement): void {
+    private ctSendToInterpreter(e: TestViewElement): void { //TODO should this be async?
         let trace = e.getParent().getParent().label;
         let test = Number(e.label);
         this._ctFeature.sendToInterpreter(trace, test);
     }
 
-    async ctGoToTrace(viewElement:TestViewElement) {
+    private async ctGoToTrace(viewElement:TestViewElement) {
 
         if(viewElement.type != TreeItemType.Trace)
             return;
@@ -348,8 +341,9 @@ export class CTTreeView {
         window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
     }
 
-    onDidExpandElement(viewElement : TestViewElement){
+    private onDidExpandElement(viewElement : TestViewElement){
         this._testProvider.handleElementExpanded(viewElement);
+        
         if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1)
             this.ctGenerate(viewElement);
         
@@ -357,11 +351,11 @@ export class CTTreeView {
             this._testProvider.rebuildViewFromElement(viewElement);
     }   
 
-    onDidCollapseElement(viewElement : TestViewElement){
+    private onDidCollapseElement(viewElement : TestViewElement){
         this._testProvider.handleElementCollapsed(viewElement);
     }
 
-    onDidChangeSelection(viewElement : TestViewElement){
+    private onDidChangeSelection(viewElement : TestViewElement){
         if(viewElement.type == TreeItemType.Test)
             // Get the trace label name from the view items grandparent and find the corresponding trace in _combinatorialTests and set/show the test sequence in the result view
             this._resultProvider.setTestSequenceResults([].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.getParent().getParent().label).testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);     
@@ -390,6 +384,7 @@ export class CTTreeView {
             // Do the execute request
             return new Promise(async (resolve, reject) => {
                 try {
+                    this.showCancelButton(true);
                     if (viewElement.type == TreeItemType.Trace){
                         // Reference the trace view item for which tests are being executed
                         this._currentlyExecutingTraceViewItem = viewElement;
@@ -422,6 +417,11 @@ export class CTTreeView {
                 } catch(error) {
                     reject(error)
                 } finally {
+                    // Handle that execution of tests has finished
+                    this.testExecutionFinished();
+                    this.showCancelButton(false);
+                    this.saveCTs();
+
                     // Remove status bar message
                     statusBarMessage.dispose();
                 }

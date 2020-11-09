@@ -25,11 +25,6 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public rebuildViewElementIfExpanded(viewElement: TestViewElement){
-        if(viewElement.expandedState == TreeItemCollapsibleState.Expanded)
-            this._onDidChangeTreeData.fire(viewElement);
-    }
-
     public filterTree(enable: boolean): any
     {
         this._filter = enable;
@@ -107,7 +102,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             {
                 let testIdRange: NumberRange = {start: (1 + i * groupSize), end: (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1))};
                 let results = this._ctView.getTestResults(testIdRange, element.label);
-                let verdict = !results || results.every(tc => tc.verdict == null) ? null : results.some(tc => tc.verdict == VerdictKind.Passed) ? VerdictKind.Passed : VerdictKind.Failed;
+                let verdict = !results || results.some(tc => tc.verdict == null) ? null : results.some(tc => tc.verdict == VerdictKind.Passed) ? VerdictKind.Passed : VerdictKind.Failed;
 
                 testGroups.push(new TestViewElement(
                     "test group", 
