@@ -11,7 +11,7 @@ export function ensureDirectoryExistence(filePath) {
 }
 
 export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.search](string: string): number; }): string {
-    if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory() )
+    if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory())
         return null;
 
     let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
@@ -19,7 +19,7 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
     {
         let element: fs.Dirent = elementsInFolder[i];
         let fullElementPath =  path.resolve(resourcesPath, element.name);
-        if(fs.lstatSync(fullElementPath).isDirectory() )
+        if(fs.lstatSync(fullElementPath).isDirectory())
             fullElementPath = recursivePathSearch(fullElementPath, searcher);
         else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1) //TODO shouldn't this be /lsp*.jar/ ?
             return fullElementPath;

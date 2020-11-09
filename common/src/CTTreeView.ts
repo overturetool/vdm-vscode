@@ -20,7 +20,7 @@ export class CTTreeView {
     private _resultProvider: CTResultDataProvider;
     private _currentlyExecutingTraceViewItem: TestViewElement;
     private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
-    private _batchSizeModifier: number = 1;
+    private _isExecuting = false;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -59,7 +59,7 @@ export class CTTreeView {
         this.setButtonsAndContext(canFilter);
 
         // Show view
-        vscode.commands.executeCommand( 'setContext', extensionLanguage+'-ct-show-view', true );
+        vscode.commands.executeCommand('setContext', extensionLanguage+'-ct-show-view', true);
     }
 
     public getSymbolNames(): string[]{
@@ -127,7 +127,11 @@ export class CTTreeView {
     }
 
     public testExecutionFinished()
-    {     
+    {   
+        if(!this._isExecuting)
+            return;
+
+        this._isExecuting = false;  
         this._testCaseBatchRange.end = 0;
         this._testCaseBatchRange.start = 0;
 
@@ -167,14 +171,14 @@ export class CTTreeView {
         let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
 
         // Return if batch size isn't big enough to warrent a view update.
-        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (groupSizeRange[1] - groupSizeRange[0]) * this._batchSizeModifier)
+        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (groupSizeRange[1] - groupSizeRange[0]))
             return;
 
         // Set the new start test number of the _testCaseBatchRange
         this._testCaseBatchRange.start = testCases[testCases.length-1].id;
 
         // Rebuild the trace view to update verdict for the group and its tests
-        this._testProvider.rebuildViewElementIfExpanded(this._currentlyExecutingTraceViewItem);
+        this._testProvider.rebuildViewFromElement(this._currentlyExecutingTraceViewItem);
     }
      
     setButtonsAndContext(canFilter: boolean){
@@ -193,7 +197,7 @@ export class CTTreeView {
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
-        this.registerCommand("extension.toggleFilteringForTestGroups",      ()  => this._testProvider.toggleFilteringForTestGroups());
+        this.registerCommand("extension.toggleFilteringForTestGroups",      ()  => this._testProvider.toggleFilteringForTest());
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
@@ -351,6 +355,8 @@ export class CTTreeView {
     private async execute(viewElement: TestViewElement, filter: boolean){
         if (viewElement.type != TreeItemType.Trace && viewElement.type != TreeItemType.TestGroup)
             throw new Error("CT Execute called on invalid element")
+
+        this._isExecuting = true;
 
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Executing test cases');

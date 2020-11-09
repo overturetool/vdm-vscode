@@ -25,23 +25,18 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public rebuildViewElementIfExpanded(viewElement: TestViewElement){
-        if(viewElement.ExpandedState == TreeItemCollapsibleState.Expanded)
-            this._onDidChangeTreeData.fire(viewElement);
-    }
-
-    public toggleFilteringForTestGroups(): any
+    public toggleFilteringForTest(): any
     {
         this._filter = this._filter ? false : true;
-        this._roots.forEach(symbol => symbol.getChildren().forEach(trace => trace.getChildren().forEach(group => this.rebuildViewElementIfExpanded(group))));
+        this._roots.forEach(symbol => symbol.getChildren().forEach(trace =>  this.rebuildViewFromElement(trace)));
     }
 
     public handleElementExpanded(element: TestViewElement){
-        element.ExpandedState = TreeItemCollapsibleState.Expanded;
+        element.expandedState = TreeItemCollapsibleState.Expanded;
     }
 
     public handleElementCollapsed(element: TestViewElement){
-        element.ExpandedState = TreeItemCollapsibleState.Collapsed;
+        element.expandedState = TreeItemCollapsibleState.Collapsed;
     }
 
     getRoots(): TestViewElement[] {
@@ -55,85 +50,114 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     getChildren(element?: TestViewElement): Thenable<TestViewElement[]> {
         // Handle root query
         if(!element){
+            // Build symbols
             let symbolNames = this._ctView.getSymbolNames();
             this._roots = symbolNames.map(symbolName => {
                 let newSymbol = new TestViewElement(symbolName, TreeItemType.CTSymbol, TreeItemCollapsibleState.Collapsed);
+
                 let oldSymbolIndex = this._roots.findIndex(symbol => newSymbol.label == symbol.label);
                 if(oldSymbolIndex != -1)
                     newSymbol.setChildren(this._roots[oldSymbolIndex].getChildren());
+
                 return newSymbol;
             });
+
             return Promise.resolve(this._roots);
         }
 
-        if(element.type == TreeItemType.CTSymbol)
-        {
+        if(element.type == TreeItemType.CTSymbol){
+            // Build view from symbol
             let ctTraces = this._ctView.getTraces(element.label);
             let oldTraces = element.getChildren();
+
+            // Generate all trace view elements for the symbol
             element.setChildren(ctTraces.map(trace => {
-                let index = oldTraces.findIndex(t => t.label == trace.name);
-                let traceViewElement = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element)
-                if(index != -1)
+                let traceViewElement = new TestViewElement(trace.name, TreeItemType.Trace, TreeItemCollapsibleState.Collapsed, "", element, this.verdictToIconPath(trace.verdict),trace.verdict);
+
+                let oldTraceIndex = oldTraces.findIndex(t => t.label == trace.name);
+                if(oldTraceIndex != -1)
                 {
-                    traceViewElement.setChildren(oldTraces[index].getChildren());
-                    traceViewElement.ExpandedState = oldTraces[index].ExpandedState;
+                    traceViewElement.setChildren(oldTraces[oldTraceIndex].getChildren());
+                    traceViewElement.expandedState = oldTraces[oldTraceIndex].expandedState;
                 }
 
-                traceViewElement.iconPath = !trace.verdict ? null : trace.verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
                 return traceViewElement;
             }));
 
             return Promise.resolve(element.getChildren());
         }
 
-        if(element.type == TreeItemType.Trace)
-        {
+        if(element.type == TreeItemType.Trace){
+            // Build view from traces
             let numberOfTests: number = this._ctView.getNumberOftests(element.label);
-
-            // Generate test groups
             let testGroups: TestViewElement[] = [];
+
+            // Calculate test group sizing
             let percentageSize = numberOfTests * this._groupSizePercentage;
             let groupSize = this._minGroupSize > percentageSize ? this._minGroupSize : percentageSize > this._maxGroupSize ? this._maxGroupSize: percentageSize;
             let groups = Math.ceil(numberOfTests/groupSize);
+
+            // Generate all test group view elements for the trace
             for(let i = 0; i < groups; i++)
             {
                 let testIdRange: NumberRange = {start: (1 + i * groupSize), end: (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1))};
-                let groupViewElement = new TestViewElement("test group", TreeItemType.TestGroup, i < element.getChildren().length ? element.getChildren()[i].ExpandedState : TreeItemCollapsibleState.Collapsed, testIdRange.start + "-" + testIdRange.end, element);
-                let testCasesForGroup = this._ctView.getTestResults(testIdRange, element.label);
-                groupViewElement.iconPath = !testCasesForGroup || testCasesForGroup.some(tc => !tc.verdict) ? null : testCasesForGroup.some(tc => tc.verdict == VerdictKind.Passed) ? this._icons.getIcon("passed.svg") : this._icons.getIcon("failed.svg");
-                testGroups.push(groupViewElement);
+                let results = this._ctView.getTestResults(testIdRange, element.label);
+                let verdict = !results || results.every(tc => tc.verdict == null) ? null : results.some(tc => tc.verdict == VerdictKind.Passed) ? VerdictKind.Passed : VerdictKind.Failed;
+
+                testGroups.push(new TestViewElement(
+                    "test group", 
+                    TreeItemType.TestGroup, 
+                    i < element.getChildren().length ? element.getChildren()[i].expandedState : TreeItemCollapsibleState.Collapsed, 
+                    testIdRange.start + "-" + testIdRange.end, 
+                    element, 
+                    this.verdictToIconPath(verdict),
+                    verdict
+                ));
+                
                 numberOfTests -= groupSize;
             }
             element.setChildren(testGroups);
 
-            return Promise.resolve(element.getChildren());
+            return Promise.resolve(this.applyFilters(element.getChildren()));
         }
 
-        if(element.type == TreeItemType.TestGroup)
-        {
-            // Generate test views for the group
+        if(element.type == TreeItemType.TestGroup){
+            // Build view from test group
             let strRange : string[] = element.description.toString().split('-');
             let testIdRange: NumberRange = {start: parseInt(strRange[0]), end: parseInt(strRange[1])};
-            let testsViewElements = this._ctView.getTestResults(testIdRange, element.getParent().label).map(testCase => new TestViewElement(testCase.id+"", TreeItemType.Test, TreeItemCollapsibleState.None, testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", element));
-            
-            if(this._filter)           
-                testsViewElements = testsViewElements.filter(twe => twe.description != VerdictKind[VerdictKind.Passed] && twe.description != VerdictKind[VerdictKind.Inconclusive]);
 
-            testsViewElements.forEach(twe => {
-                if(twe.description == VerdictKind[VerdictKind.Passed])
-                    twe.iconPath = this._icons.getIcon("passed.svg"); 
-                else if(twe.description == VerdictKind[VerdictKind.Failed])
-                    twe.iconPath = this._icons.getIcon("failed.svg"); 
-                else if(twe.description == VerdictKind[VerdictKind.Inconclusive])
-                    twe.iconPath = this._icons.getIcon("inconclusive.svg");
-                else if(twe.description == VerdictKind[VerdictKind.Filtered])
-                    twe.iconPath = this._icons.getIcon("filtered.svg");
-            });
-            return Promise.resolve(testsViewElements);
+            // Generate all test view elements for the test group
+            let testsViewElements = this._ctView.getTestResults(testIdRange, element.getParent().label).map(testCase => 
+                new TestViewElement(
+                    testCase.id+"", 
+                    TreeItemType.Test, 
+                    TreeItemCollapsibleState.None, 
+                    testCase.verdict ? VerdictKind[testCase.verdict] : "n/a", 
+                    element, 
+                    this.verdictToIconPath(testCase.verdict),
+                    testCase.verdict
+                )
+            );      
+               
+            return Promise.resolve(this.applyFilters(testsViewElements));
         }
 
         // Handle default
         return Promise.resolve([])
+    }
+
+    private verdictToIconPath(verdict: VerdictKind)
+    {
+        return verdict == VerdictKind.Passed ? this._icons.getIcon("passed.svg") : 
+            verdict == VerdictKind.Failed ? this._icons.getIcon("failed.svg") : 
+                verdict == VerdictKind.Inconclusive ? this._icons.getIcon("inconclusive.svg") : 
+                    verdict == VerdictKind.Filtered ? this._icons.getIcon("filtered.svg") : 
+                        null;
+    }
+
+    private applyFilters(viewElement: TestViewElement[]): TestViewElement[]
+    {         
+        return this._filter ? viewElement.filter(twe => twe.verdict != VerdictKind.Passed && twe.verdict != VerdictKind.Inconclusive): viewElement;
     }
 }
 
@@ -146,22 +170,23 @@ export enum TreeItemType
 }
 
 export class TestViewElement extends TreeItem {
-    // For checking if a testgroup is filtered
     private _children: TestViewElement[] = [];
-    public ExpandedState: TreeItemCollapsibleState;
+    public expandedState: TreeItemCollapsibleState;
     constructor(
     public readonly label: string,
     public readonly type: TreeItemType,
     public readonly collapsibleState: TreeItemCollapsibleState,
     public description = "",
-    private readonly _parent: TestViewElement = undefined) {
+    private readonly _parent: TestViewElement = undefined,
+    public iconPath = null,
+    public verdict: VerdictKind = null) {
         super(label, collapsibleState);
         super.contextValue = type;
         if(description === "")
             super.description = false;
         else
             super.description = description;
-        this.ExpandedState = collapsibleState;
+        this.expandedState = collapsibleState;
     }
 
     public getParent(): TestViewElement {
