@@ -414,7 +414,7 @@ export class CTTreeView {
                     // Resolve action
                     resolve();
 
-                } catch(error) {
+                } catch(error) { //TODO do we want a canceled "error" to be shown to the user?
                     this._executeCanceled = true;
                     reject(error)
                 } finally {
