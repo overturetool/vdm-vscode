@@ -141,7 +141,6 @@ export class CTTreeView {
             traceWithFinishedTestExecution.trace.verdict = VerdictKind.Passed;
         
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
-        //this._testProvider.rebuildViewFromElement(this._testProvider.getRoots().find(symbolElement => symbolElement.getChildren().some(c => c.label == traceWithFinishedTestExecution.trace.name)));
         this._testProvider.rebuildViewFromElement();
     }
 
