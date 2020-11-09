@@ -38,8 +38,10 @@ values
   a4:Alarm = mk_Alarm("Biological attack",<Bio>);
   alarms: set of Alarm = {a1,a2,a3,a4};
   
-  plant1 : Plant = mk_Plant(s,{a1,a2,a3})
+  plant1 : Plant = mk_Plant(s,{a1,a2,a3});
   
+  vals : seq of nat = [];
+
 operations
 
 Run: Expert ==> set of Period
@@ -53,8 +55,10 @@ op1(x) ==
 
 op2: nat -> nat
 op2(x) ==
-  x
-  pre x < 80;
+  if (x > 80) then 
+    vals(1)
+  else
+    x
 
 
 traces 
