@@ -30,9 +30,9 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public toggleFilteringForTestGroups(): any
+    public filterTree(enable: boolean): any
     {
-        this._filter = this._filter ? false : true;
+        this._filter = enable;
         this._roots.forEach(symbol => symbol.getChildren().forEach(trace => trace.getChildren().forEach(group => this.rebuildViewElementIfExpanded(group))));
     }
 
