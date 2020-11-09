@@ -135,13 +135,12 @@ export class CTTreeView {
         let traceWithFinishedTestExecution: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == this._currentlyExecutingTraceViewItem.label);
         if(traceWithFinishedTestExecution.testCases.some(tc => !tc.verdict))
             traceWithFinishedTestExecution.trace.verdict = null;
-        else if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict != VerdictKind.Failed))
-            traceWithFinishedTestExecution.trace.verdict = VerdictKind.Passed;
-        else
+        else if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
             traceWithFinishedTestExecution.trace.verdict = VerdictKind.Failed;
+        else
+            traceWithFinishedTestExecution.trace.verdict = VerdictKind.Passed;
         
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
-        //this._testProvider.rebuildViewFromElement(this._testProvider.getRoots().find(symbolElement => symbolElement.getChildren().some(c => c.label == traceWithFinishedTestExecution.trace.name)));
         this._testProvider.rebuildViewFromElement();
     }
 

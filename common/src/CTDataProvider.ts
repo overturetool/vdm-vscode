@@ -102,7 +102,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             {
                 let testIdRange: NumberRange = {start: (1 + i * groupSize), end: (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1))};
                 let results = this._ctView.getTestResults(testIdRange, element.label);
-                let verdict = !results || results.some(tc => tc.verdict == null) ? null : results.some(tc => tc.verdict == VerdictKind.Passed) ? VerdictKind.Passed : VerdictKind.Failed;
+                let verdict = !results || results.some(tc => tc.verdict == null) ? null : results.some(tc => tc.verdict == VerdictKind.Failed) ? VerdictKind.Failed : VerdictKind.Passed;
 
                 testGroups.push(new TestViewElement(
                     "test group", 
@@ -155,9 +155,9 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                         null;
     }
 
-    private applyFilters(viewElement: TestViewElement[]): TestViewElement[]
+    private applyFilters(viewElements: TestViewElement[]): TestViewElement[]
     {         
-        return this._filter ? viewElement.filter(twe => twe.verdict != VerdictKind.Passed && twe.verdict != VerdictKind.Inconclusive): viewElement;
+        return this._filter ? viewElements.filter(viewElement => viewElement.verdict != VerdictKind.Passed && viewElement.verdict != VerdictKind.Inconclusive && viewElement.verdict != VerdictKind.Filtered): viewElements;
     }
 }
 

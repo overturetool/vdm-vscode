@@ -21,7 +21,7 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
         let fullElementPath =  path.resolve(resourcesPath, element.name);
         if(fs.lstatSync(fullElementPath).isDirectory())
             fullElementPath = recursivePathSearch(fullElementPath, searcher);
-        else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1) //TODO shouldn't this be /lsp*.jar/ ?
+        else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1)
             return fullElementPath;
     }
     return null;
