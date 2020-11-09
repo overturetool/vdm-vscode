@@ -25,9 +25,14 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public toggleFilteringForTest(): any
+    public rebuildViewElementIfExpanded(viewElement: TestViewElement){
+        if(viewElement.expandedState == TreeItemCollapsibleState.Expanded)
+            this._onDidChangeTreeData.fire(viewElement);
+    }
+
+    public filterTree(enable: boolean): any
     {
-        this._filter = this._filter ? false : true;
+        this._filter = enable;
         this._roots.forEach(symbol => symbol.getChildren().forEach(trace =>  this.rebuildViewFromElement(trace)));
     }
 
@@ -113,7 +118,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                     this.verdictToIconPath(verdict),
                     verdict
                 ));
-                
+
                 numberOfTests -= groupSize;
             }
             element.setChildren(testGroups);

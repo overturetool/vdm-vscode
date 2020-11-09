@@ -188,6 +188,7 @@ export class CTTreeView {
             vscode.commands.executeCommand( 'setContext', 'vdm-ct-show-set-execute-filter-button', true );
         }
         this.showCancelButton(false);
+        this.showTreeFilterButton(true);
 
         ///// Command registration //////
         if(canFilter) {
@@ -197,7 +198,8 @@ export class CTTreeView {
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
         this.registerCommand("extension.ctExecute",             (e) => this.ctExecute(e));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
-        this.registerCommand("extension.toggleFilteringForTestGroups",      ()  => this._testProvider.toggleFilteringForTest());
+        this.registerCommand("extension.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
+        this.registerCommand("extension.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
         this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
         this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
     }
@@ -208,24 +210,10 @@ export class CTTreeView {
         if(!show)
             this._testProvider.rebuildViewFromElement();
     }
-    
-    async ctGoToTrace(viewElement:TestViewElement) {
 
-        if(viewElement.type != TreeItemType.Trace)
-            return;
-
-        let trace: CTTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).trace;
-        if(!trace)
-            return;
-
-        // Find path of trace
-        let path = Uri.parse(trace.location.uri.toString()).path;
-
-        // Open the specification file containing the trace
-        let doc = await workspace.openTextDocument(path);
-        
-        // Show the file
-        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
+    showTreeFilterButton(show: boolean) {
+        vscode.commands.executeCommand('setContext', 'vdm-ct-show-enable-filter-button', show);
+        vscode.commands.executeCommand('setContext', 'vdm-ct-show-disable-filter-button', !show);
     }
 
     async ctFilteredExecute(viewElement: TestViewElement) {
@@ -327,10 +315,37 @@ export class CTTreeView {
         });
     }
 
+    async ctTreeFilter(enable:boolean){
+        // Change button 
+        this.showTreeFilterButton(!enable)
+
+        // Set in testProvider
+        this._testProvider.filterTree(enable)
+    }
+    
     ctSendToInterpreter(e: TestViewElement): void {
         let trace = e.getParent().getParent().label;
         let test = Number(e.label);
         this._ctFeature.sendToInterpreter(trace, test);
+    }
+
+    async ctGoToTrace(viewElement:TestViewElement) {
+
+        if(viewElement.type != TreeItemType.Trace)
+            return;
+
+        let trace: CTTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).trace;
+        if(!trace)
+            return;
+
+        // Find path of trace
+        let path = Uri.parse(trace.location.uri.toString()).path;
+
+        // Open the specification file containing the trace
+        let doc = await workspace.openTextDocument(path);
+        
+        // Show the file
+        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
     }
 
     onDidExpandElement(viewElement : TestViewElement){

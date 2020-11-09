@@ -70,10 +70,16 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "extension.toggleFilteringForTestGroups",
-        "title": "Toggle filtering of passed and inconclusive tests",
+        "command": "extension.ctEnableTreeFilter",
+        "title": "Enable filtering of passed and inconclusive tests",
         "category": "VDM",
         "icon": "$(filter)"
+      },
+      {
+        "command": "extension.ctDisableTreeFilter",
+        "title": "Disable filtering of passed and inconclusive tests",
+        "category": "VDM",
+        "icon": "$(circle-slash)"
       },
       {
         "command": "extension.ctSendToInterpreter",
@@ -85,13 +91,13 @@
         "command": "extension.ctCancel",
         "title": "Cancel Combinatorial Test Request",
         "category": "VDM",
-        "icon": "$(stop)"
+        "icon": "$(debug-stop)"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "vdmsl-combinatorialTesting",
+          "id": "combinatorialTesting",
           "title": "Combinatorial Testing",
           "icon": "media/ctView.svg",
           "when": "vdmsl-ct-show-view == true"
@@ -99,7 +105,7 @@
       ]
     },
     "views": {
-      "vdmsl-combinatorialTesting": [
+      "combinatorialTesting": [
         {
           "id": "vdmsl-ctView",
           "name": "Tests",
@@ -136,8 +142,13 @@
           "group": "navigation@2"
         },
         {
-          "command": "extension.toggleFilteringForTestGroups",
-          "when": "view =~ /vdmsl-ctView/",
+          "command": "extension.ctEnableTreeFilter",
+          "when": "view =~ /vdmsl-ctView/ && vdm-ct-show-enable-filter-button == true",
+          "group": "navigation@3"
+        },
+        {
+          "command": "extension.ctDisableTreeFilter",
+          "when": "view =~ /vdmsl-ctView/ && vdm-ct-show-disable-filter-button == true",
           "group": "navigation@3"
         },
         {
@@ -237,7 +248,11 @@
           "when": "false"
         },
         {
-          "command": "extension.toggleFilteringForTestGroups",
+          "command": "extension.ctEnableTreeFilter",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctDisableTreeFilter",
           "when": "false"
         },
         {
