@@ -61,7 +61,7 @@
         "command": "extension.ctFilteredExecute",
         "title": "Filtered Evaluation",
         "category": "VDM",
-        "icon": "$(microscope)"
+        "icon": "$(filter)"
       },
       {
         "command": "extension.ctGenerate",
@@ -71,13 +71,13 @@
       },
       {
         "command": "extension.ctEnableTreeFilter",
-        "title": "Enable filtering of passed and inconclusive tests",
+        "title": "Show only failed tests",
         "category": "VDM",
-        "icon": "$(filter)"
+        "icon": "$(tree-filter-on-type-on)"
       },
       {
         "command": "extension.ctDisableTreeFilter",
-        "title": "Disable filtering of passed and inconclusive tests",
+        "title": "Disable filtering of tests",
         "category": "VDM",
         "icon": "$(circle-slash)"
       },

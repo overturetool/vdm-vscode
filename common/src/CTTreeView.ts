@@ -127,7 +127,7 @@ export class CTTreeView {
     }
 
     private testExecutionFinished()
-    {    
+    {     
         this._testCaseBatchRange.end = 0;
         this._testCaseBatchRange.start = 0;
 
