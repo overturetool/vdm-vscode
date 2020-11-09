@@ -6,7 +6,6 @@
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
 import * as util from "./Util"
 import * as path from 'path';
-import * as fs from 'fs'
 import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
@@ -27,8 +26,8 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
     let clientLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
     let serverLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
     let serverMainClass = 'lsp.LSPServerStdio'
-	let vdmjPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i); // TODO shouldn't it be /vdmj*.jar/ ?
-    let lspServerPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i); // TODO shouldn't it be /lsp*.jar/ ?
+	let vdmjPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
+    let lspServerPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
     if(!vdmjPath || !lspServerPath)
         return;
 
