@@ -21,6 +21,7 @@ export class CTTreeView {
     private _currentlyExecutingTraceViewItem: TestViewElement;
     private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
     private _batchSizeModifier: number = 1;
+    private _executeCanceled: boolean = false;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -253,9 +254,12 @@ export class CTTreeView {
     async ctFullExecute() {
         // Run Execute on all traces of all symbols
         for (const symbol of this._testProvider.getRoots()) {
-            for (const trace of symbol.getChildren()) {
+            for (const trace of await this._testProvider.getChildren(symbol)) {
                 await this.ctGenerate(trace);
-                await this.execute(trace, false).catch(() => {return;});
+                await this.execute(trace, false);
+
+                if (this._executeCanceled)
+                    return;
             }
         }    
     }
@@ -367,6 +371,9 @@ export class CTTreeView {
         if (viewElement.type != TreeItemType.Trace && viewElement.type != TreeItemType.TestGroup)
             throw new Error("CT Execute called on invalid element")
 
+        // Reset canceled
+        this._executeCanceled = false;
+
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Executing test cases');
 
@@ -414,6 +421,7 @@ export class CTTreeView {
                     resolve();
 
                 } catch(error) {
+                    this._executeCanceled = true;
                     reject(error)
                 } finally {
                     // Remove status bar message
