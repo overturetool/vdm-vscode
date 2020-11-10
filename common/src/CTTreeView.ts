@@ -9,6 +9,7 @@ import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
 import {extensionLanguage} from './extension'
+import { ErrorCodes } from 'vscode-languageclient';
 
 export class CTTreeView {
     private _testView: vscode.TreeView<TestViewElement>;
@@ -127,7 +128,7 @@ export class CTTreeView {
     }
 
     private testExecutionFinished()
-    {    
+    {     
         this._testCaseBatchRange.end = 0;
         this._testCaseBatchRange.start = 0;
 
@@ -322,7 +323,7 @@ export class CTTreeView {
         this._testProvider.filterTree(enable)
     }
     
-    private ctSendToInterpreter(e: TestViewElement): void { //TODO should this be async?
+    private async ctSendToInterpreter(e: TestViewElement) {
         let trace = e.getParent().getParent().label;
         let test = Number(e.label);
         this._ctFeature.sendToInterpreter(trace, test);
@@ -417,13 +418,16 @@ export class CTTreeView {
                         // Request execute with range
                         await this._ctFeature.requestExecute(viewElement.getParent().label, filter, range)
                     }
-
-                    // Resolve action
+                    // Resole the request
                     resolve();
 
-                } catch(error) { //TODO do we want a canceled "error" to be shown to the user?
-                    this._executeCanceled = true;
-                    reject(error)
+                } catch(error) {
+                    if (error?.code == ErrorCodes.RequestCancelled){
+                        this._executeCanceled = true;
+                        resolve();
+                    }
+                    else
+                        reject(error)
                 } finally {
                     // Handle that execution of tests has finished
                     this.testExecutionFinished();
