@@ -61,7 +61,11 @@
         "command": "extension.ctFilteredExecute",
         "title": "Filtered Evaluation",
         "category": "VDM",
-        "icon": "$(filter)"
+        "icon":
+        {
+          "light": "/resources/icons/light/runF iltered.svg", 
+          "dark":  "/resources/icons/dark/runFiltered.svg"
+        }
       },
       {
         "command": "extension.ctGenerate",
@@ -73,13 +77,17 @@
         "command": "extension.ctEnableTreeFilter",
         "title": "Show only failed tests",
         "category": "VDM",
-        "icon": "$(tree-filter-on-type-on)"
+        "icon": "$(filter)"
       },
       {
         "command": "extension.ctDisableTreeFilter",
         "title": "Disable filtering of tests",
         "category": "VDM",
-        "icon": "$(circle-slash)"
+        "icon": 
+        {
+          "light": "/resources/icons/light/disableFilter.svg", 
+          "dark":  "/resources/icons/dark/disableFilter.svg"
+        }
       },
       {
         "command": "extension.ctSendToInterpreter",
