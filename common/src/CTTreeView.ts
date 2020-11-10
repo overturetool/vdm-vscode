@@ -220,14 +220,14 @@ export class CTTreeView {
 
     private async ctRebuildOutline() {
         if(this._testProvider.getRoots().length > 0)
-            this._combinatorialTests = this.filterSymbols((await this._ctFeature.requestTraces()), this._combinatorialTests);
+            this._combinatorialTests = this.matchLocalSymbolsToServerSymbols((await this._ctFeature.requestTraces()), this._combinatorialTests);
             
         else
         {
             await Promise.all([this.loadCTs().catch(() => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
                 {
                     // Filter loaded data so it matches servers
-                    this._combinatorialTests = this.filterSymbols(res[1], res[0]);
+                    this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
                 });
         }          
 
@@ -235,20 +235,28 @@ export class CTTreeView {
         this._testProvider.rebuildViewFromElement();
     }
 
-    private filterSymbols(trueSymbols:CTSymbol[], symbolsToFilter:completeCT[]): completeCT[] {
-        return trueSymbols.map(serverSymbol => {
-            let localCT = symbolsToFilter.find(ct => ct.symbolName == serverSymbol.name)
-            if(!localCT)
-                return {symbolName: serverSymbol.name, traces: serverSymbol.traces.map(trace => {return {trace: trace, testCases: []}})};
+    private matchLocalSymbolsToServerSymbols(serverSymbols:CTSymbol[], localSymbols:completeCT[]): completeCT[] {
+        return serverSymbols.map(serverSymbol => {
+            let localSymbol = localSymbols.find(ct => ct.symbolName == serverSymbol.name);
             
-            localCT.traces = serverSymbol.traces.map(serverTrace => {
-                let traceIndex = localCT.traces.findIndex(t => t.trace.name == serverTrace.name);
-                if(traceIndex != -1)
-                    return localCT.traces[traceIndex];
-                else
-                    return {trace: serverTrace, testCases: []}
-            });               
-            return localCT;
+            // Map server CTSymbol to completeCT type and return
+            if(!localSymbol)
+                return {symbolName: serverSymbol.name, traces: serverSymbol.traces.map(trace => {return {trace: trace, testCases: []}})};
+
+            // Update all traces with information from server
+            localSymbol.traces = serverSymbol.traces.map(serverTrace => {
+                let localTrace = localSymbol.traces.find(t => t.trace.name == serverTrace.name);
+                // Map CTTrace to traceWithTestResults type and return
+                if(!localTrace)
+                    return {trace: serverTrace, testCases: []};
+                
+                // Update local trace location as it can be changed
+                localTrace.trace.location = serverTrace.location
+
+                return localTrace;
+            });
+
+            return localSymbol;
         });
     }
 
