@@ -135,13 +135,14 @@ export class CTTreeView {
         // Set the trace verdicts
         let traceWithFinishedTestExecution: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == this._currentlyExecutingTraceViewItem.label);
         
-        if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
-            traceWithFinishedTestExecution.trace.verdict = VerdictKind.Failed;
-        else if(traceWithFinishedTestExecution.testCases.every(tc => tc.verdict != null))
-            traceWithFinishedTestExecution.trace.verdict = VerdictKind.Passed;
-        else
-            traceWithFinishedTestExecution.trace.verdict = null;
-        
+        if (traceWithFinishedTestExecution != undefined) {
+            if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
+                traceWithFinishedTestExecution.trace.verdict = VerdictKind.Failed;
+            else if(traceWithFinishedTestExecution.testCases.every(tc => tc.verdict != null))
+                traceWithFinishedTestExecution.trace.verdict = VerdictKind.Passed;
+            else
+                traceWithFinishedTestExecution.trace.verdict = null;
+        }
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
         this._testProvider.rebuildViewFromElement();
     }
@@ -196,11 +197,7 @@ export class CTTreeView {
         }
         this.registerCommand("extension.ctRebuildOutline",      ()  => this.ctRebuildOutline());
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
-        this.registerCommand("extension.ctExecute",             (e) => {try{this.execute(e, false)}
-        catch(err){ 
-
-        } 
-    });
+        this.registerCommand("extension.ctExecute",             (e) => this.execute(e, false));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
         this.registerCommand("extension.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
@@ -283,34 +280,43 @@ export class CTTreeView {
             });
 
             // Do the generate request
-            return new Promise(async resolve => {
-                // Request generate from server
-                const numberOfTests = await this._ctFeature.requestGenerate(viewElement.label);
+            return new Promise(async (resolve) => {
+                try {
+                    // Request generate from server
+                    const numberOfTests = await this._ctFeature.requestGenerate(viewElement.label);
                 
-                // Check if number of tests from server matches local number of tests
-                let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
-                traceWithTestResults.trace.verdict = null;
-                if(traceWithTestResults.testCases.length != numberOfTests)
-                {
-                    traceWithTestResults.testCases = [];
-                    // Instatiate testcases for traces.
-                    for(let i = 1; i <= numberOfTests; i++)
-                        traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
-                }
-                else
-                    // reset verdict and results on each test.
-                    [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).testCases.forEach(testCase => {
-                        testCase.verdict = null;
-                        testCase.sequence = [];
-                    });            
-        
-                this._testProvider.rebuildViewFromElement(viewElement.getParent()); 
-                
-                // Remove status bar message
-                statusBarMessage.dispose();
+                    // Check if number of tests from server matches local number of tests
+                    let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
+                    traceWithTestResults.trace.verdict = null;
+                    if(traceWithTestResults.testCases.length != numberOfTests)
+                    {
+                        traceWithTestResults.testCases = [];
+                        // Instatiate testcases for traces.
+                        for(let i = 1; i <= numberOfTests; i++)
+                            traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
+                    }
+                    else
+                        // reset verdict and results on each test.
+                        [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).testCases.forEach(testCase => {
+                            testCase.verdict = null;
+                            testCase.sequence = [];
+                        });            
+            
+                    this._testProvider.rebuildViewFromElement(viewElement.getParent()); 
+                } catch(error) {
+                    if (error?.code == ErrorCodes.ContentModified){
+                        // Symbol out-of-sync -> rebuild
+                        this.ctRebuildOutline();
+                    }
+                } finally {
+                    // Remove status bar message
+                    statusBarMessage.dispose();
 
-                // Resolve action
-                resolve();
+                    // Resolve action
+                    resolve();
+                }
+
+                
             });
         });
     }
@@ -424,6 +430,17 @@ export class CTTreeView {
                 } catch(error) {
                     if (error?.code == ErrorCodes.RequestCancelled){
                         this._executeCanceled = true;
+                        resolve();
+                    }
+                    else if (error?.code == ErrorCodes.ContentModified){
+                        if (viewElement.type == TreeItemType.TestGroup){
+                            // Possibly just Trace out-of-sync -> try to generate it again
+                            this.ctGenerate(viewElement.getParent());
+                        }
+                        else {
+                            // Symbol out-of-sync
+                            this.ctRebuildOutline();
+                        }
                         resolve();
                     }
                     else
