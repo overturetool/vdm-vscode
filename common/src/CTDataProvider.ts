@@ -8,9 +8,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     private _onDidChangeTreeData: EventEmitter<TestViewElement | undefined> = new EventEmitter<TestViewElement | undefined>();
     onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
 
-    private _minGroupSize: number = 100;
-    private _maxGroupSize: number = 1000;
-    private _groupSizePercentage = 0.1;
+    public readonly groupSize: number = 300;
     private _roots: TestViewElement[];
     private _filter: boolean = false;
     private _icons: Icons;
@@ -21,7 +19,16 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     }
 
     public rebuildViewFromElement(viewElement?: TestViewElement)
-    {
+    {   
+        // Make sure that the viewElement reference matches the element referenched by the framework
+        if(!viewElement)
+            viewElement = null;
+        else if(viewElement.type == TreeItemType.CTSymbol)
+            viewElement = this._roots.find(symbol => symbol.label == viewElement.label);
+        else if(viewElement?.type == TreeItemType.Trace)
+            viewElement = [].concat(...this._roots.map(symbol => symbol.getChildren()))?.find(trace => trace.label == viewElement.label);
+        else if(viewElement.type == TreeItemType.TestGroup)
+            viewElement = [].concat(...this._roots.map(symbol => symbol.getChildren()))?.find(trace => trace.label == viewElement.getParent().label)?.getChildren()?.find(group => group.label == viewElement.label);
         this._onDidChangeTreeData.fire(viewElement);
     }
 
@@ -92,15 +99,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             let numberOfTests: number = this._ctView.getNumberOftests(element.label);
             let testGroups: TestViewElement[] = [];
 
-            // Calculate test group sizing
-            let percentageSize = numberOfTests * this._groupSizePercentage;
-            let groupSize = this._minGroupSize > percentageSize ? this._minGroupSize : percentageSize > this._maxGroupSize ? this._maxGroupSize: percentageSize;
-            let groups = Math.ceil(numberOfTests/groupSize);
+            let groups = Math.ceil(numberOfTests/this.groupSize);
 
             // Generate all test group view elements for the trace
             for(let i = 0; i < groups; i++)
             {
-                let testIdRange: NumberRange = {start: (1 + i * groupSize), end: (groupSize >= numberOfTests ? numberOfTests + groupSize * i : groupSize * (i+1))};
+                let testIdRange: NumberRange = {start: (1 + i * this.groupSize), end: (this.groupSize >= numberOfTests ? numberOfTests + this.groupSize * i : this.groupSize * (i+1))};
                 let results = this._ctView.getTestResults(testIdRange, element.label);
                 let verdict = !results || results.some(tc => tc.verdict == null) ? null : results.some(tc => tc.verdict == VerdictKind.Failed) ? VerdictKind.Failed : VerdictKind.Passed;
 
@@ -114,7 +118,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                     verdict
                 ));
 
-                numberOfTests -= groupSize;
+                numberOfTests -= this.groupSize;
             }
             element.setChildren(testGroups);
 
@@ -138,8 +142,8 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                     testCase.verdict
                 )
             );      
-               
-            return Promise.resolve(this.applyFilters(testsViewElements));
+            element.setChildren(testsViewElements);   
+            return Promise.resolve(this.applyFilters(element.getChildren()));
         }
 
         // Handle default

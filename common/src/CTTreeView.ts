@@ -9,7 +9,7 @@ import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
 import {extensionLanguage} from './extension'
-import { ErrorCodes } from 'vscode-languageclient';
+import { ErrorCodes, Location } from 'vscode-languageclient';
 
 export class CTTreeView {
     private _testView: vscode.TreeView<TestViewElement>;
@@ -22,6 +22,9 @@ export class CTTreeView {
     private _currentlyExecutingTraceViewItem: TestViewElement;
     private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
     private _executeCanceled: boolean = false;
+    private _numberOfUpdatedTests: number = 0;
+    private _executingTests: boolean = false;
+    public batchSizeModifier = 4;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -67,17 +70,17 @@ export class CTTreeView {
         return this._combinatorialTests.map(ct => ct.symbolName);
     }
 
-    public getTraces(symbolName: string): CTTrace[]{
-        return this._combinatorialTests.find(ct => ct.symbolName == symbolName).traces.map(twr => twr.trace);
+    public getTraces(symbolName: string): traceWithTestResults[]{
+        return this._combinatorialTests.find(ct => ct.symbolName == symbolName).traces;
     }
 
     public getNumberOftests(traceName: string): number {
-        return [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName).testCases.length;
+        return [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceName).testCases.length;
     }
 
     public getTestResults(testIdRange: NumberRange, traceName: string): CTTestCase[]{
         let traces = [].concat(...this._combinatorialTests.map(symbol => symbol.traces));
-        let traceWithResult = traces.find(twr => twr.trace.name == traceName);
+        let traceWithResult = traces.find(trace => trace.name == traceName);
         return traceWithResult.testCases.slice(testIdRange.start-1, testIdRange.end);
     }
 
@@ -128,32 +131,50 @@ export class CTTreeView {
     }
 
     private testExecutionFinished()
-    {     
+    {   
+        if(!this._executingTests)
+            return;
+        this._executingTests = false;  
         this._testCaseBatchRange.end = 0;
         this._testCaseBatchRange.start = 0;
 
         // Set the trace verdicts
-        let traceWithFinishedTestExecution: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == this._currentlyExecutingTraceViewItem.label);
+        let traceWithFinishedTestExecution: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == this._currentlyExecutingTraceViewItem.label);
         
+        // Remove tests not updated by the server
+        if(!this._executeCanceled && traceWithFinishedTestExecution.testCases.length > this._numberOfUpdatedTests)
+            traceWithFinishedTestExecution.testCases.splice(this._numberOfUpdatedTests, traceWithFinishedTestExecution.testCases.length - this._numberOfUpdatedTests)
+
+        this._numberOfUpdatedTests = 0;
+
+        // Set verdict for trace
         if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
-            traceWithFinishedTestExecution.trace.verdict = VerdictKind.Failed;
+            traceWithFinishedTestExecution.verdict = VerdictKind.Failed;
         else if(traceWithFinishedTestExecution.testCases.every(tc => tc.verdict != null))
-            traceWithFinishedTestExecution.trace.verdict = VerdictKind.Passed;
+            traceWithFinishedTestExecution.verdict = VerdictKind.Passed;
         else
-            traceWithFinishedTestExecution.trace.verdict = null;
+            traceWithFinishedTestExecution.verdict = null;
         
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
         this._testProvider.rebuildViewFromElement();
     }
 
     public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
-        let traceWithResult: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceName);
+        this._numberOfUpdatedTests += testCases.length;
+        let traceWithResult: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
         {
+            // Update existing test case results
             let oldTestCase: CTTestCase = traceWithResult.testCases.find(tc => tc.id == testCases[i].id);
-            oldTestCase.sequence = testCases[i].sequence;
-            oldTestCase.verdict = testCases[i].verdict;
+            if(oldTestCase)
+            {
+                oldTestCase.sequence = testCases[i].sequence;
+                oldTestCase.verdict = testCases[i].verdict;
+            }
+            //Add new test case with results
+            else
+                traceWithResult.testCases.push(testCases[i]);
         }
         // Handle if user has executed all test groups manually.
         if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id){
@@ -164,14 +185,8 @@ export class CTTreeView {
         // Update batch size
         this._testCaseBatchRange.end = testCases[testCases.length-1].id;
 
-        // Generate groups for the trace if they are not generated yet and reference the first group to get its group size.
-        let group = this._currentlyExecutingTraceViewItem.getChildren()[0];
-        if(!group)
-            group = (await this._testProvider.getChildren(this._currentlyExecutingTraceViewItem))[0];
-        let groupSizeRange: number[] = group.description.toString().split('-').map(str => parseInt(str));
-
         // Return if batch size isn't big enough to warrent a view update.
-        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < (groupSizeRange[1] - groupSizeRange[0]))
+        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < this._testProvider.groupSize * this.batchSizeModifier)
             return;
 
         // Set the new start test number of the _testCaseBatchRange
@@ -241,17 +256,17 @@ export class CTTreeView {
             
             // Map server CTSymbol to completeCT type and return
             if(!localSymbol)
-                return {symbolName: serverSymbol.name, traces: serverSymbol.traces.map(trace => {return {trace: trace, testCases: []}})};
+                return {symbolName: serverSymbol.name, traces: serverSymbol.traces.map(trace => {return {name: trace.name, location: trace.location, verdict: trace.verdict, testCases: []}})};
 
             // Update all traces with information from server
             localSymbol.traces = serverSymbol.traces.map(serverTrace => {
-                let localTrace = localSymbol.traces.find(t => t.trace.name == serverTrace.name);
+                let localTrace = localSymbol.traces.find(t => t.name == serverTrace.name);
                 // Map CTTrace to traceWithTestResults type and return
                 if(!localTrace)
-                    return {trace: serverTrace, testCases: []};
+                return {name: serverTrace.name, location: serverTrace.location, verdict: serverTrace.verdict, testCases: []};
                 
                 // Update local trace location as it can be changed
-                localTrace.trace.location = serverTrace.location
+                localTrace.location = serverTrace.location
 
                 return localTrace;
             });
@@ -276,7 +291,7 @@ export class CTTreeView {
         }    
     }
 
-    private async ctGenerate(viewElement: TestViewElement) {
+    private async ctGenerate(traceViewElement: TestViewElement) {
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
 
@@ -290,29 +305,10 @@ export class CTTreeView {
                 console.log("User canceled the test generation");
             });
 
-            // Do the generate request
+            // Make the generate request
             return new Promise(async resolve => {
-                // Request generate from server
-                const numberOfTests = await this._ctFeature.requestGenerate(viewElement.label);
-                
-                // Check if number of tests from server matches local number of tests
-                let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label);
-                traceWithTestResults.trace.verdict = null;
-                if(traceWithTestResults.testCases.length != numberOfTests)
-                {
-                    traceWithTestResults.testCases = [];
-                    // Instatiate testcases for traces.
-                    for(let i = 1; i <= numberOfTests; i++)
-                        traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
-                }
-                else
-                    // reset verdict and results on each test.
-                    [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).testCases.forEach(testCase => {
-                        testCase.verdict = null;
-                        testCase.sequence = [];
-                    });            
-        
-                this._testProvider.rebuildViewFromElement(viewElement.getParent()); 
+
+                await this.generate(traceViewElement);
                 
                 // Remove status bar message
                 statusBarMessage.dispose();
@@ -323,6 +319,31 @@ export class CTTreeView {
         });
     }
 
+    private async generate(traceViewElement: TestViewElement){
+        let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
+        // Request generate from server
+        const numberOfTests = await this._ctFeature.requestGenerate(traceViewElement.label);
+
+        // Check if number of tests from server matches local number of tests
+
+        traceWithTestResults.verdict = null;
+        if(traceWithTestResults.testCases.length != numberOfTests)
+        {
+            traceWithTestResults.testCases = [];
+            // Instatiate testcases for traces.
+            for(let i = 1; i <= numberOfTests; i++)
+                traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
+        }
+        else
+            // reset verdict and results on each test.
+            [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label).testCases.forEach(testCase => {
+                testCase.verdict = null;
+                testCase.sequence = [];
+            });            
+
+        this._testProvider.rebuildViewFromElement(traceViewElement.getParent());
+    }
+
     private async ctTreeFilter(enable:boolean){
         // Change button 
         this.showTreeFilterButton(!enable)
@@ -331,29 +352,29 @@ export class CTTreeView {
         this._testProvider.filterTree(enable)
     }
     
-    private async ctSendToInterpreter(e: TestViewElement) {
-        let trace = e.getParent().getParent().label;
-        let test = Number(e.label);
-        this._ctFeature.sendToInterpreter(trace, test);
+    private async ctSendToInterpreter(testViewElement: TestViewElement) {
+        let traceName = testViewElement.getParent().getParent().label;
+        let testId = Number(testViewElement.label);
+        this._ctFeature.sendToInterpreter(traceName, testId);
     }
 
-    private async ctGoToTrace(viewElement:TestViewElement) {
+    private async ctGoToTrace(traceViewElement:TestViewElement) {
 
-        if(viewElement.type != TreeItemType.Trace)
+        if(traceViewElement.type != TreeItemType.Trace)
             return;
 
-        let trace: CTTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.label).trace;
-        if(!trace)
+        let traceLocation: Location = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label).location;
+        if(!traceLocation)
             return;
 
         // Find path of trace
-        let path = Uri.parse(trace.location.uri.toString()).path;
+        let path = Uri.parse(traceLocation.uri.toString()).path;
 
         // Open the specification file containing the trace
         let doc = await workspace.openTextDocument(path);
         
         // Show the file
-        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(trace.location.range) , viewColumn: 1 })
+        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(traceLocation.range) , viewColumn: 1 })
     }
 
     private onDidExpandElement(viewElement : TestViewElement){
@@ -373,11 +394,11 @@ export class CTTreeView {
     private onDidChangeSelection(viewElement : TestViewElement){
         if(viewElement.type == TreeItemType.Test)
             // Get the trace label name from the view items grandparent and find the corresponding trace in _combinatorialTests and set/show the test sequence in the result view
-            this._resultProvider.setTestSequenceResults([].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == viewElement.getParent().getParent().label).testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);     
+            this._resultProvider.setTestSequenceResults([].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == viewElement.getParent().getParent().label).testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);     
     }
 
-    private async execute(viewElement: TestViewElement, filter: boolean){
-        if (viewElement.type != TreeItemType.Trace && viewElement.type != TreeItemType.TestGroup)
+    private async execute(traceViewElement: TestViewElement, filter: boolean){
+        if (traceViewElement.type != TreeItemType.Trace && traceViewElement.type != TreeItemType.TestGroup)
             throw new Error("CT Execute called on invalid element")
 
         // Reset canceled
@@ -401,30 +422,31 @@ export class CTTreeView {
             return new Promise(async (resolve, reject) => {
                 try {
                     this.showCancelButton(true);
-                    if (viewElement.type == TreeItemType.Trace){
-                        // Reference the trace view item for which tests are being executed
-                        this._currentlyExecutingTraceViewItem = viewElement;
 
-                        // Check if we have generated first
-                        if (viewElement.getChildren().length < 1)
-                            await this.ctGenerate(viewElement);
+                    // Generate to asure trace synchronisation between client and server
+                    await this.generate(traceViewElement);
+                    
+                    this._executingTests = true;
+                    if (traceViewElement.type == TreeItemType.Trace){
+                        // Reference the trace view item for which tests are being executed
+                        this._currentlyExecutingTraceViewItem = traceViewElement;
 
                         // Request execute
-                        await this._ctFeature.requestExecute(viewElement.label, filter, undefined, progress)
+                        await this._ctFeature.requestExecute(traceViewElement.label, filter, undefined, progress)
                     }
-                    else if (viewElement.type == TreeItemType.TestGroup){
+                    else if (traceViewElement.type == TreeItemType.TestGroup){
                         // Reference the trace view item for which tests are being executed
-                        this._currentlyExecutingTraceViewItem = viewElement.getParent();
+                        this._currentlyExecutingTraceViewItem = traceViewElement.getParent();
 
                         // Find range from group description
-                        let strRange : string[] = viewElement.description.toString().split('-');
+                        let strRange : string[] = traceViewElement.description.toString().split('-');
                         let range : NumberRange = {
                             start: Number(strRange[0]),
                             end: Number(strRange[1])
                         };
             
                         // Request execute with range
-                        await this._ctFeature.requestExecute(viewElement.getParent().label, filter, range)
+                        await this._ctFeature.requestExecute(traceViewElement.getParent().label, filter, range)
                     }
                     // Resole the request
                     resolve();
@@ -463,6 +485,20 @@ interface completeCT{
 }
 
 interface traceWithTestResults{
-    trace: CTTrace,
+    /**
+	 * Fully qualified name of the trace.
+	 */
+	name: string;
+	/**
+	 * Location in the source code of the trace.
+	 */
+	location: Location;
+	/**
+	 * An optional combined verdict of all the tests from the trace.
+	 */
+    verdict?: VerdictKind;
+    /**
+     * Test case information.
+     */
     testCases: CTTestCase[]
 }

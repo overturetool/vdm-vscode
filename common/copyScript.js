@@ -20,12 +20,12 @@ recursivePathDeletion(targetResourcePath, patternMatchForItemsToDelete);
 recursivePathDeletion(targetResourcePath, patternMatchForItemsToDelete);
 
 fs.copy(localResourcePath, targetResourcePath, function (err) {
-  if (err) return console.error(err)
+  if (err) return console.error("ERROR copying resources: " + err)
     console.log('successfully copied resources!');
 });
 
 fs.copy(localMediaPath, targetMediaPath, function (err) {
-  if (err) return console.error(err)
+  if (err) return console.error("ERROR copying media: " + err)
     console.log('successfully copied media!');
 });
 
@@ -40,12 +40,12 @@ function recursivePathDeletion(directoryPath, searchers) {
       let fullElementPath =  path.resolve(directoryPath, element.name);
       if(fs.lstatSync(fullElementPath).isDirectory())
         recursivePathDeletion(fullElementPath, searchers);
+      
       else if(searchers.some(searcher => fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1))
       {
         fs.unlinkSync(fullElementPath);
-        console.log('REMOVED: ' + element.name + " from " + directoryPath);
+        console.log('removed: ' + element.name + " from " + directoryPath);
       }
-
   }
   return;
 }
