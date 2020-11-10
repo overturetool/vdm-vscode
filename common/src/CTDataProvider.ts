@@ -6,7 +6,10 @@ import { Icons } from './Icons'
 export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
     private _onDidChangeTreeData: EventEmitter<TestViewElement | undefined> = new EventEmitter<TestViewElement | undefined>();
-    onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
+    public onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
+
+    private _onTreeUpdated: EventEmitter<undefined> = new EventEmitter<undefined>();
+    public onTreeUpdated: Event<undefined> = this._onTreeUpdated.event;
 
     public readonly groupSize: number = 300;
     private _roots: TestViewElement[];
@@ -20,15 +23,6 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
 
     public rebuildViewFromElement(viewElement?: TestViewElement)
     {   
-        // Make sure that the viewElement reference matches the element referenched by the framework
-        if(!viewElement)
-            viewElement = null;
-        else if(viewElement.type == TreeItemType.CTSymbol)
-            viewElement = this._roots.find(symbol => symbol.label == viewElement.label);
-        else if(viewElement?.type == TreeItemType.Trace)
-            viewElement = [].concat(...this._roots.map(symbol => symbol.getChildren()))?.find(trace => trace.label == viewElement.label);
-        else if(viewElement.type == TreeItemType.TestGroup)
-            viewElement = [].concat(...this._roots.map(symbol => symbol.getChildren()))?.find(trace => trace.label == viewElement.getParent().label)?.getChildren()?.find(group => group.label == viewElement.label);
         this._onDidChangeTreeData.fire(viewElement);
     }
 

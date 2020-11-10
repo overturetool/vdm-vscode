@@ -4,7 +4,7 @@ import * as Util from "./Util"
 import { commands, ExtensionContext, ProgressLocation, Uri, window, window as Window, workspace } from "vscode";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
-import { CTTestCase, CTTrace, CTSymbol, NumberRange, VerdictKind} from "./protocol.lspx";
+import { CTTestCase, CTSymbol, NumberRange, VerdictKind} from "./protocol.lspx";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
@@ -19,12 +19,12 @@ export class CTTreeView {
     private readonly _savePath: Uri;
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
-    private _currentlyExecutingTraceViewItem: TestViewElement;
     private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
     private _executeCanceled: boolean = false;
     private _numberOfUpdatedTests: number = 0;
     private _executingTests: boolean = false;
     public batchSizeModifier = 4;
+    private _currentlyExecutingTrace: traceWithTestResults;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -137,24 +137,21 @@ export class CTTreeView {
         this._executingTests = false;  
         this._testCaseBatchRange.end = 0;
         this._testCaseBatchRange.start = 0;
-
-        // Set the trace verdicts
-        let traceWithFinishedTestExecution: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == this._currentlyExecutingTraceViewItem.label);
         
         // Remove tests not updated by the server
-        if(!this._executeCanceled && traceWithFinishedTestExecution.testCases.length > this._numberOfUpdatedTests)
-            traceWithFinishedTestExecution.testCases.splice(this._numberOfUpdatedTests, traceWithFinishedTestExecution.testCases.length - this._numberOfUpdatedTests)
+        if(!this._executeCanceled && this._currentlyExecutingTrace.testCases.length > this._numberOfUpdatedTests)
+        this._currentlyExecutingTrace.testCases.splice(this._numberOfUpdatedTests, this._currentlyExecutingTrace.testCases.length - this._numberOfUpdatedTests)
 
         this._numberOfUpdatedTests = 0;
 
         // Set verdict for trace     
-        if (traceWithFinishedTestExecution != undefined) {
-            if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
-                traceWithFinishedTestExecution.verdict = VerdictKind.Failed;
-            else if(traceWithFinishedTestExecution.testCases.every(tc => tc.verdict != null))
-                traceWithFinishedTestExecution.verdict = VerdictKind.Passed;
+        if (this._currentlyExecutingTrace != undefined) {
+            if(this._currentlyExecutingTrace.testCases.some(tc => tc.verdict == VerdictKind.Failed))
+                this._currentlyExecutingTrace.verdict = VerdictKind.Failed;
+            else if(this._currentlyExecutingTrace.testCases.every(tc => tc.verdict != null))
+                this._currentlyExecutingTrace.verdict = VerdictKind.Passed;
             else
-                traceWithFinishedTestExecution.verdict = null;
+                this._currentlyExecutingTrace.verdict = null;
         }
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
         this._testProvider.rebuildViewFromElement();
@@ -162,12 +159,11 @@ export class CTTreeView {
 
     public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
         this._numberOfUpdatedTests += testCases.length;
-        let traceWithResult: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceName);
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
         {
             // Update existing test case results
-            let oldTestCase: CTTestCase = traceWithResult.testCases.find(tc => tc.id == testCases[i].id);
+            let oldTestCase: CTTestCase = this._currentlyExecutingTrace.testCases.find(tc => tc.id == testCases[i].id);
             if(oldTestCase)
             {
                 oldTestCase.sequence = testCases[i].sequence;
@@ -175,10 +171,10 @@ export class CTTreeView {
             }
             //Add new test case with results
             else
-                traceWithResult.testCases.push(testCases[i]);
+                this._currentlyExecutingTrace.testCases.push(testCases[i]);
         }
         // Handle if user has executed all test groups manually.
-        if(testCases[testCases.length-1].id == traceWithResult.testCases[traceWithResult.testCases.length-1].id){
+        if(testCases[testCases.length-1].id == this._currentlyExecutingTrace.testCases[this._currentlyExecutingTrace.testCases.length-1].id){
             this.testExecutionFinished();
             return;
         }
@@ -194,7 +190,7 @@ export class CTTreeView {
         this._testCaseBatchRange.start = testCases[testCases.length-1].id;
 
         // Rebuild the trace view to update verdict for the group and its tests
-        this._testProvider.rebuildViewFromElement(this._currentlyExecutingTraceViewItem);
+        this._testProvider.rebuildViewFromElement([].concat(...this._testProvider.getRoots().map(symbolViewElement => symbolViewElement.getChildren())).find(traceViewElement => traceViewElement.label == this._currentlyExecutingTrace.name));
     }
      
     private setButtonsAndContext(canFilter: boolean){
@@ -431,14 +427,14 @@ export class CTTreeView {
                     this._executingTests = true;
                     if (traceViewElement.type == TreeItemType.Trace){
                         // Reference the trace view item for which tests are being executed
-                        this._currentlyExecutingTraceViewItem = traceViewElement;
+                        this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
 
                         // Request execute
                         await this._ctFeature.requestExecute(traceViewElement.label, filter, undefined, progress)
                     }
                     else if (traceViewElement.type == TreeItemType.TestGroup){
                         // Reference the trace view item for which tests are being executed
-                        this._currentlyExecutingTraceViewItem = traceViewElement.getParent();
+                        this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.getParent().label);
 
                         // Find range from group description
                         let strRange : string[] = traceViewElement.description.toString().split('-');
