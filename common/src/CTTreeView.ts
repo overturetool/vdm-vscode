@@ -252,6 +252,9 @@ export class CTTreeView {
     }
 
     private async ctFullExecute() {
+        // Make sure we are up-to-date
+        await this.ctRebuildOutline();
+
         // Run Execute on all traces of all symbols
         for (const symbol of this._testProvider.getRoots()) {
             for (const trace of await this._testProvider.getChildren(symbol)) {
