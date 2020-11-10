@@ -338,7 +338,7 @@ export class CTTreeView {
         }
         else
             // reset verdict and results on each test.
-            [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceViewElement.label).testCases.forEach(testCase => {
+            [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label).testCases.forEach(testCase => {
                 testCase.verdict = null;
                 testCase.sequence = [];
             });            
