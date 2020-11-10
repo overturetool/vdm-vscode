@@ -77,7 +77,10 @@ export class CombinantorialTestingFeature implements StaticFeature {
             return res.numberOfTests;
         }
         catch (err) {
+            // if (err?.code != ErrorCodes.ContentModified) // TODO Insert if we don't want sync errors to show
             Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            throw err;
+            return (err.code != undefined ? err.code : -1 );
         }
     }
 
@@ -123,14 +126,13 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
         catch (err) {
             if (err?.code == ErrorCodes.RequestCancelled){
-                if (err?.data != null){
+                if (err?.data != null)
                     this._ctTreeView.addNewTestResults(name, err.data);
-                }
-                throw err;
             }
             else {
                 Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
             }
+            throw err;
         }
         finally{
             // Clean-up

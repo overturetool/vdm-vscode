@@ -147,14 +147,15 @@ export class CTTreeView {
 
         this._numberOfUpdatedTests = 0;
 
-        // Set verdict for trace
-        if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
-            traceWithFinishedTestExecution.verdict = VerdictKind.Failed;
-        else if(traceWithFinishedTestExecution.testCases.every(tc => tc.verdict != null))
-            traceWithFinishedTestExecution.verdict = VerdictKind.Passed;
-        else
-            traceWithFinishedTestExecution.verdict = null;
-        
+        // Set verdict for trace     
+        if (traceWithFinishedTestExecution != undefined) {
+            if(traceWithFinishedTestExecution.testCases.some(tc => tc.verdict == VerdictKind.Failed))
+                traceWithFinishedTestExecution.verdict = VerdictKind.Failed;
+            else if(traceWithFinishedTestExecution.testCases.every(tc => tc.verdict != null))
+                traceWithFinishedTestExecution.verdict = VerdictKind.Passed;
+            else
+                traceWithFinishedTestExecution.verdict = null;
+        }
         // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
         this._testProvider.rebuildViewFromElement();
     }
@@ -211,11 +212,7 @@ export class CTTreeView {
         }
         this.registerCommand("extension.ctRebuildOutline",      ()  => this.ctRebuildOutline());
         this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
-        this.registerCommand("extension.ctExecute",             (e) => {try{this.execute(e, false)}
-        catch(err){ 
-
-        } 
-    });
+        this.registerCommand("extension.ctExecute",             (e) => this.execute(e, false));
         this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
         this.registerCommand("extension.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
         this.registerCommand("extension.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
@@ -304,17 +301,23 @@ export class CTTreeView {
             token.onCancellationRequested(() => {
                 console.log("User canceled the test generation");
             });
-
+            
             // Make the generate request
-            return new Promise(async resolve => {
+            return new Promise(async (resolve) => {
+                try {
+                    await this.generate(traceViewElement);
+                } catch(error) {
+                    if (error?.code == ErrorCodes.ContentModified){
+                        // Symbol out-of-sync -> rebuild
+                        this.ctRebuildOutline();
+                    }
+                } finally {
+                    // Remove status bar message
+                    statusBarMessage.dispose();
 
-                await this.generate(traceViewElement);
-                
-                // Remove status bar message
-                statusBarMessage.dispose();
-
-                // Resolve action
-                resolve();
+                    // Resolve action
+                    resolve();
+                }             
             });
         });
     }
@@ -323,9 +326,8 @@ export class CTTreeView {
         let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
         // Request generate from server
         const numberOfTests = await this._ctFeature.requestGenerate(traceViewElement.label);
-
+            
         // Check if number of tests from server matches local number of tests
-
         traceWithTestResults.verdict = null;
         if(traceWithTestResults.testCases.length != numberOfTests)
         {
@@ -336,12 +338,12 @@ export class CTTreeView {
         }
         else
             // reset verdict and results on each test.
-            [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label).testCases.forEach(testCase => {
+            [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(twr => twr.trace.name == traceViewElement.label).testCases.forEach(testCase => {
                 testCase.verdict = null;
                 testCase.sequence = [];
             });            
 
-        this._testProvider.rebuildViewFromElement(traceViewElement.getParent());
+        this._testProvider.rebuildViewFromElement(traceViewElement.getParent()); 
     }
 
     private async ctTreeFilter(enable:boolean){
@@ -454,6 +456,17 @@ export class CTTreeView {
                 } catch(error) {
                     if (error?.code == ErrorCodes.RequestCancelled){
                         this._executeCanceled = true;
+                        resolve();
+                    }
+                    else if (error?.code == ErrorCodes.ContentModified){
+                        if (traceViewElement.type == TreeItemType.TestGroup){
+                            // Possibly just Trace out-of-sync -> try to generate it again
+                            this.ctGenerate(traceViewElement.getParent());
+                        }
+                        else {
+                            // Symbol out-of-sync
+                            this.ctRebuildOutline();
+                        }
                         resolve();
                     }
                     else
