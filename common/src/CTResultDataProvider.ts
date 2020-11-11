@@ -20,7 +20,7 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
     }
 
     private convertToResultElements(resultPairs: CTResultPair[]): CTResultElement[]{
-        return resultPairs.map(rp => new CTResultElement(rp.case, [new CTResultElement(!rp.result ? "n/a" : rp.result, [], TreeItemCollapsibleState.None)], TreeItemCollapsibleState.Expanded));
+        return resultPairs.map(rp => new CTResultElement(rp.case, [new CTResultElement(!rp.result ? "n/a" : rp.result, [], TreeItemCollapsibleState.None, "Result")], TreeItemCollapsibleState.Expanded, "Test case"));
     }
 
     public getTestSequenceResults(){
@@ -41,11 +41,7 @@ export class CTResultElement extends TreeItem {
     public readonly label: string,
     public children: CTResultElement[],
     public readonly collapsibleState?,
-    public description = "") {
+    public tooltip = "") {
         super(label, TreeItemCollapsibleState.None);
-        if(description === "")
-            super.description = false;
-        else
-            super.description = description;
     }
 }
