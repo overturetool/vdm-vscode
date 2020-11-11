@@ -425,6 +425,7 @@ export class CTTreeView {
          
                     this._executingTests = true;
                     if (traceViewElement.type == TreeItemType.Trace){
+                        this._isExecutingTestGroup = false;
                         // Reference the trace view item for which tests are being executed
                         this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
 
