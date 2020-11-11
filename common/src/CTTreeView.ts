@@ -25,6 +25,7 @@ export class CTTreeView {
     private _executingTests: boolean = false;
     public batchSizeModifier = 4;
     private _currentlyExecutingTrace: traceWithTestResults;
+    private _isExecutingTestGroup = false;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -139,8 +140,8 @@ export class CTTreeView {
         this._testCaseBatchRange.start = 0;
         
         // Remove tests not updated by the server
-        if(!this._executeCanceled && this._currentlyExecutingTrace.testCases.length > this._numberOfUpdatedTests)
-        this._currentlyExecutingTrace.testCases.splice(this._numberOfUpdatedTests, this._currentlyExecutingTrace.testCases.length - this._numberOfUpdatedTests)
+        if(!this._isExecutingTestGroup && !this._executeCanceled && this._currentlyExecutingTrace.testCases.length > this._numberOfUpdatedTests)
+            this._currentlyExecutingTrace.testCases.splice(this._numberOfUpdatedTests, this._currentlyExecutingTrace.testCases.length - this._numberOfUpdatedTests)
 
         this._numberOfUpdatedTests = 0;
 
@@ -174,8 +175,9 @@ export class CTTreeView {
                 this._currentlyExecutingTrace.testCases.push(testCases[i]);
         }
         // Handle if user has executed all test groups manually.
-        if(testCases[testCases.length-1].id == this._currentlyExecutingTrace.testCases[this._currentlyExecutingTrace.testCases.length-1].id){
+        if(this._isExecutingTestGroup && testCases[testCases.length-1].id == this._currentlyExecutingTrace.testCases[this._currentlyExecutingTrace.testCases.length-1].id){
             this.testExecutionFinished();
+            this._isExecutingTestGroup = false;
             return;
         }
 
@@ -420,10 +422,7 @@ export class CTTreeView {
             return new Promise(async (resolve, reject) => {
                 try {
                     this.showCancelButton(true);
-
-                    // Generate to asure trace synchronisation between client and server
-                    await this.generate(traceViewElement);
-                    
+         
                     this._executingTests = true;
                     if (traceViewElement.type == TreeItemType.Trace){
                         // Reference the trace view item for which tests are being executed
@@ -433,6 +432,7 @@ export class CTTreeView {
                         await this._ctFeature.requestExecute(traceViewElement.label, filter, undefined, progress)
                     }
                     else if (traceViewElement.type == TreeItemType.TestGroup){
+                        this._isExecutingTestGroup = true;
                         // Reference the trace view item for which tests are being executed
                         this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.getParent().label);
 
