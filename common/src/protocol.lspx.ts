@@ -191,7 +191,7 @@ export namespace CTTracesRequest {
 /**
  * Parameters for the CT/generate request
  */
-export interface CTGenerateParameters {
+export interface CTGenerateParameters extends WorkDoneProgressParams {
 	/**
 	 * Fully qualified name of the trace, which test cases should be generated based on.
 	 */
