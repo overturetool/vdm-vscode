@@ -18,7 +18,7 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
     ]);
     private _filterKeyTypesReverse = new Map<string, string>();
     private _filtersDefault = new Map<string, string | boolean | number>([
-        ["trace reduction type", "RANDOM"],
+        ["trace reduction type", "NONE"],
         ["trace filtering seed", 999],
         ["subset limitation", 100]
     ]);
