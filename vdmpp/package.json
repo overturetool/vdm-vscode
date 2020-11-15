@@ -331,6 +331,14 @@
       {
         "scopeName": "source.vdmpp.number",
         "path": "./syntaxes/number.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdmpp.type",
+        "path": "./syntaxes/type.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdmpp.statements",
+        "path": "./syntaxes/statements.tmLanguage.json"
       }
     ],
     "debuggers": [
