@@ -111,7 +111,8 @@ export class CTTreeView {
             if (!fs.existsSync(this._savePath.fsPath))
                 return resolve(completeCTs);
             let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
-
+            
+            // Go through files in the folder and read content
             files.forEach(f => {
                 let file:fs.Dirent = f;
                 if(file.isFile && file.name.includes(".json"))
@@ -154,12 +155,15 @@ export class CTTreeView {
             else
                 this._currentlyExecutingTrace.verdict = null;
         }
-        // This uses the symbol view element to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
+        // Rebuild entire tree view to rebuild any group views within the remaining range of executed test cases and to rebuild the trace to show its verdict
         this._testProvider.rebuildViewFromElement();
     }
 
     public async addNewTestResults(traceName: string, testCases: CTTestCase[]){
-        this._numberOfUpdatedTests += testCases.length;
+        if(this._currentlyExecutingTrace.name != traceName)
+            return;
+
+        this._numberOfUpdatedTests = testCases[testCases.length-1].id;
         // Update test results for tests in the trace
         for(let i = 0; i < testCases.length; i++)
         {
@@ -289,6 +293,9 @@ export class CTTreeView {
     }
 
     private async ctGenerate(traceViewElement: TestViewElement) {
+        if(traceViewElement.type != TreeItemType.Trace)
+            return;
+            
         // Set status bar
         let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
 
@@ -323,12 +330,17 @@ export class CTTreeView {
     }
 
     private async generate(traceViewElement: TestViewElement){
+        if(traceViewElement.type != TreeItemType.Trace)
+            return;
+
         let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
         // Request generate from server
         const numberOfTests = await this._ctFeature.requestGenerate(traceViewElement.label);
             
-        // Check if number of tests from server matches local number of tests
+        // Reset trace verdict
         traceWithTestResults.verdict = null;
+
+        // Check if number of tests from server matches local number of tests
         if(traceWithTestResults.testCases.length != numberOfTests)
         {
             traceWithTestResults.testCases = [];
@@ -361,7 +373,6 @@ export class CTTreeView {
     }
 
     private async ctGoToTrace(traceViewElement:TestViewElement) {
-
         if(traceViewElement.type != TreeItemType.Trace)
             return;
 
@@ -399,8 +410,8 @@ export class CTTreeView {
             this._resultProvider.setTestSequenceResults([].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == viewElement.getParent().getParent().label).testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);     
     }
 
-    private async execute(traceViewElement: TestViewElement, filter: boolean){
-        if (traceViewElement.type != TreeItemType.Trace && traceViewElement.type != TreeItemType.TestGroup)
+    private async execute(viewElement: TestViewElement, filter: boolean){
+        if (viewElement.type != TreeItemType.Trace && viewElement.type != TreeItemType.TestGroup)
             throw new Error("CT Execute called on invalid element")
 
         // Reset canceled
@@ -426,35 +437,35 @@ export class CTTreeView {
                     this.showCancelButton(true);
          
                     this._executingTests = true;
-                    if (traceViewElement.type == TreeItemType.Trace){
+                    if (viewElement.type == TreeItemType.Trace){
                         this._isExecutingTestGroup = false;
                         // Reference the trace view item for which tests are being executed
-                        this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
+                        this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == viewElement.label);
 
                         // Create range
-                        let lastTestGroup = traceViewElement.getChildren()[traceViewElement.getChildren().length-1];
+                        let lastTestGroup = viewElement.getChildren()[viewElement.getChildren().length-1];
                         let strRange : string[] = lastTestGroup?.description.toString().split('-');
                         let range : NumberRange;
                         if (strRange != undefined)
                             range = {end: Number(strRange[1])};
 
                         // Request execute
-                        await this._ctFeature.requestExecute(traceViewElement.label, filter, range, progress)
+                        await this._ctFeature.requestExecute(viewElement.label, filter, range, progress)
                     }
-                    else if (traceViewElement.type == TreeItemType.TestGroup){
+                    else if (viewElement.type == TreeItemType.TestGroup){
                         this._isExecutingTestGroup = true;
                         // Reference the trace view item for which tests are being executed
-                        this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.getParent().label);
+                        this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == viewElement.getParent().label);
 
                         // Find range from group description
-                        let strRange : string[] = traceViewElement.description.toString().split('-');
+                        let strRange : string[] = viewElement.description.toString().split('-');
                         let range : NumberRange = {
                             start: Number(strRange[0]),
                             end: Number(strRange[1])
                         };
             
                         // Request execute with range
-                        await this._ctFeature.requestExecute(traceViewElement.getParent().label, false, range)
+                        await this._ctFeature.requestExecute(viewElement.getParent().label, false, range)
                     }
                     // Resole the request
                     resolve();
@@ -465,9 +476,9 @@ export class CTTreeView {
                         resolve();
                     }
                     else if (error?.code == ErrorCodes.ContentModified){
-                        if (traceViewElement.type == TreeItemType.TestGroup){
+                        if (viewElement.type == TreeItemType.TestGroup){
                             // Possibly just Trace out-of-sync -> try to generate it again
-                            this.ctGenerate(traceViewElement.getParent());
+                            this.ctGenerate(viewElement.getParent());
                         }
                         else {
                             // Symbol out-of-sync
