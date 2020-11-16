@@ -173,7 +173,7 @@
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
           "group": "vdmsl-ctView@1"
         },
         {
@@ -193,7 +193,7 @@
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "resourceLangId == vdmsl && viewItem == trace && vdm-ct-show-run-buttons == true || resourceLangId == vdmsl && viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "when": "resourceLangId == vdmsl && viewItem == trace && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
         },
         {
