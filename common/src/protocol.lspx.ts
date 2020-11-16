@@ -1,11 +1,20 @@
 import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions } from "vscode-languageclient";
-import {ProtocolRequestType} from "vscode-languageserver-protocol/lib/messages";
+import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/messages";
 /**
  * The experimental capabilities that the server can reply.
  */
 export interface ExperimentalCapabilities {
+	/**
+	 * Capabilities specific to the `slsp/POG/` messages.
+	 */
 	proofObligationProvider?: boolean;
-	combinatorialTestProvider?: boolean | WorkDoneProgressOptions;
+	/**
+	 * Capabilities specific to the `slsp/CT/` messages.
+	 */
+	combinatorialTestProvider?: boolean | CombinatorialTestOptions;
+}
+
+export interface CombinatorialTestOptions extends WorkDoneProgressOptions {
 }
 
 ////////////////////// Proof Obligation Generation (POG) /////////////////////////////
@@ -18,7 +27,9 @@ export interface ProofObligation {
 	 */
 	id: number;
 	/**
-	 * Name of the PO. Array describe the hieracy of the name, e.g. ["classA", "function1"].
+	 * Name of the PO.
+	 * Array describe the hieracy of the name, 
+	 * e.g. ["classA", "function1"].
 	 */
 	name: string[];
 	/**
@@ -30,11 +41,14 @@ export interface ProofObligation {
 	 */
 	location: Location;
 	/**
-	 * Source code of the PO. String array can be used to provide visual formatting information, e.g. the PO view can put a "\n\t" between each string in the array.
+	 * Source code of the PO. 
+	 * String array can be used to provide visual formatting 
+	 * information, e.g. the PO view can put a "\n\t" between 
+	 * each string in the array.
 	 */
 	source: string | string[];
 	/**
-	 * An optinal flag indicating if the PO has been proved.
+	 * An optional flag indicating if the PO has been proved.
 	 */
 	proved?: boolean;
 }
@@ -44,7 +58,8 @@ export interface ProofObligation {
  */
 export interface GeneratePOParams {
 	/**
-	 * Uri to the file/folder for which Proof Obligations should be generated.
+	 * Uri to the file/folder for which Proof Obligations
+	 * should be generated.
 	 */
 	uri: string;
 }
@@ -61,7 +76,9 @@ export namespace GeneratePORequest {
  */
 export interface POGUpdatedParams {
 	/**
-	 * Describes the state of the specification. True if POG is possible, False if not, e.g. the specification is not type-correct.
+	 * Describes the state of the specification. 
+	 * True if POG is possible.
+	 * False otherwise, e.g. the specification is not type-correct.
 	 */
 	successful: boolean;
 }
@@ -75,14 +92,6 @@ export namespace POGUpdatedNotification {
 
 
 ////////////////////// Combinatorial Testing (CT) ///////////////////////////////////
-/**
- * Describes a range of numbers, e.g. 1-10.
- */
-export interface NumberRange {
-	start: number;
-	end: number;
-}
-
 /**
  * Mapping type for filter options for the execution of CTs. 
  */
@@ -98,7 +107,24 @@ export interface CTFilterOption {
 }
 
 /**
- * Describes a grouping of traces. E.g. a class, classA, may have multiple traces which are all combined in a CTSymbol.
+ * Describes a range of numbers, e.g. 1-10.
+ */
+export interface NumberRange {
+	/**
+	 * Start number, if omitted 'end' should be considered as
+	 * the absolute number of tests that must be returned
+	 */
+	start?: number;
+	/**
+	 * End number, if omitted tests from 'start' to last 
+	 * should be returned.
+	 */
+	end?: number;
+}
+
+/**
+ * Describes a grouping of traces, e.g. a class, classA, may 
+ * have multiple traces which are all combined in a CTSymbol.
  */
 export interface CTSymbol {
 	/**
@@ -191,9 +217,11 @@ export namespace CTTracesRequest {
 /**
  * Parameters for the CT/generate request
  */
-export interface CTGenerateParameters extends WorkDoneProgressParams {
+export interface CTGenerateParameters 
+	extends WorkDoneProgressParams {
 	/**
-	 * Fully qualified name of the trace, which test cases should be generated based on.
+	 * Fully qualified name of the trace, which test cases should be 
+	 * generated based on.
 	 */
 	name: string;
 }
@@ -202,23 +230,37 @@ export interface CTGenerateParameters extends WorkDoneProgressParams {
  * CT/generate request and return type.
  */
 export namespace CTGenerateRequest {
-	export const type = new RequestType<CTGenerateParameters, {numberOfTests: number} | null, void, void>('lspx/CT/generate');
+	export const type = new RequestType<CTGenerateParameters, CTGenerateResponse | null, void, void>('lspx/CT/generate');
+}
+
+/**
+ * Response to the 'lspx/CT/generate' request
+ */
+export interface CTGenerateResponse {
+	/**
+	 * The number of tests that is generated from the trace.
+	 */
+	numberOfTests: number
 }
 
 /**
  * Parameters for the CT/execute request.
  */
-export interface CTExecuteParameters extends WorkDoneProgressParams, PartialResultParams {
+export interface CTExecuteParameters 
+	extends WorkDoneProgressParams, PartialResultParams {
 	/**
-	 * Fully qualified name of the trace, which test cases should be executed from.
+	 * Fully qualified name of the trace, which test cases should be 
+	 * executed from.
 	 */
 	name: string;
 	/**
-	 * Optional filters that should be applied to the exectution. If not there the server should use default settings.
+	 * Optional filters that should be applied to the exectution. 
+	 * If omitted the server should use default settings.
 	 */
 	filter?: CTFilterOption[];
 	/**
-	 * An optional range of tests that should be executed. If not there all tests for the trace are executed.
+	 * An optional range of tests that should be executed. 
+	 * If omitted all tests for the trace are executed.
 	 */
 	range?: NumberRange;
 }
@@ -226,17 +268,9 @@ export interface CTExecuteParameters extends WorkDoneProgressParams, PartialResu
 /**
  * CT/execute request and return type.
  */
-// export namespace CTExecuteRequest {
-// 	export const type = new RequestType<CTExecuteParameters, CTTestCase[] | null, void, void>('lspx/CT/execute');
-// }
-
-// export namespace CTExecuteProgress {
-// 	export const type = new ProgressType<ProgressParams<CTTestCase[]>>();
-// }
-
 export namespace CTExecuteRequest {
-    export const method = 'lspx/CT/execute';
-    export const type = new ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, void>(method);
-    export const resultType = new ProgressType<CTTestCase[]>();
+	export const method = 'lspx/CT/execute';
+	export const type = new ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, void>(method);
+	export const resultType = new ProgressType<CTTestCase[]>();
 }
 
