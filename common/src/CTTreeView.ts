@@ -229,9 +229,11 @@ export class CTTreeView {
     }
 
     private async ctRebuildOutline() {
-        if(this._testProvider.getRoots().length > 0)
-            this._combinatorialTests = this.matchLocalSymbolsToServerSymbols((await this._ctFeature.requestTraces()), this._combinatorialTests);
-            
+        if(this._testProvider.getRoots().length > 0){
+            let res = await this._ctFeature.requestTraces();
+            if (res != null)
+                this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res, this._combinatorialTests);
+        }
         else
         {
             await Promise.all([this.loadCTs().catch(() => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
@@ -429,8 +431,15 @@ export class CTTreeView {
                         // Reference the trace view item for which tests are being executed
                         this._currentlyExecutingTrace = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
 
+                        // Create range
+                        let lastTestGroup = traceViewElement.getChildren()[traceViewElement.getChildren().length-1];
+                        let strRange : string[] = lastTestGroup?.description.toString().split('-');
+                        let range : NumberRange;
+                        if (strRange != undefined)
+                            range = {end: Number(strRange[1])};
+
                         // Request execute
-                        await this._ctFeature.requestExecute(traceViewElement.label, filter, undefined, progress)
+                        await this._ctFeature.requestExecute(traceViewElement.label, filter, range, progress)
                     }
                     else if (traceViewElement.type == TreeItemType.TestGroup){
                         this._isExecutingTestGroup = true;
@@ -445,7 +454,7 @@ export class CTTreeView {
                         };
             
                         // Request execute with range
-                        await this._ctFeature.requestExecute(traceViewElement.getParent().label, filter, range)
+                        await this._ctFeature.requestExecute(traceViewElement.getParent().label, false, range)
                     }
                     // Resole the request
                     resolve();

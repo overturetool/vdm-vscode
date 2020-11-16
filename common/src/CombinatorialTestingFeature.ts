@@ -64,6 +64,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
         catch (err) {
             Window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
+            return null;
         }
     }
 
@@ -80,7 +81,6 @@ export class CombinantorialTestingFeature implements StaticFeature {
             // if (err?.code != ErrorCodes.ContentModified) // TODO Insert if we don't want sync errors to show
             Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
             throw err;
-            return (err.code != undefined ? err.code : -1 );
         }
     }
 
