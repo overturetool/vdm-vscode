@@ -329,33 +329,41 @@ export class CTTreeView {
         });
     }
 
-    private async generate(traceViewElement: TestViewElement){
-        if(traceViewElement.type != TreeItemType.Trace)
+    private async generate(traceViewElement: TestViewElement) {
+        if (traceViewElement.type != TreeItemType.Trace)
             return;
 
         let traceWithTestResults: traceWithTestResults = [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label);
-        // Request generate from server
-        const numberOfTests = await this._ctFeature.requestGenerate(traceViewElement.label);
-            
-        // Reset trace verdict
-        traceWithTestResults.verdict = null;
 
-        // Check if number of tests from server matches local number of tests
-        if(traceWithTestResults.testCases.length != numberOfTests)
-        {
-            traceWithTestResults.testCases = [];
-            // Instatiate testcases for traces.
-            for(let i = 1; i <= numberOfTests; i++)
-                traceWithTestResults.testCases.push({id: i, verdict: null, sequence: []});
+        try {
+            // Request generate from server
+            const numberOfTests = await this._ctFeature.requestGenerate(traceViewElement.label);
+
+            // Reset trace verdict
+            traceWithTestResults.verdict = null;
+
+            // Check if number of tests from server matches local number of tests
+            if (traceWithTestResults.testCases.length != numberOfTests) {
+                traceWithTestResults.testCases = [];
+                // Instatiate testcases for traces.
+                for (let i = 1; i <= numberOfTests; i++)
+                    traceWithTestResults.testCases.push({ id: i, verdict: null, sequence: [] });
+            }
+            else
+                // reset verdict and results on each test.
+                [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label).testCases.forEach(testCase => {
+                    testCase.verdict = null;
+                    testCase.sequence = [];
+                });
+
+            this._testProvider.rebuildViewFromElement(traceViewElement.getParent());
+        } catch (error) {
+            if (error?.code == ErrorCodes.ContentModified) {
+                // Symbol out-of-sync
+                this.ctRebuildOutline();
+            }
+            Window.showInformationMessage("CT Test Generation failed: " + error);
         }
-        else
-            // reset verdict and results on each test.
-            [].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == traceViewElement.label).testCases.forEach(testCase => {
-                testCase.verdict = null;
-                testCase.sequence = [];
-            });            
-
-        this._testProvider.rebuildViewFromElement(traceViewElement.getParent()); 
     }
 
     private async ctTreeFilter(enable:boolean){
@@ -484,6 +492,11 @@ export class CTTreeView {
                             // Symbol out-of-sync
                             this.ctRebuildOutline();
                         }
+                        resolve();
+                    }
+                    else if (error?.code == ErrorCodes.ParseError) {
+                        this._executingTests = false;
+                        Window.showInformationMessage("CT Execute failed: " + error);
                         resolve();
                     }
                     else

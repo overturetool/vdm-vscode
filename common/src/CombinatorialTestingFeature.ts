@@ -79,7 +79,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
         catch (err) {
             // if (err?.code != ErrorCodes.ContentModified) // TODO Insert if we don't want sync errors to show
-            Window.showInformationMessage("Combinatorial Test - generation request failed: " + err);
+            console.log("Combinatorial Test - generation request failed: " + err);
             throw err;
         }
     }
@@ -129,9 +129,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 if (err?.data != null)
                     this._ctTreeView.addNewTestResults(name, err.data);
             }
-            else {
-                Window.showInformationMessage("Combinatorial Test - execute request failed: " + err);
-            }
+            console.log("Combinatorial Test - execute request failed: " + err);
             throw err;
         }
         finally{
