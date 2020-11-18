@@ -78,7 +78,7 @@ traces
            ExpertIsOnDuty(ex,plant1)
  
   Test3: 
-    let a in set {1, ..., 10} in
+    let a in set {1, ..., 100} in
       let b in set {1, ..., 100} in
         (
           op1(a); op2(b);
@@ -88,6 +88,14 @@ traces
   let a in set {1, ..., 100} in
     let b in set {1, ..., 100} in
       let c in set {1, ..., 10} in
+      (
+        op1(a); op1(b); op1(c);
+      );
+
+  Test5: 
+  let a in set {1, ..., 100} in
+    let b in set {1, ..., 100} in
+      let c in set {1, ..., 30} in
       (
         op1(a); op1(b); op1(c);
       );
