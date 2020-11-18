@@ -320,11 +320,11 @@
     "grammars": [
       {
         "language": "vdmsl",
-        "scopeName": "source.vdmpp",
-        "path": "./syntaxes/vdmpp.tmLanguage.json"
+        "scopeName": "source.vdmsl",
+        "path": "./syntaxes/vdmsl.tmLanguage.json"
       },
       {
-        "scopeName": "source.vdmpp.number",
+        "scopeName": "source.vdmsl.number",
         "path": "./syntaxes/number.tmLanguage.json"
       }
     ],

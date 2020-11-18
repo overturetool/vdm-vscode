@@ -31,7 +31,7 @@
 					"include": "#keywords"
 				},
 				{
-					"include": "source.vdmpp.number"
+					"include": "source.vdmsl.number"
 				},
 				{
 					"include": "#method-name"
@@ -44,7 +44,7 @@
 		"comment": {
 			"patterns": [
 				{
-					"name": "comment.line.double-dash.vdmpp",
+					"name": "comment.line.double-dash.vdmsl",
 					"match": "--.*"
 				}
 			]
@@ -52,7 +52,7 @@
 		"definitions": {
 			"patterns": [
 				{
-					"name": "entity.name.section.vdmpp",
+					"name": "entity.name.section.vdmsl",
 					"match": "\\b(operations|functions|types|values|instance variables)\\b"
 				}
 			]
@@ -60,18 +60,18 @@
 		"keywords": {
 			"patterns": [
 				{
-					"name": "keyword.control.vdmpp",
+					"name": "keyword.control.vdmsl",
 					"match": "\\b(if|else|then|return|forall)\\b"
 				}
 			]
 		},
 		"method-name": {
-			"name": "meta.use-method.vdmpp",
+			"name": "meta.use-method.vdmsl",
 			"begin": "(\\S+)\\(",
 			"end": "\\)",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmpp"
+					"name": "entity.name.function.vdmsl"
 				}
 			},
 			"patterns": [
@@ -81,12 +81,12 @@
 			]
 		},
 		"strings": {
-			"name": "string.quoted.double.vdmpp",
+			"name": "string.quoted.double.vdmsl",
 			"begin": "\"",
 			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.vdmpp",
+					"name": "constant.character.escape.vdmsl",
 					"match": "\\\\."
 				}
 			]
@@ -94,11 +94,11 @@
 		"modifier": {
 			"patterns": [
 				{
-					"name": "storage.modifier.vdmpp",
+					"name": "storage.modifier.vdmsl",
 					"match": "\\b(public|private|static|pre|post|pure)\\b"
 				},
 				{
-					"name": "storage.type.vdmpp",
+					"name": "storage.type.vdmsl",
 					"match": "\\b(let)\\b"
 				}
 			]
@@ -106,7 +106,7 @@
 		"types": {
 			"patterns": [
 				{
-					"name": "support.type.basic.vdmpp",
+					"name": "support.type.basic.vdmsl",
 					"match": "\\b(bool|nat|nat1|int|rat|real|char|token)\\b"
 				}
 			]
@@ -114,15 +114,15 @@
 		"operator": {
 			"patterns": [
 				{
-					"name": "keyword.operator.assignment.vdmpp",
+					"name": "keyword.operator.assignment.vdmsl",
 					"match": "(\\||\\&|=|\\+|-|\\*|\\/|>|<)"
 				},
 				{
-					"name": "keyword.operator.assignment.vdmpp",
+					"name": "keyword.operator.assignment.vdmsl",
 					"match": "\\b(mod|in set|dom|comp|iterate|and|or|abs|floor|card|power|dunion|dinter)\\b"
 				},
 				{
-					"name": "keyword.operator.new.vdmpp",
+					"name": "keyword.operator.new.vdmsl",
 					"match": "\\b(new)\\b"
 				}
 			]
@@ -130,29 +130,29 @@
 		"variable-name": {
 			"patterns": [
 				{
-					"name": "variable.other.readwrite.vdmpp",
+					"name": "variable.other.readwrite.vdmsl",
 					"match": "([^:()\\s=>])"
 				}
 			]
 		},
 		"class-declator": {
-			"name": "meta.class.vdmpp",
+			"name": "meta.class.vdmsl",
 			"begin": "(class)\\s+(\\S+)",
 			"end": "(end)\\s+(\\S+)",
 			"beginCaptures": {
 				"1": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmsl"
 				},
 				"2": {
-					"name": "entity.name.class.vdmpp"
+					"name": "entity.name.class.vdmsl"
 				}
 			},
 			"endCaptures": {
 				"1": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmsl"
 				},
 				"2": {
-					"name": "entity.name.class.vdmpp"
+					"name": "entity.name.class.vdmsl"
 				}
 			},
 			"patterns": [
@@ -168,7 +168,7 @@
 			]
 		},
 		"value-declator": {
-			"name": "meta.value.vdmpp",
+			"name": "meta.value.vdmsl",
 			"begin": "(public|private)\\s+(static)\\s+(\\S+)\\s+:\\s+(\\S+)",
 			"end": ";",
 			"beginCaptures": {
@@ -199,7 +199,7 @@
 							"include": "#types"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmsl",
 							"match": "\\S+"
 						}
 					]
@@ -207,10 +207,10 @@
 			},
 			"endCaptures": {
 				"1": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmsl"
 				},
 				"2": {
-					"name": "entity.name.class.vdmpp"
+					"name": "entity.name.class.vdmsl"
 				}
 			},
 			"patterns": [
@@ -223,7 +223,7 @@
 			]
 		},
 		"function-declator": {
-			"name": "meta.function.vdmpp",
+			"name": "meta.function.vdmsl",
 			"begin": "(public|private)\\s+(\\S+)\\s+:\\s+(\\S+)\\s+(==>|->)\\s+(seq of char|\\S+)",
 			"beginCaptures": {
 				"1": {
@@ -242,7 +242,7 @@
 							"include": "#types"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmsl",
 							"match": "\\S+"
 						}
 					]
@@ -256,7 +256,7 @@
 							"include": "#types"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmsl",
 							"match": "\\S+"
 						}
 					]
@@ -270,5 +270,5 @@
 			]
 		}
 	},
-	"scopeName": "source.vdmpp"
+	"scopeName": "source.vdmsl"
 }
