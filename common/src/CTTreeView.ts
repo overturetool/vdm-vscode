@@ -483,14 +483,20 @@ export class CTTreeView {
                         this._executeCanceled = true;
                         resolve();
                     }
-                    else if (error?.code == ErrorCodes.ContentModified){
-                        if (viewElement.type == TreeItemType.TestGroup){
-                            // Possibly just Trace out-of-sync -> try to generate it again
-                            this.ctGenerate(viewElement.getParent());
+                    else if (error?.code == ErrorCodes.ContentModified) {
+                        if (viewElement.type == TreeItemType.Trace) {
+                            if (error?.message.includes("not found")) {
+                                // Trace not found -> Symbol out-of-sync
+                                this.ctRebuildOutline();
+                            }
+                            else {
+                                // Possibly just Trace out-of-sync -> try to generate it again
+                                this.ctGenerate(viewElement);
+                            }
                         }
                         else {
-                            // Symbol out-of-sync
-                            this.ctRebuildOutline();
+                            // Possibly just Trace out-of-sync -> try to generate it again
+                            this.ctGenerate(viewElement.getParent());
                         }
                         resolve();
                     }
