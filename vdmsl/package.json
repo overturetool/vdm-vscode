@@ -292,17 +292,17 @@
         "vdmsl-lsp.experimentalServer": {
           "type": "boolean",
           "default": false,
-          "description": "Using experimental server. True if running client should not launch server."
+          "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
         },
         "vdmsl-lsp.lspPort": {
           "type": "integer",
           "default": 8000,
-          "description": "Default port for LSP client. Only used for debug server."
+          "description": "Port used for LSP. Only used for experimental server."
         },
         "vdmsl-lsp.dapPort": {
           "type": "integer",
           "default": 8001,
-          "description": "Default port for DAP client. Only used for debug server."
+          "description": "Port used for DAP. Only used for experimental server."
         }
       }
     },
