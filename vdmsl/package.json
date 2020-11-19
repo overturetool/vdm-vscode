@@ -294,7 +294,7 @@
         },
         "vdmsl-lsp.experimentalServer": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
         },
         "vdmsl-lsp.lspPort": {
