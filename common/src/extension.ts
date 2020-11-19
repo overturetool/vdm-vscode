@@ -43,8 +43,11 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                     if(JVMArguments != "")
                         args.push(JVMArguments);
 
+                    let activateServerLog = workspace.getConfiguration(vdmDialect + '-lsp').activateServerLog;
+                    if(activateServerLog)
+                        args.push('-Dlog.filename=' + serverLogFile);
+
                     args.push(...[
-                        '-Dlog.filename=' + serverLogFile,
                         '-cp', vdmjPath + path.delimiter + lspServerPath,
                         serverMainClass,
                         '-' + vdmDialect,

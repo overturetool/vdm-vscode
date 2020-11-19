@@ -287,9 +287,14 @@
           "default": "",
           "description": "JVM arguments used when launching the server."
         },
-        "vdmsl-lsp.experimentalServer": {
+        "vdmsl-lsp.activateServerLog": {
           "type": "boolean",
           "default": false,
+          "description": "Activate logging of server actions and protocol communication."
+        },
+        "vdmsl-lsp.experimentalServer": {
+          "type": "boolean",
+          "default": true,
           "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
         },
         "vdmsl-lsp.lspPort": {
