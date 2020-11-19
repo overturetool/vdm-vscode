@@ -68,7 +68,7 @@ export interface GeneratePOParams {
  * POG/generate request and return type.
  */
 export namespace GeneratePORequest {
-	export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void, void>('lspx/POG/generate');
+	export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void, void>('slsp/POG/generate');
 }
 
 /**
@@ -87,7 +87,7 @@ export interface POGUpdatedParams {
  * POG/updated notification. Sent by the server when there has been a change in the specification.
  */
 export namespace POGUpdatedNotification {
-	export const type = new NotificationType<POGUpdatedParams>('lspx/POG/updated')
+	export const type = new NotificationType<POGUpdatedParams>('slsp/POG/updated')
 }
 
 
@@ -211,7 +211,7 @@ export interface CTTracesParameters {
  * CT/traces request and return type.
  */
 export namespace CTTracesRequest {
-	export const type = new RequestType<CTTracesParameters, CTSymbol[] | null, void, void>('lspx/CT/traces');
+	export const type = new RequestType<CTTracesParameters, CTSymbol[] | null, void, void>('slsp/CT/traces');
 }
 
 /**
@@ -230,11 +230,11 @@ export interface CTGenerateParameters
  * CT/generate request and return type.
  */
 export namespace CTGenerateRequest {
-	export const type = new RequestType<CTGenerateParameters, CTGenerateResponse | null, void, void>('lspx/CT/generate');
+	export const type = new RequestType<CTGenerateParameters, CTGenerateResponse | null, void, void>('slsp/CT/generate');
 }
 
 /**
- * Response to the 'lspx/CT/generate' request
+ * Response to the 'slsp/CT/generate' request
  */
 export interface CTGenerateResponse {
 	/**
@@ -269,7 +269,7 @@ export interface CTExecuteParameters
  * CT/execute request and return type.
  */
 export namespace CTExecuteRequest {
-	export const method = 'lspx/CT/execute';
+	export const method = 'slsp/CT/execute';
 	export const type = new ProtocolRequestType<CTExecuteParameters, CTTestCase[] | null, CTTestCase[], void, void>(method);
 	export const resultType = new ProgressType<CTTestCase[]>();
 }

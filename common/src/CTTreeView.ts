@@ -4,7 +4,7 @@ import * as Util from "./Util"
 import { commands, ExtensionContext, ProgressLocation, Uri, window, window as Window, workspace } from "vscode";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
-import { CTTestCase, CTSymbol, NumberRange, VerdictKind} from "./protocol.lspx";
+import { CTTestCase, CTSymbol, NumberRange, VerdictKind} from "./protocol.slsp";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';

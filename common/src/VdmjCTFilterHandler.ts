@@ -1,5 +1,5 @@
 import { CTFilterHandler } from "./CombinatorialTestingFeature";
-import { CTFilterOption } from "./protocol.lspx";
+import { CTFilterOption } from "./protocol.slsp";
 import * as vscode from 'vscode'
 
 export class VdmjCTFilterHandler implements CTFilterHandler {

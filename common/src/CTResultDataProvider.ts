@@ -1,5 +1,5 @@
 import { Event, EventEmitter, ProviderResult, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
-import { CTResultPair } from "./protocol.lspx";
+import { CTResultPair } from "./protocol.slsp";
 
 export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 

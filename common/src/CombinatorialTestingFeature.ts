@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, Uri, window as Window } from "vscode";
 import { CancellationTokenSource, ClientCapabilities, ErrorCodes, ServerCapabilities, StaticFeature, WorkDoneProgress, WorkDoneProgressOptions} from "vscode-languageclient";
-import { ExperimentalCapabilities, CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.lspx";
+import { ExperimentalCapabilities, CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
 

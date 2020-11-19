@@ -1,6 +1,6 @@
 import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Range } from 'vscode'
 import path = require("path")
-import { ProofObligation } from "./protocol.lspx"
+import { ProofObligation } from "./protocol.slsp"
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 
 export class ProofObligationPanel {
