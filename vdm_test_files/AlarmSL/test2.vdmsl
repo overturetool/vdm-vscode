@@ -1,0 +1,25 @@
+functions
+  op1: nat -> nat
+  op1(x) ==
+    x;
+
+traces
+Test1000: 
+	let a in set {1, ..., 1000} 
+		in
+  		op1(a);
+
+Test10000: 
+  let a in set {1, ..., 10000} 
+  	in
+ 			op1(a);
+
+Test100000: 
+  let a in set {1, ..., 100000} 
+  	in
+			op1(a);
+      
+Test300000: 
+  let a in set {1, ..., 300000}
+  	in
+			op1(a);
