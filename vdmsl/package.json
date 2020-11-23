@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/jonaskrask/vdm-vscode"
   },
-  "publisher": "vscode",
+  "publisher": "jonaskrask",
   "engines": {
     "vscode": "^1.49.0"
   },
@@ -62,7 +62,7 @@
         "title": "Filtered Evaluation",
         "category": "VDM",
         "icon": {
-          "light": "/resources/icons/light/runF iltered.svg",
+          "light": "/resources/icons/light/runFiltered.svg",
           "dark": "/resources/icons/dark/runFiltered.svg"
         }
       },
