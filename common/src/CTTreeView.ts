@@ -431,7 +431,7 @@ export class CTTreeView {
         // Setup loading window
         return window.withProgress({
             location: ProgressLocation.Notification,
-            title: "Running test generation",
+            title: "Executing tests",
             cancellable: true
         }, (progress, token) => {
             token.onCancellationRequested(() => {
