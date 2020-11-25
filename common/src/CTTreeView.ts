@@ -19,7 +19,6 @@ export class CTTreeView {
     private readonly _savePath: Uri;
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
-    //private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
     private _executeCanceled: boolean = false;
     private _numberOfUpdatedTests: number = 0;
     private _executingTests: boolean = false;
@@ -101,7 +100,6 @@ export class CTTreeView {
             // Asynchronouse save
             fs.writeFile(path, json, (err) => {
                 if (err) throw err;
-                console.log('Write call finished');
             })
         });                   
     }

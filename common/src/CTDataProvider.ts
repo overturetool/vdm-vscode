@@ -130,7 +130,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             }
             element.setChildren(testGroups);
 
-            return Promise.resolve(this.applyFilters(element.getChildren()));
+            return Promise.resolve(element.getChildren());
         }
 
         if(element.type == TreeItemType.TestGroup){
@@ -171,11 +171,6 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                 verdict == VerdictKind.Inconclusive ? this._icons.getIcon("inconclusive.svg") : 
                     verdict == VerdictKind.Filtered ? this._icons.getIcon("filtered.svg") : 
                         null;
-    }
-
-    private applyFilters(viewElements: TestViewElement[]): TestViewElement[]
-    {         
-        return this._filter ? viewElements.filter(viewElement => viewElement.verdict != VerdictKind.Passed && viewElement.verdict != VerdictKind.Inconclusive && viewElement.verdict != VerdictKind.Filtered): viewElements;
     }
 }
 

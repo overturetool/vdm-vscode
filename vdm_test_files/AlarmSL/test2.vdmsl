@@ -23,3 +23,12 @@ Test300000:
   let a in set {1, ..., 300000}
   	in
 			op1(a);
+Test500000: 
+  let a in set {1, ..., 500000} 
+  	in
+			op1(a);
+
+Test1000000: 
+  let a in set {1, ..., 1000000} 
+  	in
+			op1(a);

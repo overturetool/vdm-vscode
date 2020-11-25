@@ -34,7 +34,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
 
     extensionLanguage = vdmDialect;
 
-    function createServer(): Promise<ChildProcess> {
+    function createServer(): Promise<StreamInfo> {
         return new Promise(async (resolve, reject) => {
             portfinder.getPortPromise()
                 .then((dapPort) => {
@@ -63,8 +63,20 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                         return reject("Java runtime environment not found!");
                     }
                     let server = child_process.spawn(javaPath, args);
-    
-                    resolve(server);
+
+                    server.stdout.on('data', (chunk) => {
+                        console.log(`stdout received ${chunk.length} bytes of data.`);
+                    });
+                    
+                    server.stdin.on('data', (chunk) => {
+                        console.log(`stdin received ${chunk.length} bytes of data.`);
+                    });
+
+                    //resolve(server);
+                    resolve({
+                        reader: server.stdout,
+                        writer: server.stdin
+                    });
 
                     dapSupport.initDebugConfig(context, dapPort, vdmDialect)
                 })
@@ -84,6 +96,11 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
         serverOptions = () => {
             // Connect to language server via socket
             let socket = net.connect({ port: defaultLspPort });
+
+            socket.on('data', (chunk) => {
+                console.log(`Received ${chunk.length} bytes of data.`);
+            });
+
             let result: StreamInfo = {
                 writer: socket,
                 reader: socket
