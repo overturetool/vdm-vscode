@@ -19,13 +19,15 @@ export class CTTreeView {
     private readonly _savePath: Uri;
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
-    private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
+    //private _testCaseBatchRange: NumberRange = {start: 0, end: 0};
     private _executeCanceled: boolean = false;
     private _numberOfUpdatedTests: number = 0;
     private _executingTests: boolean = false;
     public batchSizeModifier = 4;
     private _currentlyExecutingTrace: traceWithTestResults;
     private _isExecutingTestGroup = false;
+    private _timeoutRef: NodeJS.Timeout;
+    private _immediateRef: NodeJS.Immediate;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -136,9 +138,12 @@ export class CTTreeView {
     {   
         if(!this._executingTests)
             return;
+
+        //Stop the UI update timer and its immediate
+        clearImmediate(this._immediateRef);
+        clearInterval(this._timeoutRef);
+
         this._executingTests = false;  
-        this._testCaseBatchRange.end = 0;
-        this._testCaseBatchRange.start = 0;
         
         // Remove tests not updated by the server
         if(!this._isExecutingTestGroup && !this._executeCanceled && this._currentlyExecutingTrace.testCases.length > this._numberOfUpdatedTests)
@@ -168,15 +173,16 @@ export class CTTreeView {
         for(let i = 0; i < testCases.length; i++)
         {
             // Update existing test case results
-            let oldTestCase: CTTestCase = this._currentlyExecutingTrace.testCases.find(tc => tc.id == testCases[i].id);
-            if(oldTestCase)
+            let newTestCase = testCases[i];
+            if(newTestCase.id <= this._currentlyExecutingTrace.testCases.length)
             {
-                oldTestCase.sequence = testCases[i].sequence;
-                oldTestCase.verdict = testCases[i].verdict;
+                let oldTestCase: CTTestCase = this._currentlyExecutingTrace.testCases[newTestCase.id-1];
+                oldTestCase.sequence = newTestCase.sequence;
+                oldTestCase.verdict = newTestCase.verdict;
             }
             //Add new test case with results
             else
-                this._currentlyExecutingTrace.testCases.push(testCases[i]);
+                this._currentlyExecutingTrace.testCases.push(newTestCase);
         }
         // Handle if user has executed all test groups manually.
         if(this._isExecutingTestGroup && testCases[testCases.length-1].id == this._currentlyExecutingTrace.testCases[this._currentlyExecutingTrace.testCases.length-1].id){
@@ -184,19 +190,6 @@ export class CTTreeView {
             this._isExecutingTestGroup = false;
             return;
         }
-
-        // Update batch size
-        this._testCaseBatchRange.end = testCases[testCases.length-1].id;
-
-        // Return if batch size isn't big enough to warrent a view update.
-        if(this._testCaseBatchRange.end - this._testCaseBatchRange.start < this._testProvider.groupSize * this.batchSizeModifier)
-            return;
-
-        // Set the new start test number of the _testCaseBatchRange
-        this._testCaseBatchRange.start = testCases[testCases.length-1].id;
-
-        // Rebuild the trace view to update verdict for the group and its tests
-        this._testProvider.rebuildViewFromElement([].concat(...this._testProvider.getRoots().map(symbolViewElement => symbolViewElement.getChildren())).find(traceViewElement => traceViewElement.label == this._currentlyExecutingTrace.name));
     }
      
     private setButtonsAndContext(canFilter: boolean){
@@ -401,7 +394,7 @@ export class CTTreeView {
     private onDidExpandElement(viewElement : TestViewElement){
         this._testProvider.handleElementExpanded(viewElement);
         
-        if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1)
+        if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1 || (this._currentlyExecutingTrace.name == viewElement.label && this._currentlyExecutingTrace.testCases.length < 1))
             this.ctGenerate(viewElement);
         
         if (viewElement.type == TreeItemType.TestGroup)
@@ -416,6 +409,11 @@ export class CTTreeView {
         if(viewElement.type == TreeItemType.Test)
             // Get the trace label name from the view items grandparent and find the corresponding trace in _combinatorialTests and set/show the test sequence in the result view
             this._resultProvider.setTestSequenceResults([].concat(...this._combinatorialTests.map(symbol => symbol.traces)).find(trace => trace.name == viewElement.getParent().getParent().label).testCases.find(testResult => testResult.id+"" == viewElement.label).sequence);     
+    }
+
+    private updateUI()
+    {
+        this._immediateRef = setImmediate(() => this._testProvider.rebuildViewFromElement([].concat(...this._testProvider.getRoots().map(symbolViewElement => symbolViewElement.getChildren())).find(traceViewElement => traceViewElement.label == this._currentlyExecutingTrace.name)));
     }
 
     private async execute(viewElement: TestViewElement, filter: boolean){
@@ -443,7 +441,8 @@ export class CTTreeView {
             return new Promise(async (resolve, reject) => {
                 try {
                     this.showCancelButton(true);
-         
+                    //Start a timer to update the UI periodically - this timer is cleared in the finished function
+                    this._timeoutRef = setInterval(() => this.updateUI(), 1000);
                     this._executingTests = true;
                     if (viewElement.type == TreeItemType.Trace){
                         this._isExecutingTestGroup = false;
