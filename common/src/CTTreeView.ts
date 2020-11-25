@@ -394,8 +394,8 @@ export class CTTreeView {
     private onDidExpandElement(viewElement : TestViewElement){
         this._testProvider.handleElementExpanded(viewElement);
         
-        if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1 || (this._currentlyExecutingTrace.name == viewElement.label && this._currentlyExecutingTrace.testCases.length < 1))
-            this.ctGenerate(viewElement);
+        // if (viewElement.type == TreeItemType.Trace && viewElement.getChildren().length < 1 || (this._currentlyExecutingTrace.name == viewElement.label && this._currentlyExecutingTrace.testCases.length < 1))
+        //     this.ctGenerate(viewElement);
         
         if (viewElement.type == TreeItemType.TestGroup)
             this._testProvider.rebuildViewFromElement(viewElement);
