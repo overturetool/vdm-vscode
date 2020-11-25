@@ -19,6 +19,7 @@ import {
     StreamInfo
 } from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { ChildProcess } from "child_process";
 
 let client : SpecificationLanguageClient;
 
@@ -33,7 +34,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
 
     extensionLanguage = vdmDialect;
 
-    function createServer(): Promise<StreamInfo> {
+    function createServer(): Promise<ChildProcess> {
         return new Promise(async (resolve, reject) => {
             portfinder.getPortPromise()
                 .then((dapPort) => {
@@ -62,11 +63,8 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                         return reject("Java runtime environment not found!");
                     }
                     let server = child_process.spawn(javaPath, args);
-
-                    resolve({
-                        reader: server.stdout,
-                        writer: server.stdin
-                    });
+    
+                    resolve(server);
 
                     dapSupport.initDebugConfig(context, dapPort, vdmDialect)
                 })
