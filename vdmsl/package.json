@@ -289,7 +289,7 @@
         },
         "vdmsl-lsp.activateServerLog": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Activate logging of server actions and protocol communication."
         },
         "vdmsl-lsp.experimentalServer": {
