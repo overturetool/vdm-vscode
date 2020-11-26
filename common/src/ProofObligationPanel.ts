@@ -1,6 +1,7 @@
-import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview } from 'vscode'
+import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Range } from 'vscode'
 import path = require("path")
-import { ProofObligation } from "./protocol.lspx"
+import { ProofObligation } from "./protocol.slsp"
+import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 
 export class ProofObligationPanel {
     private readonly _panel: WebviewPanel;
@@ -69,9 +70,9 @@ export class ProofObligationPanel {
 
                         // Open the specification file with the symbol responsible for the po
                         let doc = await workspace.openTextDocument(path);
-
+                        
                         // Show the file
-                        window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 })
+                        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(po.location.range) , viewColumn: 1 })
                         return;
                     case 'sort':
                         // Sort and post pos to javascript
@@ -186,8 +187,8 @@ export class ProofObligationPanel {
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'main.js'));
-        const styleUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'main.css'));
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.js'));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.css'));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();

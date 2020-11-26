@@ -4,11 +4,11 @@ types
            alarms   : set of Alarm
   inv mk_Plant(schedule,alarms) ==
         forall a in set alarms &
-	   forall peri in set dom schedule &
-	     QualificationOK(schedule(peri),a.quali);
+          forall peri in set dom schedule &
+            QualificationOK(schedule(peri),a.quali);
 	     
   Schedule = map Period to set of Expert
-inv sch ==
+  inv sch ==
    forall exs in set rng sch &
           exs <> {} and
           forall ex1, ex2 in set exs &
@@ -22,7 +22,7 @@ inv sch ==
 
   ExpertId = token;
 
-										Qualification = <Elec> | <Mech> | <Bio> | <Chem>;
+  Qualification = <Elec> | <Mech> | <Bio> | <Chem>;
 	   
   Alarm :: alarmtext : seq of char
            quali     : Qualification

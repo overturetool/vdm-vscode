@@ -38,12 +38,28 @@ values
   a4:Alarm = mk_Alarm("Biological attack",<Bio>);
   alarms: set of Alarm = {a1,a2,a3,a4};
   
-  plant1 : Plant = mk_Plant(s,{a1,a2,a3})
+  plant1 : Plant = mk_Plant(s,{a1,a2,a3});
   
+  vals : seq of nat = [];
+
 operations
 
 Run: Expert ==> set of Period
 Run(e) == return ExpertIsOnDuty(e, plant1);
+
+functions
+
+op1: nat -> nat
+op1(x) ==
+  x;
+
+op2: nat -> nat
+op2(x) ==
+  if (x > 80) then 
+    vals(1)
+  else
+    x
+
 
 traces 
 
@@ -60,4 +76,33 @@ traces
   Test2: let ex in set exs
          in
            ExpertIsOnDuty(ex,plant1)
+           
+  Test3: 
+    let a in set {1, ..., 100} in
+      let b in set {1, ..., 10} in
+        (
+          op1(a); op1(b);
+        ); 
  
+  Test4: 
+    let a in set {1, ..., 100} in
+      let b in set {1, ..., 100} in
+        (
+          op1(a); op2(b);
+        );
+        
+  Test5: 
+  let a in set {1, ..., 100} in
+    let b in set {1, ..., 100} in
+      let c in set {1, ..., 10} in
+      (
+        op1(a); op1(b); op1(c);
+      );
+
+  Test6: 
+  let a in set {1, ..., 100} in
+    let b in set {1, ..., 100} in
+      let c in set {1, ..., 30} in
+      (
+        op1(a); op1(b); op1(c);
+      );

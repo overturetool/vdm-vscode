@@ -11,3 +11,4 @@ webpack.config.js
 vsc-extension-quickstart.md
 copyScript.js
 *.log
+.generated

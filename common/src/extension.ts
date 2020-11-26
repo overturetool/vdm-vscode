@@ -3,116 +3,123 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as dapSupport from "./dapSupport"
+import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
+import * as util from "./Util"
 import * as path from 'path';
-import * as fs from 'fs'
 import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import * as vscode from 'vscode'
-import { 
-	workspace, 
-	ExtensionContext} from 'vscode';
-import {
-    LanguageClientOptions,
-    ServerOptions,
-    StreamInfo
-} from 'vscode-languageclient';
+import { workspace, ExtensionContext } from 'vscode';
+import {LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-
-const SERVERNAME = "lsp-0.0.1.jar"
-const VDMJNAME = "vdmj-4.3.0.jar"
 
 let client : SpecificationLanguageClient;
 
 export async function activate(context: ExtensionContext, vdmDialect : string) {
     let clientLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
     let serverLogFile = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
-    let serverMainClass = 'lsp.LSPServerStdio'
-	let vdmjPath = path.resolve(context.extensionPath,'resources', VDMJNAME);
-	let lspServerPath = path.resolve(context.extensionPath, 'resources', SERVERNAME);
+    let serverMainClass =  'lsp.LSPServerSocket';
+    let lspPort: number;
+    let dapPort: number;
 
-    function createServer(): Promise<StreamInfo> {
-        return new Promise(async (resolve, reject) => {
-            portfinder.getPortPromise()
-                .then((dapPort) => {
-                    let args = [
-                        '-Dlog.filename=' + serverLogFile,
-                        '-cp', vdmjPath + path.delimiter + lspServerPath,
-                        serverMainClass,
-                        '-' + vdmDialect,
-                        '-dap', dapPort.toString()
-                    ]
+	let vdmjPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
+    let lspServerPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
+    if(!vdmjPath || !lspServerPath)
+        return;
 
-                    // Start the LSP server
-                    let javaPath = findJavaExecutable('java');
-                    if (!javaPath) {
-                        vscode.window.showErrorMessage("Java runtime environment not found!")
-                        writeToLog(clientLogFile, "Java runtime environment not found!");
-                        return reject("Java runtime environment not found!");
-                    }
-                    let server = child_process.spawn(javaPath, args);
+    extensionLanguage = vdmDialect;
 
-                    resolve({
-                        reader: server.stdout,
-                        writer: server.stdin
-                    });
-
-                    dapSupport.initDebugConfig(context, dapPort, vdmDialect)
-                })
-                .catch((err) => {
-                    writeToLog(clientLogFile, "An error occured when finding a free dap port: " + err);
-                    return reject(err)
-                });
-        })
-    }
-
-    let serverOptions: ServerOptions
     let debug = workspace.getConfiguration(vdmDialect + '-lsp').experimentalServer;
     if (debug) {
-        let defaultLspPort = workspace.getConfiguration(vdmDialect + '-lsp').lspPort;
-        let defaultDapPort = workspace.getConfiguration(vdmDialect + '-lsp').dapPort;
-
-        serverOptions = () => {
-            // Connect to language server via socket
-            let socket = net.connect({ port: defaultLspPort });
-            let result: StreamInfo = {
-                writer: socket,
-                reader: socket
-            };
-            return Promise.resolve(result);
-        };
-
-        dapSupport.initDebugConfig(context, defaultDapPort, vdmDialect)
+        lspPort = workspace.getConfiguration(vdmDialect + '-lsp').lspPort;
+        dapPort = workspace.getConfiguration(vdmDialect + '-lsp').dapPort;
+        createClient();
     }
     else {
-        serverOptions = createServer
+        // Get two available ports, start the server and create the client
+        portfinder.getPorts(2, {host: undefined, startPort: undefined, port: undefined, stopPort: undefined}, (err, ports) => {
+            if(err)
+            {
+                vscode.window.showErrorMessage("An error occured when finding free ports: " + err)
+                util.writeToLog(clientLogFile, "An error occured when finding free ports: " + err);
+                return;
+            }
+            lspPort = ports[0];
+            dapPort = ports[1];
+
+            // Setup server arguments
+            let args : string[] = [];
+            let JVMArguments = workspace.getConfiguration(vdmDialect + '-lsp').JVMArguments;
+            if(JVMArguments != "")
+                args.push(JVMArguments);
+    
+            let activateServerLog = workspace.getConfiguration(vdmDialect + '-lsp').activateServerLog;
+            if(activateServerLog)
+                args.push('-Dlog.filename=' + serverLogFile);
+    
+            args.push(...[
+                '-cp', vdmjPath + path.delimiter + lspServerPath,
+                serverMainClass,
+                '-' + vdmDialect,
+                '-lsp', lspPort.toString(), '-dap', dapPort.toString()
+            ]);
+    
+            // Start the LSP server
+            let javaPath = util.findJavaExecutable('java');
+            if (!javaPath) {
+                vscode.window.showErrorMessage("Java runtime environment not found!")
+                util.writeToLog(clientLogFile, "Java runtime environment not found!");
+                return;
+            }
+            child_process.spawn(javaPath, args);
+
+            // Create the client and connect
+            createClient();
+        });
     }
 
-    // Setup client options
-    let clientOptions: LanguageClientOptions = {
-        // Document selector defines which files from the workspace, that is also open in the client, to monitor.
-        documentSelector: [{ language: vdmDialect }],
-        synchronize: {
-            // Setup filesystem watcher for changes in vdm files
-            fileEvents: workspace.createFileSystemWatcher('**/.' + vdmDialect)
+    // Function for creating the client
+    function createClient()
+    {
+        // Setup DAP
+        dapSupport.initDebugConfig(context, dapPort, vdmDialect)
+
+        // Setup server options
+        let serverOptions: ServerOptions = () => {
+            // Create socket connection
+            let socket = net.connect({ port: lspPort });
+            return Promise.resolve( {
+                writer: socket,
+                reader: socket
+            });
+        };
+
+        // Setup client options
+        let clientOptions: LanguageClientOptions = {
+            // Document selector defines which files from the workspace, that is also open in the client, to monitor.
+            documentSelector: [{ language: vdmDialect }],
+            synchronize: {
+                // Setup filesystem watcher for changes in vdm files
+                fileEvents: workspace.createFileSystemWatcher('**/.' + vdmDialect)
+            }
         }
+
+        // Create the language client with the defined client options and the function to create and setup the server.
+        let client = new SpecificationLanguageClient(
+            vdmDialect + '-lsp',
+            vdmDialect.toUpperCase() + ' Language Server',
+            serverOptions,
+            clientOptions,
+            context
+        );
+
+        // Start the and launch the client
+        let disposable = client.start();
+
+        // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
+        context.subscriptions.push(disposable);
     }
-
-    // Create the language client with the defined client options and the function to create and setup the server.
-    let client = new SpecificationLanguageClient(
-        vdmDialect + '-lsp',
-        vdmDialect.toUpperCase() + ' Language Server',
-        serverOptions,
-        clientOptions,
-        context
-    );
-
-    // Start the and launch the client
-    let disposable = client.start();
-
-    // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
-    context.subscriptions.push(disposable);
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -122,39 +129,4 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
-function writeToLog(path: string, msg: string) {
-    let logStream = fs.createWriteStream(path, { flags: 'w' });
-    logStream.write(msg);
-    logStream.close();
-}
-
-// MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
-function findJavaExecutable(binname: string) {
-    if (process.platform === 'win32')
-        binname = binname + '.exe';
-
-    // First search each JAVA_HOME bin folder
-    if (process.env['JAVA_HOME']) {
-        let workspaces = process.env['JAVA_HOME'].split(path.delimiter);
-        for (let i = 0; i < workspaces.length; i++) {
-            let binpath = path.join(workspaces[i], 'bin', binname);
-            if (fs.existsSync(binpath)) {
-                return binpath;
-            }
-        }
-    }
-
-    // Then search PATH parts
-    if (process.env['PATH']) {
-        let pathparts = process.env['PATH'].split(path.delimiter);
-        for (let i = 0; i < pathparts.length; i++) {
-            let binpath = path.join(pathparts[i], binname);
-            if (fs.existsSync(binpath)) {
-                return binpath;
-            }
-        }
-    }
-
-    // Else return the binary name directly (this will likely always fail downstream) 
-    return null;
-}
+export var extensionLanguage: string;
