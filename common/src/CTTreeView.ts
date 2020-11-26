@@ -28,6 +28,8 @@ export class CTTreeView {
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
     private _immediateRef: NodeJS.Immediate;
+    private _messageTimeoutRef: NodeJS.Timeout;
+
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -226,6 +228,9 @@ export class CTTreeView {
     }
 
     private async ctRebuildOutline() {
+        // Clear message
+        this._testView.message = undefined;
+
         if(this._testProvider.getRoots().length > 0){
             let res = await this._ctFeature.requestTraces();
             if (res != null)
@@ -238,7 +243,16 @@ export class CTTreeView {
                     // Filter loaded data so it matches servers
                     this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
                 });
-        }          
+        }      
+        
+        // Inform user if no traces where found
+        if(this._testProvider.getRoots().length == 0){
+            this._testView.message = "No traces found in specification";
+            if (this._messageTimeoutRef?.hasRef())
+                this._messageTimeoutRef.refresh();
+            else
+                this._messageTimeoutRef = setTimeout(() => this._testView.message = undefined, 10000);
+        }
 
         // Notify tree view of data update
         this._testProvider.rebuildViewFromElement();
