@@ -246,8 +246,8 @@ export class CTTreeView {
         }      
         
         // Inform user if no traces where found
-        if(this._testProvider.getRoots().length == 0){
-            this._testView.message = "No traces found in specification";
+        if(this._combinatorialTests.length == 0){
+            this._testView.message = "No trace found in specification";
             if (this._messageTimeoutRef?.hasRef())
                 this._messageTimeoutRef.refresh();
             else
