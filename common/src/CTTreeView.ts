@@ -317,7 +317,7 @@ export class CTTreeView {
             });
             
             // Make the generate request
-            return new Promise(async (resolve) => {
+            return new Promise<void>(async (resolve) => {
                 try {
                     await this.generate(traceViewElement);
                 } catch(error) {
@@ -452,7 +452,7 @@ export class CTTreeView {
             });
 
             // Do the execute request
-            return new Promise(async (resolve, reject) => {
+            return new Promise<void>(async (resolve, reject) => {
                 try {
                     this.showCancelButton(true);
                     //Start a timer to update the UI periodically - this timer is cleared in the finished function
