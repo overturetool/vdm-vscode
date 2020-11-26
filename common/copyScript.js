@@ -9,9 +9,9 @@ var targetResourcePath = path.join(scriptPath,'..',folderName,'resources');
 
 var localResourcePath = path.join(scriptPath, 'resources');
 
-var targetMediaPath = path.join(scriptPath,'..',folderName,'resources');
+var targetMediaPath = path.join(scriptPath,'..',folderName,'media');
 
-var localMediaPath = path.join(scriptPath, 'resources');
+var localMediaPath = path.join(scriptPath, 'media');
 
 var patternMatchForItemsToDelete = [/vdmj.*jar/i, /lsp.*jar/i, /annotations.*jar/i];
 

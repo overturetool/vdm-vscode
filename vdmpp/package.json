@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/jonaskrask/vdm-vscode"
   },
-  "publisher": "vscode",
+  "publisher": "jonaskrask",
   "engines": {
     "vscode": "^1.49.0"
   },
@@ -61,7 +61,10 @@
         "command": "extension.ctFilteredExecute",
         "title": "Filtered Evaluation",
         "category": "VDM",
-        "icon": "$(microscope)"
+        "icon": {
+          "light": "/resources/icons/light/runFiltered.svg",
+          "dark": "/resources/icons/dark/runFiltered.svg"
+        }
       },
       {
         "command": "extension.ctGenerate",
@@ -71,15 +74,18 @@
       },
       {
         "command": "extension.ctEnableTreeFilter",
-        "title": "Enable filtering of passed and inconclusive tests",
+        "title": "Show only failed tests",
         "category": "VDM",
         "icon": "$(filter)"
       },
       {
         "command": "extension.ctDisableTreeFilter",
-        "title": "Disable filtering of passed and inconclusive tests",
+        "title": "Disable filtering of tests",
         "category": "VDM",
-        "icon": "$(circle-slash)"
+        "icon": {
+          "light": "/resources/icons/light/disableFilter.svg",
+          "dark": "/resources/icons/dark/disableFilter.svg"
+        }
       },
       {
         "command": "extension.ctSendToInterpreter",
@@ -165,7 +171,7 @@
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
           "group": "vdmpp-ctView@1"
         },
         {
@@ -185,7 +191,7 @@
         },
         {
           "command": "extension.ctFilteredExecute",
-          "when": "resourceLangId == vdmpp && viewItem == trace && vdm-ct-show-run-buttons == true || resourceLangId == vdmpp && viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "when": "resourceLangId == vdmpp && viewItem == trace && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
         },
         {
@@ -281,20 +287,25 @@
           "default": "",
           "description": "JVM arguments used when launching the server."
         },
+        "vdmpp-lsp.activateServerLog": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activate logging of server actions and protocol communication."
+        },
         "vdmpp-lsp.experimentalServer": {
           "type": "boolean",
           "default": false,
-          "description": "Using experimental server. True if running client should not launch server."
+          "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
         },
         "vdmpp-lsp.lspPort": {
           "type": "integer",
           "default": 8000,
-          "description": "Default port for LSP client. Only used for debug server."
+          "description": "Port used for LSP. Only used for experimental server."
         },
         "vdmpp-lsp.dapPort": {
           "type": "integer",
           "default": 8001,
-          "description": "Default port for DAP client. Only used for debug server."
+          "description": "Port used for DAP. Only used for experimental server."
         }
       }
     },

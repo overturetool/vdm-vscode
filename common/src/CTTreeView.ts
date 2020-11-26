@@ -26,6 +26,9 @@ export class CTTreeView {
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
     public uiUpdateIntervalMS = 1000;
+    private _immediateRef: NodeJS.Immediate;
+    private _messageTimeoutRef: NodeJS.Timeout;
+
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -222,6 +225,9 @@ export class CTTreeView {
     }
 
     private async ctRebuildOutline() {
+        // Clear message
+        this._testView.message = undefined;
+
         if(this._testProvider.getRoots().length > 0){
             let res = await this._ctFeature.requestTraces();
             if (res != null)
@@ -234,7 +240,16 @@ export class CTTreeView {
                     // Filter loaded data so it matches servers
                     this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
                 });
-        }          
+        }      
+        
+        // Inform user if no traces where found
+        if(this._combinatorialTests.length == 0){
+            this._testView.message = "No trace found in specification";
+            if (this._messageTimeoutRef?.hasRef())
+                this._messageTimeoutRef.refresh();
+            else
+                this._messageTimeoutRef = setTimeout(() => this._testView.message = undefined, 10000);
+        }
 
         // Notify tree view of data update
         this._testProvider.rebuildViewFromElement();
@@ -299,7 +314,7 @@ export class CTTreeView {
             });
             
             // Make the generate request
-            return new Promise(async (resolve) => {
+            return new Promise<void>(async (resolve) => {
                 try {
                     await this.generate(traceViewElement);
                 } catch(error) {
@@ -434,7 +449,7 @@ export class CTTreeView {
             });
 
             // Do the execute request
-            return new Promise(async (resolve, reject) => {
+            return new Promise<void>(async (resolve, reject) => {
                 try {
                     this.showCancelButton(true);
                     //Start a timer to update the UI periodically - this timer is cleared in the finished function
@@ -468,7 +483,7 @@ export class CTTreeView {
                         };
             
                         // Request execute with range
-                        await this._ctFeature.requestExecute(viewElement.getParent().label, false, range)
+                        await this._ctFeature.requestExecute(viewElement.getParent().label, false, range, progress)
                     }
                     // Resole the request
                     resolve();
