@@ -22,11 +22,10 @@ export class CTTreeView {
     private _executeCanceled: boolean = false;
     private _numberOfUpdatedTests: number = 0;
     private _executingTests: boolean = false;
-    public batchSizeModifier = 4;
     private _currentlyExecutingTrace: traceWithTestResults;
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
-    private _immediateRef: NodeJS.Immediate;
+    public uiUpdateIntervalMS = 1000;
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -138,7 +137,6 @@ export class CTTreeView {
             return;
 
         //Stop the UI update timer and its immediate
-        clearImmediate(this._immediateRef);
         clearInterval(this._timeoutRef);
 
         this._executingTests = false;  
@@ -411,7 +409,7 @@ export class CTTreeView {
 
     private updateUI()
     {
-        this._immediateRef = setImmediate(() => this._testProvider.rebuildViewFromElement([].concat(...this._testProvider.getRoots().map(symbolViewElement => symbolViewElement.getChildren())).find(traceViewElement => traceViewElement.label == this._currentlyExecutingTrace.name)));
+        this._testProvider.rebuildViewFromElement([].concat(...this._testProvider.getRoots().map(symbolViewElement => symbolViewElement.getChildren())).find(traceViewElement => traceViewElement.label == this._currentlyExecutingTrace.name));
     }
 
     private async execute(viewElement: TestViewElement, filter: boolean){
@@ -440,7 +438,7 @@ export class CTTreeView {
                 try {
                     this.showCancelButton(true);
                     //Start a timer to update the UI periodically - this timer is cleared in the finished function
-                    this._timeoutRef = setInterval(() => this.updateUI(), 1000);
+                    this._timeoutRef = setInterval(() => this.updateUI(), this.uiUpdateIntervalMS);
                     this._executingTests = true;
                     if (viewElement.type == TreeItemType.Trace){
                         this._isExecutingTestGroup = false;
@@ -514,8 +512,7 @@ export class CTTreeView {
                     statusBarMessage.dispose();
                 }
             });
-        });
-        
+        });       
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {

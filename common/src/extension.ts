@@ -89,7 +89,6 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
         let serverOptions: ServerOptions = () => {
             // Create socket connection
             let socket = net.connect({ port: lspPort });
-
             return Promise.resolve( {
                 writer: socket,
                 reader: socket
