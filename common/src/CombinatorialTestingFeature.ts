@@ -110,7 +110,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
             var partialResultHandlerDisposable = this._client.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests, name));
 
             // Setup work done  progress handler
-            if (this._supportWorkDone){
+            if (this._supportWorkDone && progress != undefined){
                 this._progress = 0;
                 let workDoneTokenToken = this.generateToken();
                 params.workDoneToken = workDoneTokenToken;
