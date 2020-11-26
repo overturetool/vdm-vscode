@@ -486,7 +486,7 @@ export class CTTreeView {
                         };
             
                         // Request execute with range
-                        await this._ctFeature.requestExecute(viewElement.getParent().label, false, range)
+                        await this._ctFeature.requestExecute(viewElement.getParent().label, false, range, progress)
                     }
                     // Resole the request
                     resolve();
