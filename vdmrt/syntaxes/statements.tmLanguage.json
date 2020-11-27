@@ -8,7 +8,7 @@
 	],
 	"repository": {
 		"statements": {
-			"name": "meta.statements.vdmpp",
+			"name": "meta.statements.vdmrt",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -36,18 +36,18 @@
 		"comment": {
 			"patterns": [
 				{
-					"name": "comment.line.double-dash.vdmpp",
+					"name": "comment.line.double-dash.vdmrt",
 					"match": "--.*"
 				}
 			]
 		},
 		"strings": {
-			"name": "string.quoted.double.vdmpp",
+			"name": "string.quoted.double.vdmrt",
 			"begin": "\"",
 			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.vdmpp",
+					"name": "constant.character.escape.vdmrt",
 					"match": "\\\\."
 				}
 			]
@@ -55,7 +55,7 @@
 		"control-statements": {
 			"patterns": [
 				{
-					"name": "keyword.control.statements.conditional.vdmpp",
+					"name": "keyword.control.statements.conditional.vdmrt",
 					"match": "\\b(if|then|else|elseif|cases|end)\\b"
 				}
 			]
@@ -63,7 +63,7 @@
 		"local-binding-statements":{
 			"patterns": [
 				{
-					"name": "storage.type.vdmpp",
+					"name": "storage.type.vdmrt",
 					"match": "\\b(let)\\b"
 				}
 			]
@@ -71,11 +71,11 @@
 		"expressions": {
 			"patterns": [
 				{
-					"name": "keyword.operator.expressions.binary.vdmpp",
+					"name": "keyword.operator.expressions.binary.vdmrt",
 					"match": "\\b(div|rem|mod|or|and|in set|not in set|subset|psubset|union|inter|munion|comp)\\b"
 				},
 				{
-					"name": "keyword.operator.expressions.unary.vdmpp",
+					"name": "keyword.operator.expressions.unary.vdmrt",
 					"match": "\\b(abs|floor|not|card|power|dunion|dinter|hd|tl|len|elems|inds|reverse|conc|dom|rng|merge|inverse|mod|in|set|comp|and|or)\\b"
 				}
 			]
@@ -91,19 +91,19 @@
 		"operator": {
 			"patterns": [
 				{
-					"name": "keyword.operator.assignment.vdmpp",
+					"name": "keyword.operator.assignment.vdmrt",
 					"match": "(\\||\\&|=|\\+|-|\\*|\\/|>|<)"
 				},
 				{
-					"name": "keyword.operator.assignment.vdmpp",
+					"name": "keyword.operator.assignment.vdmrt",
 					"match": "\\b(mod|in set|dom|comp|iterate|and|or|abs|floor|card|power|dunion|dinter)\\b"
 				},
 				{
-					"name": "keyword.operator.new.vdmpp",
+					"name": "keyword.operator.new.vdmrt",
 					"match": "\\b(new)\\b"
 				}
 			]
 		}
 	},
-	"scopeName": "source.vdmpp.statements"
+	"scopeName": "source.vdmrt.statements"
 }

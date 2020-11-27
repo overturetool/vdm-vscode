@@ -19,7 +19,7 @@
                     "include": "#enum"
                 },
 				{
-					"name": "support.type.basic.vdmpp",
+					"name": "support.type.basic.vdmrt",
 					"match": "\\b(bool|nat|nat1|int|rat|real|char|token)\\b"
 				}
 			]
@@ -28,10 +28,10 @@
 			"match": "(seq of) (\\S+)",
 			"captures": {
 				"1": {
-					"name": "support.type.basic.vdmpp"
+					"name": "support.type.basic.vdmrt"
 				},
 				"2": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmrt"
 				}
 			}
 		},
@@ -39,16 +39,16 @@
 			"match": "(map) (\\S+) (to) (\\S+)",
 			"captures": {
 				"1": {
-					"name": "support.type.basic.vdmpp"
+					"name": "support.type.basic.vdmrt"
 				},
 				"2": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmrt"
 				},
 				"3": {
-					"name": "support.type.basic.vdmpp"
+					"name": "support.type.basic.vdmrt"
 				},
 				"4": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmrt"
 				}
 			}
         },
@@ -56,10 +56,10 @@
             "match": "<([^>]+)>",
             "captures": {
                 "1": {
-                    "name": "support.type.basic.vdmpp"
+                    "name": "support.type.basic.vdmrt"
                 }
             }
         }
 	},
-	"scopeName": "source.vdmpp.type"
+	"scopeName": "source.vdmrt.type"
 }

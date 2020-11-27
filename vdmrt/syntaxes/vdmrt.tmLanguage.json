@@ -11,23 +11,23 @@
 	],
 	"repository": {
 		"class-declator": {
-			"name": "meta.class.vdmpp",
+			"name": "meta.class.vdmrt",
 			"begin": "(class)\\s+(\\S+)",
 			"end": "(end)\\s+(\\S+)",
 			"beginCaptures": {
 				"1": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmrt"
 				},
 				"2": {
-					"name": "entity.name.class.vdmpp"
+					"name": "entity.name.class.vdmrt"
 				}
 			},
 			"endCaptures": {
 				"1": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmrt"
 				},
 				"2": {
-					"name": "entity.name.class.vdmpp"
+					"name": "entity.name.class.vdmrt"
 				}
 			},
 			"patterns": [
@@ -60,20 +60,20 @@
 					"include": "#definitions"
 				},
 				{
-					"include": "source.vdmpp.type"
+					"include": "source.vdmrt.type"
 				},
 				{
-					"include": "source.vdmpp.number"
+					"include": "source.vdmrt.number"
 				},
 				{
-					"include": "source.vdmpp.statements"
+					"include": "source.vdmrt.statements"
 				}
 			]
 		},
 		"definitions": {
 			"patterns": [
 				{
-					"name": "entity.name.function.vdmpp",
+					"name": "entity.name.function.vdmrt",
 					"match": "\\b(operations|functions|types|values|instance variables)\\b"
 				}
 			]
@@ -81,7 +81,7 @@
 		"modifier": {
 			"patterns": [
 				{
-					"name": "storage.modifier.vdmpp",
+					"name": "storage.modifier.vdmrt",
 					"match": "\\b(public|private|static|pre|post|pure)\\b"
 				}
 			]
@@ -89,13 +89,13 @@
 		"variable-name": {
 			"patterns": [
 				{
-					"name": "variable.other.readwrite.vdmpp",
+					"name": "variable.other.readwrite.vdmrt",
 					"match": "([^:()\\s=>])"
 				}
 			]
 		},
 		"instance-variables-definition": {
-			"name": "meta.instance-variables.vdmpp",
+			"name": "meta.instance-variables.vdmrt",
 			"begin": "\\b(instance variables)\\b",
 			"end": "(.*)(?=(operations|functions|types|values|end))",
 			"beginCaptures": {
@@ -117,7 +117,7 @@
 			]
 		},
 		"instance-variables-declator": {
-			"name": "meta.instance-variables.declator.vdmpp",
+			"name": "meta.instance-variables.declator.vdmrt",
 			"begin": "(\\S+)\\s*:\\s*([^;\\n]+)",
 			"end": ";",
 			"beginCaptures": {
@@ -131,7 +131,7 @@
 				"2": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
 							"include": "#statements"
@@ -141,7 +141,7 @@
 			}
 		},
 		"types-definition": {
-			"name": "meta.types.vdmpp",
+			"name": "meta.types.vdmrt",
 			"begin": "\\b(types)\\b",
 			"end": "(.*)(?=(operations|functions|values|instance variables|end))",
 			"beginCaptures": {
@@ -163,7 +163,7 @@
 			]
 		},
 		"types-declator": {
-			"name": "meta.types.declator.vdmpp",
+			"name": "meta.types.declator.vdmrt",
 			"begin": "(public|private)\\s+(\\S+)\\s+=\\s+([^;]+)",
 			"end": ";",
 			"beginCaptures": {
@@ -184,10 +184,10 @@
 				"3": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmrt",
 							"match": "\\S+"
 						}
 					]
@@ -200,7 +200,7 @@
 			]
 		},
 		"values-definition": {
-			"name": "meta.values.vdmpp",
+			"name": "meta.values.vdmrt",
 			"begin": "\\b(values)\\b",
 			"end": "(.*)(?=(operations|functions|types|instance variables|end))",
 			"beginCaptures": {
@@ -222,7 +222,7 @@
 			]
 		},
 		"values-declator": {
-			"name": "meta.values.declator.vdmpp",
+			"name": "meta.values.declator.vdmrt",
 			"begin": "(public|private)\\s+(static)\\s+(\\S+)\\s+:\\s+(\\S+)",
 			"end": ";",
 			"beginCaptures": {
@@ -250,10 +250,10 @@
 				"4": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmrt",
 							"match": "\\S+"
 						}
 					]
@@ -261,10 +261,10 @@
 			},
 			"endCaptures": {
 				"1": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmrt"
 				},
 				"2": {
-					"name": "entity.name.class.vdmpp"
+					"name": "entity.name.class.vdmrt"
 				}
 			},
 			"patterns": [
@@ -274,7 +274,7 @@
 			]
 		},
 		"functions-definition": {
-			"name": "meta.functions.vdmpp",
+			"name": "meta.functions.vdmrt",
 			"begin": "\\b(functions)\\b",
 			"end": ".*(?=operations|values|types|instance variables|end)",
 			"beginCaptures": {
@@ -299,7 +299,7 @@
 			]
 		},
 		"functions-declator": {
-			"name": "meta.functions.declator.vdmpp",
+			"name": "meta.functions.declator.vdmrt",
 			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
 			"beginCaptures": {
 				"1": {
@@ -315,10 +315,10 @@
 				"3": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmrt",
 							"match": "\\S+"
 						}
 					]
@@ -332,10 +332,10 @@
 				"2": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmrt",
 							"match": "\\S+"
 						}
 					]
@@ -348,12 +348,12 @@
 			]
 		},
 		"functions-implementation": {
-			"name": "meta.functions.implementation.vdmpp",
+			"name": "meta.functions.implementation.vdmrt",
 			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
 			"end": ";",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmpp"
+					"name": "entity.name.function.vdmrt"
 				}
 			},
 			"patterns": [
@@ -363,7 +363,7 @@
 			]
 		},
 		"operations-definition": {
-			"name": "meta.operations.vdmpp",
+			"name": "meta.operations.vdmrt",
 			"begin": "\\b(operations)\\b",
 			"end": "(.*)(?=(functions|values|types|instance variables|end))",
 			"beginCaptures": {
@@ -388,7 +388,7 @@
 			]
 		},
 		"operations-declator": {
-			"name": "meta.operations.declator.vdmpp",
+			"name": "meta.operations.declator.vdmrt",
 			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
 			"beginCaptures": {
 				"1": {
@@ -404,10 +404,10 @@
 				"3": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmrt",
 							"match": "\\S+"
 						}
 					]
@@ -421,10 +421,10 @@
 				"2": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmrt.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmrt",
 							"match": "\\S+"
 						}
 					]
@@ -437,12 +437,12 @@
 			]
 		},
 		"operations-implementation": {
-			"name": "meta.operations.implementation.vdmpp",
+			"name": "meta.operations.implementation.vdmrt",
 			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
 			"end": ";",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmpp"
+					"name": "entity.name.function.vdmrt"
 				}
 			},
 			"patterns": [
@@ -455,12 +455,12 @@
 			]
 		},
 		"use-function":{
-			"name": "meta.use-function.vdmpp",
+			"name": "meta.use-function.vdmrt",
 			"begin": "(\\S+)\\s*\\(",
 			"end": "\\)",
 			"beginCaptures": {
 				"1":{
-					"name": "support.function.vdmpp"
+					"name": "support.function.vdmrt"
 				}
 			}
 		}

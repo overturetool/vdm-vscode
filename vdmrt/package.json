@@ -333,11 +333,11 @@
         "path": "./syntaxes/number.tmLanguage.json"
       },
       {
-        "scopeName": "source.vdmpp.type",
+        "scopeName": "source.vdmrt.type",
         "path": "./syntaxes/type.tmLanguage.json"
       },
       {
-        "scopeName": "source.vdmpp.statements",
+        "scopeName": "source.vdmrt.statements",
         "path": "./syntaxes/statements.tmLanguage.json"
       }
     ],
