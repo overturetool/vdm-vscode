@@ -1,0 +1,70 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "type",
+	"patterns": [
+		{
+			"include": "#basicTypes"
+		},
+		{
+			"include": "#truefalse"
+		},
+		{
+			"include": "#collection"
+		},
+		{
+			"include": "#enum"
+		}
+	],
+	"repository": {
+		"basicTypes": {
+			"name": "support.type.basic.vdm",
+			"match": "\\b(bool|nat|nat1|int|rat|real|char|token)\\b"
+		},
+		"truefalse": {
+			"name": "constant.language.boolean.vdm",
+			"match": "\\b(true|false)\\b"
+		},
+		"collection": {
+			"name": "storage.modifier.collection.vdm",
+			"match": "\\b(set of|set1 of|seq of|seq1 of|map|to)\\b"
+		},
+		"enum": {
+			"match": "<([^>]+)>",
+			"captures": {
+				"1": {
+					"name": "support.type.basic.vdm"
+				}
+			}
+		},
+		"seq-of": {
+			"match": "(seq of) (\\S+)",
+			"captures": {
+				"1": {
+					"name": "support.type.basic.vdm"
+				},
+				"2": {
+					"name": "storage.type.vdm"
+				}
+			}
+		},
+		"map-to": {
+			"match": "(map) (\\S+) (to) (\\S+)",
+			"captures": {
+				"1": {
+					"name": "support.type.basic.vdm"
+				},
+				"2": {
+					"name": "storage.type.vdm"
+				},
+				"3": {
+					"name": "support.type.basic.vdm"
+				},
+				"4": {
+					"name": "storage.type.vdm"
+				}
+			}
+		}
+		
+	},
+	"scopeName": "source.vdm.type"
+}

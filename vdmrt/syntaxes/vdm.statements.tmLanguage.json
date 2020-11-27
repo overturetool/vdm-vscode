@@ -1,0 +1,81 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "statements",
+	"patterns": [
+		{
+			"include": "#statements"
+		}
+	],
+	"repository": {
+		"statements": {
+			"name": "meta.statements.vdmpp",
+			"patterns": [
+				{
+					"include": "#comment"
+				},
+				{
+					"include": "#strings"
+				},
+				{
+					"include": "#control-statements"
+				},
+				{
+					"include": "#local-binding-statements"
+				},
+				{
+					"include": "#expressions"
+				},
+				{
+					"include": "#others"
+				},
+				{
+					"include": "#operator"
+				}
+			]
+		},
+		"comment": {
+			"patterns": [
+				{
+					"name": "comment.line.double-dash.vdmpp",
+					"match": "--.*"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.vdmpp",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.vdmpp",
+					"match": "\\\\."
+				}
+			]
+		},
+		"control-statements": {
+			"patterns": [
+				{
+					"name": "keyword.control.statements.conditional.vdmpp",
+					"match": "\\b(if|then|else|elseif|cases|end)\\b"
+				}
+			]
+		},
+		"local-binding-statements":{
+			"patterns": [
+				{
+					"name": "keyword.control.localBinding.vdmpp",
+					"match": "\\b(let|in)\\b"
+				}
+			]
+		},
+		"others": {
+			"patterns": [
+				{
+					"name": "keyword.other.vdmsl",
+					"match": "\\b(#else|#endif|#ifdef|#ifndef|RESULT)\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.vdm.statements"
+}
