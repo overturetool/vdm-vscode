@@ -26,7 +26,7 @@
 		},
 		"collection": {
 			"name": "storage.modifier.collection.vdm",
-			"match": "\\b(set of|set1 of|seq of|seq1 of)\\b"
+			"match": "\\b(set of|set1 of|seq of|seq1 of|map|to)\\b"
 		},
 		"enum": {
 			"match": "<([^>]+)>",
