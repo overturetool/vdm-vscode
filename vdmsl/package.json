@@ -329,16 +329,24 @@
         "path": "./syntaxes/vdmsl.tmLanguage.json"
       },
       {
-        "scopeName": "source.vdmsl.number",
-        "path": "./syntaxes/number.tmLanguage.json"
+        "scopeName": "source.vdm",
+        "path": "./syntaxes/vdm.tmLanguage.json"
       },
       {
-        "scopeName": "source.vdmpp.type",
-        "path": "./syntaxes/type.tmLanguage.json"
+        "scopeName": "source.vdm.type",
+        "path": "./syntaxes/vdm.type.tmLanguage.json"
       },
       {
-        "scopeName": "source.vdmpp.statements",
-        "path": "./syntaxes/statements.tmLanguage.json"
+        "scopeName": "source.vdm.number",
+        "path": "./syntaxes/vdm.number.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.operators",
+        "path": "./syntaxes/vdm.operators.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.statements",
+        "path": "./syntaxes/vdm.statements.tmLanguage.json"
       }
     ],
     "debuggers": [
