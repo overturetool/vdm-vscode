@@ -19,7 +19,7 @@
                     "include": "#enum"
                 },
 				{
-					"name": "support.type.basic.vdmpp",
+					"name": "support.type.basic.vdmsl",
 					"match": "\\b(bool|nat|nat1|int|rat|real|char|token)\\b"
 				}
 			]
@@ -28,10 +28,10 @@
 			"match": "(seq of) (\\S+)",
 			"captures": {
 				"1": {
-					"name": "support.type.basic.vdmpp"
+					"name": "support.type.basic.vdmsl"
 				},
 				"2": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmsl"
 				}
 			}
 		},
@@ -39,16 +39,16 @@
 			"match": "(map) (\\S+) (to) (\\S+)",
 			"captures": {
 				"1": {
-					"name": "support.type.basic.vdmpp"
+					"name": "support.type.basic.vdmsl"
 				},
 				"2": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmsl"
 				},
 				"3": {
-					"name": "support.type.basic.vdmpp"
+					"name": "support.type.basic.vdmsl"
 				},
 				"4": {
-					"name": "storage.type.vdmpp"
+					"name": "storage.type.vdmsl"
 				}
 			}
         },
@@ -56,10 +56,10 @@
             "match": "<([^>]+)>",
             "captures": {
                 "1": {
-                    "name": "support.type.basic.vdmpp"
+                    "name": "support.type.basic.vdmsl"
                 }
             }
         }
 	},
-	"scopeName": "source.vdmpp.type"
+	"scopeName": "source.vdmsl.type"
 }

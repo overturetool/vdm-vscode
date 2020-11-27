@@ -31,20 +31,20 @@
 					"include": "#definitions"
 				},
 				{
-					"include": "source.vdmpp.type"
+					"include": "source.vdmsl.type"
 				},
 				{
 					"include": "source.vdmsl.number"
 				},
 				{
-					"include": "source.vdmpp.statements"
+					"include": "source.vdmsl.statements"
 				}
 			]
 		},
 		"definitions": {
 			"patterns": [
 				{
-					"name": "entity.name.function.vdmpp",
+					"name": "entity.name.function.vdmsl",
 					"match": "\\b(operations|functions|types|values|instance variables)\\b"
 				}
 			]
@@ -52,7 +52,7 @@
 		"modifier": {
 			"patterns": [
 				{
-					"name": "storage.modifier.vdmpp",
+					"name": "storage.modifier.vdmsl",
 					"match": "\\b(public|private|static|pre|post|pure)\\b"
 				}
 			]
@@ -60,13 +60,13 @@
 		"variable-name": {
 			"patterns": [
 				{
-					"name": "variable.other.readwrite.vdmpp",
+					"name": "variable.other.readwrite.vdmsl",
 					"match": "([^:()\\s=>])"
 				}
 			]
 		},
 		"instance-variables-definition": {
-			"name": "meta.instance-variables.vdmpp",
+			"name": "meta.instance-variables.vdmsl",
 			"begin": "\\b(instance variables)\\b",
 			"end": "(.*)(?=(operations|functions|types|values|end))",
 			"beginCaptures": {
@@ -88,7 +88,7 @@
 			]
 		},
 		"instance-variables-declator": {
-			"name": "meta.instance-variables.declator.vdmpp",
+			"name": "meta.instance-variables.declator.vdmsl",
 			"begin": "(\\S+)\\s*:\\s*([^;\\n]+)",
 			"end": ";",
 			"beginCaptures": {
@@ -102,7 +102,7 @@
 				"2": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
 							"include": "#statements"
@@ -112,7 +112,7 @@
 			}
 		},
 		"types-definition": {
-			"name": "meta.types.vdmpp",
+			"name": "meta.types.vdmsl",
 			"begin": "\\b(types)\\b",
 			"end": "(.*)(?=(operations|functions|values|instance variables|end))",
 			"beginCaptures": {
@@ -134,7 +134,7 @@
 			]
 		},
 		"types-declator": {
-			"name": "meta.types.declator.vdmpp",
+			"name": "meta.types.declator.vdmsl",
 			"begin": "(public|private)\\s+(\\S+)\\s+=\\s+([^;]+)",
 			"end": ";",
 			"beginCaptures": {
@@ -155,10 +155,10 @@
 				"3": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmsl",
 							"match": "\\S+"
 						}
 					]
@@ -171,7 +171,7 @@
 			]
 		},
 		"values-definition": {
-			"name": "meta.values.vdmpp",
+			"name": "meta.values.vdmsl",
 			"begin": "\\b(values)\\b",
 			"end": "(.*)(?=(operations|functions|types|instance variables|end))",
 			"beginCaptures": {
@@ -193,7 +193,7 @@
 			]
 		},
 		"values-declator": {
-			"name": "meta.values.declator.vdmpp",
+			"name": "meta.values.declator.vdmsl",
 			"begin": "(public|private)\\s+(static)\\s+(\\S+)\\s+:\\s+(\\S+)",
 			"end": ";",
 			"beginCaptures": {
@@ -221,10 +221,10 @@
 				"4": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmsl",
 							"match": "\\S+"
 						}
 					]
@@ -245,7 +245,7 @@
 			]
 		},
 		"functions-definition": {
-			"name": "meta.functions.vdmpp",
+			"name": "meta.functions.vdmsl",
 			"begin": "\\b(functions)\\b",
 			"end": ".*(?=operations|values|types|instance variables|end)",
 			"beginCaptures": {
@@ -270,7 +270,7 @@
 			]
 		},
 		"functions-declator": {
-			"name": "meta.functions.declator.vdmpp",
+			"name": "meta.functions.declator.vdmsl",
 			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
 			"beginCaptures": {
 				"1": {
@@ -286,10 +286,10 @@
 				"3": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
-							"name": "support.type.primitive.vdmpp",
+							"name": "support.type.primitive.vdmsl",
 							"match": "\\S+"
 						}
 					]
@@ -303,7 +303,7 @@
 				"2": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
 							"name": "support.type.primitive.vdmsl",
@@ -319,12 +319,12 @@
 			]
 		},
 		"functions-implementation": {
-			"name": "meta.functions.implementation.vdmpp",
+			"name": "meta.functions.implementation.vdmsl",
 			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
 			"end": ";",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmpp"
+					"name": "entity.name.function.vdmsl"
 				}
 			},
 			"patterns": [
@@ -334,7 +334,7 @@
 			]
 		},
 		"operations-definition": {
-			"name": "meta.operations.vdmpp",
+			"name": "meta.operations.vdmsl",
 			"begin": "\\b(operations)\\b",
 			"end": "(.*)(?=(functions|values|types|instance variables|end))",
 			"beginCaptures": {
@@ -359,7 +359,7 @@
 			]
 		},
 		"operations-declator": {
-			"name": "meta.operations.declator.vdmpp",
+			"name": "meta.operations.declator.vdmsl",
 			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
 			"beginCaptures": {
 				"1": {
@@ -375,7 +375,7 @@
 				"3": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
 							"name": "support.type.primitive.vdmsl",
@@ -392,7 +392,7 @@
 				"2": {
 					"patterns": [
 						{
-							"include": "source.vdmpp.type"
+							"include": "source.vdmsl.type"
 						},
 						{
 							"name": "support.type.primitive.vdmsl",
@@ -408,12 +408,12 @@
 			]
 		},
 		"operations-implementation": {
-			"name": "meta.operations.implementation.vdmpp",
+			"name": "meta.operations.implementation.vdmsl",
 			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
 			"end": ";",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmpp"
+					"name": "entity.name.function.vdmsl"
 				}
 			},
 			"patterns": [
@@ -426,12 +426,12 @@
 			]
 		},
 		"use-function":{
-			"name": "meta.use-function.vdmpp",
+			"name": "meta.use-function.vdmsl",
 			"begin": "(\\S+)\\s*\\(",
 			"end": "\\)",
 			"beginCaptures": {
 				"1":{
-					"name": "support.function.vdmpp"
+					"name": "support.function.vdmsl"
 				}
 			}
 		}
