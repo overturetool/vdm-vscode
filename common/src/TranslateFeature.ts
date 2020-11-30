@@ -25,9 +25,9 @@ export class TranslateFeature implements StaticFeature {
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         // Client supports POG
         if(!capabilities.experimental)
-            capabilities.experimental = { translate: true };
+            capabilities.experimental = { translateProvider: true };
         else
-            Object.assign(capabilities.experimental, {translate: true});
+            Object.assign(capabilities.experimental, {translateProvider: true});
     }
     initialize(capabilities: ServerCapabilities<any>, _documentSelector: DocumentSelector): void {
         // If server supports POG
