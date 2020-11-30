@@ -43,16 +43,16 @@
 		},
 		"combinators": {
 			"name": "keyword.other.combinators.vdm",
-			"match": "(\\*\\*|comp)"
+			"match": "\\b(\\*\\*|comp)\\b"
 		},
 		"applicators": {},
 		"arithmetic": {
 			"name": "keyword.operator.arithmetic.vdm",
-			"match": "(\\+|\\-|\\*|\\/|\\\\|\\^)"
+			"match": "\\b(\\+|\\-|\\*|\\/|\\\\|\\^)\\b"
 		},
 		"map": {
 			"name": "keyword.operator.map.vdm",
-			"match": "(\\+\\+|\\<\\:|\\<\\-\\:|\\:\\>|\\:\\-\\>)"
+			"match": "\\b(\\+\\+|\\<\\:|\\<\\-\\:|\\:\\>|\\:\\-\\>)\\b"
 		},
 		"evaluators": {
 			"name": "keyword.other.evaluators.vdm",
@@ -60,11 +60,11 @@
 		},
 		"relations": {
 			"name": "keyword.operator.relations.vdm",
-			"match": "(<=|>=|<|>|=|==|<>)"
+			"match": "\\b(<=|>=|<|>|=|==|<>)\\b"
 		},
 		"set": {
 			"name": "keyword.other.set.vdm",
-			"match": "(subset|psubset|in set|not in set)"
+			"match": "\\b(subset|psubset|in set|not in set)\\b"
 		},
 		"connectives": {
 			"name": "keyword.other.connectives.vdm",
@@ -77,7 +77,7 @@
 		},
 		"other": {
 			"name": "keyword.other.vdm",
-			"match": "(\\.\\.\\.|forall|exists|exists1|iota|lambda)"
+			"match": "\\b(\\.\\.\\.|forall|exists|exists1|iota|lambda)\\b"
 		}
 	},
 	"scopeName": "source.vdm.operators"
