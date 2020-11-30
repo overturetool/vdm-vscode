@@ -1,6 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Uri } from 'vscode';
+import { DocumentUri } from 'vscode-languageclient';
 
 export function ensureDirectoryExistence(filePath) {
     var dirname = path.dirname(filePath);
@@ -12,7 +13,7 @@ export function ensureDirectoryExistence(filePath) {
 }
 
 export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.search](string: string): number; }): string {
-    if (!fs.existsSync(resourcesPath) || !fs.lstatSync(resourcesPath).isDirectory())
+    if (!fs.existsSync(resourcesPath) || !isDir(resourcesPath))
         return null;
 
     let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
@@ -28,12 +29,16 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
     return null;
 }
 
-export function createTimestampedDirectory(rootPath: string, dirName:string): Uri{
+export function isDir(path: fs.PathLike): boolean {
+    return fs.lstatSync(path).isDirectory();
+}
+
+export function createTimestampedDirectory(rootPath: Uri, dirName:string): DocumentUri{
     var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-    let fullPath = path.resolve(rootPath, dirName + " " + dateString)
-    if (!fs.existsSync(fullPath)){
-        fs.mkdirSync(fullPath);
-        return Uri.parse(fullPath);
+    let fullUri = Uri.joinPath(rootPath, dirName+ " " + dateString);
+    if (!fs.existsSync(fullUri.fsPath)){
+        fs.mkdirSync(fullUri.fsPath, {recursive: true});
+        return fullUri.toString();
     }
 
     throw new Error("Failed to create directory.");

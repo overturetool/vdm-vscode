@@ -50,20 +50,21 @@ export class TranslateFeature implements StaticFeature {
 
     private async translateToLaTeX(){
         window.setStatusBarMessage(`Translating to ${this._languageKindName}.`, 1000);
-
         try {
             // Setup message parameters
             let params: TranslateParams = {
-                uri: this._client.projectRoot?.fsPath,
+                uri: null, //TODO Change this when workspace has been implemented.
                 language: this._languageKind,
-                saveUri: util.createTimestampedDirectory(this._client.projectSavedDataPath.fsPath, this._languageKindName)?.fsPath
+                saveUri:util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKindName).toString()
             };
 
             // Send request
-            const mainFileUri = await this._client.sendRequest(TranslateRequest.type, params);
-
-            // Open the resulting LaTeX file
-            let doc = await workspace.openTextDocument(mainFileUri.uri);
+            const response = await this._client.sendRequest(TranslateRequest.type, params);
+            if(util.isDir(Uri.parse(response.uri).fsPath)) // Check if a directory has been returned
+                return;
+            
+            // Open the main file in the translation
+            let doc = await workspace.openTextDocument(response.uri);
             
             // Show the file
             window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
