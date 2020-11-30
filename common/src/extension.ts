@@ -38,7 +38,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
     }
     else {
         // Get two available ports, start the server and create the client
-        portfinder.getPorts(2, {host: undefined, startPort: undefined, port: undefined, stopPort: undefined}, (err, ports) => {
+        portfinder.getPorts(2, {host: undefined, startPort: undefined, port: undefined, stopPort: undefined}, async (err, ports) => {
             if(err)
             {
                 vscode.window.showErrorMessage("An error occured when finding free ports: " + err)
@@ -73,6 +73,23 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                 return;
             }
             child_process.spawn(javaPath, args);
+
+            // Wait for the server to be ready
+            let connected = false;
+            let timeOutCounter = 0;
+            while(!connected)
+            {
+                var sock = net.connect(lspPort, 'localhost',() => { 
+                    sock.destroy();
+                    connected = true;
+                });
+                await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
+                if(timeOutCounter++ == 100){
+                    vscode.window.showErrorMessage("ERROR: LSP server connection timeout");
+                    util.writeToLog(clientLogFile, "ERROR: LSP server connection timeout");
+                    return;
+                }
+            }
 
             // Create the client and connect
             createClient();
