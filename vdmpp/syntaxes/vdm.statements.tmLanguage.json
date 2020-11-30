@@ -38,6 +38,11 @@
 				{
 					"name": "comment.line.double-dash.vdmpp",
 					"match": "--.*"
+				},
+				{
+					"name": "comment.block.vdm",
+					"begin": "/\\*",
+					"end": "\\*/"
 				}
 			]
 		},
@@ -60,7 +65,7 @@
 				}
 			]
 		},
-		"local-binding-statements":{
+		"local-binding-statements": {
 			"patterns": [
 				{
 					"name": "keyword.control.localBinding.vdmpp",
