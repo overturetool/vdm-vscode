@@ -26,21 +26,21 @@ export class CTTreeView {
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
     public uiUpdateIntervalMS = 1000;
-    private _immediateRef: NodeJS.Immediate;
     private _messageTimeoutRef: NodeJS.Timeout;
 
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
         private _context:ExtensionContext, 
-        canFilter: boolean = false
+        canFilter: boolean = false,
+        savePath:Uri
         ){
 
         this._testProvider = new CTDataProvider(this, this._context);
         this._resultProvider = new CTResultDataProvider();
 
         // Set save path and load cts     // TODO correct this when implementing workspaces
-        this._savePath = Uri.joinPath(workspace.workspaceFolders[0].uri, ".generated", "Combinatorial Testing");
+        this._savePath = Uri.joinPath(savePath, "Combinatorial Testing");
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<TestViewElement> = {

@@ -37,7 +37,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
                 
             // Register view
-            this._ctTreeView = new CTTreeView(this, this._context, !!this._filterHandler);
+            this._ctTreeView = new CTTreeView(this, this._context, !!this._filterHandler, this._client.projectSavedDataPath);
 
             this.registerCommand('extension.ctCancel', () => this.cancelExecution());
         }

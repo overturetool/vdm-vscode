@@ -1,5 +1,6 @@
 import * as path from 'path'
 import * as fs from 'fs'
+import { Uri } from 'vscode';
 
 export function ensureDirectoryExistence(filePath) {
     var dirname = path.dirname(filePath);
@@ -25,6 +26,17 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
             return fullElementPath;
     }
     return null;
+}
+
+export function createTimestampedDirectory(rootPath: string, dirName:string): Uri{
+    var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
+    let fullPath = path.resolve(rootPath, dirName + " " + dateString)
+    if (!fs.existsSync(fullPath)){
+        fs.mkdirSync(fullPath);
+        return Uri.parse(fullPath);
+    }
+
+    throw new Error("Failed to create directory.");
 }
 
 export function writeToLog(path: string, msg: string) {
