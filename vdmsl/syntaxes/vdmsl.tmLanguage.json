@@ -7,7 +7,7 @@
 		},
 		{
 			"name": "storage.type.module.vdmsl",
-			"match": "module"
+			"match": "\\b(module)\\b"
 		}
 	],
 	"scopeName": "source.vdmsl"

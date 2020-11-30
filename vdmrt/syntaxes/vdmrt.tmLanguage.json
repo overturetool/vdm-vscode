@@ -7,7 +7,7 @@
 		},
 		{
 			"name": "storage.type.class.vdmpp",
-			"match": "class"
+			"match": "\\b(class)\\"
 		},
 		{
 			"name": "storage.type.definition.class.vdmpp",
@@ -15,7 +15,7 @@
 		},
 		{
 			"name": "storage.type.system.vdmpp",
-			"match": "system"
+			"match": "\\b(system)\\b"
 		}
 	],
 	"scopeName": "source.vdmrt"

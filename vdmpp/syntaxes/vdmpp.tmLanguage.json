@@ -7,7 +7,7 @@
 		},
 		{
 			"name": "storage.type.class.vdmpp",
-			"match": "class"
+			"match": "\\b(class)\\b"
 		},
 		{
 			"name": "storage.type.definition.class.vdmpp",
