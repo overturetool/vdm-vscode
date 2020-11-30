@@ -13,7 +13,7 @@ export interface ExperimentalCapabilities {
 	 */
 	combinatorialTestProvider?: boolean | CombinatorialTestOptions;
 	/**
-	 * Capabilities specific to the `slsp/translation/` messages.
+	 * Capabilities specific to the `slsp/translate` message.
 	 */
 	translateProvider?: boolean;
 }
