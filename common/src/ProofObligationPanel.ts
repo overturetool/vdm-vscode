@@ -18,7 +18,7 @@ export class ProofObligationPanel {
     public static createOrShowPanel(extensionUri: Uri, moveFocus: boolean) {
         // Define which column the po view should be in
         const column = window.activeTextEditor
-            ? window.activeTextEditor.viewColumn + 1
+            ? ViewColumn.Beside
             : ViewColumn.Two;
 
         // Check if a panel already exists

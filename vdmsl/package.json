@@ -22,6 +22,12 @@
   "contributes": {
     "commands": [
       {
+        "command": "extension.translateLatex",
+        "title": "Translate to LaTeX",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
         "command": "extension.runPOG",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
@@ -220,6 +226,11 @@
       "editor/context": [
         {
           "command": "extension.runPOG",
+          "when": "resourceLangId == vdmsl",
+          "group": "verification@1"
+        },
+        {
+          "command": "extension.translateLatex",
           "when": "resourceLangId == vdmsl",
           "group": "verification@1"
         }

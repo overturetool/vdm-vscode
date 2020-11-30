@@ -1,4 +1,4 @@
-import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions } from "vscode-languageclient";
+import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
 import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/messages";
 /**
  * The experimental capabilities that the server can reply.
@@ -12,9 +12,61 @@ export interface ExperimentalCapabilities {
 	 * Capabilities specific to the `slsp/CT/` messages.
 	 */
 	combinatorialTestProvider?: boolean | CombinatorialTestOptions;
+	/**
+	 * Capabilities specific to the `slsp/translation/` messages.
+	 */
+	translateProvider?: boolean;
 }
 
-export interface CombinatorialTestOptions extends WorkDoneProgressOptions {
+////////////////////// Translate to LaTex /////////////////////////////
+/**
+ * Parameters for the Translation/translate request.
+ */
+export interface TranslateParams {
+	/**
+	 * DocumentUri specifying the root of the project to translate.
+	 */
+	uri: DocumentUri;
+	/**
+	 * language id defined by a LanguageKind or a string.
+	 */
+	language: LanguageKind | string;
+	/**
+	 * DocumentUri specifying the location of the resulting translation.
+	 * This should be an existing empty folder.
+	 */
+	saveUri: DocumentUri;
+}
+
+/**
+ * Translation/translate request and return type.
+ */
+export namespace TranslateRequest {
+	export const type = new RequestType<TranslateParams, TranslateResponse | null, void, void>('slsp/Translation/translate');
+}
+
+/**
+ * Response to the 'slsp/Translation/translate' request
+ */
+export interface TranslateResponse {
+	/**
+	 * URI specifying the "main" file of the resulting translation (if multiple files are generated, this is the uri to where "main" is).
+	 */
+	uri: DocumentUri;
+}
+
+/**
+ * The kind of a language.
+ */
+export enum  LanguageKind {
+	Latex = 1,
+	UML = 2,
+    B = 3,
+    Z = 4,
+    HOL = 5,
+    Alloy = 6,
+    C = 7,
+    Cpp = 8
 }
 
 ////////////////////// Proof Obligation Generation (POG) /////////////////////////////
@@ -92,6 +144,12 @@ export namespace POGUpdatedNotification {
 
 
 ////////////////////// Combinatorial Testing (CT) ///////////////////////////////////
+/**
+ * Options for the combinatorial testing feature. 
+ */
+export interface CombinatorialTestOptions extends WorkDoneProgressOptions {
+}
+
 /**
  * Mapping type for filter options for the execution of CTs. 
  */
