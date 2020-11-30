@@ -3,6 +3,9 @@
 	"name": "VDM",
 	"patterns": [
 		{
+			"include": "#comment"
+		},
+		{
 			"include": "source.vdm.type"
 		},
 		{
@@ -40,7 +43,19 @@
 		}
 	],
 	"repository": {
-		
+		"comment": {
+			"patterns": [
+				{
+					"name": "comment.line.double-dash.vdm",
+					"match": "--.*"
+				},
+				{
+					"name": "comment.block.vdm",
+					"begin": "/\\*",
+					"end": "\\*/"
+				}
+			]
+		},
 		"statements": {
 			"patterns": [
 				{
@@ -54,7 +69,7 @@
 		"definitions": {
 			"patterns": [
 				{
-					"name": "entity.name.function.vdmsl",
+					"name": "entity.name.function.vdm",
 					"match": "\\b(operations|functions|types|values|instance variables)\\b"
 				}
 			]
@@ -62,7 +77,7 @@
 		"modifier": {
 			"patterns": [
 				{
-					"name": "storage.modifier.vdmsl",
+					"name": "storage.modifier.vdm",
 					"match": "\\b(public|private|static|pre|post|pure|inv)\\b"
 				}
 			]
@@ -70,13 +85,13 @@
 		"variable-name": {
 			"patterns": [
 				{
-					"name": "variable.other.readwrite.vdmsl",
+					"name": "variable.other.readwrite.vdm",
 					"match": "([^:()\\s=>])"
 				}
 			]
 		},
 		"instance-variables-definition": {
-			"name": "meta.instance-variables.vdmsl",
+			"name": "meta.instance-variables.vdm",
 			"begin": "\\b(instance variables)\\b",
 			"end": "(.*)(?=(operations|functions|types|values|end))",
 			"beginCaptures": {
@@ -98,7 +113,7 @@
 			]
 		},
 		"instance-variables-declator": {
-			"name": "meta.instance-variables.declator.vdmsl",
+			"name": "meta.instance-variables.declator.vdm",
 			"begin": "(\\S+)\\s*:\\s*([^;\\n]+)",
 			"end": ";",
 			"beginCaptures": {
@@ -122,7 +137,7 @@
 			}
 		},
 		"types-definition": {
-			"name": "meta.types.vdmsl",
+			"name": "meta.types.vdm",
 			"begin": "\\b(types)\\b",
 			"end": "(.*)(?=(operations|functions|values|instance variables|end))",
 			"beginCaptures": {
@@ -144,7 +159,7 @@
 			]
 		},
 		"types-declator": {
-			"name": "meta.types.declator.vdmsl",
+			"name": "meta.types.declator.vdm",
 			"begin": "(public|private)\\s+(\\S+)\\s+=\\s+([^;]+)",
 			"end": ";",
 			"beginCaptures": {
@@ -168,7 +183,7 @@
 							"include": "source.vdm.type"
 						},
 						{
-							"name": "support.type.primitive.vdmsl",
+							"name": "support.type.primitive.vdm",
 							"match": "\\S+"
 						}
 					]
@@ -181,7 +196,7 @@
 			]
 		},
 		"values-definition": {
-			"name": "meta.values.vdmsl",
+			"name": "meta.values.vdm",
 			"begin": "\\b(values)\\b",
 			"end": "(.*)(?=(operations|functions|types|instance variables|end))",
 			"beginCaptures": {
@@ -203,7 +218,7 @@
 			]
 		},
 		"values-declator": {
-			"name": "meta.values.declator.vdmsl",
+			"name": "meta.values.declator.vdm",
 			"begin": "(public|private)\\s+(static)\\s+(\\S+)\\s+:\\s+(\\S+)",
 			"end": ";",
 			"beginCaptures": {
@@ -234,7 +249,7 @@
 							"include": "source.vdm.type"
 						},
 						{
-							"name": "support.type.primitive.vdmsl",
+							"name": "support.type.primitive.vdm",
 							"match": "\\S+"
 						}
 					]
@@ -242,10 +257,10 @@
 			},
 			"endCaptures": {
 				"1": {
-					"name": "storage.type.vdmsl"
+					"name": "storage.type.vdm"
 				},
 				"2": {
-					"name": "entity.name.class.vdmsl"
+					"name": "entity.name.class.vdm"
 				}
 			},
 			"patterns": [
@@ -255,7 +270,7 @@
 			]
 		},
 		"functions-definition": {
-			"name": "meta.functions.vdmsl",
+			"name": "meta.functions.vdm",
 			"begin": "\\b(functions)\\b",
 			"end": ".*(?=operations|values|types|instance variables|end)",
 			"beginCaptures": {
@@ -280,7 +295,7 @@
 			]
 		},
 		"functions-declator": {
-			"name": "meta.functions.declator.vdmsl",
+			"name": "meta.functions.declator.vdm",
 			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
 			"beginCaptures": {
 				"1": {
@@ -299,7 +314,7 @@
 							"include": "source.vdm.type"
 						},
 						{
-							"name": "support.type.primitive.vdmsl",
+							"name": "support.type.primitive.vdm",
 							"match": "\\S+"
 						}
 					]
@@ -316,7 +331,7 @@
 							"include": "source.vdm.type"
 						},
 						{
-							"name": "support.type.primitive.vdmsl",
+							"name": "support.type.primitive.vdm",
 							"match": "\\S+"
 						}
 					]
@@ -329,12 +344,12 @@
 			]
 		},
 		"functions-implementation": {
-			"name": "meta.functions.implementation.vdmsl",
+			"name": "meta.functions.implementation.vdm",
 			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
 			"end": ";",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmsl"
+					"name": "entity.name.function.vdm"
 				}
 			},
 			"patterns": [
@@ -344,7 +359,7 @@
 			]
 		},
 		"operations-definition": {
-			"name": "meta.operations.vdmsl",
+			"name": "meta.operations.vdm",
 			"begin": "\\b(operations)\\b",
 			"end": "(.*)(?=(functions|values|types|instance variables|end))",
 			"beginCaptures": {
@@ -369,7 +384,7 @@
 			]
 		},
 		"operations-declator": {
-			"name": "meta.operations.declator.vdmsl",
+			"name": "meta.operations.declator.vdm",
 			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
 			"beginCaptures": {
 				"1": {
@@ -388,7 +403,7 @@
 							"include": "source.vdm.type"
 						},
 						{
-							"name": "support.type.primitive.vdmsl",
+							"name": "support.type.primitive.vdm",
 							"match": "\\S+"
 						}
 					]
@@ -405,7 +420,7 @@
 							"include": "source.vdm.type"
 						},
 						{
-							"name": "support.type.primitive.vdmsl",
+							"name": "support.type.primitive.vdm",
 							"match": "\\S+"
 						}
 					]
@@ -418,12 +433,12 @@
 			]
 		},
 		"operations-implementation": {
-			"name": "meta.operations.implementation.vdmsl",
+			"name": "meta.operations.implementation.vdm",
 			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
 			"end": ";",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.vdmsl"
+					"name": "entity.name.function.vdm"
 				}
 			},
 			"patterns": [
@@ -436,12 +451,12 @@
 			]
 		},
 		"use-function":{
-			"name": "meta.use-function.vdmsl",
+			"name": "meta.use-function.vdm",
 			"begin": "(\\S+)\\s*\\(",
 			"end": "\\)",
 			"beginCaptures": {
 				"1":{
-					"name": "support.function.vdmsl"
+					"name": "support.function.vdm"
 				}
 			}
 		}

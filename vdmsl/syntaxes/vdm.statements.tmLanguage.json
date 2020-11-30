@@ -8,14 +8,10 @@
 	],
 	"repository": {
 		"statements": {
-			"name": "meta.statements.vdmpp",
+			"name": "meta.statements.vdm",
 			"patterns": [
-				{
-					"include": "#comment"
-				},
-				{
-					"include": "#strings"
-				},
+				
+				
 				{
 					"include": "#control-statements"
 				},
@@ -33,42 +29,20 @@
 				}
 			]
 		},
-		"comment": {
-			"patterns": [
-				{
-					"name": "comment.line.double-dash.vdmpp",
-					"match": "--.*"
-				},
-				{
-					"name": "comment.block.vdm",
-					"begin": "/\\*",
-					"end": "\\*/"
-				}
-			]
-		},
-		"strings": {
-			"name": "string.quoted.double.vdmpp",
-			"begin": "\"",
-			"end": "\"",
-			"patterns": [
-				{
-					"name": "constant.character.escape.vdmpp",
-					"match": "\\\\."
-				}
-			]
-		},
+		
+		
 		"control-statements": {
 			"patterns": [
 				{
-					"name": "keyword.control.statements.conditional.vdmpp",
-					"match": "\\b(if|then|else|elseif|cases|end)\\b"
+					"name": "keyword.control.statements.conditional.vdm",
+					"match": "\\b(if|then|else|elseif|cases|end|return)\\b"
 				}
 			]
 		},
 		"local-binding-statements": {
 			"patterns": [
 				{
-					"name": "keyword.control.localBinding.vdmpp",
+					"name": "keyword.control.localBinding.vdm",
 					"match": "\\b(let|in)\\b"
 				}
 			]
@@ -76,8 +50,8 @@
 		"others": {
 			"patterns": [
 				{
-					"name": "keyword.other.vdmsl",
-					"match": "\\b(#else|#endif|#ifdef|#ifndef|RESULT)\\b"
+					"name": "keyword.other.vdm",
+					"match": "\\b(#if|#else|#endif|#ifdef|#ifndef|RESULT)\\b"
 				}
 			]
 		}

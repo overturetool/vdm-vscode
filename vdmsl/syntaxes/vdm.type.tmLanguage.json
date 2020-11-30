@@ -13,6 +13,9 @@
 		},
 		{
 			"include": "#enum"
+		},
+		{
+			"include": "#strings"
 		}
 	],
 	"repository": {
@@ -35,6 +38,17 @@
 					"name": "support.type.basic.vdm"
 				}
 			}
+		},
+		"strings": {
+			"name": "string.quoted.double.vdm",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.vdm",
+					"match": "\\\\."
+				}
+			]
 		},
 		"seq-of": {
 			"match": "(seq of) (\\S+)",

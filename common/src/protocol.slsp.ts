@@ -13,20 +13,20 @@ export interface ExperimentalCapabilities {
 	 */
 	combinatorialTestProvider?: boolean | CombinatorialTestOptions;
 	/**
-	 * Capabilities specific to the `slsp/translation/` messages.
+	 * Capabilities specific to the `slsp/translate` message.
 	 */
 	translateProvider?: boolean;
 }
 
 ////////////////////// Translate to LaTex /////////////////////////////
 /**
- * Parameters for the Translation/translate request.
+ * Parameters for the translate request.
  */
 export interface TranslateParams {
 	/**
 	 * DocumentUri specifying the root of the project to translate.
 	 */
-	uri: DocumentUri;
+	uri?: DocumentUri;
 	/**
 	 * language id defined by a LanguageKind or a string.
 	 */
@@ -39,14 +39,14 @@ export interface TranslateParams {
 }
 
 /**
- * Translation/translate request and return type.
+ * translate request and return type.
  */
 export namespace TranslateRequest {
-	export const type = new RequestType<TranslateParams, TranslateResponse | null, void, void>('slsp/Translation/translate');
+	export const type = new RequestType<TranslateParams, TranslateResponse | null, void, void>('slsp/translate');
 }
 
 /**
- * Response to the 'slsp/Translation/translate' request
+ * Response to the 'slsp/translate' request
  */
 export interface TranslateResponse {
 	/**

@@ -221,6 +221,11 @@
           "command": "extension.runPOG",
           "when": "resourceLangId == vdmsl",
           "group": "verification@1"
+        },
+        {
+          "command": "extension.translateLatex",
+          "when": "resourceLangId == vdmsl",
+          "group": "translate@1"
         }
       ],
       "editor/context": [
@@ -232,7 +237,7 @@
         {
           "command": "extension.translateLatex",
           "when": "resourceLangId == vdmsl",
-          "group": "verification@1"
+          "group": "translate@1"
         }
       ],
       "commandPalette": [
@@ -274,6 +279,10 @@
         },
         {
           "command": "extension.ctSendToInterpreter",
+          "when": "false"
+        },
+        {
+          "command": "extension.goToTrace",
           "when": "false"
         }
       ]
