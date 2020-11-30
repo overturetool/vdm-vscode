@@ -7,7 +7,7 @@ import * as util from "./Util"
 
 export class TranslateFeature implements StaticFeature {
     private _translateDisp: Disposable;
-    private readonly _languageKindName:string;
+    private readonly _languageKindName: string;
 
     constructor(
         private _client: SpecificationLanguageClient, 
@@ -23,18 +23,18 @@ export class TranslateFeature implements StaticFeature {
     }
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
-        // Client supports POG
+        // Client supports Translate
         if(!capabilities.experimental)
             capabilities.experimental = { translateProvider: true };
         else
             Object.assign(capabilities.experimental, {translateProvider: true});
     }
     initialize(capabilities: ServerCapabilities<any>, _documentSelector: DocumentSelector): void {
-        // If server supports POG
+        // If server supports Translate
         if (capabilities?.experimental?.translateProvider) {
+            // TODO Only register commands for the ones that the server says it can
            this.registerTranslateCommand();
         }
-        this.registerTranslateCommand();
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -49,7 +49,7 @@ export class TranslateFeature implements StaticFeature {
     }
 
     private async translateToLaTeX(){
-        window.setStatusBarMessage(`Translating to ${this._languageKindName}.`);
+        window.setStatusBarMessage(`Translating to ${this._languageKindName}.`, 1000);
 
         try {
             // Setup message parameters
