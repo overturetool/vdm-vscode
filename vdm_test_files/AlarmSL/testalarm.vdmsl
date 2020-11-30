@@ -76,7 +76,7 @@ traces
   Test2: let ex in set exs
          in
            ExpertIsOnDuty(ex,plant1)
-           
+         
   Test3: 
     let a in set {1, ..., 100} in
       let b in set {1, ..., 10} in

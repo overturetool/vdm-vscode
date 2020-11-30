@@ -6,6 +6,12 @@
 			"include": "#comment"
 		},
 		{
+			"include": "#modifier"
+		},
+		{
+			"include": "#definitions"
+		},
+		{
 			"include": "source.vdm.type"
 		},
 		{
@@ -22,9 +28,6 @@
 		},
 		{
 			"include": "#collection"
-		},
-		{
-			"include": "#statements"
 		},
 		{
 			"include": "#functions-definition"
@@ -56,21 +59,11 @@
 				}
 			]
 		},
-		"statements": {
-			"patterns": [
-				{
-					"include": "#modifier"
-				},
-				{
-					"include": "#definitions"
-				}
-			]
-		},
 		"definitions": {
 			"patterns": [
 				{
-					"name": "entity.name.function.vdm",
-					"match": "\\b(operations|functions|types|values|instance variables)\\b"
+					"name": "storage.type.definition.vdm",
+					"match": "\\b(operations|functions|types|values|instance variables|traces)\\b"
 				}
 			]
 		},
@@ -78,7 +71,7 @@
 			"patterns": [
 				{
 					"name": "storage.modifier.vdm",
-					"match": "\\b(public|private|static|pre|post|pure|inv)\\b"
+					"match": "\\b(public|private|protected|static|pre|post|pure|inv)\\b"
 				}
 			]
 		},

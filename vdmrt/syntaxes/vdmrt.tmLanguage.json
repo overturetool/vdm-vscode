@@ -4,6 +4,18 @@
 	"patterns": [
 		{
 			"include": "source.vdm"
+		},
+		{
+			"name": "storage.type.class.vdmpp",
+			"match": "class"
+		},
+		{
+			"name": "storage.type.definition.class.vdmpp",
+			"match": "\\b(thread|sync)\\b"
+		},
+		{
+			"name": "storage.type.system.vdmpp",
+			"match": "system"
 		}
 	],
 	"scopeName": "source.vdmrt"

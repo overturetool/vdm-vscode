@@ -4,6 +4,14 @@
 	"patterns": [
 		{
 			"include": "source.vdm"
+		},
+		{
+			"name": "storage.type.class.vdmpp",
+			"match": "class"
+		},
+		{
+			"name": "storage.type.definition.class.vdmpp",
+			"match": "\\b(thread|sync)\\b"
 		}
 	],
 	"scopeName": "source.vdmpp"

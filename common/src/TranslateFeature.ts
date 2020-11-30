@@ -21,7 +21,7 @@ export class TranslateFeature implements StaticFeature {
             window.showInformationMessage(`Translation to ${this._languageKindName} is not supported by the language server`)
         });
     }
-
+    
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         // Client supports Translate
         if(!capabilities.experimental)

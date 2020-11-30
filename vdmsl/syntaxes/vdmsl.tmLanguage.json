@@ -4,6 +4,10 @@
 	"patterns": [
 		{
 			"include": "source.vdm"
+		},
+		{
+			"name": "storage.type.module.vdmsl",
+			"match": "module"
 		}
 	],
 	"scopeName": "source.vdmsl"
