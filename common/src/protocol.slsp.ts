@@ -13,7 +13,7 @@ export interface ExperimentalCapabilities {
 	 */
 	combinatorialTestProvider?: boolean | CombinatorialTestOptions;
 	/**
-	 * Capabilities specific to the `slsp/translate` message.
+	 * Capabilities specific to the `slsp/TR` message.
 	 */
 	translateProvider?: boolean;
 }
@@ -30,7 +30,7 @@ export interface TranslateParams {
 	/**
 	 * language id defined by a LanguageKind or a string.
 	 */
-	language: LanguageKind | string;
+	language: string;
 	/**
 	 * DocumentUri specifying the location of the resulting translation.
 	 * This should be an existing empty folder.
@@ -42,11 +42,11 @@ export interface TranslateParams {
  * translate request and return type.
  */
 export namespace TranslateRequest {
-	export const type = new RequestType<TranslateParams, TranslateResponse | null, void, void>('slsp/translate');
+	export const type = new RequestType<TranslateParams, TranslateResponse | null, void, void>('slsp/TR/translate');
 }
 
 /**
- * Response to the 'slsp/translate' request
+ * Response to the 'slsp/TR/translate' request
  */
 export interface TranslateResponse {
 	/**
@@ -55,19 +55,6 @@ export interface TranslateResponse {
 	uri: DocumentUri;
 }
 
-/**
- * The kind of a language.
- */
-export enum  LanguageKind {
-	Latex = 1,
-	UML = 2,
-    B = 3,
-    Z = 4,
-    HOL = 5,
-    Alloy = 6,
-    C = 7,
-    Cpp = 8
-}
 
 ////////////////////// Proof Obligation Generation (POG) /////////////////////////////
 /**

@@ -1,24 +1,21 @@
 import path = require("path");
 import { commands, ExtensionContext, window, Disposable, Uri, workspace, ViewColumn } from "vscode";
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, StaticFeature } from "vscode-languageclient";
-import { LanguageKind, TranslateParams, TranslateRequest } from "./protocol.slsp";
+import { TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 
 export class TranslateFeature implements StaticFeature {
     private _translateDisp: Disposable;
-    private readonly _languageKindName: string;
 
     constructor(
         private _client: SpecificationLanguageClient, 
         private _context: ExtensionContext,
-        private readonly _languageKind: LanguageKind,
+        private readonly _languageKind: string,
         private readonly _translationCommandName) {
 
-        this._languageKindName = LanguageKind[_languageKind];
-
         this._translateDisp = this.registerCommand(_translationCommandName, () => {
-            window.showInformationMessage(`Translation to ${this._languageKindName} is not supported by the language server`)
+            window.showInformationMessage(`Translation to ${this._languageKind} is not supported by the language server`)
         });
     }
     
@@ -49,13 +46,13 @@ export class TranslateFeature implements StaticFeature {
     }
 
     private async translateToLaTeX(){
-        window.setStatusBarMessage(`Translating to ${this._languageKindName}.`, 1000);
+        window.setStatusBarMessage(`Translating to ${this._languageKind}.`, 1000);
         try {
             // Setup message parameters
             let params: TranslateParams = {
                 uri: null, //TODO Change this when workspace has been implemented.
                 language: this._languageKind,
-                saveUri:util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKindName).toString()
+                saveUri:util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKind).toString()
             };
 
             // Send request
@@ -70,7 +67,7 @@ export class TranslateFeature implements StaticFeature {
             window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
         }
         catch (error) {
-            window.showInformationMessage(`Translation to ${this._languageKindName} failed.` + error);
+            window.showInformationMessage(`Translation to ${this._languageKind} failed.` + error);
         }
     }
 }
