@@ -1,7 +1,7 @@
 import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
 import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/messages";
 /**
- * The experimental capabilities that the server can reply.
+ * The experimental capabilities that the client can query.
  */
 export interface ExperimentalCapabilities {
 	/**
