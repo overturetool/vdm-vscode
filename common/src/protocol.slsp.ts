@@ -1,7 +1,7 @@
 import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
 import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/messages";
 /**
- * The experimental capabilities that the client can query.
+ * The experimental capabilities that the server can reply.
  */
 export interface ExperimentalCapabilities {
 	/**
@@ -15,14 +15,22 @@ export interface ExperimentalCapabilities {
 	/**
 	 * Capabilities specific to the `slsp/TR` message.
 	 */
-	translateProvider?: boolean;
+	translateProvider?: boolean | TranslateOptions;
 }
 
 ////////////////////// Translate to LaTex /////////////////////////////
 /**
+ * Options for the translate feature. 
+ */
+export interface TranslateOptions extends WorkDoneProgressOptions {
+	languageIds: string | string[];
+}
+
+
+/**
  * Parameters for the translate request.
  */
-export interface TranslateParams {
+export interface TranslateParams extends WorkDoneProgressParams {
 	/**
 	 * DocumentUri specifying the root of the project to translate.
 	 */
@@ -30,7 +38,7 @@ export interface TranslateParams {
 	/**
 	 * language id defined by a LanguageKind or a string.
 	 */
-	language: string;
+	languageId: string;
 	/**
 	 * DocumentUri specifying the location of the resulting translation.
 	 * This should be an existing empty folder.

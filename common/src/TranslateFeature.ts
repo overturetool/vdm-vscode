@@ -1,12 +1,13 @@
 import path = require("path");
 import { commands, ExtensionContext, window, Disposable, Uri, workspace, ViewColumn } from "vscode";
-import { ClientCapabilities, DocumentSelector, ServerCapabilities, StaticFeature } from "vscode-languageclient";
-import { TranslateParams, TranslateRequest } from "./protocol.slsp";
+import { ClientCapabilities, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
+import { ExperimentalCapabilities, TranslateOptions, TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 
 export class TranslateFeature implements StaticFeature {
     private _translateDisp: Disposable;
+    private _supportWorkDone: boolean = false;
 
     constructor(
         private _client: SpecificationLanguageClient, 
@@ -26,11 +27,18 @@ export class TranslateFeature implements StaticFeature {
         else
             Object.assign(capabilities.experimental, {translateProvider: true});
     }
-    initialize(capabilities: ServerCapabilities<any>, _documentSelector: DocumentSelector): void {
+    initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>, _documentSelector: DocumentSelector): void {
         // If server supports Translate
         if (capabilities?.experimental?.translateProvider) {
-            // TODO Only register commands for the ones that the server says it can
-           this.registerTranslateCommand();
+            if (typeof capabilities.experimental.translateProvider != "boolean"){
+                if (capabilities.experimental.translateProvider.languageIds.includes(this._languageKind))
+                    // TODO Only register commands for the ones that the server says it can
+                    this.registerTranslateCommand();
+            }
+
+            // Check if support work done progress
+            if (WorkDoneProgressOptions.hasWorkDoneProgress(capabilities?.experimental?.translateProvider))
+                this._supportWorkDone = capabilities?.experimental?.translateProvider.workDoneProgress
         }
     }
 
@@ -51,7 +59,7 @@ export class TranslateFeature implements StaticFeature {
             // Setup message parameters
             let params: TranslateParams = {
                 uri: null, //TODO Change this when workspace has been implemented.
-                language: this._languageKind,
+                languageId: this._languageKind,
                 saveUri:util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKind).toString()
             };
 
