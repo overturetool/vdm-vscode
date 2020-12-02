@@ -31,7 +31,7 @@ export class TranslateFeature implements StaticFeature {
         // If server supports Translate
         if (capabilities?.experimental?.translateProvider) {
             if (typeof capabilities.experimental.translateProvider != "boolean"){
-                if (capabilities.experimental.translateProvider.languageIds.includes(this._languageKind))
+                if (capabilities.experimental.translateProvider.languageId?.includes(this._languageKind))
                     // TODO Only register commands for the ones that the server says it can
                     this.registerTranslateCommand();
             }

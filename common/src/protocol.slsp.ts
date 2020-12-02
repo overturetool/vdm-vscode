@@ -23,7 +23,7 @@ export interface ExperimentalCapabilities {
  * Options for the translate feature. 
  */
 export interface TranslateOptions extends WorkDoneProgressOptions {
-	languageIds: string | string[];
+	languageId: string | string[];
 }
 
 
