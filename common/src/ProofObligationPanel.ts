@@ -206,7 +206,7 @@ export class ProofObligationPanel {
             <button id="expandPOsBtn">Expand all proof obligations</button>
             <button id="hideProvedPosBtn">Hide proved proof obligations</button>
             <br>
-            <p id="posInvalid"><b>Warning:</b> Proof obligations are no longer guarenteed to be valid!</p>
+            <p id="posInvalid"><b>Warning:</b> Proof obligations are no longer guaranteed to be valid!</p>
             <div id="poContainer"></div>
             <script nonce="${scriptNonce}" src="${scriptUri}"></script>
         </body>
