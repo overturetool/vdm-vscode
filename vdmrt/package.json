@@ -28,6 +28,12 @@
         "icon": "$(references)"
       },
       {
+        "command": "extension.translateWord",
+        "title": "Translate to Word",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
         "command": "extension.runPOG",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
@@ -226,6 +232,11 @@
           "command": "extension.translateLatex",
           "when": "resourceLangId == vdmrt",
           "group": "translate@1"
+        },
+        {
+          "command": "extension.translateWord",
+          "when": "resourceLangId == vdmrt",
+          "group": "translate@2"
         }
       ],
       "editor/context": [
@@ -238,6 +249,11 @@
           "command": "extension.translateLatex",
           "when": "resourceLangId == vdmrt",
           "group": "translate@1"
+        },
+        {
+          "command": "extension.translateWord",
+          "when": "resourceLangId == vdmrt",
+          "group": "translate@2"
         }
       ],
       "commandPalette": [
