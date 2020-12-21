@@ -1,34 +1,34 @@
 functions
-  op1: nat -> nat
-  op1(x) ==
+  testFunc: nat -> nat
+  testFunc(x) ==
     x;
 
 traces
 Test1000: 
 	let a in set {1, ..., 1000} 
 		in
-  		op1(a);
+  		testFunc(a);
 
 Test10000: 
   let a in set {1, ..., 10000} 
   	in
- 			op1(a);
+ 			testFunc(a);
 
 Test100000: 
   let a in set {1, ..., 100000} 
   	in
-			op1(a);
+			testFunc(a);
       
 Test300000: 
   let a in set {1, ..., 300000}
   	in
-			op1(a);
+			testFunc(a);
 Test500000: 
   let a in set {1, ..., 500000} 
   	in
-			op1(a);
+			testFunc(a);
 
 Test1000000: 
   let a in set {1, ..., 1000000} 
   	in
-			op1(a);
+			testFunc(a);

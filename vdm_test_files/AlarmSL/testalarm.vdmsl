@@ -49,8 +49,8 @@ Run(e) == return ExpertIsOnDuty(e, plant1);
 
 functions
 
-op1: nat -> nat
-op1(x) ==
+op: nat -> nat
+op(x) ==
   x;
 
 op2: nat -> nat
@@ -81,14 +81,14 @@ traces
     let a in set {1, ..., 100} in
       let b in set {1, ..., 10} in
         (
-          op1(a); op1(b);
+          op(a); op(b);
         ); 
  
   Test4: 
     let a in set {1, ..., 100} in
       let b in set {1, ..., 100} in
         (
-          op1(a); op2(b);
+          op(a); op2(b);
         );
         
   Test5: 
@@ -96,7 +96,7 @@ traces
     let b in set {1, ..., 100} in
       let c in set {1, ..., 10} in
       (
-        op1(a); op1(b); op1(c);
+        op(a); op(b); op(c);
       );
 
   Test6: 
@@ -104,5 +104,5 @@ traces
     let b in set {1, ..., 100} in
       let c in set {1, ..., 30} in
       (
-        op1(a); op1(b); op1(c);
+        op(a); op(b); op(c);
       );
