@@ -451,7 +451,7 @@ export namespace TPCommandRequest {
  */
 interface TPUndoParams {
     /**
-     * Id of the step that must be undone to.
+     * Id of the step that must be undone.
      * If empty, undo last step.
      */
     id?: number
