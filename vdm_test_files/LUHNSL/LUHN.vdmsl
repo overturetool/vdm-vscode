@@ -95,6 +95,31 @@ traces
       luhn([a,b,c,d]);
       luhn([a,b,c,d,e])
     );
+
+    First300k:
+    let a,b,c,d,e in set {0,...,9} in
+      let f in set {0,...,2} in
+      (
+        luhn([a]);
+        luhn([a,b]);
+        luhn([a,b,c]);
+        luhn([a,b,c,d]);
+        luhn([a,b,c,d,e]);
+        luhn([f,a,b,c,d,e])
+      );
+
+    First500k:
+    let a,b,c,d,e in set {0,...,9} in
+      let f in set {0,...,4} in
+      (
+        luhn([a]);
+        luhn([a,b]);
+        luhn([a,b,c]);
+        luhn([a,b,c,d]);
+        luhn([a,b,c,d,e]);
+        luhn([f,a,b,c,d,e])
+
+      );
     
     First1000k:
     let a,b,c,d,e,f in set {0,...,9} in
