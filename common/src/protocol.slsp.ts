@@ -467,7 +467,7 @@ export namespace TPUndoRequest {
 /**
  * Type describing the status of a proof
  */
-type ProofStatus = "proved" | "disproved" | "untried" | "unfinished" | "timeout";
+type ProofStatus = "proved" | "disproved" | "untried" | "unfinished" | "timeout" | "unchecked";
 
 /**
  * Parameters describing a Lemma and meta data.
