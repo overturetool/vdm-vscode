@@ -139,7 +139,7 @@
     "viewsWelcome": [
       {
         "view": "vdmsl-ctView",
-        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
+        "contents": "[Generate trace outline](command:extension.ctRebuildOutline)"
       }
     ],
     "menus": {
