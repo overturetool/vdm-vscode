@@ -46,7 +46,8 @@ export function createTimestampedDirectory(rootPath: Uri, dirName:string): Docum
 
 export function writeToLog(path: string, msg: string) {
     let logStream = fs.createWriteStream(path, { flags: 'a' });
-    logStream.write(msg + "\n");
+    let timeStamp =  `[${new Date(Date.now()).toLocaleString()}] `
+    logStream.write(timeStamp + msg + "\n");
     logStream.close();
 }
 
