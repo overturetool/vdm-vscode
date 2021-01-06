@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import * as Util from "./Util"
-import { commands, ExtensionContext, ProgressLocation, Uri, window, window as Window, workspace } from "vscode";
+import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from "vscode";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { CTTestCase, CTSymbol, NumberRange, VerdictKind} from "./protocol.slsp";
@@ -10,6 +9,7 @@ import path = require('path');
 import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
 import {extensionLanguage} from './extension'
 import { ErrorCodes, Location } from 'vscode-languageclient';
+import * as util from "./Util"
 
 export class CTTreeView {
     private _testView: vscode.TreeView<TestViewElement>;
@@ -26,7 +26,8 @@ export class CTTreeView {
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
     public uiUpdateIntervalMS = 1000;
-    private _messageTimeoutRef: NodeJS.Timeout;
+    private _ctViewId: string;
+    private _resultViewId: string;
 
 
     constructor(
@@ -38,7 +39,8 @@ export class CTTreeView {
 
         this._testProvider = new CTDataProvider(this, this._context);
         this._resultProvider = new CTResultDataProvider();
-
+        this._ctViewId = extensionLanguage+'-ctView';
+        this._resultViewId = extensionLanguage+'-ctResultView';
         // Set save path and load cts     // TODO correct this when implementing workspaces
         this._savePath = Uri.joinPath(savePath, "Combinatorial Testing");
 
@@ -47,7 +49,7 @@ export class CTTreeView {
             treeDataProvider: this._testProvider, 
             showCollapseAll: true
         }
-        this._testView = Window.createTreeView(extensionLanguage+'-ctView', testview_options);
+        this._testView = window.createTreeView(this._ctViewId, testview_options);
         this._context.subscriptions.push(this._testView);
 
         // Create results view
@@ -55,7 +57,7 @@ export class CTTreeView {
             treeDataProvider: this._resultProvider, 
             showCollapseAll: true
         }
-        this._resultView = Window.createTreeView(extensionLanguage+'-ctResultView', resultview_options);
+        this._resultView = window.createTreeView(this._resultViewId, resultview_options);
         this._context.subscriptions.push(this._resultView);
 
         // Register view behavior
@@ -94,7 +96,7 @@ export class CTTreeView {
             let path = Uri.joinPath(this._savePath, ct.symbolName+".json").fsPath;
 
             // Ensure that path exists
-            Util.ensureDirectoryExistence(path)
+            util.ensureDirectoryExistence(path)
         
             // Convert data into JSON
             let json = JSON.stringify(ct);
@@ -224,35 +226,45 @@ export class CTTreeView {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-disable-filter-button', !show);
     }
 
-    private async ctRebuildOutline() {
-        // Clear message
-        this._testView.message = undefined;
-
-        if(this._testProvider.getRoots().length > 0){
-            let res = await this._ctFeature.requestTraces();
-            if (res != null)
-                this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res, this._combinatorialTests);
-        }
-        else
-        {
-            await Promise.all([this.loadCTs().catch(() => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
-                {
-                    // Filter loaded data so it matches servers
-                    this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
-                });
-        }      
-        
-        // Inform user if no traces where found
-        if(this._combinatorialTests.length == 0){
-            this._testView.message = "No trace found in specification";
-            if (this._messageTimeoutRef?.hasRef())
-                this._messageTimeoutRef.refresh();
+    private async ctRebuildOutline() {    
+        // Display progress
+        window.withProgress({
+            location: ProgressLocation.Notification,
+            title: "Generation trace outline",
+            cancellable: false
+        }, async (progress, token) => {
+            try {
+            if(this._testProvider.getRoots().length > 0){
+                let res = await this._ctFeature.requestTraces();
+                if (res != null)
+                    this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res, this._combinatorialTests);
+            }
             else
-                this._messageTimeoutRef = setTimeout(() => this._testView.message = undefined, 10000);
+            {
+                await Promise.all([this.loadCTs().catch(() => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
+                    {
+                        // Filter loaded data so it matches servers
+                        this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
+                    });
+            }      
+            
+            // Inform user if no traces were found
+            if(this._combinatorialTests.length == 0){
+                window.showInformationMessage("No trace found in specification");      
+            }
+            else
+            {
+                // Notify tree view of data update
+                this._testProvider.rebuildViewFromElement();       
+            }
         }
-
-        // Notify tree view of data update
-        this._testProvider.rebuildViewFromElement();
+        catch(error){
+            util.writeToLog(globalThis.clientLogPath, "Failed to generate trace outline: " + error);
+            window.showWarningMessage("Failed to generate trace outline"); 
+        }
+        finally{
+        }   
+        }); 
     }
 
     private matchLocalSymbolsToServerSymbols(serverSymbols:CTSymbol[], localSymbols:completeCT[]): completeCT[] {
@@ -301,11 +313,11 @@ export class CTTreeView {
             return;
             
         // Set status bar
-        let statusBarMessage = Window.setStatusBarMessage('Generating test cases');
+        let statusBarMessage = window.setStatusBarMessage('Generating test cases');
 
         // Setup loading window
         return window.withProgress({
-            location: {viewId: "ctView"},
+            location: ProgressLocation.Notification,
             title: "Running test generation",
             cancellable: false
         }, (progress, token) => {
@@ -366,7 +378,7 @@ export class CTTreeView {
                 // Symbol out-of-sync
                 this.ctRebuildOutline();
             }
-            Window.showInformationMessage("CT Test Generation failed: " + error);
+            window.showWarningMessage("CT Test Generation failed: " + error);
         }
     }
 
@@ -435,7 +447,7 @@ export class CTTreeView {
         this._executeCanceled = false;
 
         // Set status bar
-        let statusBarMessage = Window.setStatusBarMessage('Executing test cases');
+        let statusBarMessage = window.setStatusBarMessage('Executing test cases');
 
         // Setup loading window
         return window.withProgress({
@@ -511,8 +523,7 @@ export class CTTreeView {
                         resolve();
                     }
                     else if (error?.code == ErrorCodes.ParseError) {
-                        this._executingTests = false;
-                        Window.showInformationMessage("CT Execute failed: " + error);
+                        window.showWarningMessage("CT Execute failed: " + error);
                         resolve();
                     }
                     else
