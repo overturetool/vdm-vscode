@@ -1,0 +1,60 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "statements",
+	"patterns": [
+		{
+			"include": "#statements"
+		}
+	],
+	"repository": {
+		"statements": {
+			"name": "meta.statements.vdm",
+			"patterns": [
+				
+				
+				{
+					"include": "#control-statements"
+				},
+				{
+					"include": "#local-binding-statements"
+				},
+				{
+					"include": "#expressions"
+				},
+				{
+					"include": "#others"
+				},
+				{
+					"include": "#operator"
+				}
+			]
+		},
+		
+		
+		"control-statements": {
+			"patterns": [
+				{
+					"name": "keyword.control.statements.conditional.vdm",
+					"match": "\\b(if|then|else|elseif|cases|end|return)\\b"
+				}
+			]
+		},
+		"local-binding-statements": {
+			"patterns": [
+				{
+					"name": "keyword.control.localBinding.vdm",
+					"match": "\\b(let|in)\\b"
+				}
+			]
+		},
+		"others": {
+			"patterns": [
+				{
+					"name": "keyword.other.vdm",
+					"match": "\\b(#if|#else|#endif|#ifdef|#ifndef|RESULT)\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.vdm.statements"
+}

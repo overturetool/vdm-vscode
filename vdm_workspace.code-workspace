@@ -13,6 +13,10 @@
 			"path": "vdmrt"
 		},
 		{
+			"name": "vdm",
+			"path": "vdm"
+		},
+		{
 			"name": "common",
 			"path": "common"
 		}

@@ -1,0 +1,483 @@
+{
+  "name": "vdm-vscode",
+  "description": "A language server for VDM",
+  "author": "Jonas Rask and Frederik Palludan",
+  "license": "MIT",
+  "version": "0.0.3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonaskrask/vdm-vscode"
+  },
+  "publisher": "jonaskrask",
+  "engines": {
+    "vscode": "^1.49.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:vdmpp"
+  ],
+  "main": "./dist/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.translateLatex",
+        "title": "Translate to LaTeX",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "extension.translateWord",
+        "title": "Translate to Word",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "extension.runPOG",
+        "title": "Run Proof Obligation Generation",
+        "category": "VDM",
+        "icon": "$(run)"
+      },
+      {
+        "command": "extension.goToTrace",
+        "title": "Go to trace",
+        "category": "VDM",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "extension.ctSetFilter",
+        "title": "Set Filter Options",
+        "category": "VDM",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "extension.ctRebuildOutline",
+        "title": "Rebuild Trace Outline",
+        "category": "VDM",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "extension.ctFullExecute",
+        "title": "Execute All Tests",
+        "category": "VDM",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "extension.ctExecute",
+        "title": "Full Evaluation",
+        "category": "VDM",
+        "icon": "$(run)"
+      },
+      {
+        "command": "extension.ctFilteredExecute",
+        "title": "Filtered Evaluation",
+        "category": "VDM",
+        "icon": {
+          "light": "/resources/icons/light/runFiltered.svg",
+          "dark": "/resources/icons/dark/runFiltered.svg"
+        }
+      },
+      {
+        "command": "extension.ctGenerate",
+        "title": "Generate Tests",
+        "category": "VDM",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "extension.ctEnableTreeFilter",
+        "title": "Show only failed tests",
+        "category": "VDM",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "extension.ctDisableTreeFilter",
+        "title": "Disable filtering of tests",
+        "category": "VDM",
+        "icon": {
+          "light": "/resources/icons/light/disableFilter.svg",
+          "dark": "/resources/icons/dark/disableFilter.svg"
+        }
+      },
+      {
+        "command": "extension.ctSendToInterpreter",
+        "title": "Send test to interpreter",
+        "category": "VDM",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "extension.ctCancel",
+        "title": "Cancel Combinatorial Test Request",
+        "category": "VDM",
+        "icon": "$(debug-stop)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "combinatorialTesting",
+          "title": "Combinatorial Testing",
+          "icon": "media/ctView.svg",
+          "when": "vdmpp-ct-show-view == true"
+        }
+      ]
+    },
+    "views": {
+      "combinatorialTesting": [
+        {
+          "id": "vdmpp-ctView",
+          "name": "Tests",
+          "when": "vdmpp-ct-show-view == true"
+        },
+        {
+          "id": "vdmpp-ctResultView",
+          "name": "Test Sequence Results",
+          "when": "vdmpp-ct-show-view == true"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "vdmpp-ctView",
+        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "extension.ctFullExecute",
+          "when": "view =~ /vdmpp-ctView/ && vdm-ct-show-run-buttons == true",
+          "group": "navigation@0"
+        },
+        {
+          "command": "extension.ctCancel",
+          "when": "view =~ /vdmpp-ctView/ && vdm-ct-show-cancel-button == true",
+          "group": "navigation@1"
+        },
+        {
+          "command": "extension.ctSetFilter",
+          "when": "view =~ /vdmpp-ctView/ && vdm-ct-show-set-execute-filter-button == true",
+          "group": "navigation@2"
+        },
+        {
+          "command": "extension.ctEnableTreeFilter",
+          "when": "view =~ /vdmpp-ctView/ && vdm-ct-show-enable-filter-button == true",
+          "group": "navigation@3"
+        },
+        {
+          "command": "extension.ctDisableTreeFilter",
+          "when": "view =~ /vdmpp-ctView/ && vdm-ct-show-disable-filter-button == true",
+          "group": "navigation@3"
+        },
+        {
+          "command": "extension.ctRebuildOutline",
+          "when": "view =~ /vdmpp-ctView/",
+          "group": "navigation@4"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "extension.ctExecute",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "group": "vdmpp-ctView@0"
+        },
+        {
+          "command": "extension.ctFilteredExecute",
+          "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
+          "group": "vdmpp-ctView@1"
+        },
+        {
+          "command": "extension.ctGenerate",
+          "when": "viewItem == trace",
+          "group": "vdmpp-ctView@2"
+        },
+        {
+          "command": "extension.ctSendToInterpreter",
+          "when": "viewItem == test && vdm-ct-show-run-buttons == true",
+          "group": "vdmpp-ctView@0"
+        },
+        {
+          "command": "extension.ctExecute",
+          "when": "resourceLangId == vdmpp && viewItem == trace && vdm-ct-show-run-buttons == true || resourceLangId == vdmpp && viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "group": "inline@0"
+        },
+        {
+          "command": "extension.ctFilteredExecute",
+          "when": "resourceLangId == vdmpp && viewItem == trace && vdm-ct-show-run-buttons == true",
+          "group": "inline@1"
+        },
+        {
+          "command": "extension.ctGenerate",
+          "when": "resourceLangId == vdmpp && viewItem == trace",
+          "group": "inline@2"
+        },
+        {
+          "command": "extension.goToTrace",
+          "when": "resourceLangId == vdmpp && viewItem == trace",
+          "group": "inline@3"
+        },
+        {
+          "command": "extension.ctSendToInterpreter",
+          "when": "resourceLangId == vdmpp && viewItem == test && vdm-ct-show-run-buttons == true",
+          "group": "inline@0"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "extension.runPOG",
+          "when": "resourceLangId == vdmpp",
+          "group": "verification@1"
+        },
+        {
+          "command": "extension.translateLatex",
+          "when": "resourceLangId == vdmpp",
+          "group": "translate@1"
+        },
+        {
+          "command": "extension.translateWord",
+          "when": "resourceLangId == vdmpp",
+          "group": "translate@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "extension.runPOG",
+          "when": "resourceLangId == vdmpp",
+          "group": "verification@1"
+        },
+        {
+          "command": "extension.translateLatex",
+          "when": "resourceLangId == vdmpp",
+          "group": "translate@1"
+        },
+        {
+          "command": "extension.translateWord",
+          "when": "resourceLangId == vdmpp",
+          "group": "translate@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "extension.runPOG",
+          "when": "editorLangId == vdmpp"
+        },
+        {
+          "command": "extension.ctSetFilter",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctRebuildOutline",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctFullExecute",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctExecute",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctFilteredExecute",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctGenerate",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctEnableTreeFilter",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctDisableTreeFilter",
+          "when": "false"
+        },
+        {
+          "command": "extension.ctSendToInterpreter",
+          "when": "false"
+        },
+        {
+          "command": "extension.goToTrace",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "VDM++",
+      "properties": {
+        "vdmpp-lsp.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "format": "json",
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server."
+        },
+        "vdmpp-lsp.JVMArguments": {
+          "type": "string",
+          "default": "",
+          "description": "JVM arguments used when launching the server."
+        },
+        "vdmpp-lsp.activateServerLog": {
+          "type": "boolean",
+          "default": false,
+          "description": "Activate logging of server actions and protocol communication."
+        },
+        "vdmpp-lsp.experimentalServer": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
+        },
+        "vdmpp-lsp.lspPort": {
+          "type": "integer",
+          "default": 8000,
+          "description": "Port used for LSP. Only used for experimental server."
+        },
+        "vdmpp-lsp.dapPort": {
+          "type": "integer",
+          "default": 8001,
+          "description": "Port used for DAP. Only used for experimental server."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "vdmpp",
+        "aliases": [
+          "VDM++",
+          "vdmpp"
+        ],
+        "extensions": [
+          ".vdmpp"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vdmpp",
+        "scopeName": "source.vdmpp",
+        "path": "./syntaxes/vdmpp.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm",
+        "path": "./syntaxes/vdm.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.type",
+        "path": "./syntaxes/vdm.type.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.number",
+        "path": "./syntaxes/vdm.number.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.operators",
+        "path": "./syntaxes/vdm.operators.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.statements",
+        "path": "./syntaxes/vdm.statements.tmLanguage.json"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "vdmpp",
+        "label": "VDM++ Debug",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "noDebug": {
+                "type": "boolean",
+                "description": "Don't run debug mode.",
+                "default": false
+              },
+              "defaultName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Name of the default module or class.",
+                "default": ""
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "vdmpp",
+            "request": "launch",
+            "name": "Launch VDM++ Debug",
+            "stopOnEntry": true,
+            "noDebug": false,
+            "defaultName": null
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "VDM++ Debug: Launch",
+            "description": "A new configuration for 'debugging' a VDM++ project.",
+            "body": {
+              "type": "vdmpp",
+              "request": "launch",
+              "name": "Launch VDM++ Debug",
+              "stopOnEntry": true,
+              "noDebug": false,
+              "defaultName": null
+            }
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "vdmpp"
+      }
+    ]
+  },
+  "scripts": {
+    "preinstall": "cd ../common && npm install && cd ../vdmpp",
+    "postinstall": "cd ../common && node copyScript.js vdmpp",
+    "vscode:prepublish": "npm run compile && webpack --mode production",
+    "compile": "cd ../common && node copyScript.js vdmpp && tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "webpack": "npm run compile && webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch",
+    "test-compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.14.6",
+    "@types/vscode": "^1.49.0",
+    "mocha": "^8.1.1",
+    "ts-loader": "^8.0.7",
+    "typescript": "^4.0.5",
+    "vscode-test": "^1.4.1",
+    "webpack": "^5.3.2",
+    "webpack-cli": "^4.1.0"
+  },
+  "dependencies": {
+    "compile": "0.0.2",
+    "fs-extra": "^9.0.1",
+    "portfinder": "^1.0.26",
+    "run": "^1.4.0",
+    "vscode-languageclient": "^6.1.3"
+  }
+}

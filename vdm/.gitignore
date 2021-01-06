@@ -1,0 +1,10 @@
+out
+server
+node_modules
+dist
+resources
+media
+!*.jar
+*.log
+.VSCodeCounter
+dist/**
