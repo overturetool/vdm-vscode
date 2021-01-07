@@ -1,0 +1,84 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "operators",
+	"patterns": [
+		{
+			"include": "#assignment"
+		},
+		{
+			"include": "#combinators"
+		},
+		{
+			"include": "#map"
+		},
+		{
+			"include": "#set"
+		},
+		{
+			"include": "#applicators"
+		},
+		{
+			"include": "#evaluators"
+		},
+		{
+			"include": "#relations"
+		},
+		{
+			"include": "#type"
+		},
+		{
+			"include": "#new"
+		},
+		{
+			"include": "#connectives"
+		},
+		{
+			"include": "#other"
+		}
+	],
+	"repository": {
+		"assignment": {
+			"name": "keyword.operator.assignment.vdm",
+			"match": "(=)"
+		},
+		"combinators": {
+			"name": "keyword.other.combinators.vdm",
+			"match": "\\b(\\*\\*|comp)\\b"
+		},
+		"applicators": {},
+		"arithmetic": {
+			"name": "keyword.operator.arithmetic.vdm",
+			"match": "\\b(\\+|\\-|\\*|\\/|\\\\|\\^)\\b"
+		},
+		"map": {
+			"name": "keyword.operator.map.vdm",
+			"match": "\\b(\\+\\+|\\<\\:|\\<\\-\\:|\\:\\>|\\:\\-\\>)\\b"
+		},
+		"evaluators": {
+			"name": "keyword.other.evaluators.vdm",
+			"match": "\\b(abs|floor|card|power|dunion|dinter|hd|tl|len|inds|elems|conc|reverse|dom|rng|merge|inverse|rem|mod|div|union|inter|munion)\\b"
+		},
+		"relations": {
+			"name": "keyword.operator.relations.vdm",
+			"match": "\\b(<=|>=|<|>|=|==|<>)\\b"
+		},
+		"set": {
+			"name": "keyword.other.set.vdm",
+			"match": "\\b(subset|psubset|in set|not in set)\\b"
+		},
+		"connectives": {
+			"name": "keyword.other.connectives.vdm",
+			"match": "\\b(not|and|or|=>|<=>)\\b"
+		},
+		"type": {},
+		"new": {
+			"name": "keyword.operator.new.vdm",
+			"match": "\\b(new)\\b"
+		},
+		"other": {
+			"name": "keyword.other.vdm",
+			"match": "\\b(\\.\\.\\.|forall|exists|exists1|iota|lambda)\\b"
+		}
+	},
+	"scopeName": "source.vdm.operators"
+}

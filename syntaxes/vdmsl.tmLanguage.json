@@ -1,0 +1,14 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "VDM-SL",
+	"patterns": [
+		{
+			"include": "source.vdm"
+		},
+		{
+			"name": "storage.type.module.vdmsl",
+			"match": "\\b(module)\\b"
+		}
+	],
+	"scopeName": "source.vdmsl"
+}

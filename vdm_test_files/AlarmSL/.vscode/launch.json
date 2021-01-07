@@ -5,9 +5,9 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "vdmsl",
+            "type": "vdm",
             "request": "launch",
-            "name": "Launch VDM-SL Debug",
+            "name": "Launch VDM Debug",
             "stopOnEntry": true,
             "noDebug": false,
             "defaultName": null

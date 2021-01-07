@@ -3,4 +3,4 @@ functions
 		f(a, b) == a/b;
 
 types
-			typeA = nt;
+			typeA = nat;

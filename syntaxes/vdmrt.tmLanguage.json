@@ -1,0 +1,22 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "VDM-RT",
+	"patterns": [
+		{
+			"include": "source.vdm"
+		},
+		{
+			"name": "storage.type.class.vdmrt",
+			"match": "\\b(class)\\b"
+		},
+		{
+			"name": "storage.type.definition.class.vdmrt",
+			"match": "\\b(thread|sync)\\b"
+		},
+		{
+			"name": "storage.type.system.vdmrt",
+			"match": "\\b(system)\\b"
+		}
+	],
+	"scopeName": "source.vdmrt"
+}
