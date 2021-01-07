@@ -17,17 +17,16 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 let client : SpecificationLanguageClient;
 
 export async function activate(context: ExtensionContext, vdmDialect : string) {
-    let clientLogPath = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
-    globalThis.clientLogPath = clientLogPath;
-    let serverLogPath = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
-    let serverMainClass =  'lsp.LSPServerSocket';
-    let lspPort: number;
-    let dapPort: number;
-
-	let vdmjPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
+    let vdmjPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
     let lspServerPath = util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
     if(!vdmjPath || !lspServerPath)
         return;
+
+    globalThis.clientLogPath = path.resolve(context.extensionPath, vdmDialect + '_lang_client.log');
+    let serverLogPath = path.resolve(context.extensionPath, vdmDialect + '_lang_server.log');
+    const serverMainClass =  'lsp.LSPServerSocket';
+    let lspPort: number;
+    let dapPort: number;
 
     extensionLanguage = vdmDialect;
 
@@ -43,7 +42,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
             if(err)
             {
                 vscode.window.showErrorMessage("An error occured when finding free ports: " + err)
-                util.writeToLog(clientLogPath, "An error occured when finding free ports: " + err);
+                util.writeToLog(globalThis.clientLogPath, "An error occured when finding free ports: " + err);
                 return;
             }
             lspPort = ports[0];
@@ -70,7 +69,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
             let javaPath = util.findJavaExecutable('java');
             if (!javaPath) {
                 vscode.window.showErrorMessage("Java runtime environment not found!")
-                util.writeToLog(clientLogPath, "Java runtime environment not found!");
+                util.writeToLog(globalThis.clientLogPath, "Java runtime environment not found!");
                 return;
             }
             child_process.spawn(javaPath, args);
@@ -87,7 +86,7 @@ export async function activate(context: ExtensionContext, vdmDialect : string) {
                 await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
                 if(timeOutCounter++ == 100){
                     vscode.window.showErrorMessage("ERROR: LSP server connection timeout");
-                    util.writeToLog(clientLogPath, "ERROR: LSP server connection timeout");
+                    util.writeToLog(globalThis.clientLogPath, "ERROR: LSP server connection timeout");
                     return;
                 }
             }
