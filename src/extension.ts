@@ -175,9 +175,13 @@ export function activate(context: ExtensionContext) {
         });
     }
 
-    function createClient(dialect: string, lspPort: number, dapPort: number, folder?: WorkspaceFolder): SpecificationLanguageClient {
+    let once = false;
+    function createClient(dialect: string, lspPort: number, dapPort: number, folder: WorkspaceFolder): SpecificationLanguageClient {
         // Setup DAP
-        dapSupport.initDebugConfig(context, dapPort) //TODO Fix for multi-server
+        // if (!once){
+            // once = true;
+            dapSupport.initDebugConfig(context, folder, dapPort) //TODO Fix for multi-server
+        // }
 
         // Setup server options
         let serverOptions: ServerOptions = () => {
@@ -229,7 +233,8 @@ export function activate(context: ExtensionContext) {
         let lspPort = Workspace.getConfiguration('vdm-vscode').lspPort;
         let dapPort = Workspace.getConfiguration('vdm-vscode').dapPort;
         
-        createClient(dialect, lspPort, dapPort);
+        createClient(dialect, lspPort, dapPort, Workspace.workspaceFolders[0]);
+        return;
     }
 
     Workspace.onDidOpenTextDocument(didOpenTextDocument);
