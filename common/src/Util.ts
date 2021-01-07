@@ -21,7 +21,7 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
     {
         let element: fs.Dirent = elementsInFolder[i];
         let fullElementPath =  path.resolve(resourcesPath, element.name);
-        if(fs.lstatSync(fullElementPath).isDirectory())
+        if(isDir(fullElementPath))
             fullElementPath = recursivePathSearch(fullElementPath, searcher);
         else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1)
             return fullElementPath;
@@ -33,15 +33,25 @@ export function isDir(path: fs.PathLike): boolean {
     return fs.lstatSync(path).isDirectory();
 }
 
-export function createTimestampedDirectory(rootPath: Uri, dirName:string): DocumentUri{
-    var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-    let fullUri = Uri.joinPath(rootPath, dirName+ " " + dateString);
-    if (!fs.existsSync(fullUri.fsPath)){
-        fs.mkdirSync(fullUri.fsPath, {recursive: true});
-        return fullUri.toString();
-    }
-
-    throw new Error("Failed to create directory.");
+export function createTimestampedDirectory(rootPath: Uri, dirName:string): Promise<DocumentUri>{
+    return new Promise(async (resolve, reject) => {
+        var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
+        let fullUri = Uri.joinPath(rootPath, dirName+ " " + dateString);
+        fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
+            if(!accessErr)
+                return resolve(fullUri.fsPath);
+            if (accessErr.code === 'ENOENT'){
+                fs.mkdir(fullUri.fsPath, dirErr => {
+                    if (dirErr){
+                        return reject(dirErr);
+                    }
+                    return resolve(fullUri.toString());
+                });     
+            }
+            else
+                return reject(accessErr);  
+        });      
+     });
 }
 
 export function writeToLog(path: string, msg: string) {
