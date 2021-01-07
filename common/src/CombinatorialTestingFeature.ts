@@ -5,6 +5,8 @@ import { ExperimentalCapabilities, CTTestCase, CTSymbol, CTFilterOption, CTTrace
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
 import * as util from "./Util"
+import { resolve } from 'path';
+import { rejects } from 'assert';
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _ctTreeView : CTTreeView;
@@ -51,7 +53,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     };
 
     public async requestTraces(uri?: Uri) : Promise<CTSymbol[]>{
-        window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
+        let barMessage = window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview');
 
         try {
             // Setup message parameters
@@ -61,10 +63,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             const symbols = await this._client.sendRequest(CTTracesRequest.type, params);
+            barMessage.dispose();
             return symbols;
         }
         catch (err) {
             window.showWarningMessage("Combinatorial Test - trace request failed. " + err);
+            barMessage.dispose();
             return null;
         }
     }
@@ -159,10 +163,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
     private handleExecuteWorkDoneProgress(value: any, progress: vscode.Progress<{ message?: string; increment?: number }>){
         if (value?.percentage != undefined){
-            progress.report({message: value.message, increment: (value.percentage - this._progress)})
+            progress.report({message: `${value.message} - ${value.percentage}%`, increment: (value.percentage - this._progress)})
             this._progress = value.percentage
-        }
-            
+        }           
     }
 
     private generateToken() : string {
