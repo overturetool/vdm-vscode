@@ -235,46 +235,44 @@ export class CTTreeView {
             cancellable: false
         }, async (progress, token) => {
             try {
-            if(this._testProvider.getRoots().length > 0){
-                let res = await this._ctFeature.requestTraces();
-                if (res){
-                    // Filter existing trace symbols so they matches servers
-                    this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res, this._combinatorialTests);
-                }
-                else
-                    this._combinatorialTests = [];
-            }
-            else
-            {
-                await Promise.all([this.loadCTs().catch(reason =>{
-                    window.showWarningMessage("Failed to load existing CTs from files");
-                    util.writeToLog(globalThis.clientLogPath, "Failed to load existing CTs from files: " + reason);
-                    return Promise.resolve([])
-                }), this._ctFeature.requestTraces()]).then(res =>
+                let requestedTraces = await this._ctFeature.requestTraces() ?? [];
+                if(requestedTraces.length > 0)
+                {
+                    if(this._testProvider.getRoots().length > 0){            
+                        // Filter existing trace symbols so they matches servers
+                        this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(requestedTraces, this._combinatorialTests);
+                    }
+                    else
                     {
-                        if(res[1]){
-                            // Filter loaded trace symbols so they matches servers
-                            this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
-                        }
-                        else
-                            this._combinatorialTests = [];       
-                });
-            }      
-            
-            // Inform user if no traces were found
-            if(this._combinatorialTests.length == 0){
-                window.showInformationMessage("No trace found in specification");      
-            }
-            if(this._combinatorialTests){
-                // Notify tree view of data update
-                this._testProvider.rebuildViewFromElement();
-            }
+                        await this.loadCTs().catch(reason =>{
+                            window.showWarningMessage("Failed to load existing CTs from files");
+                            util.writeToLog(globalThis.clientLogPath, "Failed to load existing CTs from files: " + reason);
+                            return Promise.resolve([])
+                        }).then(completeCTs => {
+                             // Filter loaded trace symbols so they matches servers
+                             this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(requestedTraces, completeCTs);
+                        });                     
+                    }      
+                }
+                else{
+                    this._combinatorialTests = [];
+                }
+                
+                // Inform user if no traces were found
+                if(this._combinatorialTests.length == 0){
+                    window.showInformationMessage("No trace found in specification");      
+                }
+                if(this._combinatorialTests){
+                    // Notify tree view of data update
+                    this._testProvider.rebuildViewFromElement();
+                }
 
-        }
-        catch(error){
-            util.writeToLog(globalThis.clientLogPath, "Failed to generate trace outline: " + error);
-            window.showWarningMessage("Failed to generate trace outline"); 
-        }}); 
+            }
+            catch(error){
+                util.writeToLog(globalThis.clientLogPath, "Failed to generate trace outline: " + error);
+                window.showWarningMessage("Failed to generate trace outline"); 
+            }}
+        ); 
     }
 
     private matchLocalSymbolsToServerSymbols(serverSymbols:CTSymbol[], localSymbols:completeCT[]): completeCT[] {
