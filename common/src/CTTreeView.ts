@@ -26,9 +26,6 @@ export class CTTreeView {
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
     public uiUpdateIntervalMS = 1000;
-    private _ctViewId: string;
-    private _resultViewId: string;
-
 
     constructor(
         private _ctFeature: CombinantorialTestingFeature, 
@@ -39,8 +36,6 @@ export class CTTreeView {
 
         this._testProvider = new CTDataProvider(this, this._context);
         this._resultProvider = new CTResultDataProvider();
-        this._ctViewId = extensionLanguage+'-ctView';
-        this._resultViewId = extensionLanguage+'-ctResultView';
         // Set save path and load cts     // TODO correct this when implementing workspaces
         this._savePath = Uri.joinPath(savePath, "Combinatorial Testing");
 
@@ -49,7 +44,7 @@ export class CTTreeView {
             treeDataProvider: this._testProvider, 
             showCollapseAll: true
         }
-        this._testView = window.createTreeView(this._ctViewId, testview_options);
+        this._testView = window.createTreeView(extensionLanguage+'-ctView', testview_options);
         this._context.subscriptions.push(this._testView);
 
         // Create results view
@@ -57,7 +52,7 @@ export class CTTreeView {
             treeDataProvider: this._resultProvider, 
             showCollapseAll: true
         }
-        this._resultView = window.createTreeView(this._resultViewId, resultview_options);
+        this._resultView = window.createTreeView(extensionLanguage+'-ctResultView', resultview_options);
         this._context.subscriptions.push(this._resultView);
 
         // Register view behavior
@@ -93,7 +88,7 @@ export class CTTreeView {
     public saveCTs() {            
         this._combinatorialTests.forEach(ct => {
             // Create full path
-            let path = Uri.joinPath(this._savePath, ct.symbolName+".json").fsPath;
+            let path = Uri.joinPath(this._savePath, `${ct.symbolName}.json`).fsPath;
 
             // Ensure that path exists
             util.ensureDirectoryExistence(path)
@@ -110,29 +105,35 @@ export class CTTreeView {
 
     private async loadCTs() : Promise<completeCT[]>{
         return new Promise(async (resolve, reject) => {
-            // Asynchroniouse read of filepath
             let completeCTs: completeCT[] = [];
-            if (!fs.existsSync(this._savePath.fsPath))
-                return resolve(completeCTs);
-            let files = fs.readdirSync(this._savePath.fsPath, {withFileTypes: true});
-            
-            // Go through files in the folder and read content
-            files.forEach(f => {
-                let file:fs.Dirent = f;
-                if(file.isFile && file.name.includes(".json"))
-                {
-                    let ctFile = fs.readFileSync(this._savePath.fsPath + path.sep + file.name).toString();
-                    try{
-                        completeCTs.push(JSON.parse(ctFile));
-                    }
-                    catch(err)
-                    {
-                        reject(err);
-                        throw err;
-                    }
+            fs.access(this._savePath.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
+                if(!accessErr){
+                    fs.readdir(this._savePath.fsPath, {withFileTypes: true}, (dirErr,files) => {
+                        if(!dirErr){
+                            // Go through files in the folder and read content
+                            files.forEach(f => {
+                                let file:fs.Dirent = f;
+                                if(file.isFile && file.name.includes(".json"))
+                                {
+                                    let ctFile = fs.readFileSync(this._savePath.fsPath + path.sep + file.name).toString();
+                                    try{
+                                        completeCTs.push(JSON.parse(ctFile));
+                                    }
+                                    catch(err)
+                                    {
+                                        return reject(err);
+                                    }
+                                }
+                            });
+                            return resolve(completeCTs);
+                        }
+                        return reject(dirErr);                               
+                    });
                 }
-            });
-            resolve(completeCTs);
+                if(accessErr.code === 'ENOENT')
+                    return resolve(completeCTs);             
+                return reject(accessErr);                 
+             });
         })
     }
 
@@ -236,35 +237,44 @@ export class CTTreeView {
             try {
             if(this._testProvider.getRoots().length > 0){
                 let res = await this._ctFeature.requestTraces();
-                if (res != null)
+                if (res){
+                    // Filter existing trace symbols so they matches servers
                     this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res, this._combinatorialTests);
+                }
+                else
+                    this._combinatorialTests = [];
             }
             else
             {
-                await Promise.all([this.loadCTs().catch(() => Promise.resolve<completeCT[]>([{symbolName: "", traces: []}])), this._ctFeature.requestTraces()]).then(res =>
+                await Promise.all([this.loadCTs().catch(reason =>{
+                    window.showWarningMessage("Failed to load existing CTs from files");
+                    util.writeToLog(globalThis.clientLogPath, "Failed to load existing CTs from files: " + reason);
+                    return Promise.resolve([])
+                }), this._ctFeature.requestTraces()]).then(res =>
                     {
-                        // Filter loaded data so it matches servers
-                        this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
-                    });
+                        if(res[1]){
+                            // Filter loaded trace symbols so they matches servers
+                            this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(res[1], res[0]);
+                        }
+                        else
+                            this._combinatorialTests = [];       
+                });
             }      
             
             // Inform user if no traces were found
             if(this._combinatorialTests.length == 0){
                 window.showInformationMessage("No trace found in specification");      
             }
-            else
-            {
+            if(this._combinatorialTests){
                 // Notify tree view of data update
-                this._testProvider.rebuildViewFromElement();       
+                this._testProvider.rebuildViewFromElement();
             }
+
         }
         catch(error){
             util.writeToLog(globalThis.clientLogPath, "Failed to generate trace outline: " + error);
             window.showWarningMessage("Failed to generate trace outline"); 
-        }
-        finally{
-        }   
-        }); 
+        }}); 
     }
 
     private matchLocalSymbolsToServerSymbols(serverSymbols:CTSymbol[], localSymbols:completeCT[]): completeCT[] {
