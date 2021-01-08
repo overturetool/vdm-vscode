@@ -82,7 +82,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
             const pos = await client.sendRequest(GeneratePORequest.type, params);
 
             // Create new view or show existing POG View
-            ProofObligationPanel.createOrShowPanel(Uri.file(context.extensionPath), revealPOGView);
+            ProofObligationPanel.createOrShowPanel(Uri.file(context.extensionPath), revealPOGView, workspace.getWorkspaceFolder(inputUri).name);
             ProofObligationPanel.currentPanel.displayNewPOS(pos);
         }
         catch (error) {
