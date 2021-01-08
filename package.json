@@ -227,7 +227,7 @@
       "explorer/context": [
         {
           "command": "extension.runPOG",
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
           "group": "verification@1"
         },
         {
@@ -244,7 +244,7 @@
       "editor/context": [
         {
           "command": "extension.runPOG",
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
           "group": "verification@1"
         },
         {
@@ -261,7 +261,7 @@
       "commandPalette": [
         {
           "command": "extension.runPOG",
-          "when": "editorLangId == vdmsl"
+          "when": "false"
         },
         {
           "command": "extension.ctSetFilter",

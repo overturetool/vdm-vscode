@@ -18,10 +18,10 @@ export class SpecificationLanguageClient extends LanguageClient {
         this._context = context
         
         this.registerFeatures([ //TODO Fix for multi-server
-            new ProofObligationGenerationFeature(this,this._context), 
-            new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()),
-            new TranslateFeature(this, this._context, this.latexLanguageId, "extension.translateLatex"),
-            new TranslateFeature(this, this._context, this.wordLanguageId, "extension.translateWord")
+            new ProofObligationGenerationFeature(this, this._context), 
+            // new CombinantorialTestingFeature(this, this._context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()),
+            // new TranslateFeature(this, this._context, this.latexLanguageId, "extension.translateLatex"),
+            // new TranslateFeature(this, this._context, this.wordLanguageId, "extension.translateWord")
 
         ]);
     }

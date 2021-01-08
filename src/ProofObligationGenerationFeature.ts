@@ -1,23 +1,17 @@
-import path = require("path");
-import { ExtensionContext, Disposable, Uri, window, commands } from "vscode";
+import { ExtensionContext, Uri, window, commands, workspace } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
 import { ExperimentalCapabilities, POGUpdatedNotification, GeneratePOParams, GeneratePORequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class ProofObligationGenerationFeature implements StaticFeature {
+    private static commandRegistered = false;
     private _client: SpecificationLanguageClient;
     private _context: ExtensionContext;
-    private _runPOGDisp: Disposable;
-    private _lastUri: Uri;
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext) {
         this._client = client;
-        this._context = context;
-
-        this._runPOGDisp = this.registerCommand('extension.runPOG', () => {
-            window.showInformationMessage("Proof obligation generation is not supported by the language server")
-        });
+        this._context = context;   
     }
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -43,18 +37,29 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     };
 
     private registerPOGCommand(): void {
-        this._runPOGDisp.dispose();
-        this.registerCommand('extension.runPOG', (inputUri: Uri) => this.runPOG(inputUri));
+        if (!ProofObligationGenerationFeature.commandRegistered) {
+            ProofObligationGenerationFeature.commandRegistered = true;
+            commands.executeCommand( 'setContext', 'pog-show-button', true );
+            this.registerCommand('extension.runPOG', (inputUri: Uri) => {
+
+                // Find client
+                let wsFolder = workspace.getWorkspaceFolder(inputUri);
+                let client = globalThis.clients.get(wsFolder.uri.toString());
+
+                ProofObligationGenerationFeature.run(inputUri, client, this._context)
+            });
+        }
     }
 
     private registerPOGUpdatedNotificationHandler(): void {
         this._client.onNotification(POGUpdatedNotification.type, (params) => {
-            // Only perform actions if POG View exists
-            if (ProofObligationPanel.currentPanel) {
+            // Only perform actions if POG View exists and if active editor is on a file from the clients workspace
+            if (ProofObligationPanel.currentPanel &&
+                (workspace.getWorkspaceFolder(window.activeTextEditor.document.uri).uri.toString() == this._client.clientOptions.workspaceFolder.uri.toString()) ) {
                 // If POG is possible
                 if (params.successful) {
-                    // Request new POG
-                    this.runPOG(this._lastUri, false);
+                    // Request new POG 
+                    ProofObligationGenerationFeature.run(this._client.clientOptions.workspaceFolder.uri, this._client, this._context, false);
                 }
                 else {
                     // Display warning that POs may be outdated
@@ -64,28 +69,24 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
-    private async runPOG(inputUri: Uri, revealPOGView: boolean = true) {
+    static async run(inputUri: Uri, client: SpecificationLanguageClient, context: ExtensionContext, revealPOGView: boolean = true) {
         window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
-
-        let uri = inputUri || window.activeTextEditor?.document.uri;
-        let dirUri = Uri.file(uri.fsPath.substring(0,uri.fsPath.lastIndexOf(path.sep)));
-        this._lastUri = uri;
 
         try {
             // Setup message parameters
             let params: GeneratePOParams = {
-                uri: dirUri.toString(),
+                uri: inputUri.toString(),
             };
 
             // Send request
-            const pos = await this._client.sendRequest(GeneratePORequest.type, params);
+            const pos = await client.sendRequest(GeneratePORequest.type, params);
 
             // Create new view or show existing POG View
-            ProofObligationPanel.createOrShowPanel(Uri.file(this._context.extensionPath), revealPOGView);
+            ProofObligationPanel.createOrShowPanel(Uri.file(context.extensionPath), revealPOGView);
             ProofObligationPanel.currentPanel.displayNewPOS(pos);
         }
         catch (error) {
             window.showInformationMessage("Proof obligation generation failed. " + error);
         }
-    }
+    }   
 }

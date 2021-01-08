@@ -12,8 +12,7 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import * as Util from "./Util"
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
 
-
-let clients: Map<string, SpecificationLanguageClient> = new Map();
+globalThis.clients = new Map();
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -75,14 +74,14 @@ export function activate(context: ExtensionContext) {
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
         folder = getOuterMostWorkspaceFolder(folder);
 
-        if (!clients.has(folder.uri.toString())) {
+        if (!globalThis.clients.has(folder.uri.toString())) {
             
             let serverLogFile = path.resolve(context.extensionPath, folder.name.toString() + '_lang_server.log');
             
             let dialect = getDialect(document);
             launchClient(dialect, lspServerPath, vdmjPath, globalThis.clientLogPath, serverLogFile, folder);
 
-            clients.set(folder.uri.toString(), null);
+            globalThis.clients.set(folder.uri.toString(), null);
         }
     }
 
@@ -95,7 +94,7 @@ export function activate(context: ExtensionContext) {
             {
                 Window.showErrorMessage("An error occured when finding free ports: " + err)
                 Util.writeToLog(clientLogFile, "An error occured when finding free ports: " + err);
-                clients.delete(folder.uri.toString());
+                globalThis.clients.delete(folder.uri.toString());
                 return;
             }
             let lspPort = ports[0];
@@ -123,7 +122,7 @@ export function activate(context: ExtensionContext) {
             if (!javaPath) {
                 Window.showErrorMessage("Java runtime environment not found!")
                 Util.writeToLog(clientLogFile, "Java runtime environment not found!");
-                clients.delete(folder.uri.toString());
+                globalThis.clients.delete(folder.uri.toString());
                 return;
             }
             child_process.spawn(javaPath, args);
@@ -141,7 +140,7 @@ export function activate(context: ExtensionContext) {
                 if(timeOutCounter++ == 100){
                     Window.showErrorMessage("ERROR: LSP server connection timeout");
                     Util.writeToLog(clientLogFile, "ERROR: LSP server connection timeout");
-                    clients.delete(folder.uri.toString());
+                    globalThis.clients.delete(folder.uri.toString());
                     return;
                 }
             }
@@ -149,7 +148,7 @@ export function activate(context: ExtensionContext) {
             let client = createClient(dialect, lspPort, dapPort, folder);
     
             // Save client
-            clients.set(folder.uri.toString(), client);
+            globalThis.clients.set(folder.uri.toString(), client);
         });
     }
 
@@ -216,9 +215,9 @@ export function activate(context: ExtensionContext) {
     Workspace.textDocuments.forEach(didOpenTextDocument);
     Workspace.onDidChangeWorkspaceFolders((event) => {
         for (const folder of event.removed) {
-            const client = clients.get(folder.uri.toString());
+            const client = globalThis.clients.get(folder.uri.toString());
             if (client) {
-                clients.delete(folder.uri.toString());
+                globalThis.clients.delete(folder.uri.toString());
                 client.stop();
             }
         }
@@ -227,7 +226,7 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
-    for (let client of clients.values()) {
+    for (let client of globalThis.clients.values()) {
         promises.push(client.stop());
     }
     return Promise.all(promises).then(() => undefined);
