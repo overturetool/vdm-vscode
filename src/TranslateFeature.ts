@@ -1,7 +1,7 @@
 import path = require("path");
 import { commands, ExtensionContext, window, Disposable, Uri, workspace, ViewColumn } from "vscode";
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { ExperimentalCapabilities, TranslateOptions, TranslateParams, TranslateRequest } from "./protocol.slsp";
+import { ExperimentalCapabilities, TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 
@@ -50,32 +50,45 @@ export class TranslateFeature implements StaticFeature {
 
     private registerTranslateCommand(): void {
         this._translateDisp.dispose();
-        this.registerCommand(this._translationCommandName, () => this.translateToLaTeX());
+        this.registerCommand(this._translationCommandName, () => this.translate());
     }
 
-    private async translateToLaTeX(){
-        window.setStatusBarMessage(`Translating to ${this._languageKind}.`, 1000);
-        try {
-            // Setup message parameters
-            let params: TranslateParams = {
-                uri: null, //TODO Change this when workspace has been implemented.
-                languageId: this._languageKind,
-                saveUri:util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKind).toString()
-            };
-
-            // Send request
-            const response = await this._client.sendRequest(TranslateRequest.type, params);
-            if(util.isDir(Uri.parse(response.uri).fsPath)) // Check if a directory has been returned
-                return;
-            
-            // Open the main file in the translation
-            let doc = await workspace.openTextDocument(response.uri);
-            
-            // Show the file
-            window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
-        }
-        catch (error) {
-            window.showInformationMessage(`Translation to ${this._languageKind} failed.` + error);
-        }
+    private async translate(){
+        window.setStatusBarMessage(`Translating to ${this._languageKind}.`, new Promise(async (resolve, reject) => {
+            util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKind).then(async (saveUri) => {
+                try {
+                    // Setup message parameters
+                    let params: TranslateParams = {
+                        uri: null, //TODO Change this when workspace has been implemented.
+                        languageId: this._languageKind,
+                        saveUri:saveUri.toString()
+                    };
+        
+                    // Send request
+                    const response = await this._client.sendRequest(TranslateRequest.type, params);
+                    // Check if a directory has been returned
+                    if(!util.isDir(Uri.parse(response.uri).fsPath)){
+                         // Open the main file in the translation
+                        let doc = await workspace.openTextDocument(response.uri);
+                        
+                        // Show the file
+                        window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                    } 
+                                  
+                    resolve(`Translated to ${this._languageKind}.`);
+                    window.showInformationMessage(`Translation to ${this._languageKind} completed`);
+                }
+                catch (error) {
+                    window.showWarningMessage(`Translation to ${this._languageKind} failed with error: ${error}`);
+                    util.writeToLog(globalThis.clientLogPath, `Translation to ${this._languageKind} failed with error: ${error}`);
+                    reject();
+                }
+            }, (reason) => {
+                window.showWarningMessage("Creating directory for translation files failed");
+                util.writeToLog(globalThis.clientLogPath, "Creating directory for translation files failed with error: " + reason);
+                reject();
+            });
+        }));
+        
     }
 }

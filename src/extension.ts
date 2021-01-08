@@ -55,6 +55,7 @@ function getDialect(document: TextDocument): string{
 }
 
 export function activate(context: ExtensionContext) {
+    globalThis.clientLogPath = path.resolve(context.extensionPath, 'vdm_lang_client.log');
     let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
     let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
     if (!vdmjPath || !lspServerPath)
@@ -77,11 +78,11 @@ export function activate(context: ExtensionContext) {
         folder = getOuterMostWorkspaceFolder(folder);
 
         if (!clients.has(folder.uri.toString())) {
-            let clientLogFile = path.resolve(context.extensionPath, folder.name.toString() + '_lang_client.log');
+            
             let serverLogFile = path.resolve(context.extensionPath, folder.name.toString() + '_lang_server.log');
             
             let dialect = getDialect(document);
-            launchClient(dialect, lspServerPath, vdmjPath, clientLogFile, serverLogFile, folder);
+            launchClient(dialect, lspServerPath, vdmjPath, globalThis.clientLogPath, serverLogFile, folder);
 
             clients.set(folder.uri.toString(), null);
         }

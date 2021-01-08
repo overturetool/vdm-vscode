@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
-import { commands, ExtensionContext, Uri, window as Window } from "vscode";
+import { commands, ExtensionContext, Uri, window} from "vscode";
 import { CancellationTokenSource, ClientCapabilities, ErrorCodes, ServerCapabilities, StaticFeature, WorkDoneProgress, WorkDoneProgressOptions} from "vscode-languageclient";
 import { ExperimentalCapabilities, CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
+import * as util from "./Util"
+import { resolve } from 'path';
+import { rejects } from 'assert';
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _ctTreeView : CTTreeView;
@@ -50,7 +53,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     };
 
     public async requestTraces(uri?: Uri) : Promise<CTSymbol[]>{
-        Window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview', 2000);
+        let barMessage = window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview');
 
         try {
             // Setup message parameters
@@ -60,10 +63,12 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
             // Send request
             const symbols = await this._client.sendRequest(CTTracesRequest.type, params);
+            barMessage.dispose();
             return symbols;
         }
         catch (err) {
-            Window.showInformationMessage("Combinatorial Test - trace request failed. " + err);
+            window.showWarningMessage("Combinatorial Test - trace request failed. " + err);
+            barMessage.dispose();
             return null;
         }
     }
@@ -79,7 +84,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         }
         catch (err) {
             // if (err?.code != ErrorCodes.ContentModified) // TODO Insert if we don't want sync errors to show
-            console.log("Combinatorial Test - generation request failed: " + err);
+            util.writeToLog(globalThis.clientLogPath, "CT - generation request failed: " + err);
             throw err;
         }
     }
@@ -87,7 +92,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
     public async requestExecute(name: string, filtered: boolean = false, range?: NumberRange, progress?: vscode.Progress<{ message?: string; increment?: number }>){
         // Check if already running an execution
         if (this._cancelToken){
-            Window.showInformationMessage("Combinatorial Test - execute request failed: An execution is already running");
+            window.showInformationMessage("Combinatorial Test - execute request failed: An execution is already running");
             return;
         }
 
@@ -129,7 +134,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                 if (err?.data != null)
                     this._ctTreeView.addNewTestResults(name, err.data);
             }
-            console.log("Combinatorial Test - execute request failed: " + err);
+            util.writeToLog(globalThis.clientLogPath, "CT - execute request failed: " + err);
             throw err;
         }
         finally{
@@ -153,15 +158,14 @@ export class CombinantorialTestingFeature implements StaticFeature {
         if (tests)
             this._ctTreeView.addNewTestResults(trace, tests);
         else
-            Window.showInformationMessage("CT Received Progress without any tests");
+            window.showInformationMessage("CT Received Progress without any tests");
     }
 
     private handleExecuteWorkDoneProgress(value: any, progress: vscode.Progress<{ message?: string; increment?: number }>){
         if (value?.percentage != undefined){
-            progress.report({message: value.message, increment: (value.percentage - this._progress)})
+            progress.report({message: `${value.message} - ${value.percentage}%`, increment: (value.percentage - this._progress)})
             this._progress = value.percentage
-        }
-            
+        }           
     }
 
     private generateToken() : string {
