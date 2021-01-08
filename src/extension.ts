@@ -58,36 +58,15 @@ export function activate(context: ExtensionContext) {
     let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
     let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
     if (!vdmjPath || !lspServerPath)
-        return; // TODO Maybe prompt user?
+        return;
 
     function didOpenTextDocument(document: TextDocument): void {
-        // We are only interested in vdm text //TODO add vdmpp and vdmrt 
-        if ( (document.languageId !== 'vdmsl' && document.languageId !== 'vdmpp'  && document.languageId !== 'vdmrt')
-            || (document.uri.scheme !== 'file' && document.uri.scheme !== 'untitled')) 
-            {
+        // We are only interested in vdm text
+        if (document.languageId !== 'vdmsl' && document.languageId !== 'vdmpp'  && document.languageId !== 'vdmrt') {
             return;
         }
 
         const uri = document.uri;
-
-        // Untitled files go to a default client.
-        if (uri.scheme === 'untitled' && !defaultClient) {
-            // TODO What to do about default client?
-            // const debugOptions = { execArgv: ["--nolazy", "--inspect=6010"] };
-            // const serverOptions = {
-            //     run: { module, transport: TransportKind.ipc },
-            //     debug: { module, transport: TransportKind.ipc, options: debugOptions }
-            // };
-            // const clientOptions: LanguageClientOptions = {
-            //     documentSelector: [
-            //         { scheme: 'untitled', language: 'plaintext' }
-            //     ],
-            //     diagnosticCollectionName: 'lsp-multi-server-example',
-            // };
-            // defaultClient = new LanguageClient('lsp-multi-server-example', 'LSP Multi Server Example', serverOptions, clientOptions);
-            // defaultClient.start();
-            return;
-        }
         let folder = Workspace.getWorkspaceFolder(uri);
         // Files outside a folder can't be handled. This might depend on the language.
         // Single file languages like JSON might handle files outside the workspace folders.
@@ -178,10 +157,7 @@ export function activate(context: ExtensionContext) {
     let once = false;
     function createClient(dialect: string, lspPort: number, dapPort: number, folder: WorkspaceFolder): SpecificationLanguageClient {
         // Setup DAP
-        // if (!once){
-            // once = true;
-            dapSupport.initDebugConfig(context, folder, dapPort) //TODO Fix for multi-server
-        // }
+        dapSupport.initDebugConfig(context, folder, dapPort)
 
         // Setup server options
         let serverOptions: ServerOptions = () => {
