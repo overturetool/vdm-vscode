@@ -46,7 +46,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
                 let wsFolder = workspace.getWorkspaceFolder(inputUri);
                 let client = globalThis.clients.get(wsFolder.uri.toString());
 
-                ProofObligationGenerationFeature.run(inputUri, client, this._context)
+                ProofObligationGenerationFeature.run(wsFolder.uri, client, this._context)
             });
         }
     }
@@ -82,7 +82,8 @@ export class ProofObligationGenerationFeature implements StaticFeature {
             const pos = await client.sendRequest(GeneratePORequest.type, params);
 
             // Create new view or show existing POG View
-            ProofObligationPanel.createOrShowPanel(Uri.file(context.extensionPath), revealPOGView, workspace.getWorkspaceFolder(inputUri).name);
+            let workspaceName = (workspace.workspaceFolders.length > 1 ? workspace.getWorkspaceFolder(inputUri).name : undefined)
+            ProofObligationPanel.createOrShowPanel(Uri.file(context.extensionPath), revealPOGView, workspaceName);
             ProofObligationPanel.currentPanel.displayNewPOS(pos);
         }
         catch (error) {

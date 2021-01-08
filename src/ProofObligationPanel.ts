@@ -24,7 +24,7 @@ export class ProofObligationPanel {
 
         // Check if a panel already exists
         if (ProofObligationPanel.currentPanel) {
-            // Check if panel is on another workspace folder
+            // Check if panel is for another workspace folder
             if (workspace && workspace != this.lastWorkspace){
                 ProofObligationPanel.currentPanel.dispose();
             }
@@ -39,9 +39,10 @@ export class ProofObligationPanel {
         }
 
         // Create a new panel.
+        let panelName: string = 'Proof Obligations' + (workspace ? ': ' + workspace : '');
         const panel = window.createWebviewPanel(
             ProofObligationPanel.viewType,
-            'Proof Obligations: ' + workspace,
+            panelName,
             {
                 viewColumn: column,
                 preserveFocus: true
