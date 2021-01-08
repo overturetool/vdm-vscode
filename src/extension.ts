@@ -11,9 +11,13 @@ import {
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import * as Util from "./Util"
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
+import { CTHandler } from './CTHandler';
+import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
+import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
 
 globalThis.clients = new Map();
+let ctHandler: CTHandler;
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -147,9 +151,15 @@ export function activate(context: ExtensionContext) {
             }
     
             let client = createClient(dialect, lspPort, dapPort, folder);
+            // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
+            let clientKey = folder.uri.toString();
     
             // Save client
-            globalThis.clients.set(folder.uri.toString(), client);
+            globalThis.clients.set(clientKey, client);
+
+            // Setup CT handler
+            if(!ctHandler)
+                ctHandler = new CTHandler(clientKey, context, globalThis.clients, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
         });
     }
 
@@ -188,7 +198,8 @@ export function activate(context: ExtensionContext) {
             'VDM Language Server',
             serverOptions,
             clientOptions,
-            context
+            context,
+            Uri.joinPath(folder.uri, ".generated")
         );
 
         // Start the and launch the client
