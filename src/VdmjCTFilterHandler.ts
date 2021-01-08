@@ -1,4 +1,4 @@
-import { CTFilterHandler } from "./CombinatorialTestingFeature";
+import { CTFilterHandler } from "./CTHandler";
 import { CTFilterOption } from "./protocol.slsp";
 import * as vscode from 'vscode'
 
