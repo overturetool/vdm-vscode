@@ -13,8 +13,6 @@ import * as Util from "./Util"
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
 
 
-
-let defaultClient: SpecificationLanguageClient; // TODO what to do for this?
 let clients: Map<string, SpecificationLanguageClient> = new Map();
 
 let _sortedWorkspaceFolders: string[] | undefined;
@@ -229,9 +227,6 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
-    if (defaultClient) {
-        promises.push(defaultClient.stop());
-    }
     for (let client of clients.values()) {
         promises.push(client.stop());
     }
