@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "POGTestSL"
+		},
+		{
+			"path": "AlarmSL"
 		}
 	],
 	"settings": {}

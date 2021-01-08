@@ -14,8 +14,9 @@ export class ProofObligationPanel {
 
     public static currentPanel: ProofObligationPanel | undefined;
     public static readonly viewType = 'proofObligationPanel';
+    private static lastWorkspace: string;
 
-    public static createOrShowPanel(extensionUri: Uri, moveFocus: boolean) {
+    public static createOrShowPanel(extensionUri: Uri, moveFocus: boolean, workspace?: string) {
         // Define which column the po view should be in
         const column = window.activeTextEditor
             ? ViewColumn.Beside
@@ -23,16 +24,24 @@ export class ProofObligationPanel {
 
         // Check if a panel already exists
         if (ProofObligationPanel.currentPanel) {
-            // Put panel in focus
-            if(moveFocus)
-                ProofObligationPanel.currentPanel._panel.reveal(column, true);
-            return;
+            // Check if panel is on another workspace folder
+            if (workspace && workspace != this.lastWorkspace){
+                ProofObligationPanel.currentPanel.dispose();
+            }
+            else {
+                // Put panel in focus
+                if(moveFocus)
+                    ProofObligationPanel.currentPanel._panel.reveal(column, true);
+                return;
+            }
+
+            
         }
 
         // Create a new panel.
         const panel = window.createWebviewPanel(
             ProofObligationPanel.viewType,
-            'Proof Obligations',
+            'Proof Obligations: ' + workspace,
             {
                 viewColumn: column,
                 preserveFocus: true
@@ -49,6 +58,7 @@ export class ProofObligationPanel {
             },
         );
 
+        this.lastWorkspace = workspace;
         ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
     }
 
