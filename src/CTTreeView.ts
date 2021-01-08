@@ -6,16 +6,15 @@ import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { CTTestCase, CTSymbol, NumberRange, VerdictKind} from "./protocol.slsp";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
-import { CombinantorialTestingFeature } from './CombinatorialTestingFeature';
 import { ErrorCodes, Location } from 'vscode-languageclient';
 import * as util from "./Util"
+import { CTHandler } from './CTHandler';
 
 export class CTTreeView {
     private _testView: vscode.TreeView<TestViewElement>;
     private _resultView: vscode.TreeView<CTResultElement>;
     public currentTraceName: string;
     private _combinatorialTests: completeCT[] = [];
-    private readonly _savePath: Uri;
     private _testProvider: CTDataProvider;
     private _resultProvider: CTResultDataProvider;
     private _executeCanceled: boolean = false;
@@ -24,19 +23,17 @@ export class CTTreeView {
     private _currentlyExecutingTrace: traceWithTestResults;
     private _isExecutingTestGroup = false;
     private _timeoutRef: NodeJS.Timeout;
+    private _isRebuildingTraceOutline: boolean = false;
     public uiUpdateIntervalMS = 1000;
 
     constructor(
-        private _ctFeature: CombinantorialTestingFeature, 
+        private _ctHandler: CTHandler, 
         private _context:ExtensionContext, 
-        canFilter: boolean = false,
-        savePath:Uri
+        private _canFilter: boolean = false
         ){
 
         this._testProvider = new CTDataProvider(this, this._context);
         this._resultProvider = new CTResultDataProvider();
-        // Set save path and load cts     // TODO correct this when implementing workspaces
-        this._savePath = Uri.joinPath(savePath, "Combinatorial Testing");
 
         // Create test view
         let testview_options : vscode.TreeViewOptions<TestViewElement> = {
@@ -60,7 +57,7 @@ export class CTTreeView {
         this._context.subscriptions.push(this._testView.onDidChangeSelection(e => this.onDidChangeSelection(e.selection[0])));
 
         // Set button behavior
-        this.setButtonsAndContext(canFilter);
+        this.setButtonsAndContext(this._canFilter);
 
         // Show view
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-view', true);
@@ -87,16 +84,16 @@ export class CTTreeView {
     public saveCTs() {            
         this._combinatorialTests.forEach(ct => {
             // Create full path
-            let path = Uri.joinPath(this._savePath, `${ct.symbolName}.json`).fsPath;
+            let savePath = Uri.joinPath(this._ctHandler.currentClient.dataStoragePath, "Combinatorial Testing", `${ct.symbolName}.json`).fsPath;
 
             // Ensure that path exists
-            util.ensureDirectoryExistence(path)
+            util.ensureDirectoryExistence(savePath)
         
             // Convert data into JSON
             let json = JSON.stringify(ct);
 
             // Asynchronouse save
-            fs.writeFile(path, json, (err) => {
+            fs.writeFile(savePath, json, (err) => {
                 if (err) throw err;
             })
         });                   
@@ -105,16 +102,19 @@ export class CTTreeView {
     private async loadCTs() : Promise<completeCT[]>{
         return new Promise(async (resolve, reject) => {
             let completeCTs: completeCT[] = [];
-            fs.access(this._savePath.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
+
+            // Create full path
+            let savePath = Uri.joinPath(this._ctHandler.currentClient.dataStoragePath, "Combinatorial Testing").fsPath;
+            fs.access(savePath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
                 if(!accessErr){
-                    fs.readdir(this._savePath.fsPath, {withFileTypes: true}, (dirErr,files) => {
+                    fs.readdir(savePath, {withFileTypes: true}, (dirErr,files) => {
                         if(!dirErr){
                             // Go through files in the folder and read content
                             files.forEach(f => {
                                 let file:fs.Dirent = f;
                                 if(file.isFile && file.name.includes(".json"))
                                 {
-                                    let ctFile = fs.readFileSync(this._savePath.fsPath + path.sep + file.name).toString();
+                                    let ctFile = fs.readFileSync(savePath + path.sep + file.name).toString();
                                     try{
                                         completeCTs.push(JSON.parse(ctFile));
                                     }
@@ -226,18 +226,33 @@ export class CTTreeView {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-disable-filter-button', !show);
     }
 
-    private async ctRebuildOutline() {    
+    private async ctRebuildOutline() {
+        if(this._isRebuildingTraceOutline)
+            return;
+        
+        this._isRebuildingTraceOutline = true;
+        let clientName: string = this._ctHandler.currentClientName;
+
+        // Prompt user to chose a specification for CT. This also changes the client-server connection.
+        await this._ctHandler.showAvailableSpecsForCT();
+
+        //Change viewname
+        this._testView.title = this._ctHandler.currentClientName;
+
+        //Verify if the user changed the specification and thus the client.
+        let clientChanged: boolean =  clientName !== this._ctHandler.currentClientName;   
+
         // Display progress
         window.withProgress({
             location: ProgressLocation.Notification,
-            title: "Generation trace outline",
+            title: `Generating trace outline for ${this._ctHandler.currentClientName}`,
             cancellable: false
         }, async (progress, token) => {
             try {
-                let requestedTraces = await this._ctFeature.requestTraces() ?? [];
+                let requestedTraces = await this._ctHandler.requestTraces() ?? [];
                 if(requestedTraces.length > 0)
-                {
-                    if(this._testProvider.getRoots().length > 0){            
+                {       
+                    if(!clientChanged && this._testProvider.getRoots().length > 0){            
                         // Filter existing trace symbols so they matches servers
                         this._combinatorialTests = this.matchLocalSymbolsToServerSymbols(requestedTraces, this._combinatorialTests);
                     }
@@ -259,19 +274,28 @@ export class CTTreeView {
                 
                 // Inform user if no traces were found
                 if(this._combinatorialTests.length == 0){
-                    window.showInformationMessage("No trace found in specification");      
+                    window.showInformationMessage(`No trace found in ${this._ctHandler.currentClientName}`);      
                 }
+
+                // Notify tree view of data update
                 if(this._combinatorialTests){
-                    // Notify tree view of data update
                     this._testProvider.rebuildViewFromElement();
+                }
+
+                // Reset test sequence view
+                if(this._resultProvider.getTestSequenceResults().length > 0){
+                    this._resultProvider.setTestSequenceResults([]);
                 }
 
             }
             catch(error){
                 util.writeToLog(globalThis.clientLogPath, "Failed to generate trace outline: " + error);
                 window.showWarningMessage("Failed to generate trace outline"); 
-            }}
-        ); 
+            }
+            finally{
+                this._isRebuildingTraceOutline = false;
+            }
+        }); 
     }
 
     private matchLocalSymbolsToServerSymbols(serverSymbols:CTSymbol[], localSymbols:completeCT[]): completeCT[] {
@@ -318,18 +342,18 @@ export class CTTreeView {
     private async ctGenerate(traceViewElement: TestViewElement) {
         if(traceViewElement.type != TreeItemType.Trace)
             return;
-            
+
         // Set status bar
-        let statusBarMessage = window.setStatusBarMessage('Generating test cases');
+        let statusBarMessage = window.setStatusBarMessage(`Generating test cases for ${traceViewElement.label}`);
 
         // Setup loading window
         return window.withProgress({
             location: ProgressLocation.Notification,
-            title: "Running test generation",
+            title: `Running test generation for ${traceViewElement.label}`,
             cancellable: false
         }, (progress, token) => {
             token.onCancellationRequested(() => {
-                console.log("User canceled the test generation");
+                util.writeToLog(globalThis.clientLogPath, `User canceled the test generation for ${traceViewElement.label}`);
             });
             
             // Make the generate request
@@ -360,7 +384,7 @@ export class CTTreeView {
 
         try {
             // Request generate from server
-            const numberOfTests = await this._ctFeature.requestGenerate(traceViewElement.label);
+            const numberOfTests = await this._ctHandler.requestGenerate(traceViewElement.label);
 
             // Reset trace verdict
             traceWithTestResults.verdict = null;
@@ -385,6 +409,7 @@ export class CTTreeView {
                 // Symbol out-of-sync
                 this.ctRebuildOutline();
             }
+            util.writeToLog(globalThis.clientLogPath, "CT Test Generation failed: " + error);
             window.showWarningMessage("CT Test Generation failed: " + error);
         }
     }
@@ -400,7 +425,7 @@ export class CTTreeView {
     private async ctSendToInterpreter(testViewElement: TestViewElement) {
         let traceName = testViewElement.getParent().getParent().label;
         let testId = Number(testViewElement.label);
-        this._ctFeature.sendToInterpreter(traceName, testId);
+        this._ctHandler.sendToInterpreter(traceName, testId);
     }
 
     private async ctGoToTrace(traceViewElement:TestViewElement) {
@@ -463,8 +488,7 @@ export class CTTreeView {
             cancellable: true
         }, (progress, token) => {
             token.onCancellationRequested(() => {
-                console.log("User canceled the test execution");
-                this._ctFeature.cancelExecution();
+                this._ctHandler.cancelExecution();
             });
 
             // Do the execute request
@@ -487,7 +511,7 @@ export class CTTreeView {
                             range = {end: Number(strRange[1])};
 
                         // Request execute
-                        await this._ctFeature.requestExecute(viewElement.label, filter, range, progress)
+                        await this._ctHandler.requestExecute(viewElement.label, filter, range, progress)
                     }
                     else if (viewElement.type == TreeItemType.TestGroup){
                         this._isExecutingTestGroup = true;
@@ -502,7 +526,7 @@ export class CTTreeView {
                         };
             
                         // Request execute with range
-                        await this._ctFeature.requestExecute(viewElement.getParent().label, false, range, progress)
+                        await this._ctHandler.requestExecute(viewElement.getParent().label, false, range, progress)
                     }
                     // Resole the request
                     resolve();

@@ -11,9 +11,13 @@ import {
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import * as Util from "./Util"
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
+import { CTHandler } from './CTHandler';
+import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
+import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 
 
 let clients: Map<string, SpecificationLanguageClient> = new Map();
+let ctHandler: CTHandler;
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -147,13 +151,18 @@ export function activate(context: ExtensionContext) {
             }
     
             let client = createClient(dialect, lspPort, dapPort, folder);
+            // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
+            let clientKey = folder.uri.toString();
     
             // Save client
-            clients.set(folder.uri.toString(), client);
+            clients.set(clientKey, client);
+
+            // Setup CT handler
+            if(!ctHandler)
+                ctHandler = new CTHandler(clientKey, context, clients, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
         });
     }
 
-    let once = false;
     function createClient(dialect: string, lspPort: number, dapPort: number, folder: WorkspaceFolder): SpecificationLanguageClient {
         // Setup DAP
         dapSupport.initDebugConfig(context, folder, dapPort)
@@ -189,7 +198,9 @@ export function activate(context: ExtensionContext) {
             'VDM Language Server',
             serverOptions,
             clientOptions,
-            context
+            context,
+            clients,
+            Uri.joinPath(folder.uri, ".generated")
         );
 
         // Start the and launch the client

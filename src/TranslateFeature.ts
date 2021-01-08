@@ -55,7 +55,7 @@ export class TranslateFeature implements StaticFeature {
 
     private async translate(){
         window.setStatusBarMessage(`Translating to ${this._languageKind}.`, new Promise(async (resolve, reject) => {
-            util.createTimestampedDirectory(this._client.projectSavedDataPath, this._languageKind).then(async (saveUri) => {
+            util.createTimestampedDirectory(this._client.dataStoragePath, this._languageKind).then(async (saveUri) => {
                 try {
                     // Setup message parameters
                     let params: TranslateParams = {
