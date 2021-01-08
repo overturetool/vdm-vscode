@@ -1,6 +1,7 @@
 functions
 		f: nat * typeA -> nat
-		f(a, b) == a/b;
+		f(a, b) == a/b
+		pre not b = 0;
 
 types
 			typeA = nat;
