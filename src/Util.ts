@@ -37,6 +37,7 @@ export function createTimestampedDirectory(rootPath: Uri, dirName:string): Promi
     return new Promise(async (resolve, reject) => {
         var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
         let fullUri = Uri.joinPath(rootPath, dirName+ " " + dateString);
+        ensureDirectoryExistence(fullUri.fsPath);
         fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
             if(!accessErr)
                 return resolve(fullUri.fsPath);

@@ -11,6 +11,7 @@ import {
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import * as Util from "./Util"
 import {VdmDapSupport as dapSupport} from "./VdmDapSupport"
+import { TranslateHandler } from './TranslateHandler';
 
 globalThis.clients = new Map();
 
@@ -152,7 +153,6 @@ export function activate(context: ExtensionContext) {
         });
     }
 
-    let once = false;
     function createClient(dialect: string, lspPort: number, dapPort: number, folder: WorkspaceFolder): SpecificationLanguageClient {
         // Setup DAP
         dapSupport.initDebugConfig(context, folder, dapPort)
@@ -200,6 +200,8 @@ export function activate(context: ExtensionContext) {
         return client;
     }
 
+    let translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "extension.translateLatex");
+    let translateHandlerWord = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "extension.translateWord");
 
     let debug = Workspace.getConfiguration('vdm-vscode').experimentalServer;
     if (debug) {

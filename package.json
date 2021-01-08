@@ -232,12 +232,12 @@
         },
         {
           "command": "extension.translateLatex",
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
         },
         {
           "command": "extension.translateWord",
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
         }
       ],
@@ -249,12 +249,12 @@
         },
         {
           "command": "extension.translateLatex",
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
         },
         {
           "command": "extension.translateWord",
-          "when": "resourceLangId == vdmsl",
+          "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
         }
       ],
@@ -301,6 +301,14 @@
         },
         {
           "command": "extension.goToTrace",
+          "when": "false"
+        },
+        {
+          "command": "extension.translateLatex",
+          "when": "false"
+        },
+        {
+          "command": "extension.translateWord",
           "when": "false"
         }
       ]
