@@ -1,9 +1,21 @@
 {
   "name": "vdm-vscode",
-  "description": "A language server for VDM",
+  "displayName": "VDM VSCode",
+  "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
+  "keywords": [
+    "Vienna Development Method",
+    "vdm",
+    "VDM",
+    "vdmsl",
+    "VDM-SL",
+    "vdmpp",
+    "VDM++",
+    "vdmrt",
+    "VDM-RT"
+  ],
   "author": "Jonas K. Rask and Frederik P. Madsen",
   "license": "MIT",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/jonaskrask/vdm-vscode"
