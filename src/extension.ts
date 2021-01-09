@@ -3,7 +3,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    workspace as Workspace, window as Window, ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions
+    window as Window, ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions, workspace
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -15,6 +15,7 @@ import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
+import * as fs from 'fs';
 
 globalThis.clients = new Map();
 let ctHandler: CTHandler;
@@ -24,7 +25,7 @@ let translateHandlerWord: TranslateHandler;
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
     if (_sortedWorkspaceFolders === void 0) {
-        _sortedWorkspaceFolders = Workspace.workspaceFolders ? Workspace.workspaceFolders.map(folder => {
+        _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
             let result = folder.uri.toString();
             if (result.charAt(result.length - 1) !== '/') {
                 result = result + '/';
@@ -38,7 +39,7 @@ function sortedWorkspaceFolders(): string[] {
     }
     return _sortedWorkspaceFolders;
 }
-Workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined);
+workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined);
 
 function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
     const sorted = sortedWorkspaceFolders();
@@ -48,7 +49,7 @@ function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
             uri = uri + '/';
         }
         if (uri.startsWith(element)) {
-            return Workspace.getWorkspaceFolder(Uri.parse(element))!;
+            return workspace.getWorkspaceFolder(Uri.parse(element))!;
         }
     }
     return folder;
@@ -60,9 +61,12 @@ function getDialect(document: TextDocument): string {
 
 export function activate(context: ExtensionContext) {
     globalThis.clientLogPath = path.resolve(context.extensionPath, 'vdm_lang_client.log');
-    let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
-    let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
-    let annotationsPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /annotations.*jar/i);
+    let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /vdmj.*jar/i);
+    let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /lsp.*jar/i);
+    let annotationsPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /annotations.*jar/i);
+    let vdmjPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /vdmj.*jar/i);
+    let lspServerPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /lsp.*jar/i);
+    let annotationsPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /annotations.*jar/i);
 
     if (!vdmjPath || !lspServerPath || !annotationsPath)
         return;
@@ -74,7 +78,7 @@ export function activate(context: ExtensionContext) {
         }
 
         const uri = document.uri;
-        let folder = Workspace.getWorkspaceFolder(uri);
+        let folder = workspace.getWorkspaceFolder(uri);
         // Files outside a folder can't be handled. This might depend on the language.
         // Single file languages like JSON might handle files outside the workspace folders.
         if (!folder) {
@@ -124,9 +128,8 @@ export function activate(context: ExtensionContext) {
 
     async function launchClient(dialect: string, serverLogFile: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
-
         // If using experimental server
-        let debug = Workspace.getConfiguration('vdm-vscode').experimentalServer;
+        let debug = workspace.getConfiguration('vdm-vscode').experimentalServer;
         if (debug) {
             let lspPort = await requestPort("LSP", 8000);
             let dapPort = await requestPort("DAP", 8001);
@@ -149,16 +152,61 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
-            let JVMArguments = Workspace.getConfiguration('vdm-vscode').JVMArguments;
+            let JVMArguments = workspace.getConfiguration('vdm-vscode').JVMArguments;
             if (JVMArguments != "")
                 args.push(JVMArguments);
 
-            let activateServerLog = Workspace.getConfiguration('vdm-vscode').activateServerLog;
+            let activateServerLog = workspace.getConfiguration('vdm-vscode').activateServerLog;
             if (activateServerLog)
                 args.push('-Dlog.filename=' + serverLogFile);
 
+            let classPath = "";
+
+            let useHighprecision = workspace.getConfiguration("", folder).highPrecision;
+            if(useHighprecision && useHighprecision === true){
+                classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
+            }
+            else{
+                classPath += vdmjPath + path.delimiter + lspServerPath;
+            }
+
+            let userProvidedAnnotationPaths = workspace.getConfiguration("", folder).annotationPaths;
+            if(userProvidedAnnotationPaths){
+                let jarPaths = userProvidedAnnotationPaths.split(",");
+                jarPaths.forEach(jarPath => {
+                    if(!fs.existsSync(jarPath)){
+                        Util.writeToClientLog("Invalid path: " + jarPath);
+                        return;
+                    }
+                    
+                    if(Util.isDir(jarPath)){
+                        Util.writeToClientLog("Invalid path to annotations: " + jarPath);
+                        let subJarPaths = Util.getJarsFromFolder(jarPath);
+                        if(subJarPaths.length === 0){
+                            Util.writeToClientLog("No annotations found in path: " + jarPath);
+                        }
+                        subJarPaths.forEach(subJarPath =>{
+                            classPath +=  path.delimiter + subJarPath;
+                        })
+                    }
+                    else if(jarPath.split(jarPath.sep)[jarPath.split(jarPath.sep).length -1].search(/.*jar/i) != -1){
+                        classPath +=  path.delimiter + jarPath;
+                    }
+                    else{
+                        Util.writeToClientLog("Invalid path to annotation: " + jarPath);
+                    }
+                });          
+            }
+
+            if(useHighprecision && useHighprecision === true){
+                classPath += path.delimiter + annotationsPath_hp;
+            }
+            else{
+                classPath += path.delimiter + annotationsPath;
+            }
+
             args.push(...[
-                '-cp', vdmjPath + path.delimiter + lspServerPath + path.delimiter + annotationsPath,
+                '-cp', classPath,
                 serverMainClass,
                 '-' + dialect,
                 '-lsp', lspPort.toString(), '-dap', dapPort.toString()
@@ -221,7 +269,7 @@ export function activate(context: ExtensionContext) {
             documentSelector: [{ language: dialect }],
             synchronize: {
                 // Setup filesystem watcher for changes in vdm files
-                fileEvents: Workspace.createFileSystemWatcher('**/.' + dialect)
+                fileEvents: workspace.createFileSystemWatcher('**/.' + dialect)
             }
         }
         if (folder) {
@@ -253,9 +301,9 @@ export function activate(context: ExtensionContext) {
     translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "extension.translateLatex");
     translateHandlerWord = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "extension.translateWord");
 
-    Workspace.onDidOpenTextDocument(didOpenTextDocument);
-    Workspace.textDocuments.forEach(didOpenTextDocument);
-    Workspace.onDidChangeWorkspaceFolders((event) => {
+    workspace.onDidOpenTextDocument(didOpenTextDocument);
+    workspace.textDocuments.forEach(didOpenTextDocument);
+    workspace.onDidChangeWorkspaceFolders((event) => {
         for (const folder of event.removed) {
             const client = globalThis.clients.get(folder.uri.toString());
             if (client) {

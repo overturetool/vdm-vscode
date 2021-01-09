@@ -3,5 +3,10 @@ functions
 		f(a, b) == a/b
 		pre not b = 0;
 
+		max: int * int -> int
+		max(a, b) ==
+			-- @Printf("a = %s", a)
+			if a > b then a else b;
+
 types
 			typeA = nat;

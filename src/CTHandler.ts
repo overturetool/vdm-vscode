@@ -146,7 +146,8 @@ export class CTHandler {
                 if (err?.data != null)
                     this._ctTreeView.addNewTestResults(name, err.data);
             }
-            util.writeToLog(globalThis.clientLogPath, "CT - execute request failed: " + err);
+            else
+                util.writeToLog(globalThis.clientLogPath, "CT - execute request failed: " + err);
             throw err;
         }
         finally{

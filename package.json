@@ -326,7 +326,7 @@
       ]
     },
     "configuration": {
-      "title": "VDM-SL",
+      "title": "VDM",
       "properties": {
         "vdm-vscode.trace.server": {
           "scope": "window",

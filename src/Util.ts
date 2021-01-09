@@ -12,6 +12,22 @@ export function ensureDirectoryExistence(filePath) {
     fs.mkdirSync(dirname);
 }
 
+export function getJarsFromFolder(resourcesPath: string): string[]{
+    if (!fs.existsSync(resourcesPath) || !isDir(resourcesPath))
+        return null;
+
+    let jarPaths: string[] = []
+    let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
+    for(let i = 0; i < elementsInFolder.length; i++)
+    {
+        let element: fs.Dirent = elementsInFolder[i];
+        let fullElementPath =  path.resolve(resourcesPath, element.name);
+        if(!isDir(fullElementPath) && element.name.search( /.*jar/i) != -1)
+            jarPaths.push(fullElementPath);
+    }
+    return jarPaths;
+}
+
 export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.search](string: string): number; }): string {
     if (!fs.existsSync(resourcesPath) || !isDir(resourcesPath))
         return null;
