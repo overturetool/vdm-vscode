@@ -5,6 +5,7 @@ import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesReque
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
 import * as util from "./Util"
+import { clients } from './global';
 
 export class CTHandler {
     private _ctTreeView : CTTreeView;
@@ -40,6 +41,12 @@ export class CTHandler {
     };
 
     public async showAvailableSpecsForCT(): Promise<void> {
+        // Skip if only one client available
+        if (this._clients.size == 1){
+            this._clients.forEach((v,k) => this.setCurrentClientFromKey(k));
+            return;
+        }
+
         let showOptions: string[] = [];
         this._clients.forEach((v,k) => {
             showOptions.push(k.replace(/^.*[\\\/]/, ''));
