@@ -5,7 +5,6 @@ import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesReque
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
 import * as util from "./Util"
-import { clients } from './global';
 
 export class CTHandler {
     private _ctTreeView : CTTreeView;
@@ -16,17 +15,14 @@ export class CTHandler {
     public currentClientName: string;
 
     constructor(
-        private _currentClientKey: string, 
-        private _context: ExtensionContext, 
         private _clients: Map<string, SpecificationLanguageClient>,
+        private _context: ExtensionContext, 
         private _filterHandler?: CTFilterHandler, 
         private _interpreterHandler?: CTInterpreterHandler,
         private _supportWorkDone = false) {
             // Set filter
             if (this._filterHandler)
                 this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
-
-            this.setCurrentClientFromKey(this._currentClientKey);   
              
             // Register view
             this._ctTreeView = new CTTreeView(this, this._context, !!this._filterHandler);
@@ -65,7 +61,6 @@ export class CTHandler {
     }
 
     private setCurrentClientFromKey(clientKey: string){
-        this._currentClientKey = clientKey;
         this.currentClient = this._clients.get(clientKey);
         this.currentClientName = clientKey.replace(/^.*[\\\/]/, '');
     }

@@ -18,6 +18,8 @@ import { TranslateHandler } from './TranslateHandler';
 
 globalThis.clients = new Map();
 let ctHandler: CTHandler;
+let translateHandlerLatex: TranslateHandler;
+let translateHandlerWord: TranslateHandler;
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -158,10 +160,6 @@ export function activate(context: ExtensionContext) {
     
             // Save client
             globalThis.clients.set(clientKey, client);
-
-            // Setup CT handler
-            if(!ctHandler)
-                ctHandler = new CTHandler(clientKey, context, globalThis.clients, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
         });
     }
 
@@ -213,8 +211,9 @@ export function activate(context: ExtensionContext) {
         return client;
     }
 
-    let translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "extension.translateLatex");
-    let translateHandlerWord = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "extension.translateWord");
+    ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
+    translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "extension.translateLatex");
+    translateHandlerWord = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "extension.translateWord");
 
     let debug = Workspace.getConfiguration('vdm-vscode').experimentalServer;
     if (debug) {
