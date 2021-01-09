@@ -62,7 +62,7 @@ export class CTHandler {
 
     private setCurrentClientFromKey(clientKey: string){
         this.currentClient = this._clients.get(clientKey);
-        this.currentClientName = clientKey.replace(/^.*[\\\/]/, '');
+        this.currentClientName = this.currentClient.clientOptions.workspaceFolder.name;
     }
 
     public async requestTraces(uri?: Uri) : Promise<CTSymbol[]>{
