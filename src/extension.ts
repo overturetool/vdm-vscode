@@ -89,12 +89,12 @@ export function activate(context: ExtensionContext) {
 
             let serverLogFile = path.resolve(context.extensionPath, folder.name.toString() + '_lang_server.log');
             let dialect = getDialect(document);
-            
+
             launchClient(dialect, serverLogFile, folder);
         }
     }
 
-    async function requestPort(portName: string, portDefault: number): Promise<number>{
+    async function requestPort(portName: string, portDefault: number): Promise<number> {
         let inputOptions: InputBoxOptions = {
             prompt: "Input " + portName + " Port",
             placeHolder: portDefault.toString(),
@@ -118,85 +118,87 @@ export function activate(context: ExtensionContext) {
                 return;
             port = Number(res);
         })
-        
+
         return port;
     }
 
     async function launchClient(dialect: string, serverLogFile: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
 
+        // If using experimental server
         let debug = Workspace.getConfiguration('vdm-vscode').experimentalServer;
         if (debug) {
             let lspPort = await requestPort("LSP", 8000);
             let dapPort = await requestPort("DAP", 8001);
-
-            createClient(dialect, lspPort, dapPort, folder);
+            let client = createClient(dialect, lspPort, dapPort, folder);
+            let clientKey = folder.uri.toString();
+            globalThis.clients.set(clientKey, client);
             return;
         }
-        else {
-            // Get two available ports, start the server and create the client
-            portfinder.getPorts(2, { host: undefined, startPort: undefined, port: undefined, stopPort: undefined }, async (err, ports) => {
-                if (err) {
-                    Window.showErrorMessage("An error occured when finding free ports: " + err)
-                    Util.writeToClientLog("An error occured when finding free ports: " + err);
+
+        // Get two available ports, start the server and create the client
+        portfinder.getPorts(2, { host: undefined, startPort: undefined, port: undefined, stopPort: undefined }, async (err, ports) => {
+            if (err) {
+                Window.showErrorMessage("An error occured when finding free ports: " + err)
+                Util.writeToClientLog("An error occured when finding free ports: " + err);
+                globalThis.clients.delete(folder.uri.toString());
+                return;
+            }
+            let lspPort = ports[0];
+            let dapPort = ports[1];
+
+            // Setup server arguments
+            let args: string[] = [];
+            let JVMArguments = Workspace.getConfiguration('vdm-vscode').JVMArguments;
+            if (JVMArguments != "")
+                args.push(JVMArguments);
+
+            let activateServerLog = Workspace.getConfiguration('vdm-vscode').activateServerLog;
+            if (activateServerLog)
+                args.push('-Dlog.filename=' + serverLogFile);
+
+            args.push(...[
+                '-cp', vdmjPath + path.delimiter + lspServerPath + path.delimiter + annotationsPath,
+                serverMainClass,
+                '-' + dialect,
+                '-lsp', lspPort.toString(), '-dap', dapPort.toString()
+            ]);
+
+            // Start the LSP server
+            let javaPath = Util.findJavaExecutable('java');
+            if (!javaPath) {
+                Window.showErrorMessage("Java runtime environment not found!")
+                Util.writeToClientLog("Java runtime environment not found!");
+                globalThis.clients.delete(folder.uri.toString());
+                return;
+            }
+            child_process.spawn(javaPath, args);
+
+            // Wait for the server to be ready
+            let connected = false;
+            let timeOutCounter = 0;
+            while (!connected) {
+                var sock = net.connect(lspPort, 'localhost', () => {
+                    sock.destroy();
+                    connected = true;
+                });
+                await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
+                if (timeOutCounter++ == 100) {
+                    Window.showErrorMessage("ERROR: LSP server connection timeout");
+                    Util.writeToClientLog("ERROR: LSP server connection timeout");
                     globalThis.clients.delete(folder.uri.toString());
                     return;
                 }
-                let lspPort = ports[0];
-                let dapPort = ports[1];
+            }
 
-                // Setup server arguments
-                let args: string[] = [];
-                let JVMArguments = Workspace.getConfiguration('vdm-vscode').JVMArguments;
-                if (JVMArguments != "")
-                    args.push(JVMArguments);
+            let client = createClient(dialect, lspPort, dapPort, folder);
 
-                let activateServerLog = Workspace.getConfiguration('vdm-vscode').activateServerLog;
-                if (activateServerLog)
-                    args.push('-Dlog.filename=' + serverLogFile);
+            // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
+            let clientKey = folder.uri.toString();
 
-                args.push(...[
-                    '-cp', vdmjPath + path.delimiter + lspServerPath + path.delimiter + annotationsPath,
-                    serverMainClass,
-                    '-' + dialect,
-                    '-lsp', lspPort.toString(), '-dap', dapPort.toString()
-                ]);
-
-                // Start the LSP server
-                let javaPath = Util.findJavaExecutable('java');
-                if (!javaPath) {
-                    Window.showErrorMessage("Java runtime environment not found!")
-                    Util.writeToClientLog("Java runtime environment not found!");
-                    globalThis.clients.delete(folder.uri.toString());
-                    return;
-                }
-                child_process.spawn(javaPath, args);
-
-                // Wait for the server to be ready
-                let connected = false;
-                let timeOutCounter = 0;
-                while (!connected) {
-                    var sock = net.connect(lspPort, 'localhost', () => {
-                        sock.destroy();
-                        connected = true;
-                    });
-                    await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
-                    if (timeOutCounter++ == 100) {
-                        Window.showErrorMessage("ERROR: LSP server connection timeout");
-                        Util.writeToClientLog("ERROR: LSP server connection timeout");
-                        globalThis.clients.delete(folder.uri.toString());
-                        return;
-                    }
-                }
-
-                let client = createClient(dialect, lspPort, dapPort, folder);
-                // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
-                let clientKey = folder.uri.toString();
-
-                // Save client
-                globalThis.clients.set(clientKey, client);
-            });
-        }
+            // Save client
+            globalThis.clients.set(clientKey, client);
+        });
     }
 
     function createClient(dialect: string, lspPort: number, dapPort: number, folder: WorkspaceFolder): SpecificationLanguageClient {
