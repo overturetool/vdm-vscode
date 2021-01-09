@@ -62,6 +62,10 @@ export function writeToLog(path: string, msg: string) {
     logStream.close();
 }
 
+export function writeToClientLog(msg: string){
+    writeToLog(globalThis.clientLogPath, msg);
+}
+
 // MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
 export function findJavaExecutable(binname: string) {
     if (process.platform === 'win32')

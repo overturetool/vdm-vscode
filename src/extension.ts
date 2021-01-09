@@ -60,7 +60,9 @@ export function activate(context: ExtensionContext) {
     globalThis.clientLogPath = path.resolve(context.extensionPath, 'vdm_lang_client.log');
     let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /vdmj.*jar/i);
     let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /lsp.*jar/i);
-    if (!vdmjPath || !lspServerPath)
+    let annotationsPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources"), /annotations.*jar/i);
+
+    if (!vdmjPath || !lspServerPath || !annotationsPath)
         return;
 
     function didOpenTextDocument(document: TextDocument): void {
@@ -84,13 +86,13 @@ export function activate(context: ExtensionContext) {
             let serverLogFile = path.resolve(context.extensionPath, folder.name.toString() + '_lang_server.log');
             
             let dialect = getDialect(document);
-            launchClient(dialect, lspServerPath, vdmjPath, globalThis.clientLogPath, serverLogFile, folder);
+            launchClient(dialect, serverLogFile, folder);
 
             globalThis.clients.set(folder.uri.toString(), null);
         }
     }
 
-    function launchClient(dialect: string, lspServerPath: string, vdmjPath: string, clientLogFile: string, serverLogFile: string, folder: WorkspaceFolder): void {
+    function launchClient(dialect: string, serverLogFile: string, folder: WorkspaceFolder): void {
         let serverMainClass = 'lsp.LSPServerSocket';
     
         // Get two available ports, start the server and create the client
@@ -98,7 +100,7 @@ export function activate(context: ExtensionContext) {
             if(err)
             {
                 Window.showErrorMessage("An error occured when finding free ports: " + err)
-                Util.writeToLog(clientLogFile, "An error occured when finding free ports: " + err);
+                Util.writeToClientLog("An error occured when finding free ports: " + err);
                 globalThis.clients.delete(folder.uri.toString());
                 return;
             }
@@ -116,7 +118,7 @@ export function activate(context: ExtensionContext) {
                 args.push('-Dlog.filename=' + serverLogFile);
     
             args.push(...[
-                '-cp', vdmjPath + path.delimiter + lspServerPath,
+                '-cp', vdmjPath + path.delimiter + lspServerPath + path.delimiter + annotationsPath,
                 serverMainClass,
                 '-' + dialect,
                 '-lsp', lspPort.toString(), '-dap', dapPort.toString()
@@ -126,7 +128,7 @@ export function activate(context: ExtensionContext) {
             let javaPath = Util.findJavaExecutable('java');
             if (!javaPath) {
                 Window.showErrorMessage("Java runtime environment not found!")
-                Util.writeToLog(clientLogFile, "Java runtime environment not found!");
+                Util.writeToClientLog("Java runtime environment not found!");
                 globalThis.clients.delete(folder.uri.toString());
                 return;
             }
@@ -144,7 +146,7 @@ export function activate(context: ExtensionContext) {
                 await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
                 if(timeOutCounter++ == 100){
                     Window.showErrorMessage("ERROR: LSP server connection timeout");
-                    Util.writeToLog(clientLogFile, "ERROR: LSP server connection timeout");
+                    Util.writeToClientLog("ERROR: LSP server connection timeout");
                     globalThis.clients.delete(folder.uri.toString());
                     return;
                 }
