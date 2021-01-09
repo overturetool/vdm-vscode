@@ -1,0 +1,40 @@
+class A
+instance variables
+	x:nat := 0;
+	
+operations
+	public deadlock: () ==> ()
+	deadlock() == skip;
+	
+	public runtime: () ==> real
+	runtime() == return 123/x;
+	
+	public runtime2: () ==> real
+	runtime2() == return runtime();
+	
+	public go: () ==> ()
+	go() == ( start(self); finished() );
+	
+	finished: () ==> ()
+	finished() == skip;
+	
+	get: () ==> nat
+	get() == return x;
+	
+	inc: () ==> ()
+	inc() == x := x + 1;
+	
+sync
+	per deadlock => #fin(deadlock) > 0;
+	per finished => x > 0;
+
+thread
+	deadlock();
+	
+traces
+	T1: get(); deadlock(); get();
+	T2: get(); runtime(); get();
+	T3: get(); go(); get();
+	T4: inc(){1,3}; get()
+
+end A
