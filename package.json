@@ -354,26 +354,6 @@
           "type": "boolean",
           "default": false,
           "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
-        },
-        "vdm-vscode.dialect": {
-          "type": "string",
-          "enum": [
-            "vdmsl",
-            "vdmpp",
-            "vdmrt"
-          ],
-          "default": "vdmsl",
-          "description": "Dialect to expect for experimental server. NOTE: Only used for experimental server."
-        },
-        "vdm-vscode.lspPort": {
-          "type": "integer",
-          "default": 8000,
-          "description": "Port used for LSP. NOTE: Only used for experimental server."
-        },
-        "vdm-vscode.dapPort": {
-          "type": "integer",
-          "default": 8001,
-          "description": "Port used for DAP. NOTE: Only used for experimental server."
         }
       }
     },
