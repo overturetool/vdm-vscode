@@ -60,13 +60,17 @@ function getDialect(document: TextDocument): string {
 }
 
 export function activate(context: ExtensionContext) {
-    globalThis.clientLogPath = path.resolve(context.extensionPath, 'vdm_lang_client.log');
     let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /vdmj.*jar/i);
     let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /lsp.*jar/i);
     let annotationsPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /annotations.*jar/i);
     let vdmjPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /vdmj.*jar/i);
     let lspServerPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /lsp.*jar/i);
     let annotationsPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /annotations.*jar/i);
+    let extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
+
+    // Ensure logging path exists
+    Util.ensureDirectoryExistence(extensionLogPath);
+    
 
     if (!vdmjPath || !lspServerPath || !annotationsPath)
         return;
@@ -90,11 +94,9 @@ export function activate(context: ExtensionContext) {
         // If a client has not been started for the folder, start one
         if (!globalThis.clients.has(folder.uri.toString())) {
             globalThis.clients.set(folder.uri.toString(), null);
-
-            let serverLogFile = path.resolve(context.extensionPath, folder.name.toString() + '_lang_server.log');
             let dialect = getDialect(document);
 
-            launchClient(dialect, serverLogFile, folder);
+            launchClient(dialect, folder);
         }
     }
 
@@ -126,7 +128,7 @@ export function activate(context: ExtensionContext) {
         return port;
     }
 
-    async function launchClient(dialect: string, serverLogFile: string, folder: WorkspaceFolder): Promise<void> {
+    async function launchClient(dialect: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
         // If using experimental server
         let debug = workspace.getConfiguration('vdm-vscode').experimentalServer;
@@ -143,7 +145,7 @@ export function activate(context: ExtensionContext) {
         portfinder.getPorts(2, { host: undefined, startPort: undefined, port: undefined, stopPort: undefined }, async (err, ports) => {
             if (err) {
                 Window.showErrorMessage("An error occured when finding free ports: " + err)
-                Util.writeToClientLog("An error occured when finding free ports: " + err);
+                Util.writeToLog(extensionLogPath, "An error occured when finding free ports: " + err);
                 globalThis.clients.delete(folder.uri.toString());
                 return;
             }
@@ -152,17 +154,23 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
-            let JVMArguments = workspace.getConfiguration('vdm-vscode').JVMArguments;
+            let JVMArguments = workspace.getConfiguration('vdm-vscode', folder).JVMArguments;
             if (JVMArguments != "")
                 args.push(JVMArguments);
 
-            let activateServerLog = workspace.getConfiguration('vdm-vscode').activateServerLog;
-            if (activateServerLog)
-                args.push('-Dlog.filename=' + serverLogFile);
+            let activateServerLog = workspace.getConfiguration('vdm-vscode', folder).activateServerLog;
+            if (activateServerLog){
+                // Ensure logging path exists
+                let languageServerLoggingPath = path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log');
+                Util.ensureDirectoryExistence(languageServerLoggingPath);
+                
+                args.push('-Dlog.filename=' + path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log'));
+            }
+
 
             let classPath = "";
 
-            let useHighprecision = workspace.getConfiguration("", folder).highPrecision;
+            let useHighprecision = workspace.getConfiguration('vdm-vscode', folder).highPrecision;
             if(useHighprecision && useHighprecision === true){
                 classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
             }
@@ -170,20 +178,19 @@ export function activate(context: ExtensionContext) {
                 classPath += vdmjPath + path.delimiter + lspServerPath;
             }
 
-            let userProvidedAnnotationPaths = workspace.getConfiguration("", folder).annotationPaths;
+            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', folder).annotationPaths;
             if(userProvidedAnnotationPaths){
                 let jarPaths = userProvidedAnnotationPaths.split(",");
                 jarPaths.forEach(jarPath => {
                     if(!fs.existsSync(jarPath)){
-                        Util.writeToClientLog("Invalid path: " + jarPath);
+                        Util.writeToLog(extensionLogPath, "Invalid path: " + jarPath);
                         return;
                     }
                     
                     if(Util.isDir(jarPath)){
-                        Util.writeToClientLog("Invalid path to annotations: " + jarPath);
                         let subJarPaths = Util.getJarsFromFolder(jarPath);
                         if(subJarPaths.length === 0){
-                            Util.writeToClientLog("No annotations found in path: " + jarPath);
+                            Util.writeToLog(extensionLogPath, "No annotations found in path: " + jarPath);
                         }
                         subJarPaths.forEach(subJarPath =>{
                             classPath +=  path.delimiter + subJarPath;
@@ -193,7 +200,7 @@ export function activate(context: ExtensionContext) {
                         classPath +=  path.delimiter + jarPath;
                     }
                     else{
-                        Util.writeToClientLog("Invalid path to annotation: " + jarPath);
+                        Util.writeToLog(extensionLogPath, "Invalid path to annotation: " + jarPath);
                     }
                 });          
             }
@@ -216,7 +223,7 @@ export function activate(context: ExtensionContext) {
             let javaPath = Util.findJavaExecutable('java');
             if (!javaPath) {
                 Window.showErrorMessage("Java runtime environment not found!")
-                Util.writeToClientLog("Java runtime environment not found!");
+                Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
                 globalThis.clients.delete(folder.uri.toString());
                 return;
             }
@@ -233,7 +240,7 @@ export function activate(context: ExtensionContext) {
                 await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
                 if (timeOutCounter++ == 100) {
                     Window.showErrorMessage("ERROR: LSP server connection timeout");
-                    Util.writeToClientLog("ERROR: LSP server connection timeout");
+                    Util.writeToLog(extensionLogPath, "ERROR: LSP server connection timeout");
                     globalThis.clients.delete(folder.uri.toString());
                     return;
                 }
@@ -280,8 +287,8 @@ export function activate(context: ExtensionContext) {
 
         // Create the language client with the defined client options and the function to create and setup the server.
         let client = new SpecificationLanguageClient(
-            'vdm-vscode',
-            'VDM Language Server',
+            `vdm-vscode_${folder.name}_client`,
+            `${folder.name}_client`,
             serverOptions,
             clientOptions,
             context,
