@@ -75,9 +75,8 @@ export function activate(context: ExtensionContext) {
 
         const uri = document.uri;
         let folder = Workspace.getWorkspaceFolder(uri);
-        // Files outside a folder can't be handled. This might depend on the language.
-        // Single file languages like JSON might handle files outside the workspace folders.
-        if (!folder) {
+        // Files outside a folder can't be handled. 
+        if (!folder) { // TODO remove if we get support for single file workspace
             return;
         }
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
