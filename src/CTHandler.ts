@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { commands, ExtensionContext, Uri, window} from "vscode";
+import { commands, ExtensionContext, Uri, window, WorkspaceFolder} from "vscode";
 import { CancellationTokenSource,ErrorCodes, WorkDoneProgress} from "vscode-languageclient";
 import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange} from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
@@ -164,7 +164,7 @@ export class CTHandler {
     }
 
     sendToInterpreter(trace: string, test:number){
-        this._interpreterHandler.sendToInterpreter(trace,test);
+        this._interpreterHandler.sendToInterpreter(trace,test,this.currentClient.clientOptions.workspaceFolder);
     }
 
     private handleExecutePartialResult(tests: CTTestCase[], trace: string){
@@ -192,6 +192,6 @@ export interface CTFilterHandler {
 }
 
 export interface CTInterpreterHandler {
-    sendToInterpreter(trace : string, test : number): void;
+    sendToInterpreter(trace : string, test : number, folder?: WorkspaceFolder | undefined): void;
 }
 

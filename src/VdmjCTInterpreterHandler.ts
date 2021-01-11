@@ -1,9 +1,10 @@
+import { WorkspaceFolder } from "vscode";
 import { CTInterpreterHandler } from "./CTHandler";
 import { VdmDapSupport as dapSupport} from "./VdmDapSupport"
 
 export class VdmjCTInterpreterHandler implements CTInterpreterHandler {
-    sendToInterpreter(trace: string, test: number){
+    sendToInterpreter(trace: string, test: number, folder: WorkspaceFolder | undefined){
         let command: string = "runtrace " + trace + " " + test.toString();
-        dapSupport.startDebuggerWithCommand(command, true);
+        dapSupport.startDebuggerWithCommand(command, folder, true);
     }
 }
