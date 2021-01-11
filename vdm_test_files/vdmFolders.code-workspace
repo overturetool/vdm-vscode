@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "SimpleTests"
+		},
+		{
+			"path": "POGTestSL"
+		},
+		{
+			"path": "AlarmSL"
+		},
+		{
+			"path": "AlarmPP"
+		},
+		{
+			"path": "Alarm++tracesPP"
+		},
+		{
+			"path": "debugging"
+		}
+	],
+	"settings": {}
+}
