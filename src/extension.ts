@@ -109,6 +109,10 @@ export function activate(context: ExtensionContext) {
 
     async function launchClient(dialect: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
+
+        // Add settings watch for workspace folder
+        workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, folder));
+
         // If using experimental server
         let debug = workspace.getConfiguration('vdm-vscode.debug', folder).experimentalServer;
         if (debug) {
@@ -131,9 +135,6 @@ export function activate(context: ExtensionContext) {
             }
             let lspPort = ports[0];
             let dapPort = ports[1];
-
-            // Add settings watch for workspace folder
-            workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, folder));
 
             // Setup server arguments
             let args: string[] = [];
