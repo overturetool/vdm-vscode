@@ -107,34 +107,6 @@ export function activate(context: ExtensionContext) {
         }
     }
 
-    async function requestPort(portName: string, portDefault: number): Promise<number> {
-        let inputOptions: InputBoxOptions = {
-            prompt: "Input " + portName + " Port",
-            placeHolder: portDefault.toString(),
-            value: portDefault.toString(),
-            validateInput: (input) => {
-                let num = Number(input);
-                if (Number.isNaN(num))
-                    return "Invalid input: Not a number"
-                if (!Number.isInteger(num))
-                    return "Invalid input: Not an integer"
-                if (num > 0)
-                    return undefined // Accept
-                else
-                    return "Invalid input: Not a positive integer"
-            }
-        }
-
-        let port: number = portDefault;
-        await window.showInputBox(inputOptions).then(res => {
-            if (res == undefined)
-                return;
-            port = Number(res);
-        })
-
-        return port;
-    }
-
     async function launchClient(dialect: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
         // If using experimental server
