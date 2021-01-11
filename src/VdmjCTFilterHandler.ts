@@ -6,9 +6,9 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
     private _traceReductionTypes = new Map<string, string>([
         ["NONE", "None"],
         ["RANDOM", "Random"],
-        ["SHAPES_NOVARS", "No variables"],
-        ["SHAPES_VARNAMES", "Variable names"],
-        ["SHAPES_VARVALUES", "Variable value"]
+        ["SHAPES_NOVARS", "Shaped (no variables)"],
+        ["SHAPES_VARNAMES", "Shaped (variable names)"],
+        ["SHAPES_VARVALUES", "Shaped (variable value)"]
     ]);
     private _traceReductionTypesReverse = new Map<string, string>();
     private _filterKeyTypes = new Map<string, string>([
