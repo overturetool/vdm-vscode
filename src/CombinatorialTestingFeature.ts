@@ -1,6 +1,4 @@
-import { ExtensionContext } from "vscode";
 import { ClientCapabilities, ServerCapabilities, StaticFeature, WorkDoneProgressOptions} from "vscode-languageclient";
-import { CTHandler } from "./CTHandler";
 import { ExperimentalCapabilities} from "./protocol.slsp";
 
 export class CombinantorialTestingFeature implements StaticFeature {
