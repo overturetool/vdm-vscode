@@ -10,8 +10,8 @@ For further explanation on the features see [here](https://github.com/nickbattle
 
 
 ## Requirements
-* [VS Code $\geq$ 1.49.0](https://code.visualstudio.com/download)
-* [Java $\geq$ 11](https://adoptopenjdk.net/)
+* [VS Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
+* [Java ≥ v. 11](https://adoptopenjdk.net/)
 
 ## Features
 * Syntax Highlighting
