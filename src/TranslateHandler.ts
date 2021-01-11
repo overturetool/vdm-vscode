@@ -37,7 +37,7 @@ export class TranslateHandler {
                     try {
                         // Setup message parameters
                         let params: TranslateParams = {
-                            uri: null, //TODO Change this when workspace has been implemented.
+                            uri: null, //Maybe: TODO Change this when workspace has been implemented. Note: this is only relevant when a single server controls multiple workspace folders
                             languageId: this.languageKind,
                             saveUri: saveUri.toString()
                         };
