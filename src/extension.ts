@@ -138,7 +138,7 @@ export function activate(context: ExtensionContext) {
     async function launchClient(dialect: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
         // If using experimental server
-        let debug = workspace.getConfiguration('vdm-vscode').experimentalServer;
+        let debug = workspace.getConfiguration('vdm-vscode', folder).experimentalServer;
         if (debug) {
             let lspPort = await requestPort("LSP", 8000);
             let dapPort = await requestPort("DAP", 8001);
