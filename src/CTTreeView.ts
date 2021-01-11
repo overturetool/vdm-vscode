@@ -260,7 +260,7 @@ export class CTTreeView {
                     {
                         await this.loadCTs().catch(reason =>{
                             window.showWarningMessage("Failed to load existing CTs from files");
-                            util.writeToLog(globalThis.clientLogPath, "Failed to load existing CTs from files: " + reason);
+                            util.writeToLog(this._ctHandler.currentClient.logPath, "Failed to load existing CTs from files: " + reason);
                             return Promise.resolve([])
                         }).then(completeCTs => {
                              // Filter loaded trace symbols so they matches servers
@@ -289,7 +289,7 @@ export class CTTreeView {
 
             }
             catch(error){
-                util.writeToLog(globalThis.clientLogPath, "Failed to generate trace outline: " + error);
+                util.writeToLog(this._ctHandler.currentClient.logPath, "Failed to generate trace outline: " + error);
                 window.showWarningMessage("Failed to generate trace outline"); 
             }
             finally{
@@ -353,7 +353,7 @@ export class CTTreeView {
             cancellable: false
         }, (progress, token) => {
             token.onCancellationRequested(() => {
-                util.writeToLog(globalThis.clientLogPath, `User canceled the test generation for ${traceViewElement.label}`);
+                util.writeToLog(this._ctHandler.currentClient.logPath, `User canceled the test generation for ${traceViewElement.label}`);
             });
             
             // Make the generate request
@@ -409,7 +409,7 @@ export class CTTreeView {
                 // Symbol out-of-sync
                 this.ctRebuildOutline();
             }
-            util.writeToLog(globalThis.clientLogPath, "CT Test Generation failed: " + error);
+            util.writeToLog(this._ctHandler.currentClient.logPath, "CT Test Generation failed: " + error);
             window.showWarningMessage("CT Test Generation failed: " + error);
         }
     }

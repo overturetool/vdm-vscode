@@ -96,7 +96,7 @@ export class CTHandler {
             return res.numberOfTests;
         }
         catch (err) {
-            util.writeToLog(globalThis.clientLogPath, "CT - generation request failed: " + err);
+            util.writeToLog(this.currentClient.logPath, "CT - generation request failed: " + err);
             throw err;
         }
     }
@@ -146,7 +146,8 @@ export class CTHandler {
                 if (err?.data != null)
                     this._ctTreeView.addNewTestResults(name, err.data);
             }
-            util.writeToLog(globalThis.clientLogPath, "CT - execute request failed: " + err);
+            else
+                util.writeToLog(this.currentClient.logPath, "CT - execute request failed: " + err);
             throw err;
         }
         finally{

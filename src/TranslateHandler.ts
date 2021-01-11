@@ -58,12 +58,12 @@ export class TranslateHandler {
                     }
                     catch (error) {
                         window.showWarningMessage(`Translation to ${this.languageKind} failed with error: ${error}`);
-                        util.writeToClientLog(`Translation to ${this.languageKind} failed with error: ${error}`);
+                        util.writeToLog(client.logPath,`Translation to ${this.languageKind} failed with error: ${error}`);
                         reject();
                     }
                 }, (reason) => {
                     window.showWarningMessage("Creating directory for translation files failed");
-                    util.writeToClientLog("Creating directory for translation files failed with error: " + reason);
+                    util.writeToLog(client.logPath, `Creating directory for translation files failed with error: ${reason}`);
                     reject();
                 });
             }
