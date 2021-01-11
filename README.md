@@ -61,11 +61,15 @@ This extension contributes the following settings:
 
 [//]: # (Insert the settings..)
 
-
 ## Using the Latests Server SNAPSHOTS
 The server available on the VS Code Marketplace may not be the latests. 
 See https://github.com/nickbattle/vdmj to find the latest version. 
 To use it package the project into jar files and copy the snapshots into the ...\vdm-vscode\resources\jars folder and delete the old ones. Next time VS Code is started the extension will use the new jars.
+
+## Publications
+Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen, 
+[Visual Studio Code VDM Support](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support),
+The 18th Overture Workshop, December 2020 [[PDF](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support)]
 
 ## Change Log
 See change log [here](CHANGELOG.md)
