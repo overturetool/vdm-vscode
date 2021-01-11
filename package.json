@@ -339,14 +339,14 @@
           "type": "integer",
           "default": 8000,
           "scope": "resource",
-          "markdownDescription": "Port used for LSP. NOTE: Only used when `#experimentalServer#` is active."
+          "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.debug.experimentalServer#` is active."
         },
         "vdm-vscode.debug.dapPort": {
           "title": "DAP Port",
           "type": "integer",
           "default": 8001,
           "scope": "resource",
-          "markdownDescription": "Port used for DAP. NOTE: Only used when `#experimentalServer#` is active."
+          "markdownDescription": "Port used for DAP. NOTE: Only used when `#vdm-vscode.debug.experimentalServer#` is active."
         },
         "vdm-vscode.debug.activateServerLog": {
           "type": "boolean",
