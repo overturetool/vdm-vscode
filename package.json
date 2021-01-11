@@ -328,18 +328,6 @@
     "configuration": {
       "title": "VDM VSCode",
       "properties": {
-        "vdm-vscode.trace.server": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "off",
-            "messages",
-            "verbose"
-          ],
-          "format": "json",
-          "default": "off",
-          "description": "Traces the communication between VS Code and the language server."
-        },
         "vdm-vscode.debug.experimentalServer": {
           "type": "boolean",
           "default": false,
