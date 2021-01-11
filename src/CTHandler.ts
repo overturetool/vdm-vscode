@@ -39,24 +39,22 @@ export class CTHandler {
     public async showAvailableSpecsForCT(): Promise<void> {
         // Skip if only one client available
         if (this._clients.size == 1){
-            this._clients.forEach((v,k) => this.setCurrentClientFromKey(k));
+            this.setCurrentClientFromKey(this._clients.keys().next().value)
             return;
         }
 
         let showOptions: string[] = [];
         this._clients.forEach((v,k) => {
-            showOptions.push(k.replace(/^.*[\\\/]/, ''));
+            showOptions.push(v.clientOptions.workspaceFolder.name);
         });
-        showOptions.push("- Cancel");
-
+        showOptions.push("> Cancel");
 
         await vscode.window.showQuickPick(showOptions).then(res => {
-            if (res == undefined || res == "- Cancel") {  // Exit on 'esc' or 'Cancel'
+            if (res == undefined || res == "> Cancel") {  // Exit on 'esc' or 'Cancel'
                 return;
             }
-            let clientKey = Array.from(this._clients.keys()).find(k => k.includes(res));
 
-            this.setCurrentClientFromKey(clientKey);
+            this.setCurrentClientFromKey(Array.from(this._clients.keys()).find(k => Uri.parse(k).fsPath.includes(res)));
         })
     }
 
