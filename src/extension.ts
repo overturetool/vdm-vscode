@@ -3,7 +3,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    window as Window, ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions, workspace
+    window as Window, ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions, workspace, ConfigurationScope, commands, ConfigurationChangeEvent
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -59,6 +59,15 @@ function getDialect(document: TextDocument): string {
     return document.languageId;
 }
 
+function didChangeConfiguration(event: ConfigurationChangeEvent, folder: WorkspaceFolder){
+    if (event.affectsConfiguration("vdm-vscode", folder)){
+        window.showInformationMessage("Configurations changed, restart VS Code?", "Restart", "Cancel").then(res => {
+            if (res == "Restart") 
+                commands.executeCommand("workbench.action.reloadWindow");
+        })
+    }
+}
+
 export function activate(context: ExtensionContext) {
     let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /vdmj.*jar/i);
     let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /lsp.*jar/i);
@@ -70,7 +79,6 @@ export function activate(context: ExtensionContext) {
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
-    
 
     if (!vdmjPath || !lspServerPath || !annotationsPath)
         return;
@@ -151,6 +159,9 @@ export function activate(context: ExtensionContext) {
             let lspPort = ports[0];
             let dapPort = ports[1];
 
+            // Add settings watch for workspace folder
+            workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, folder));
+
             // Setup server arguments
             let args: string[] = [];
             let JVMArguments = workspace.getConfiguration('vdm-vscode', folder).JVMArguments;
@@ -166,9 +177,7 @@ export function activate(context: ExtensionContext) {
                 args.push('-Dlog.filename=' + path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log'));
             }
 
-
             let classPath = "";
-
             let useHighprecision = workspace.getConfiguration('vdm-vscode', folder).highPrecision;
             if(useHighprecision && useHighprecision === true){
                 classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
