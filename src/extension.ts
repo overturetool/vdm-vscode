@@ -61,8 +61,8 @@ function getDialect(document: TextDocument): string {
 
 function didChangeConfiguration(event: ConfigurationChangeEvent, folder: WorkspaceFolder){
     if (event.affectsConfiguration("vdm-vscode", folder)){
-        window.showInformationMessage("Configurations changed, restart VS Code?", "Restart", "Cancel").then(res => {
-            if (res == "Restart") 
+        window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
+            if (res == "Reload Now") 
                 commands.executeCommand("workbench.action.reloadWindow");
         })
     }
