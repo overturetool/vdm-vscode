@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { WorkspaceFolder } from "vscode";
 
 export namespace VdmDapSupport {
     let initialized: boolean = false;
@@ -66,7 +67,7 @@ export namespace VdmDapSupport {
         }
     }
 
-    export function startDebuggerWithCommand(command: string, stopOnEntry?:boolean) {
+    export function startDebuggerWithCommand(command: string, folder: WorkspaceFolder | undefined, stopOnEntry?:boolean) {
         var debugConfiguration: vscode.DebugConfiguration = {
             type: "vdm",               // The type of the debug session.
             name: "Launch command",    // The name of the debug session.
@@ -79,7 +80,7 @@ export namespace VdmDapSupport {
             debugConfiguration.stopOnEntry = stopOnEntry;
 
         // Start debug session with custom debug configurations
-        vscode.debug.startDebugging(undefined, debugConfiguration)
+        vscode.debug.startDebugging(folder, debugConfiguration)
     }
 
 }
