@@ -138,10 +138,11 @@ export function activate(context: ExtensionContext) {
     async function launchClient(dialect: string, folder: WorkspaceFolder): Promise<void> {
         let serverMainClass = 'lsp.LSPServerSocket';
         // If using experimental server
-        let debug = workspace.getConfiguration('vdm-vscode', folder).experimentalServer;
+        let debug = workspace.getConfiguration('vdm-vscode.debug', folder).experimentalServer;
         if (debug) {
-            let lspPort = await requestPort("LSP", 8000);
-            let dapPort = await requestPort("DAP", 8001);
+            let lspPort = workspace.getConfiguration('vdm-vscode.debug', folder).lspPort;
+            let dapPort = workspace.getConfiguration('vdm-vscode.debug', folder).dapPort;
+
             let client = createClient(dialect, lspPort, dapPort, folder);
             let clientKey = folder.uri.toString();
             globalThis.clients.set(clientKey, client);
@@ -168,7 +169,7 @@ export function activate(context: ExtensionContext) {
             if (JVMArguments != "")
                 args.push(JVMArguments);
 
-            let activateServerLog = workspace.getConfiguration('vdm-vscode', folder).activateServerLog;
+            let activateServerLog = workspace.getConfiguration('vdm-vscode.debug', folder).activateServerLog;
             if (activateServerLog){
                 // Ensure logging path exists
                 let languageServerLoggingPath = path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log');

@@ -340,23 +340,37 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "vdm-vscode.JVMArguments": {
-          "type": "string",
-          "default": "",
+        "vdm-vscode.debug.experimentalServer": {
+          "type": "boolean",
+          "default": false,
           "scope": "resource",
-          "description": "JVM arguments used when launching the server."
+          "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
         },
-        "vdm-vscode.activateServerLog": {
+        "vdm-vscode.debug.lspPort": {
+          "title": "LSP Port",
+          "type": "integer",
+          "default": 8000,
+          "scope": "resource",
+          "markdownDescription": "Port used for LSP. NOTE: Only used when `#experimentalServer#` is active."
+        },
+        "vdm-vscode.debug.dapPort": {
+          "title": "DAP Port",
+          "type": "integer",
+          "default": 8001,
+          "scope": "resource",
+          "markdownDescription": "Port used for DAP. NOTE: Only used when `#experimentalServer#` is active."
+        },
+        "vdm-vscode.debug.activateServerLog": {
           "type": "boolean",
           "default": false,
           "scope": "resource",
           "description": "Activate logging of server actions and protocol communication."
         },
-        "vdm-vscode.experimentalServer": {
-          "type": "boolean",
-          "default": false,
+        "vdm-vscode.JVMArguments": {
+          "type": "string",
+          "default": "",
           "scope": "resource",
-          "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
+          "description": "JVM arguments used when launching the server."
         },
         "vdm-vscode.annotationPaths": {
           "type": "string",
