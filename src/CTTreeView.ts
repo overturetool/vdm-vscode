@@ -512,6 +512,9 @@ export class CTTreeView {
                         if (strRange != undefined)
                             range = {end: Number(strRange[1])};
 
+                        if (filter)
+                            this._isExecutingTestGroup = true;
+
                         // Request execute
                         await this._ctHandler.requestExecute(viewElement.label, filter, range, progress)
                     }
