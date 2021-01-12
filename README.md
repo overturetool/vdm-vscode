@@ -1,4 +1,9 @@
 # VDM Language Support in Visual Studio Code
+
+[//]: # [![Version](https://img.shields.io/visual-studio-marketplace/v/<EXTENSION REFEFERENCE HERE>)](https://marketplace.visualstudio.com/items?itemName=<EXTENSION REFEFERENCE HERE>)
+[//]: # [![Downloads](https://img.shields.io/visual-studio-marketplace/d/<EXTENSION REFEFERENCE HERE>)](https://marketplace.visualstudio.com/items?itemName=<EXTENSION REFEFERENCE HERE>)
+[//]: # [![Installs](https://img.shields.io/visual-studio-marketplace/i/<EXTENSION REFEFERENCE HERE>)](https://marketplace.visualstudio.com/items?itemName=<EXTENSION REFEFERENCE HERE>)
+
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
 The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle). 
 
@@ -48,7 +53,7 @@ The following displays snippets of the feature functionalities provided by the e
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/translation.gif" width="700">
 
 
-## Installing the Extension
+## Installation
 There are several different ways to install the extension, some of these are listed below.
 
 ### Marketplace
@@ -76,9 +81,9 @@ This extension contributes the following settings:
 
 [//]: # (Insert the settings..)
 
-## Using the Latests Server SNAPSHOTS
-The language server utilised by the VDM-VSCode extension available on the VS Code Marketplace may not be the latest. 
-See https://github.com/nickbattle/vdmj to find the latest version. 
+## Using the Latest Server SNAPSHOTS
+The language server utilised by the VDM-VSCode extension may not be the latest. 
+See https://github.com/nickbattle/vdmj to find the newest version. 
 To update the language server manually, package the vdmj and lsp projects into jar files and copy the snapshots into the ...\vdm-vscode\resources\jars folder and delete the old ones. Next time VS Code is started the extension will use the new jars.
 
 ## Publications
