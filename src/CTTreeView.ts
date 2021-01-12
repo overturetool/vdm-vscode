@@ -512,6 +512,7 @@ export class CTTreeView {
                         if (strRange != undefined)
                             range = {end: Number(strRange[1])};
 
+                        // If running a filtered execution mark it as a group execution to prevent change to the number of tests
                         if (filter)
                             this._isExecutingTestGroup = true;
 
