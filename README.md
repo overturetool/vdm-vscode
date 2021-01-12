@@ -1,8 +1,9 @@
 # VDM Language Support in Visual Studio Code
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
-The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by Nick Battle. 
+The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle). 
 
 <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/GUI.png" width="800">
+
 ## Requirements
 * [VS Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
 * [Java ≥ v. 11](https://adoptopenjdk.net/)
