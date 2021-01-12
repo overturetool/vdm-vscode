@@ -255,16 +255,9 @@ export function activate(context: ExtensionContext) {
         // Setup client options
         let clientOptions: LanguageClientOptions = {
             // Document selector defines which files from the workspace, that is also open in the client, to monitor.
-            documentSelector: [{ language: dialect }],
-            synchronize: {
-                // Setup filesystem watcher for changes in vdm files
-                fileEvents: workspace.createFileSystemWatcher('**/.' + dialect)
-            }
-        }
-        if (folder) {
-            clientOptions.documentSelector = [{ scheme: 'file', language: dialect, pattern: `${folder.uri.fsPath}/**/*` }];
-            clientOptions.diagnosticCollectionName = "vdm-vscode";
-            clientOptions.workspaceFolder = folder;
+            documentSelector: [{ scheme: 'file', language: dialect, pattern: `${folder.uri.fsPath}/**/*`}],
+            diagnosticCollectionName: "vdm-vscode",
+            workspaceFolder: folder
         }
 
         // Create the language client with the defined client options and the function to create and setup the server.
