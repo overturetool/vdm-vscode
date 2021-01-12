@@ -50,22 +50,31 @@ In VS Code under "Extensions -> Views and More actions... -> Install from VSIX" 
 ### Cloning Git Repository
 To install the extensions by cloning the git repo you must 
 
-1. Run the following bash commands in the VDM extension folder: ```npm install & npm run compile```. (*It is important that this performed **before** the following steps, such that all the necessary files are available in the extension folder*)
+1. Run the following bash commands in the VDM extension folder: `npm install & npm run compile`. (*It is important that this performed **before** the following steps, such that all the necessary files are available in the extension folder*)
 1. Navigate to the VS Code extensions folder into: ...\Microsoft VS Code\resources\app\extensions.
 1. Copy the VDM extension folder (i.e. 'vdm-vscode') into the VS Code extensions folder.
 
 ## VS Code Settings
 This extension contributes the following settings:
-*
-*
+* `vdm-vscode.JVMArguments`: Arguments for the JVM that is executing the server (e.g. -Xmx2g).
+* `vdm-vscode.annotationPaths`: Comma separated list of folders and/or jar file paths for annotations that should be used with the language server.
+* `vdm-vscode.highPrecision`: Use high precision server, that use more memory for variables ("on" or "off").
+* `vdm-vscode.debug.activateServerLog`: Log server actions ("on" or "off").
+* `vdm-vscode.debug.experimentalServer`: Use an experimental/external server ("on" or "off"). If "on" the client will not launch a server but instead connect to one that is running in another process. E.g. executing the VDMJ server in a debugger.
+* `vdm-vscode.debug.lspPort`: Port used for the LSP/SLSP connection when `experimentalServer` is "on".
+* `vdm-vscode.debug.dapPort`: Port used for the DAP connection when `experimentalServer` is "on".
 
 [//]: # (Insert the settings..)
-
 
 ## Using the Latests Server SNAPSHOTS
 The server available on the VS Code Marketplace may not be the latests. 
 See https://github.com/nickbattle/vdmj to find the latest version. 
 To use it package the project into jar files and copy the snapshots into the ...\vdm-vscode\resources\jars folder and delete the old ones. Next time VS Code is started the extension will use the new jars.
+
+## Publications
+Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen, 
+[Visual Studio Code VDM Support](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support),
+The 18th Overture Workshop, December 2020 [[PDF](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support)]
 
 ## Change Log
 See change log [here](CHANGELOG.md)
