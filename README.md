@@ -1,6 +1,6 @@
 # VDM Language Support in Visual Studio Code
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
-The extension utelises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by Nick Battle. 
+The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by Nick Battle. 
 
 <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/GUI.png" width="800">
 ## Requirements
@@ -76,7 +76,7 @@ This extension contributes the following settings:
 [//]: # (Insert the settings..)
 
 ## Using the Latests Server SNAPSHOTS
-The language server utelised by the VDM-VSCode extension available on the VS Code Marketplace may not be the latest. 
+The language server utilised by the VDM-VSCode extension available on the VS Code Marketplace may not be the latest. 
 See https://github.com/nickbattle/vdmj to find the latest version. 
 To update the language server manually, package the vdmj and lsp projects into jar files and copy the snapshots into the ...\vdm-vscode\resources\jars folder and delete the old ones. Next time VS Code is started the extension will use the new jars.
 
