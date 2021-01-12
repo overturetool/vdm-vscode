@@ -226,7 +226,7 @@ export class CTTreeView {
         vscode.commands.executeCommand('setContext', 'vdm-ct-show-disable-filter-button', !show);
     }
 
-    private async ctRebuildOutline() {
+    private async ctRebuildOutline(useCurrentClient: boolean = false) {
         if(this._isRebuildingTraceOutline)
             return;
         
@@ -234,7 +234,9 @@ export class CTTreeView {
         let clientName: string = this._ctHandler.currentClientName;
 
         // Prompt user to chose a specification for CT. This also changes the client-server connection.
-        await this._ctHandler.showAvailableSpecsForCT();
+        // Skip if using current client
+        if (!useCurrentClient || this._ctHandler.currentClient == undefined)
+            await this._ctHandler.showAvailableSpecsForCT();
 
         //Change viewname
         this._testView.title = this._ctHandler.currentClientName;
@@ -325,7 +327,7 @@ export class CTTreeView {
 
     private async ctFullExecute() {
         // Make sure we are up-to-date
-        await this.ctRebuildOutline();
+        await this.ctRebuildOutline(true);
 
         // Run Execute on all traces of all symbols
         for (const symbol of this._testProvider.getRoots()) {
