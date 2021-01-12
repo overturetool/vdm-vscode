@@ -11,7 +11,8 @@
     "vdmpp",
     "VDM++",
     "vdmrt",
-    "VDM-RT"
+    "VDM-RT",
+    "multi-root ready"
   ],
   "author": "Jonas K. Rask and Frederik P. Madsen",
   "license": "MIT",
@@ -25,7 +26,9 @@
     "vscode": "^1.49.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Debuggers",
+    "Linters"
   ],
   "activationEvents": [
     "onLanguage:vdmsl",
