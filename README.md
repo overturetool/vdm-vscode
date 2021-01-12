@@ -28,8 +28,14 @@ For further explanation on the features see [here](https://github.com/nickbattle
 * Show all workspace folders in the Combinatorial Testing view
 
 ## Usage
+Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(.vdmsl, .vdmpp or .vdmrt) in the editor. The language server will then automatically launch in the background.
 
-[//]: # (Insert gifs and stuff here that explains how to use the extension)
+The following displays snippets of the functionalities provided by the extension:
+- **Syntax highlighting**: VDM keywords are automatically highlighted.
+<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/syntax_highlighting.png" width="600">
+
+- **Syntax- and type-checking**: Syntax- and type-errors and warnings are highligthed in the editor and detailed in the terminal or by hovering on the highlighted section.
+<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/syntax_checking.gif" width="600">
 
 
 ### Debugging Using the Extension
