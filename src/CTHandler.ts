@@ -22,12 +22,12 @@ export class CTHandler {
         private _supportWorkDone = false) {
             // Set filter
             if (this._filterHandler)
-                this.registerCommand('extension.ctSetFilter', () => this._filterHandler.setCTFilter());
+                this.registerCommand("vdm-vscode.ctSetFilter", () => this._filterHandler.setCTFilter());
              
             // Register view
             this._ctTreeView = new CTTreeView(this, this._context, !!this._filterHandler);
 
-            this.registerCommand('extension.ctCancel', () => this.cancelExecution());
+            this.registerCommand("vdm-vscode.ctCancel", () => this.cancelExecution());
         }
     
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {

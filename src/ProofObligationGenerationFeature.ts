@@ -39,8 +39,8 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     private registerPOGCommand(): void {
         if (!ProofObligationGenerationFeature.commandRegistered) {
             ProofObligationGenerationFeature.commandRegistered = true;
-            commands.executeCommand( 'setContext', 'pog-show-button', true );
-            this.registerCommand('extension.runPOG', (inputUri: Uri) => {
+            commands.executeCommand( "setContext", "pog-show-button", true );
+            this.registerCommand("vdm-vscode.runPOG", (inputUri: Uri) => {
 
                 // Find client
                 let wsFolder = workspace.getWorkspaceFolder(inputUri);
@@ -70,7 +70,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     }
 
     static async run(inputUri: Uri, client: SpecificationLanguageClient, context: ExtensionContext, revealPOGView: boolean = true) {
-        window.setStatusBarMessage('Running Proof Obligation Generation', 2000);
+        window.setStatusBarMessage("Running Proof Obligation Generation", 2000);
 
         try {
             // Setup message parameters

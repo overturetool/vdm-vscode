@@ -39,55 +39,55 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.translateLatex",
+        "command": "vdm-vscode.translateLatex",
         "title": "Translate to LaTeX",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "extension.translateWord",
+        "command": "vdm-vscode.translateWord",
         "title": "Translate to Word",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "extension.runPOG",
+        "command": "vdm-vscode.runPOG",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
         "icon": "$(run)"
       },
       {
-        "command": "extension.goToTrace",
+        "command": "vdm-vscode.goToTrace",
         "title": "Go to trace",
         "category": "VDM",
         "icon": "$(go-to-file)"
       },
       {
-        "command": "extension.ctSetFilter",
+        "command": "vdm-vscode.ctSetFilter",
         "title": "Set Filter Options",
         "category": "VDM",
         "icon": "$(gear)"
       },
       {
-        "command": "extension.ctRebuildOutline",
+        "command": "vdm-vscode.ctRebuildOutline",
         "title": "Rebuild Trace Outline",
         "category": "VDM",
         "icon": "$(refresh)"
       },
       {
-        "command": "extension.ctFullExecute",
+        "command": "vdm-vscode.ctFullExecute",
         "title": "Execute All Tests",
         "category": "VDM",
         "icon": "$(run-all)"
       },
       {
-        "command": "extension.ctExecute",
+        "command": "vdm-vscode.ctExecute",
         "title": "Full Evaluation",
         "category": "VDM",
         "icon": "$(run)"
       },
       {
-        "command": "extension.ctFilteredExecute",
+        "command": "vdm-vscode.ctFilteredExecute",
         "title": "Filtered Evaluation",
         "category": "VDM",
         "icon": {
@@ -96,19 +96,19 @@
         }
       },
       {
-        "command": "extension.ctGenerate",
+        "command": "vdm-vscode.ctGenerate",
         "title": "Generate Tests",
         "category": "VDM",
         "icon": "$(refresh)"
       },
       {
-        "command": "extension.ctEnableTreeFilter",
+        "command": "vdm-vscode.ctEnableTreeFilter",
         "title": "Show only failed tests",
         "category": "VDM",
         "icon": "$(filter)"
       },
       {
-        "command": "extension.ctDisableTreeFilter",
+        "command": "vdm-vscode.ctDisableTreeFilter",
         "title": "Disable filtering of tests",
         "category": "VDM",
         "icon": {
@@ -117,13 +117,13 @@
         }
       },
       {
-        "command": "extension.ctSendToInterpreter",
+        "command": "vdm-vscode.ctSendToInterpreter",
         "title": "Send test to interpreter",
         "category": "VDM",
         "icon": "$(debug-alt)"
       },
       {
-        "command": "extension.ctCancel",
+        "command": "vdm-vscode.ctCancel",
         "title": "Cancel Combinatorial Test Request",
         "category": "VDM",
         "icon": "$(debug-stop)"
@@ -156,174 +156,174 @@
     "viewsWelcome": [
       {
         "view": "vdm-ctView",
-        "contents": "[Generate test outline](command:extension.ctRebuildOutline)"
+        "contents": "[Generate test outline](command:vdm-vscode.ctRebuildOutline)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "extension.ctFullExecute",
+          "command": "vdm-vscode.ctFullExecute",
           "when": "view =~ /vdm-ctView/ && vdm-ct-show-run-buttons == true",
           "group": "navigation@0"
         },
         {
-          "command": "extension.ctCancel",
+          "command": "vdm-vscode.ctCancel",
           "when": "view =~ /vdm-ctView/ && vdm-ct-show-cancel-button == true",
           "group": "navigation@1"
         },
         {
-          "command": "extension.ctSetFilter",
+          "command": "vdm-vscode.ctSetFilter",
           "when": "view =~ /vdm-ctView/ && vdm-ct-show-set-execute-filter-button == true",
           "group": "navigation@2"
         },
         {
-          "command": "extension.ctEnableTreeFilter",
+          "command": "vdm-vscode.ctEnableTreeFilter",
           "when": "view =~ /vdm-ctView/ && vdm-ct-show-enable-filter-button == true",
           "group": "navigation@3"
         },
         {
-          "command": "extension.ctDisableTreeFilter",
+          "command": "vdm-vscode.ctDisableTreeFilter",
           "when": "view =~ /vdm-ctView/ && vdm-ct-show-disable-filter-button == true",
           "group": "navigation@3"
         },
         {
-          "command": "extension.ctRebuildOutline",
+          "command": "vdm-vscode.ctRebuildOutline",
           "when": "view =~ /vdm-ctView/",
           "group": "navigation@4"
         }
       ],
       "view/item/context": [
         {
-          "command": "extension.ctExecute",
+          "command": "vdm-vscode.ctExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "vdm-ctView@0"
         },
         {
-          "command": "extension.ctFilteredExecute",
+          "command": "vdm-vscode.ctFilteredExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
           "group": "vdm-ctView@1"
         },
         {
-          "command": "extension.ctGenerate",
+          "command": "vdm-vscode.ctGenerate",
           "when": "viewItem == trace",
           "group": "vdm-ctView@2"
         },
         {
-          "command": "extension.ctSendToInterpreter",
+          "command": "vdm-vscode.ctSendToInterpreter",
           "when": "viewItem == test && vdm-ct-show-run-buttons == true",
           "group": "vdm-ctView@0"
         },
         {
-          "command": "extension.ctExecute",
+          "command": "vdm-vscode.ctExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
           "group": "inline@0"
         },
         {
-          "command": "extension.ctFilteredExecute",
+          "command": "vdm-vscode.ctFilteredExecute",
           "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
           "group": "inline@1"
         },
         {
-          "command": "extension.ctGenerate",
+          "command": "vdm-vscode.ctGenerate",
           "when": "viewItem == trace",
           "group": "inline@2"
         },
         {
-          "command": "extension.goToTrace",
+          "command": "vdm-vscode.goToTrace",
           "when": "viewItem == trace",
           "group": "inline@3"
         },
         {
-          "command": "extension.ctSendToInterpreter",
+          "command": "vdm-vscode.ctSendToInterpreter",
           "when": "viewItem == test && vdm-ct-show-run-buttons == true",
           "group": "inline@0"
         }
       ],
       "explorer/context": [
         {
-          "command": "extension.runPOG",
+          "command": "vdm-vscode.runPOG",
           "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
           "group": "verification@1"
         },
         {
-          "command": "extension.translateLatex",
+          "command": "vdm-vscode.translateLatex",
           "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
         },
         {
-          "command": "extension.translateWord",
+          "command": "vdm-vscode.translateWord",
           "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
         }
       ],
       "editor/context": [
         {
-          "command": "extension.runPOG",
+          "command": "vdm-vscode.runPOG",
           "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
           "group": "verification@1"
         },
         {
-          "command": "extension.translateLatex",
+          "command": "vdm-vscode.translateLatex",
           "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
         },
         {
-          "command": "extension.translateWord",
+          "command": "vdm-vscode.translateWord",
           "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
         }
       ],
       "commandPalette": [
         {
-          "command": "extension.runPOG",
+          "command": "vdm-vscode.runPOG",
           "when": "false"
         },
         {
-          "command": "extension.ctSetFilter",
+          "command": "vdm-vscode.ctSetFilter",
           "when": "false"
         },
         {
-          "command": "extension.ctRebuildOutline",
+          "command": "vdm-vscode.ctRebuildOutline",
           "when": "false"
         },
         {
-          "command": "extension.ctFullExecute",
+          "command": "vdm-vscode.ctFullExecute",
           "when": "false"
         },
         {
-          "command": "extension.ctExecute",
+          "command": "vdm-vscode.ctExecute",
           "when": "false"
         },
         {
-          "command": "extension.ctFilteredExecute",
+          "command": "vdm-vscode.ctFilteredExecute",
           "when": "false"
         },
         {
-          "command": "extension.ctGenerate",
+          "command": "vdm-vscode.ctGenerate",
           "when": "false"
         },
         {
-          "command": "extension.ctEnableTreeFilter",
+          "command": "vdm-vscode.ctEnableTreeFilter",
           "when": "false"
         },
         {
-          "command": "extension.ctDisableTreeFilter",
+          "command": "vdm-vscode.ctDisableTreeFilter",
           "when": "false"
         },
         {
-          "command": "extension.ctSendToInterpreter",
+          "command": "vdm-vscode.ctSendToInterpreter",
           "when": "false"
         },
         {
-          "command": "extension.goToTrace",
+          "command": "vdm-vscode.goToTrace",
           "when": "false"
         },
         {
-          "command": "extension.translateLatex",
+          "command": "vdm-vscode.translateLatex",
           "when": "false"
         },
         {
-          "command": "extension.translateWord",
+          "command": "vdm-vscode.translateWord",
           "when": "false"
         }
       ]

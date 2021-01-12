@@ -204,16 +204,16 @@ export class CTTreeView {
 
         ///// Command registration //////
         if(canFilter) {
-            this.registerCommand("extension.ctFilteredExecute", (e) => this.execute(e, true));
+            this.registerCommand("vdm-vscode.ctFilteredExecute", (e) => this.execute(e, true));
         }
-        this.registerCommand("extension.ctRebuildOutline",      ()  => this.ctRebuildOutline());
-        this.registerCommand("extension.ctFullExecute",         ()  => this.ctFullExecute());
-        this.registerCommand("extension.ctExecute",             (e) => this.execute(e, false));
-        this.registerCommand("extension.ctGenerate",            (e) => this.ctGenerate(e));
-        this.registerCommand("extension.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
-        this.registerCommand("extension.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
-        this.registerCommand("extension.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
-        this.registerCommand("extension.goToTrace",   (e) => this.ctGoToTrace(e));
+        this.registerCommand("vdm-vscode.ctRebuildOutline",      ()  => this.ctRebuildOutline());
+        this.registerCommand("vdm-vscode.ctFullExecute",         ()  => this.ctFullExecute());
+        this.registerCommand("vdm-vscode.ctExecute",             (e) => this.execute(e, false));
+        this.registerCommand("vdm-vscode.ctGenerate",            (e) => this.ctGenerate(e));
+        this.registerCommand("vdm-vscode.ctEnableTreeFilter",    ()  => this.ctTreeFilter(true));
+        this.registerCommand("vdm-vscode.ctDisableTreeFilter",   ()  => this.ctTreeFilter(false));
+        this.registerCommand("vdm-vscode.ctSendToInterpreter",   (e) => this.ctSendToInterpreter(e));
+        this.registerCommand("vdm-vscode.goToTrace",   (e) => this.ctGoToTrace(e));
     }
 
     private showCancelButton(show: boolean) {
