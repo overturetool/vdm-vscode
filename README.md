@@ -1,14 +1,8 @@
 # VDM Language Support in Visual Studio Code
-Extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
-The extension provides language support by connecting to the server developed by Nick Battle in [VDMJ](https://github.com/nickbattle/vdmj).
-The communication between the extension and the server is carried out using the Specification Language Server Protocol (SLSP), which is an extension to the Language Server Protocol (LSP), and the Debug Adapter Protocol (DAP).
+VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
+The extension utelises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by Nick Battle. 
 
-To use, open folder containing a VDM file(.vdmsl, .vdmpp or .vdmrt). The language server will then automatically launch in the background.
-
-To use the debugger, open the file that you want to debug, this will launch the server. With the server running you can launch the debugger, by default the debugger will launch the VDMJ interpreter from where you can debug specifications. 
-For further explanation on the features see [here](https://github.com/nickbattle/vdmj/tree/master/LSP).
-
-
+<img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/GUI.png" width="800">
 ## Requirements
 * [VS Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
 * [Java ≥ v. 11](https://adoptopenjdk.net/)
@@ -40,7 +34,7 @@ The following displays snippets of the feature functionalities provided by the e
 - **Smart navigation**: Mutiple actions exists for navigating to the definition for a given identifier in a specification: Ctrl + click, the right click context menu or pressing f12 while hovering on the identifier.
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/smart_navigation.gif" width="700">
 
-- **Debugging**: A debugging session can be initiated using the standard VS Code debug interface. This launches the interpter in VDMJ enabling commands to be issued through the terminal.
+- **Debugging**: A debugging session can be initiated using the standard VS Code debug interface. This launches the VDMJ interpreter enabling commands to be issued through the terminal (See the VDMJ user guide).
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/debugging.gif" width="700">
 
 - **Proof Obligation Generation**: Proof obligation generation can be performed for a given specification through accessing the editor context menu by right-clicking in the editor window. Alternatively the explorer contex menu can be used by right-clicking a vdm file in the explorer window.
@@ -53,33 +47,27 @@ The following displays snippets of the feature functionalities provided by the e
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/translation.gif" width="700">
 
 
-### Debugging Using the Extension
-To use the debugger, open the file that you want to debug, this will launch the server. With the server running you can launch the debugger, by default the debugger will launch the VDMJ interpreter from where you can debug specifications. 
-When debugging VDM projects the extensions launches a VDMJ terminal. To execute a specification the VDMJ format must be used, an explanation of this can be found [here](https://github.com/nickbattle/vdmj/tree/master/LSP).
-
-
 ## Installing the Extension
-There are several different ways to install the extensions, some of these are listed below
+There are several different ways to install the extension, some of these are listed below.
 
 ### Marketplace
-Eventually the extensions will be published on the marketplace, but this is not the case yet.
+Eventually the extension will be published on the marketplace, but this is not the case yet.
 
 ### Install From VSIX
-In the extension folders you will find VSIX files containing packaged versions of the extensions (Note that the VSIX files are not always up-to-date with the latest commit).
-In VS Code under "Extensions -> Views and More actions... -> Install from VSIX" you can select the extension VSIX file, which will install the extension.
+In VS Code under "Extensions -> Views and More actions... -> Install from VSIX" locate the .vsix file in the VDM-VSCode extension folder (Note that the file is not always up-to-date with the latest commit), choose the file and click install. This will install the extension or update it if an older version is already present.
 
-### Cloning Git Repository
-To install the extensions by cloning the git repo you must 
+### Install by copying folder
+To install the extension by copying its folder you must:
 
-1. Run the following bash commands in the VDM extension folder: `npm install & npm run compile`. (*It is important that this performed **before** the following steps, such that all the necessary files are available in the extension folder*)
-1. Navigate to the VS Code extensions folder into: ...\Microsoft VS Code\resources\app\extensions.
-1. Copy the VDM extension folder (i.e. 'vdm-vscode') into the VS Code extensions folder.
+1. Run the following bash commands in the VDM-VSCode extension folder: `npm install & npm run compile`. (*It is important that this performed **before** the following steps, such that all the necessary files are available in the extension folder*)
+1. Navigate to the VS Code extensions folder: ...\Microsoft VS Code\resources\app\extensions.
+1. Copy the VDM-VSCode extension folder (i.e. 'vdm-vscode') into the VS Code extensions folder.
 
-## VS Code Settings
+## Settings
 This extension contributes the following settings:
 * `vdm-vscode.JVMArguments`: Arguments for the JVM that is executing the server (e.g. -Xmx2g).
 * `vdm-vscode.annotationPaths`: Comma separated list of folders and/or jar file paths for annotations that should be used with the language server.
-* `vdm-vscode.highPrecision`: Use high precision server, that use more memory for variables ("on" or "off").
+* `vdm-vscode.highPrecision`: Use high precision server that use more memory for variables ("on" or "off").
 * `vdm-vscode.debug.activateServerLog`: Log server actions ("on" or "off").
 * `vdm-vscode.debug.experimentalServer`: Use an experimental/external server ("on" or "off"). If "on" the client will not launch a server but instead connect to one that is running in another process. E.g. executing the VDMJ server in a debugger.
 * `vdm-vscode.debug.lspPort`: Port used for the LSP/SLSP connection when `experimentalServer` is "on".
@@ -88,9 +76,9 @@ This extension contributes the following settings:
 [//]: # (Insert the settings..)
 
 ## Using the Latests Server SNAPSHOTS
-The server available on the VS Code Marketplace may not be the latests. 
+The language server utelised by the VDM-VSCode extension available on the VS Code Marketplace may not be the latest. 
 See https://github.com/nickbattle/vdmj to find the latest version. 
-To use it package the project into jar files and copy the snapshots into the ...\vdm-vscode\resources\jars folder and delete the old ones. Next time VS Code is started the extension will use the new jars.
+To update the language server manually, package the vdmj and lsp projects into jar files and copy the snapshots into the ...\vdm-vscode\resources\jars folder and delete the old ones. Next time VS Code is started the extension will use the new jars.
 
 ## Publications
 Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen, 
@@ -101,7 +89,7 @@ The 18th Overture Workshop, December 2020 [[PDF](https://www.researchgate.net/pu
 See change log [here](CHANGELOG.md)
 
 ## Issues
-Submit the [issue](https://github.com/jonaskrask/vdm-vscode/issues) if you find a bug or have a suggestion for improving the extension.
+Submit an [issue](https://github.com/jonaskrask/vdm-vscode/issues) if you find a bug or have a suggestion for improving the extension.
 
 ## Contributing
-Contributions are very welocome, to do so: Fork the [repo](https://github.com/jonaskrask/vdm-vscode) and submit pull requests.
+Contributions are very welcome. To do so: Fork the [repo](https://github.com/jonaskrask/vdm-vscode) and submit a pull request.
