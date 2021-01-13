@@ -1,8 +1,8 @@
 # VDM Language Support in Visual Studio Code
 
-[//]: # [![Version](https://img.shields.io/visual-studio-marketplace/v/<EXTENSION REFEFERENCE HERE>)](https://marketplace.visualstudio.com/items?itemName=<EXTENSION REFEFERENCE HERE>)
-[//]: # [![Downloads](https://img.shields.io/visual-studio-marketplace/d/<EXTENSION REFEFERENCE HERE>)](https://marketplace.visualstudio.com/items?itemName=<EXTENSION REFEFERENCE HERE>)
-[//]: # [![Installs](https://img.shields.io/visual-studio-marketplace/i/<EXTENSION REFEFERENCE HERE>)](https://marketplace.visualstudio.com/items?itemName=<EXTENSION REFEFERENCE HERE>)
+[//]: # [![Version](https://img.shields.io/visual-studio-marketplace/v/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
+[//]: # [![Downloads](https://img.shields.io/visual-studio-marketplace/d/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
+[//]: # [![Installs](https://img.shields.io/visual-studio-marketplace/i/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
 
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
 The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle). 
