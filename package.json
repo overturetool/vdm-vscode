@@ -17,7 +17,7 @@
   ],
   "author": "Jonas K. Rask and Frederik P. Madsen",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/jonaskrask/vdm-vscode"

@@ -79,8 +79,6 @@ This extension contributes the following settings:
 * `vdm-vscode.debug.lspPort`: Port used for the LSP/SLSP connection when `experimentalServer` is "on".
 * `vdm-vscode.debug.dapPort`: Port used for the DAP connection when `experimentalServer` is "on".
 
-[//]: # (Insert the settings..)
-
 ## Using the Latest Server SNAPSHOTS
 The language server utilised by the VDM-VSCode extension may not be the latest. 
 See https://github.com/nickbattle/vdmj to find the newest version. 
