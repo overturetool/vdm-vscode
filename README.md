@@ -57,7 +57,7 @@ The following displays snippets of the feature functionalities provided by the e
 There are several different ways to install the extension, some of these are listed below.
 
 ### Marketplace
-Eventually the extension will be published on the marketplace, but this is not the case yet.
+Just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
 
 ### Install From VSIX
 In VS Code under "Extensions -> Views and More actions... -> Install from VSIX" locate the .vsix file in the VDM-VSCode extension folder (Note that the file is not always up-to-date with the latest commit), choose the file and click install. This will install the extension or update it if an older version is already present.
