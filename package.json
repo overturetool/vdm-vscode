@@ -135,7 +135,7 @@
         {
           "id": "combinatorialTesting",
           "title": "Combinatorial Testing",
-          "icon": "media/ctView.svg",
+          "icon": "resources/icons/ctView.svg",
           "when": "vdm-ct-show-view == true"
         }
       ]
