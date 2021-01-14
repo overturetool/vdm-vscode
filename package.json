@@ -472,15 +472,15 @@
                 "description": "Name of the default module or class.",
                 "default": ""
               },
-              "stopOnEntry": {
-                "type": "boolean",
-                "description": "Automatically stop after launch.",
-                "default": true
-              },
               "trace": {
                 "type": "boolean",
                 "description": "Enable logging of the Debug Adapter Protocol.",
                 "default": true
+              },
+              "command": {
+                "type": "string",
+                "description": "Run single execution of command and terminate.",
+                "default": ""
               }
             }
           }
@@ -490,7 +490,6 @@
             "type": "vdm",
             "request": "launch",
             "name": "Launch VDM Debug",
-            "stopOnEntry": true,
             "noDebug": false,
             "defaultName": null
           }
@@ -503,7 +502,6 @@
               "type": "vdm",
               "request": "launch",
               "name": "Launch VDM Debug",
-              "stopOnEntry": true,
               "noDebug": false,
               "defaultName": null
             }
