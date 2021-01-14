@@ -77,7 +77,7 @@
 		},
 		"other": {
 			"name": "keyword.other.vdm",
-			"match": "\\b(\\.\\.\\.|forall|exists|exists1|iota|lambda)\\b"
+			"match": "\\b(\\.\\.\\.|forall|exists|exists1|iota|lambda|all|from|eq|ord|compose|of|is_)\\b"
 		}
 	},
 	"scopeName": "source.vdm.operators"

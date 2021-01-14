@@ -22,6 +22,9 @@
 					"include": "#expressions"
 				},
 				{
+					"include": "#not-specified"
+				},
+				{
 					"include": "#others"
 				},
 				{
@@ -29,13 +32,11 @@
 				}
 			]
 		},
-		
-		
 		"control-statements": {
 			"patterns": [
 				{
 					"name": "keyword.control.statements.conditional.vdm",
-					"match": "\\b(if|then|else|elseif|cases|end|return|while|do)\\b"
+					"match": "\\b(if|then|else|elseif|cases|end|return|while|do|measure|imports|exports)\\b"
 				}
 			]
 		},
@@ -44,6 +45,14 @@
 				{
 					"name": "keyword.control.localBinding.vdm",
 					"match": "\\b(let|in)\\b"
+				}
+			]
+		},
+		"not-specified": {
+			"patterns": [
+				{
+					"name": "keyword.other.notSpecified.vdm",
+					"match": "\\b(is not yet specified)\\b"
 				}
 			]
 		},

@@ -83,7 +83,7 @@
 			"patterns": [
 				{
 					"name": "storage.type.definition.vdm",
-					"match": "\\b(operations|functions|types|values|instance variables|traces)\\b"
+					"match": "\\b(operations|functions|types|values|instance variables|traces|definitions)\\b"
 				}
 			]
 		},
