@@ -1,6 +1,7 @@
 {
   "name": "vdm-vscode",
   "displayName": "VDM VSCode",
+  "version": "1.0.2",
   "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
   "icon": "resources/icons/Overture.png",
   "keywords": [
@@ -17,7 +18,6 @@
   ],
   "author": "Jonas K. Rask and Frederik P. Madsen",
   "license": "MIT",
-  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/jonaskrask/vdm-vscode"
