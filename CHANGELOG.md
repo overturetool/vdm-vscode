@@ -1,3 +1,6 @@
+### 1.0.3
+Updated language server
+
 ### 1.0.2
 Changed launch file configurations
 
