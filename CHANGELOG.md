@@ -1,3 +1,6 @@
+### 1.0.4
+Fixes to syntax highlighting
+
 ### 1.0.3
 Updated language server
 
