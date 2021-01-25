@@ -1,3 +1,6 @@
+### 1.0.5
+
+
 ### 1.0.4
 - Fixes to syntax highlighting
 - Initialization and execution are asynchronous and can now be interrupted or paused using the VSC controls (fixes bug #11)
