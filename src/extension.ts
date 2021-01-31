@@ -3,7 +3,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    window as Window, ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions, workspace, ConfigurationScope, commands, ConfigurationChangeEvent
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions, workspace, ConfigurationScope, commands, ConfigurationChangeEvent
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -129,7 +129,7 @@ export function activate(context: ExtensionContext) {
         // Get two available ports, start the server and create the client
         portfinder.getPorts(2, { host: undefined, startPort: undefined, port: undefined, stopPort: undefined }, async (err, ports) => {
             if (err) {
-                Window.showErrorMessage("An error occured when finding free ports: " + err)
+                window.showErrorMessage("An error occured when finding free ports: " + err)
                 Util.writeToLog(extensionLogPath, "An error occured when finding free ports: " + err);
                 globalThis.clients.delete(folder.uri.toString());
                 return;
@@ -205,7 +205,7 @@ export function activate(context: ExtensionContext) {
             // Start the LSP server
             let javaPath = Util.findJavaExecutable('java');
             if (!javaPath) {
-                Window.showErrorMessage("Java runtime environment not found!")
+                window.showErrorMessage("Java runtime environment not found!")
                 Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
                 globalThis.clients.delete(folder.uri.toString());
                 return;
@@ -222,7 +222,7 @@ export function activate(context: ExtensionContext) {
                 });
                 await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
                 if (timeOutCounter++ == 100) {
-                    Window.showErrorMessage("ERROR: LSP server connection timeout");
+                    window.showErrorMessage("ERROR: LSP server connection timeout");
                     Util.writeToLog(extensionLogPath, "ERROR: LSP server connection timeout");
                     globalThis.clients.delete(folder.uri.toString());
                     return;
