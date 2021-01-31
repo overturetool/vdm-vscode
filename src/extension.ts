@@ -3,7 +3,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, InputBoxOptions, workspace, ConfigurationScope, commands, ConfigurationChangeEvent
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -210,7 +210,7 @@ export function activate(context: ExtensionContext) {
                 globalThis.clients.delete(folder.uri.toString());
                 return;
             }
-            child_process.spawn(javaPath, args);
+            let server = child_process.spawn(javaPath, args);
 
             // Wait for the server to be ready
             let connected = false;
@@ -229,6 +229,34 @@ export function activate(context: ExtensionContext) {
                 }
             }
 
+            // Create output channel for server stdout
+            let activeStdoutLogging = workspace.getConfiguration('vdm-vscode.stdio', folder).activeStdioLogging;
+            let stdoutLogPath = workspace.getConfiguration('vdm-vscode.stdio', folder).stdioLogPath;
+            if (activeStdoutLogging) {
+                // Log to file
+                if (stdoutLogPath != ""){ 
+                    Util.ensureDirectoryExistence(stdoutLogPath+path.sep+folder.name.toString())
+                    server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+folder.name.toString()+"_stdout.log", chunk));
+                    server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+folder.name.toString()+"_stderr.log", chunk));
+                }
+                // Log to terminal
+                else { 
+                    let outputChannel: OutputChannel = window.createOutputChannel("VDM: "+folder.name.toString());
+                    server.stdout.addListener("data", chunk => {
+                        outputChannel.show(true);
+                        outputChannel.appendLine(chunk)
+                    })
+                    server.stderr.addListener("data", chunk => {
+                        outputChannel.show(true);
+                        outputChannel.appendLine(chunk)
+                    })
+                }
+            }
+            else { //Discard stdout messages
+                server.stdout.addListener("data", chunk => {});
+                server.stderr.addListener("data", chunk => {});
+            } 
+            
             let client = createClient(dialect, lspPort, dapPort, folder);
 
             // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
