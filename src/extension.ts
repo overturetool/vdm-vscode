@@ -230,9 +230,9 @@ export function activate(context: ExtensionContext) {
             }
 
             // Create output channel for server stdout
-            let activeStdoutLogging = workspace.getConfiguration('vdm-vscode.stdio', folder).activeStdioLogging;
+            let activateStdoutLogging = workspace.getConfiguration('vdm-vscode.stdio', folder).activateStdoutLogging;
             let stdoutLogPath = workspace.getConfiguration('vdm-vscode.stdio', folder).stdioLogPath;
-            if (activeStdoutLogging) {
+            if (activateStdoutLogging) {
                 // Log to file
                 if (stdoutLogPath != ""){ 
                     Util.ensureDirectoryExistence(stdoutLogPath+path.sep+folder.name.toString())
