@@ -1,5 +1,5 @@
 ### 1.0.5
-
+- Added logging of server stdio to a file or terminal, this allows allotations to be printed during CT execution
 
 ### 1.0.4
 - Fixes to syntax highlighting
@@ -9,7 +9,7 @@
 - Allow changed "set" settings to take effect on restart
 - Several F12 definition location corrections (see bug #6)
 - Advice is to use "continue" to exit debug sessions that catch exceptions, rather than the stop button (see bug #9)
-- Improved handling for Java internal errors, like OutOfMemory.
+- Improved handling for Java internal errors, like OutOfMemory
 
 ### 1.0.3
 - Updated language server
@@ -21,4 +21,4 @@
 - Added icon to extension
 
 ### 1.0.0
-- Initial Release.
+- Initial Release

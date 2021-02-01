@@ -67,6 +67,8 @@ This extension contributes the following settings:
 - `vdm-vscode.debug.experimentalServer`: Use an experimental/external server ("on" or "off"). If "on" the client will not launch a server but instead connect to one that is running in another process. E.g. executing the VDMJ server in a debugger.
 - `vdm-vscode.debug.lspPort`: Port used for the LSP/SLSP connection when `experimentalServer` is "on".
 - `vdm-vscode.debug.dapPort`: Port used for the DAP connection when `experimentalServer` is "on".
+- `vdm-vscode.stdio.activateStdoutLogging`: Activate logging of stdout/stderr to terminal window.
+- `vdm-vscode.stdio.stdioLogPath`: File path for directory that should be used to store stdout/stderr logs. If empty, terminal logging is used instead of file logging.
 
 
 ## Publications
