@@ -1,5 +1,10 @@
 ### 1.0.5
 - Added logging of server stdio to a file or terminal, this allows allotations to be printed during CT execution
+- Specifications with "Too many type checking errors" handled sensibly
+- Maintain synchronisation between client and server on folder deletion
+- Improved handling of types that are imported
+- Better watch variable output when variables are not in scope
+- Allow manipulation of breakpoints while stopped at a breakpoint
 
 ### 1.0.4
 - Fixes to syntax highlighting
