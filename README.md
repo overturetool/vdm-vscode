@@ -10,10 +10,10 @@ The extension utilises a [language server powered by VDMJ](https://github.com/ni
 <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/GUI.png" width="800">
 
 ## Installation
-Just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
+In Visual Studio Code just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
 
 ### Requirements
-- [VS Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
+- [Visual Studio Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
 - [Java ≥ v. 11](https://adoptopenjdk.net/)
 
 ## Features
