@@ -9,7 +9,10 @@ The extension utilises a [language server powered by VDMJ](https://github.com/ni
 
 <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/GUI.png" width="800">
 
-## Requirements
+## Installation
+Just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
+
+### Requirements
 - [VS Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
 - [Java ≥ v. 11](https://adoptopenjdk.net/)
 
@@ -54,9 +57,6 @@ The following displays snippets of the feature functionalities provided by the e
 - **Translation to LaTeX and Word**: A specification can be translated to LaTex or Word formats by accessing the editor context menu by right-clicking in the editor.
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/translation.gif" width="700">
 
-
-## Installation
-Just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
 
 ## Settings
 This extension contributes the following settings:
