@@ -111,7 +111,7 @@ export interface GeneratePOParams {
      * Uri to the file/folder for which Proof Obligations
      * should be generated.
      */
-    uri: string;
+    uri: DocumentUri;
 }
 
 /**
