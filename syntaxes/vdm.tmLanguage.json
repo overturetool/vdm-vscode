@@ -56,14 +56,72 @@
 			"patterns": [
 				{
 					"name": "comment.line.double-dash.vdm",
-					"match": "--.*"
+					"begin": "--",
+					"end": "\\n",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.vdm"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#annotation-keywords"
+						}
+					]
 				},
+				{
+                    "include": "#block-comments"
+                },
 				{
 					"name": "comment.block.vdm",
 					"begin": "/\\*",
 					"end": "\\*/"
 				}
 			]
+		},
+		"annotation-keywords": {
+			"patterns": [
+				{
+					"match": "@(Override|Trace|NoPOG|Printf|OnFail|Warning)\\b",
+					"name": "keyword.other.documentation.vdm"
+				}
+			]
+		},
+		"block-comments": {
+			"patterns": [
+                {
+					"name": "comment.block.empty.vdm",
+                    "match": "/\\*\\*/",
+                    "captures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    }
+                },
+                {
+					"name": "comment.block.vdm",
+                    "begin": "/\\*",
+					"end": "\\*/",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#annotation-keywords"
+                        },
+                        {
+                            "include": "#block-comments"
+                        }
+                    ],
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    }
+                }
+            ]
 		},
 		"function-name":{
 			"match": "(\\w+)(\\()(\\S+|\\s+)(\\))(\\s+)(==)",
