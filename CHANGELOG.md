@@ -1,3 +1,10 @@
+### 1.1.0
+- Updated license
+- Warning for unused imports
+- Removed duplicate type checking errors
+- Allow nested comments
+- Added scheme to control parse ordering
+
 ### 1.0.5
 - Added logging of server stdio to a file or terminal, this allows allotations to be printed during CT execution
 - Specifications with "Too many type checking errors" handled sensibly
