@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import * as path from 'path'
 import * as net from 'net';
 import * as child_process from 'child_process';

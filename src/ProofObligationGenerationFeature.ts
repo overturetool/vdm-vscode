@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { ExtensionContext, Uri, window, commands, workspace } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";

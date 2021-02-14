@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import * as path from 'path'
 import * as fs from 'fs'
 import { Uri } from 'vscode';

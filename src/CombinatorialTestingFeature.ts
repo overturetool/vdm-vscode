@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { ClientCapabilities, ServerCapabilities, StaticFeature, WorkDoneProgressOptions} from "vscode-languageclient";
 import { ExperimentalCapabilities} from "./protocol.slsp";
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { commands, ExtensionContext, Uri, ViewColumn, window, workspace, WorkspaceFolder } from "vscode";
 import { TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";

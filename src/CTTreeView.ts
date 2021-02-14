@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from "vscode";
