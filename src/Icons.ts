@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import * as path from 'path'
 import { ExtensionContext, ThemeIcon, Uri } from 'vscode';
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
 import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/messages";
 /**

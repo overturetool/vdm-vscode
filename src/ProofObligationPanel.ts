@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Range } from 'vscode'
 import path = require("path")
 import { ProofObligation } from "./protocol.slsp"

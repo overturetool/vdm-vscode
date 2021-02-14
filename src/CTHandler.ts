@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, Uri, window, WorkspaceFolder} from "vscode";
 import { CancellationTokenSource,ErrorCodes, WorkDoneProgress} from "vscode-languageclient";

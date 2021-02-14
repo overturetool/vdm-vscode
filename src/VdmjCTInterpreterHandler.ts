@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { WorkspaceFolder } from "vscode";
 import { CTInterpreterHandler } from "./CTHandler";
 import { VdmDapSupport as dapSupport} from "./VdmDapSupport"

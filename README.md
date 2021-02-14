@@ -1,5 +1,6 @@
 # VDM Language Support in Visual Studio Code
 
+[![License](https://img.shields.io/:license-gpl3-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-3.0.html)
 [![Version](https://img.shields.io/visual-studio-marketplace/v/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
