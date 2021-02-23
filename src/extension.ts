@@ -141,9 +141,19 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
-            let JVMArguments = workspace.getConfiguration('vdm-vscode', folder).JVMArguments;
-            if (JVMArguments != "")
-                args.push(JVMArguments);
+            let JVMArguments: string = workspace.getConfiguration('vdm-vscode', folder).JVMArguments;
+            if (JVMArguments != ""){
+                let split = JVMArguments.split(" ").filter(v => v != "")
+                let i = 0;
+                while (i < split.length-1){
+                    if (split[i].includes("\"")){
+                        split[i] = split[i] + " " + split[i+1]
+                        split.splice(i+1, 1)
+                    }
+                    i++;
+                }
+                args.push(...split);
+            }
 
             let activateServerLog = workspace.getConfiguration('vdm-vscode.debug', folder).activateServerLog;
             if (activateServerLog){
