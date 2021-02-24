@@ -1,3 +1,15 @@
+### 1.1.1
+- Allow multiple JVM settings
+- Minor correction to location of <QUOTE> values
+- Improvement to module initialization retries
+- Added VDMJ "order" plugin to help create ordering files (VDMJ only)
+- Add POG mapping for "ext" clauses
+- Correct trace execution context bug
+- Fix bug with free variables for type invariant functions
+- Improve UI focusing on exceptions and breakpoints
+- Allow trace inits to use cached data (experimental)
+- Enable F12 goto definition for ext, errs and specification statements
+
 ### 1.1.0
 - Updated license
 - Warning for unused imports
