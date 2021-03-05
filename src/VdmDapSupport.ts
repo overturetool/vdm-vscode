@@ -27,18 +27,35 @@ export namespace VdmDapSupport {
     }
 
     export class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
-        constructor(
-        ) { }
+        private sessions : string[] = new Array(); // Array of running sessions
+        
+        constructor() { 
+            // When a session terminates, remove it from the array of running sessions
+            vscode.debug.onDidTerminateDebugSession(session => {
+                let elems = this.sessions.filter(value => value != session.workspaceFolder.uri.toString());
+                this.sessions = elems;
+            })
+        }
         /**
          * Massage a debug configuration just before a debug session is being launched,
          * e.g. add all missing attributes to the debug configuration.
          */
         resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+            let uri = folder.uri.toString();
+
+            // Check if sessions is already runnig for the specification
+            if (this.sessions.includes(uri)){
+                vscode.window.showInformationMessage("Debug sessions already running, cannot lauch multiple sessions for the same specification");
+                return undefined; // Abort launch
+            }
+
+            // Add WSF to sessions
+            this.sessions.push(uri);
 
             // if launch.json is missing or empty
             if (!config.type && !config.request && !config.name) {
                 config.type = 'vdm';
-                config.name = 'Launch';
+                config.name = 'Launch VDM Debug';
                 config.request = 'launch';
                 config.stopOnEntry = true;
                 config.noDebug = false;
