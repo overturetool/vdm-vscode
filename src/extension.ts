@@ -161,7 +161,7 @@ export function activate(context: ExtensionContext) {
                 let languageServerLoggingPath = path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log');
                 Util.ensureDirectoryExistence(languageServerLoggingPath);
                 
-                args.push('-Dlog.filename=' + path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log'));
+                args.push('-Dlsp.log.filename=' + path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log'));
             }
 
             let classPath = "";
