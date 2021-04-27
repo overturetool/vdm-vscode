@@ -34,7 +34,10 @@
   "activationEvents": [
     "onLanguage:vdmsl",
     "onLanguage:vdmpp",
-    "onLanguage:vdmrt"
+    "onLanguage:vdmrt",
+    "workspaceContains:*.vdmsl",
+    "workspaceContains:*.vdmpp",
+    "workspaceContains:*.vdmrt"
   ],
   "main": "./dist/extension",
   "contributes": {

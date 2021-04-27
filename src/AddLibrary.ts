@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import { copyFile, Dirent, readdirSync } from 'fs';
 import * as path from 'path'
+import { VdmDapSupport } from "./VdmDapSupport";
+import { SlowBuffer } from "buffer";
 
 
 export class AddLibraryHandler {
@@ -25,29 +27,49 @@ export class AddLibraryHandler {
 
     private async addLibrary(wsFolder: WorkspaceFolder) {
 
+        let dialect = null;
+        const dialects = {"vdmsl" : "SL", "vdmpp" : "PP", "vdmrt" : "RT"}
+
         window.setStatusBarMessage(`Adding Libraries.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
-            if (client == undefined) {
-                window.showInformationMessage(`No client found for the folder: ${wsFolder.name}`);
-                return;
+            if (client) {
+                dialect = dialects[client.dialect];
+            }else{
+            console.log(`No client found for the folder: ${wsFolder.name}`);
+
+                // Guess dialect
+                for (var dp in dialects){
+                   let pattern = new RelativePattern(wsFolder.uri.path, "*." + dp);
+                   let res = await workspace.findFiles(pattern,null,1)
+                   if(res.length == 1) dialect = dialects[dp];
+                } 
+
+                if(dialect == null)
+                {
+                    window.showInformationMessage(`Add library failed! Unable to guess VDM dialect for workspace`); 
+                    reject();
+                    return;
+                }
             }
+
+            // Gather available libraries and let user select
+            const libPath = path.resolve(this.context.extensionPath, "resources", "lib", dialect);
+            
+            const libsInFolder: Dirent[] = readdirSync(libPath, { withFileTypes: true });
+            
+            let libsOptions: string[] = libsInFolder.map((x: Dirent) => x.name);
+
+            let selectedLibs: string[] = await window.showQuickPick(libsOptions, {
+                placeHolder: 'Choose libraries',
+                canPickMany: true,
+            });
+
+            // None selected 
+            if(selectedLibs === undefined || selectedLibs.length == 0) return resolve(`Empty selection. Add library completed.`)
 
 
             util.createLibDirectory(wsFolder.uri).then(async (projLibPath) => {
                 try {
-
-                    const dialect = "PP";
-                    const libPath = path.resolve(this.context.extensionPath, "resources", "lib", dialect);
-
-                    const libsInFolder: Dirent[] = readdirSync(libPath, { withFileTypes: true });
-
-                    let libsOptions: string[] = libsInFolder.map((x: Dirent) => x.name);
-
-                    let selectedLibs: string[] = await window.showQuickPick(libsOptions, {
-                        placeHolder: 'Choose libraries',
-                        canPickMany: true,
-                    });
-
 
                     for (let lib of selectedLibs) {
 
@@ -59,7 +81,7 @@ export class AddLibraryHandler {
                             if (reason) {
                                 resolve(`Add library  ${lib} failed.`);
                                 window.showInformationMessage(`Add library ${lib} failed`);
-                                util.writeToLog(client.logPath, `Copy library files failed with error: ${reason}`);
+                                console.log( `Copy library files failed with error: ${reason}`);
                                 reject();
                             }
                             window.showInformationMessage(`Add library ${lib} completed`);
@@ -70,16 +92,14 @@ export class AddLibraryHandler {
                 }
                 catch (error) {
                     window.showWarningMessage(`Add library failed with error: ${error}`);
-                    util.writeToLog(client.logPath, `Add library failed with error: ${error}`);
+                    console.log(`Add library failed with error: ${error}`);
                     reject();
                 }
             }, (reason) => {
                 window.showWarningMessage("Creating directory for library failed");
-                util.writeToLog(client.logPath, `Creating directory for library files failed with error: ${reason}`);
+                console.log(`Creating directory for library files failed with error: ${reason}`);
                 reject();
             });
-
-
         }));
 
     }

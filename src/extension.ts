@@ -307,6 +307,7 @@ export function activate(context: ExtensionContext) {
         let client = new SpecificationLanguageClient(
             `vdm-vscode_${folder.name}_client`,
             `${folder.name}_client`,
+            dialect,
             serverOptions,
             clientOptions,
             context,
