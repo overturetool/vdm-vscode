@@ -10,8 +10,10 @@ export function ensureDirectoryExistence(filePath) {
     if (fs.existsSync(dirname)) {
         return true;
     }
-    ensureDirectoryExistence(dirname);
+
     fs.mkdirSync(dirname);
+    
+    return fs.existsSync(dirname);
 }
 
 export function getJarsFromFolder(resourcesPath: string): string[]{
