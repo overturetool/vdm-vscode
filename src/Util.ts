@@ -10,8 +10,10 @@ export function ensureDirectoryExistence(filePath) {
     if (fs.existsSync(dirname)) {
         return true;
     }
-    ensureDirectoryExistence(dirname);
+
     fs.mkdirSync(dirname);
+    
+    return fs.existsSync(dirname);
 }
 
 export function getJarsFromFolder(resourcesPath: string): string[]{
@@ -49,6 +51,27 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
 
 export function isDir(path: fs.PathLike): boolean {
     return fs.lstatSync(path).isDirectory();
+}
+
+export function createLibDirectory(rootPath: Uri): Promise<DocumentUri>{
+    return new Promise(async (resolve, reject) => {
+        let fullUri = Uri.joinPath(rootPath, "lib");
+        ensureDirectoryExistence(fullUri.fsPath);
+        fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
+            if(!accessErr)
+                return resolve(fullUri.fsPath);
+            if (accessErr.code === 'ENOENT'){
+                fs.mkdir(fullUri.fsPath, dirErr => {
+                    if (dirErr){
+                        return reject(dirErr);
+                    }
+                    return resolve(fullUri.toString());
+                });     
+            }
+            else
+                return reject(accessErr);  
+        });      
+     });
 }
 
 export function createTimestampedDirectory(rootPath: Uri, dirName:string): Promise<DocumentUri>{

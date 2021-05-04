@@ -34,11 +34,20 @@
   "activationEvents": [
     "onLanguage:vdmsl",
     "onLanguage:vdmpp",
-    "onLanguage:vdmrt"
+    "onLanguage:vdmrt",
+    "workspaceContains:*.vdmsl",
+    "workspaceContains:*.vdmpp",
+    "workspaceContains:*.vdmrt"
   ],
   "main": "./dist/extension",
   "contributes": {
     "commands": [
+      {
+        "command": "vdm-vscode.addLibrary",
+        "title": "Add VDM Library",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
       {
         "command": "vdm-vscode.translateLatex",
         "title": "Translate to LaTeX",
@@ -255,6 +264,11 @@
           "command": "vdm-vscode.translateWord",
           "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
+        },
+        {
+          "command": "vdm-vscode.addLibrary",
+          "when": "true",
+          "group": "navigation@7"
         }
       ],
       "editor/context": [
@@ -325,6 +339,10 @@
         },
         {
           "command": "vdm-vscode.translateWord",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.addLibrary",
           "when": "false"
         }
       ]
