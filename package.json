@@ -46,7 +46,7 @@
         "command": "vdm-vscode.addLibrary",
         "title": "Add VDM Library",
         "category": "VDM",
-        "icon": "$(references)"
+        "icon": "$(library)"
       },
       {
         "command": "vdm-vscode.translateLatex",
@@ -267,7 +267,7 @@
         },
         {
           "command": "vdm-vscode.addLibrary",
-          "when": "true",
+          "when": "resourceScheme == file && add-lib-show-button == true || resourceScheme == folder && add-lib-show-button == true",
           "group": "navigation@7"
         }
       ],
