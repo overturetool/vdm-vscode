@@ -81,6 +81,9 @@ export function activate(context: ExtensionContext) {
     let annotationsPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /annotations.*jar/i);
     let extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
 
+    // Show VDM VS Code buttons
+    commands.executeCommand( 'setContext', 'add-lib-show-button', true );
+
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
 

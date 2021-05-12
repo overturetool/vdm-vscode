@@ -46,6 +46,7 @@ export class AddLibraryHandler {
 
                 if(dialect == null)
                 {
+                    // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
                     window.showInformationMessage(`Add library failed! Unable to guess VDM dialect for workspace`); 
                     reject();
                     return;
@@ -79,7 +80,7 @@ export class AddLibraryHandler {
                         copyFile(path.resolve(libPath, lib), path.resolve(projLibPath, lib), (reason) => {
 
                             if (reason) {
-                                resolve(`Add library  ${lib} failed.`);
+                                resolve(`Add library  ${lib} failed.`); // TODO why does this if-case call both "resolve" and "reject" (line 86)?
                                 window.showInformationMessage(`Add library ${lib} failed`);
                                 console.log( `Copy library files failed with error: ${reason}`);
                                 reject();

@@ -54,7 +54,7 @@ export function isDir(path: fs.PathLike): boolean {
 }
 
 export function createLibDirectory(rootPath: Uri): Promise<DocumentUri>{
-    return new Promise(async (resolve, reject) => {
+    return new Promise( async (resolve, reject) => { // TODO any reason for the "async" keyword here?
         let fullUri = Uri.joinPath(rootPath, "lib");
         ensureDirectoryExistence(fullUri.fsPath);
         fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
@@ -65,7 +65,7 @@ export function createLibDirectory(rootPath: Uri): Promise<DocumentUri>{
                     if (dirErr){
                         return reject(dirErr);
                     }
-                    return resolve(fullUri.toString());
+                    return resolve(fullUri.fsPath); // TODO this was .toString() before, was there a reason for that?
                 });     
             }
             else
