@@ -80,10 +80,9 @@ export class AddLibraryHandler {
                         copyFile(path.resolve(libPath, lib), path.resolve(projLibPath, lib), (reason) => {
 
                             if (reason) {
-                                resolve(`Add library  ${lib} failed.`); // TODO why does this if-case call both "resolve" and "reject" (line 86)?
                                 window.showInformationMessage(`Add library ${lib} failed`);
                                 console.log( `Copy library files failed with error: ${reason}`);
-                                reject();
+                                reject(`Add library  ${lib} failed.`);
                             }
                             window.showInformationMessage(`Add library ${lib} completed`);
                         }
