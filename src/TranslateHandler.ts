@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, ExtensionContext, Uri, ViewColumn, window, workspace, WorkspaceFolder } from "vscode";
+import { DocumentUri } from "vscode-languageclient";
 import { TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
@@ -12,7 +13,7 @@ export class TranslateHandler {
         private readonly languageKind: string,
         private readonly translationCommandName
     ) {
-        this.registerCommand(this.translationCommandName, (inputUri: Uri) => this.translate(workspace.getWorkspaceFolder(inputUri)));
+        this.registerCommand(this.translationCommandName, (inputUri: Uri) => this.translate(inputUri, workspace.getWorkspaceFolder(inputUri)));
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -21,7 +22,7 @@ export class TranslateHandler {
         return disposable;
     };
 
-    private async translate(wsFolder: WorkspaceFolder) {
+    private async translate(fileUri: Uri, wsFolder: WorkspaceFolder) {
         window.setStatusBarMessage(`Translating to ${this.languageKind}.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
             if (client == undefined){
@@ -39,7 +40,7 @@ export class TranslateHandler {
                     try {
                         // Setup message parameters
                         let params: TranslateParams = {
-                            uri: null, //Maybe: TODO Change this when workspace has been implemented. Note: this is only relevant when a single server controls multiple workspace folders
+                            uri: fileUri.toString(), // null, //Maybe: TODO Change this when workspace has been implemented. Note: this is only relevant when a single server controls multiple workspace folders
                             languageId: this.languageKind,
                             saveUri: saveUri.toString()
                         };
@@ -49,7 +50,7 @@ export class TranslateHandler {
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
                             // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(response.uri);
+                            let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
                             // Show the file
                             window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })

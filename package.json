@@ -61,6 +61,12 @@
         "icon": "$(references)"
       },
       {
+        "command": "vdm-vscode.translateCov",
+        "title": "Generate Coverage",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
         "command": "vdm-vscode.runPOG",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
@@ -266,6 +272,11 @@
           "group": "translate@2"
         },
         {
+          "command": "vdm-vscode.translateCov",
+          "when": "resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
+          "group": "translate@3"
+        },
+        {
           "command": "vdm-vscode.addLibrary",
           "when": "true",
           "group": "navigation@7"
@@ -286,6 +297,11 @@
           "command": "vdm-vscode.translateWord",
           "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
+        },
+        {
+          "command": "vdm-vscode.translateCov",
+          "when": "resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
+          "group": "translate@3"
         }
       ],
       "commandPalette": [
@@ -339,6 +355,10 @@
         },
         {
           "command": "vdm-vscode.translateWord",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translateCov",
           "when": "false"
         },
         {

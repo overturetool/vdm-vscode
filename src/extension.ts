@@ -23,7 +23,8 @@ import { AddLibraryHandler } from './AddLibrary';
 globalThis.clients = new Map();
 let ctHandler: CTHandler;
 let translateHandlerLatex: TranslateHandler;
-let translateHandlerWord: TranslateHandler;
+let translateHandlerWord : TranslateHandler;
+let translateHandlerCov  : TranslateHandler;
 let addLibraryHandler: AddLibraryHandler; 
 
 let _sortedWorkspaceFolders: string[] | undefined;
@@ -325,7 +326,9 @@ export function activate(context: ExtensionContext) {
 
     ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
     translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
-    translateHandlerWord = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    translateHandlerWord  = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
+
     addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
