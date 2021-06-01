@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, Uri, ViewColumn, window, workspace, WorkspaceFolder } from "vscode";
+import { readFileSync } from "fs";
+import { commands, DecorationOptions, ExtensionContext, Range, Uri, ViewColumn, window, workspace, WorkspaceFolder } from "vscode";
 import { TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
@@ -12,7 +13,7 @@ export class TranslateHandler {
         private readonly languageKind: string,
         private readonly translationCommandName
     ) {
-        this.registerCommand(this.translationCommandName, (inputUri: Uri) => this.translate(workspace.getWorkspaceFolder(inputUri)));
+        this.registerCommand(this.translationCommandName, (inputUri: Uri) => this.translate(inputUri, workspace.getWorkspaceFolder(inputUri)));
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -21,8 +22,8 @@ export class TranslateHandler {
         return disposable;
     };
 
-    private async translate(wsFolder: WorkspaceFolder) {
-        window.setStatusBarMessage(`Translating to ${this.languageKind}.`, new Promise(async (resolve, reject) => {
+    private async translate(fileUri: Uri, wsFolder: WorkspaceFolder) {
+        window.setStatusBarMessage(`Generating ${this.languageKind}.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
             if (client == undefined){
                 window.showInformationMessage(`No client found for the folder: ${wsFolder.name}`);
@@ -35,11 +36,11 @@ export class TranslateHandler {
                 && (client.initializeResult.capabilities.experimental.translateProvider.languageId?.includes(this.languageKind))
             ) {
 
-                util.createTimestampedDirectory(client.projectSavedDataPath, this.languageKind).then(async (saveUri) => {
+                util.createTimestampedDirectory(client.projectSavedDataPath, this.languageKind).then(async (saveUri): Promise<void> => {
                     try {
                         // Setup message parameters
                         let params: TranslateParams = {
-                            uri: null, //Maybe: TODO Change this when workspace has been implemented. Note: this is only relevant when a single server controls multiple workspace folders
+                            uri: fileUri.toString(), // null, //Maybe: TODO Change this when workspace has been implemented. Note: this is only relevant when a single server controls multiple workspace folders
                             languageId: this.languageKind,
                             saveUri: saveUri.toString()
                         };
@@ -48,31 +49,93 @@ export class TranslateHandler {
                         const response = await client.sendRequest(TranslateRequest.type, params);
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-                            // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(response.uri);
+
+                            if ( this.languageKind !== SpecificationLanguageClient.covLanguageId )
+                            {
+                                                           // Open the main file in the translation
+                            let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
                             // Show the file
                             window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                            }
+                        else
+                            {
+                            // Open the main file in the translation
+                            let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
+
+                            const decorationType = window.createTextEditorDecorationType({
+                                backgroundColor: '#0080FF80',
+                                border: '2px solid black',
+                              })
+
+                            let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
+
+                            // Show the file
+                            window.showTextDocument(doc.uri)
+                                .then( (editor) => editor.setDecorations(decorationType, ranges)
+                                      );
+                            }
+
                         }
 
-                        resolve(`Translated to ${this.languageKind}.`);
-                        window.showInformationMessage(`Translation to ${this.languageKind} completed`);
+                        resolve(`Generation of ${this.languageKind} succeeded.`);
+                        window.showInformationMessage(`Generation of ${this.languageKind} completed`);
                     }
                     catch (error) {
-                        window.showWarningMessage(`Translation to ${this.languageKind} failed with error: ${error}`);
-                        util.writeToLog(client.logPath,`Translation to ${this.languageKind} failed with error: ${error}`);
+                        window.showWarningMessage(`Generation of ${this.languageKind} failed with error: ${error}`);
+                        util.writeToLog(client.logPath, `Generation of ${this.languageKind} failed with error: ${error}`);
                         reject();
                     }
                 }, (reason) => {
-                    window.showWarningMessage("Creating directory for translation files failed");
-                    util.writeToLog(client.logPath, `Creating directory for translation files failed with error: ${reason}`);
+                    window.showWarningMessage("Creating timestamped directory failed");
+                    util.writeToLog(client.logPath, `Creating timestamped directory failed with error: ${reason}`);
                     reject();
                 });
             }
             else {
-                window.showInformationMessage(`Translation to ${this.languageKind} is not supported`);
+                window.showInformationMessage(`Generation of ${this.languageKind} is not supported`);
             }
         }));
 
     }
+}
+
+function getCovtblFileRanges(fsPath: string): DecorationOptions[] {
+
+    let ranges: DecorationOptions[] = [];
+
+    try {
+        // read contents of the file
+        const data = readFileSync(fsPath, { encoding: 'utf8' });
+
+        // split the contents by new line
+        const lines = data.split(/\r?\n/);
+
+        // iterate over each coverage region
+        lines.forEach((line) => {
+
+            if ( line.length > 0){
+
+            // Lines follow "ln c1-c2+ct"
+            let lnsplit = line.split(" ");
+            let c1split = lnsplit[1].split("-");
+            let c2split = c1split[1].split("=");
+            //
+            let ln = parseInt(lnsplit[0]);
+            let c1 = parseInt(c1split[0]);
+            let c2 = parseInt(c2split[0]);
+
+            let range = new Range(ln-1, c1-1, ln-1, c2);
+
+            ranges.push({ range });
+
+            }
+
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
+
+    return ranges
 }
