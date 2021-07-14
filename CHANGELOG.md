@@ -1,3 +1,8 @@
+### 1.1.2
+- Add library functionality
+- Add coverage decorations
+- Fixes to VDMJ
+
 ### 1.1.1
 - Allow multiple JVM settings
 - Minor correction to location of <QUOTE> values
