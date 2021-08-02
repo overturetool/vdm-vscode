@@ -184,14 +184,14 @@ export function activate(context: ExtensionContext) {
                 let jarPaths = userProvidedAnnotationPaths.split(",");
                 jarPaths.forEach(jarPath => {
                     if(!fs.existsSync(jarPath)){
-                        Util.writeToLog(extensionLogPath, "Invalid path: " + jarPath);
+                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
                         return;
                     }
                     
                     if(Util.isDir(jarPath)){
                         let subJarPaths = Util.getJarsFromFolder(jarPath);
                         if(subJarPaths.length === 0){
-                            Util.writeToLog(extensionLogPath, "No annotations found in path: " + jarPath);
+                            Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
                         }
                         subJarPaths.forEach(subJarPath =>{
                             classPath +=  path.delimiter + subJarPath;
@@ -201,7 +201,7 @@ export function activate(context: ExtensionContext) {
                         classPath +=  path.delimiter + jarPath;
                     }
                     else{
-                        Util.writeToLog(extensionLogPath, "Invalid path to annotation: " + jarPath);
+                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation " + jarPath);
                     }
                 });          
             }
