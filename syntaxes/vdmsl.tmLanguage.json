@@ -8,6 +8,18 @@
 		{
 			"name": "storage.type.module.vdmsl",
 			"match": "\\b(module)\\b"
+		},
+		{
+			"name": "keyword.control.import.vdmsl",
+			"match": "\\b(imports|from|init|renamed|uselib)\\b"
+		},
+		{
+			"name": "keyword.control.export.vdmsl",
+			"match": "\\b(exports)\\b"
+		},
+		{
+			"name": "keyword.other.vdmsl",
+			"match": "\\b(state|struct)\\b"
 		}
 	],
 	"scopeName": "source.vdmsl"

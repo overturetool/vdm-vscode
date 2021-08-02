@@ -71,7 +71,7 @@
 		},
 		"seq": {
 			"name": "keyword.other.seq.vdm",
-			"match": "\\b(in seq|in seq1|seq)\\b"
+			"match": "\\b(in seq|in seq1)\\b"
 		},
 		"connectives": {
 			"name": "keyword.other.connectives.vdm",
@@ -84,7 +84,7 @@
 		},
 		"other": {
 			"name": "keyword.other.vdm",
-			"match": "\\b(\\.\\.\\.|forall|exists|exists1|iota|lambda|all|from|eq|ord|compose|of)\\b"
+			"match": "\\b(\\.\\.\\.|forall|exists|exists1|iota|lambda|all|eq|ord|compose|of)\\b"
 		}
 	},
 	"scopeName": "source.vdm.operators"

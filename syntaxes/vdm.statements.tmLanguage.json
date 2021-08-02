@@ -36,7 +36,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.statements.conditional.vdm",
-					"match": "\\b(if|then|else|elseif|cases|return|while|for|do|measure|imports|exports|renamed)\\b"
+					"match": "\\b(if|then|else|elseif|cases|return|while|for|do|measure|renamed|by|others|tixe|trap|with)\\b"
 				}
 			]
 		},
@@ -44,7 +44,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.localBinding.vdm",
-					"match": "\\b(let|be st|in)\\b"
+					"match": "\\b(let|be st|in|be|st)\\b"
 				}
 			]
 		},
@@ -60,7 +60,7 @@
 			"patterns": [
 				{
 					"name": "keyword.other.vdm",
-					"match": "\\b(#if|#else|#endif|#ifdef|#ifndef|RESULT)\\b"
+					"match": "(\\#if|\\#else|\\#endif|\\#ifdef|\\#ifndef|RESULT)\\b"
 				}
 			]
 		}
