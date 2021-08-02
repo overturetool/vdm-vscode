@@ -77,6 +77,11 @@ Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Lars
 [Visual Studio Code VDM Support](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support),
 The 18th Overture Workshop, December 2020 [[PDF](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support)]
 
+Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen, 
+[The Specification Language Server Protocol: A Proposal for Standardised LSP Extensions](https://www.researchgate.net/publication/353220633_The_Specification_Language_Server_Protocol_A_Proposal_for_Standardised_LSP_Extensions),
+The 6th Workshop on Formal Integrated Development Environment, May 2021 [[PDF](https://cister-labs.pt/f-ide2021/images/preprints/F-IDE_2021_paper_3.pdf)]
+
+
 ## Change Log
 See change log [here](CHANGELOG.md).
 
