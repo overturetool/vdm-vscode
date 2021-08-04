@@ -5,9 +5,10 @@ Start by opening an issue or propose a change by submitting a pull request (incl
 
 ## Running the Project
 1. Install [npm](https://docs.npmjs.com/cli/v6/commands/npm-install)
-1. Install [Java version >= 11](https://adoptopenjdk.net/)
-1. Change directory to the root of the project
-1. Install node modules: `npm install`
+2. Install [TypeScript](https://www.typescriptlang.org/download/)
+3. Install [Java version >= 11](https://adoptopenjdk.net/)
+4. Change directory to the root of the project
+5. Install node modules: `npm install`
 
 ## Install From VSIX
 You may want to package the project yourself this is done using:
