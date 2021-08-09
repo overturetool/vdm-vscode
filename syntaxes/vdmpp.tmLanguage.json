@@ -7,11 +7,35 @@
 		},
 		{
 			"name": "storage.type.class.vdmpp",
-			"match": "\\b(class)\\b"
+			"match": "\\b(class|self)\\b"
 		},
 		{
 			"name": "storage.type.definition.class.vdmpp",
-			"match": "\\b(thread|sync)\\b"
+			"match": "\\b(thread|sync|instance|variables)\\b"
+		},
+		{
+			"name": "keyword.other.subclassResposibility.vdmpp",
+			"match": "\\b(is subclass responsibility)\\b"
+		},
+		{
+			"name": "keyword.other.history.vdmpp",
+			"match": "(\\#act|\\#active|\\#fin|\\#req|\\#waiting)\\b"
+		},
+		{
+			"name": "support.function.membership.vdmpp",
+			"match": "\\b(isofbaseclass|isofclass|samebaseclass|sameclass|subclass)\\b"
+		},
+		{
+			"name": "support.function.sync.vdmpp",
+			"match": "\\b(mutex|per)\\b"
+		},
+		{
+			"name": "keyword.other.thread.vdmpp",
+			"match": "\\b(periodic|sporadic|threadid)\\b"
+		},
+		{
+			"name": "support.function.startstop.vdmpp",
+			"match": "\\b(start|startlist|stop|stoplist)\\b"
 		}
 	],
 	"scopeName": "source.vdmpp"

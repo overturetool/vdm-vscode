@@ -6,16 +6,19 @@
 			"include": "source.vdm"
 		},
 		{
-			"name": "storage.type.class.vdmrt",
-			"match": "\\b(class)\\b"
-		},
-		{
-			"name": "storage.type.definition.class.vdmrt",
-			"match": "\\b(thread|sync)\\b"
+			"include": "source.vdmpp"
 		},
 		{
 			"name": "storage.type.system.vdmrt",
 			"match": "\\b(system)\\b"
+		},
+		{
+			"name": "keyword.other.vdmrt",
+			"match": "\\b(async|time)\\b"
+		},
+		{
+			"name": "support.function.timing.vdmrt",
+			"match": "\\b(cycles|duration)\\b"
 		}
 	],
 	"scopeName": "source.vdmrt"

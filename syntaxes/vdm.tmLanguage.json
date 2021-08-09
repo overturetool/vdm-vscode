@@ -18,6 +18,12 @@
 			"include": "#definitions"
 		},
 		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#mode"
+		},
+		{
 			"include": "source.vdm.type"
 		},
 		{
@@ -161,7 +167,7 @@
 		},
 		"storage":{
 			"name": "storage.type.dcl.vdm",
-			"match": "\\b(dcl|struct|state)\\b"
+			"match": "\\b(dcl|struct|state|def|atomic)\\b"
 		},
 		"end":{
 			"patterns": [
@@ -184,6 +190,22 @@
 				{
 					"name": "variable.other.readwrite.vdm",
 					"match": "([^:()\\s=>])"
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.other.vdm",
+					"match": "\\b(always|error|errs|ext|exit|skip|using)\\b"
+				}
+			]
+		},
+		"mode": {
+			"patterns": [
+				{
+					"name": "keyword.other.mode.vdm",
+					"match": "\\b(rd|wr)\\b"
 				}
 			]
 		},
