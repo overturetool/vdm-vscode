@@ -1,3 +1,7 @@
+### 1.1.3
+- Added keywords to syntax highlighting
+- Fixes to VDMJ
+
 ### 1.1.2
 - Add library functionality
 - Add coverage decorations

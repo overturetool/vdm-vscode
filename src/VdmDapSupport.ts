@@ -18,9 +18,6 @@ export namespace VdmDapSupport {
             factory = new VdmDebugAdapterDescriptorFactory(folder, port);
 
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
-            if ('dispose' in factory) {
-                context.subscriptions.push(factory);
-            }
         } else {
             factory.addPort(folder, port);
         }
