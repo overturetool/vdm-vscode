@@ -1,3 +1,6 @@
+### 1.1.4
+- Added more debug configuration snippets
+
 ### 1.1.3
 - Added keywords to syntax highlighting
 - Fixes to VDMJ
