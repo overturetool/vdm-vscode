@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, OpenDialogOptions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import * as vscode from "vscode";
+import { commands, DebugConfiguration, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
-import { copyFile, Dirent, readdirSync } from 'fs';
-import * as path from 'path'
+
 
 export class AddRunConfigurationHandler {
 
@@ -66,10 +66,12 @@ export class AddRunConfigurationHandler {
                     placeHolder: "Class"
                 });
             }
-            selectedCommand = await window.showInputBox({
-                prompt: "Input entry point function/operation",
-                placeHolder: "Run()"
-            });
+            if (selectedClass != undefined) {
+                selectedCommand = await window.showInputBox({
+                    prompt: "Input entry point function/operation",
+                    placeHolder: "Run()"
+                }); 
+            }
 
             // None selected 
             if(selectedClass === undefined || selectedCommand === undefined) return resolve(`Empty selection. Add run configuration completed.`)
@@ -80,8 +82,40 @@ export class AddRunConfigurationHandler {
                 selectedCommandArguments = selectedCommand.slice(selectedCommand.indexOf("(")+1,selectedCommand.lastIndexOf(")"));
                 selectedCommand = selectedCommand.slice(0,selectedCommand.indexOf("("))
             }
-            
-        }));
 
+
+            // Create run configuration
+            let debugConfiguration: DebugConfiguration;
+            if(dialect == "SL") {
+                debugConfiguration = {
+                    name: "Launch VDM Debug from Entry Point",    // The name of the debug session.
+                    type: "vdm",               // The type of the debug session.
+                    request: "launch",         // The request type of the debug session.
+                    noDebug: false,
+                    defaultName: `${selectedClass}`,
+                    command: `print ${selectedCommand}(${selectedCommandArguments})`
+                }
+                
+            } else {
+                debugConfiguration = {
+                    name: "Launch VDM Debug from Entry Point",    // The name of the debug session.
+                    type: "vdm",               // The type of the debug session.
+                    request: "launch",         // The request type of the debug session.
+                    noDebug: false,
+                    defaultName: null,
+                    command: `print new ${selectedClass}().${selectedCommand}()`,
+                    arguments: (selectedCommandArguments == null ? null : `${selectedCommandArguments}`)
+                }
+            }
+
+            // Save run configuration
+            let position = util.saveRunConfiguration(debugConfiguration, wsFolder);
+
+            // Open launch file
+            vscode.window.showTextDocument(
+                Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"),
+                {preview: true, preserveFocus: true}
+            )
+        }));
     }
 }
