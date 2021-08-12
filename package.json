@@ -558,8 +558,8 @@
         "initialConfigurations": [
           {
             "name": "Launch VDM Debug Console",
-            "request": "launch",
             "type": "vdm",
+            "request": "launch",
             "noDebug": false,
             "defaultName": null
           }
@@ -570,8 +570,8 @@
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug Console",
-              "request": "launch",
               "type": "vdm",
+              "request": "launch",
               "noDebug": false,
               "defaultName": null
             }
@@ -581,8 +581,8 @@
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug from Entry Point",
-              "request": "launch",
               "type": "vdm",
+              "request": "launch",
               "noDebug": false,
               "defaultName": null,
               "command": "print ${1:Function/Operation}(${2:arguments})"
@@ -593,8 +593,8 @@
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug from Entry Point",
-              "request": "launch",
               "type": "vdm",
+              "request": "launch",
               "noDebug": false,
               "defaultName": null,
               "command": "print new ${1:Class}().${2:Function/Operation}()",
