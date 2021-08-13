@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as vscode from "vscode";
+import * as fs from 'fs'
 import { commands, DebugConfiguration, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
@@ -74,38 +75,29 @@ export class AddRunConfigurationHandler {
             if(selectedClass === undefined || selectedCommand === undefined) return resolve(`Empty selection. Add run configuration completed.`)
 
             // Check for command arguments
-            let selectedCommandArguments: string = null
+            let selectedCommandArguments: string = ""
             if (selectedCommand.includes("(")){
                 selectedCommandArguments = selectedCommand.slice(selectedCommand.indexOf("(")+1,selectedCommand.lastIndexOf(")"));
                 selectedCommand = selectedCommand.slice(0,selectedCommand.indexOf("("))
             }
 
             // Create run configuration
-            let debugConfiguration: DebugConfiguration;
+            let debugConfiguration: DebugConfiguration = {
+                name: `Launch VDM Debug from ${selectedClass}\`${selectedCommand}(${selectedCommandArguments})`,    // The name of the debug session.
+                type: "vdm",               // The type of the debug session.
+                request: "launch",         // The request type of the debug session.
+                noDebug: false
+            }
             if(dialect == "SL") {
-                debugConfiguration = {
-                    name: "Launch VDM Debug from Entry Point",    // The name of the debug session.
-                    type: "vdm",               // The type of the debug session.
-                    request: "launch",         // The request type of the debug session.
-                    noDebug: false,
-                    defaultName: `${selectedClass}`,
-                    command: `print ${selectedCommand}(${selectedCommandArguments})`
-                }
-                
+                debugConfiguration.defaultName = `${selectedClass}`,
+                debugConfiguration.command = `print ${selectedCommand}(${selectedCommandArguments})`
             } else {
-                debugConfiguration = {
-                    name: "Launch VDM Debug from Entry Point",    // The name of the debug session.
-                    type: "vdm",               // The type of the debug session.
-                    request: "launch",         // The request type of the debug session.
-                    noDebug: false,
-                    defaultName: null,
-                    command: `print new ${selectedClass}().${selectedCommand}()`,
-                    arguments: (selectedCommandArguments == null ? null : `${selectedCommandArguments}`)
-                }
+                debugConfiguration.defaultName = null,
+                debugConfiguration.command = `print new ${selectedClass}().${selectedCommand}(${selectedCommandArguments})`
             }
 
             // Save run configuration
-            util.saveRunConfiguration(debugConfiguration, wsFolder);
+            this.saveRunConfiguration(debugConfiguration, wsFolder);
 
             // Open launch file
             vscode.window.showTextDocument(
@@ -113,5 +105,35 @@ export class AddRunConfigurationHandler {
                 {preview: true, preserveFocus: true}
             )
         }));
+    }
+
+    private saveRunConfiguration(runConf: vscode.DebugConfiguration, wsFolder: vscode.WorkspaceFolder) {
+        let defaultLaunchFile: string = JSON.stringify(
+            {
+                "//": "Use IntelliSense to learn about possible attributes. Hover to view descriptions of existing attributes. For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387",
+                "version": "0.2.0",
+                "configurations": []
+            }, null, 4
+        )
+        
+        // Ensure that there exists a launch file
+        let path = Uri.joinPath(wsFolder.uri, ".vscode", "launch.json").fsPath;
+        util.ensureDirectoryExistence(path);
+        if (!fs.existsSync(path)){
+             fs.writeFileSync(path, defaultLaunchFile); // Create empty launch file
+        }
+    
+        // Load launch file
+        let launchFileString = fs.readFileSync(path).toString();
+        let launchFile = JSON.parse(launchFileString)
+        
+        // Add the new run configuration
+        let conf : Array<any> = launchFile.configurations;
+        conf.push(runConf);
+        launchFile.configurations = conf;
+    
+        // Save new launch file
+        launchFileString = JSON.stringify(launchFile, null, 4)
+        fs.writeFileSync(path, launchFileString)
     }
 }

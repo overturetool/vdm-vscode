@@ -546,11 +546,6 @@
                 "type": "string",
                 "description": "Run single execution of command and terminate.",
                 "default": ""
-              },
-              "arguments": {
-                "type": ["string", "null"],
-                "description": "Arguments for the command",
-                "default": null
               }
             }
           }
@@ -597,8 +592,7 @@
               "request": "launch",
               "noDebug": false,
               "defaultName": null,
-              "command": "print new ${1:Class}().${2:Function/Operation}()",
-              "arguments": "${3:arguments}"
+              "command": "print new ${1:Class}().${2:Function/Operation}(${3:arguments})"
             }
           }
         ]
