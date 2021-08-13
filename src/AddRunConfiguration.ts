@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as vscode from "vscode";
-import * as fs from 'fs'
-import { commands, DebugConfiguration, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ConfigurationTarget, DebugConfiguration, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import * as util from "./Util"
 
 export class AddRunConfigurationHandler {
 
@@ -99,17 +96,17 @@ export class AddRunConfigurationHandler {
             this.saveRunConfiguration(debugConfiguration, wsFolder);
 
             // Open launch file
-            vscode.window.showTextDocument(
+            window.showTextDocument(
                 Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"),
                 {preview: true, preserveFocus: true}
             )
         }));
     }
 
-    private saveRunConfiguration(runConf: vscode.DebugConfiguration, wsFolder: vscode.WorkspaceFolder) {
-        const launchConfigurations  = vscode.workspace.getConfiguration("launch", wsFolder);
-        const rawConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
+    private saveRunConfiguration(runConf: DebugConfiguration, wsFolder: WorkspaceFolder) {
+        const launchConfigurations  = workspace.getConfiguration("launch", wsFolder);
+        const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
         rawConfigs.push(runConf);
-        launchConfigurations.update("configurations", rawConfigs, vscode.ConfigurationTarget.WorkspaceFolder);
+        launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
     }
 }
