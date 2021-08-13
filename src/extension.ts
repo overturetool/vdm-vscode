@@ -19,6 +19,7 @@ import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
 import * as fs from 'fs';
 import { AddLibraryHandler } from './AddLibrary';
+import { AddExampleHandler } from './ImportExample';
 
 globalThis.clients = new Map();
 let ctHandler: CTHandler;
@@ -26,6 +27,7 @@ let translateHandlerLatex: TranslateHandler;
 let translateHandlerWord : TranslateHandler;
 let translateHandlerCov  : TranslateHandler;
 let addLibraryHandler: AddLibraryHandler; 
+let addExampleHandler: AddExampleHandler; 
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -333,6 +335,8 @@ export function activate(context: ExtensionContext) {
     translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
 
     addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
+    addExampleHandler = new AddExampleHandler(globalThis.clients, context);
+
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);

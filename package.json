@@ -37,7 +37,8 @@
     "onLanguage:vdmrt",
     "workspaceContains:*.vdmsl",
     "workspaceContains:*.vdmpp",
-    "workspaceContains:*.vdmrt"
+    "workspaceContains:*.vdmrt",
+    "onCommand:vdm-vscode.importExample"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -47,6 +48,12 @@
         "title": "Add VDM Library",
         "category": "VDM",
         "icon": "$(library)"
+      },
+      {
+        "command": "vdm-vscode.importExample",
+        "title": "Import VDM Example",
+        "category": "VDM",
+        "icon": "$(example)"
       },
       {
         "command": "vdm-vscode.translateLatex",
@@ -171,6 +178,11 @@
     },
     "viewsWelcome": [
       {
+        "view": "explorer",
+        "contents": "You can also import a VDM example by clicking the button below.\n[Import VDM example](command:vdm-vscode.importExample)",
+        "when": "workspaceFolderCount == 0"
+      },
+      {
         "view": "vdm-ctView",
         "contents": "[Generate test outline](command:vdm-vscode.ctRebuildOutline)"
       }
@@ -280,6 +292,10 @@
           "command": "vdm-vscode.addLibrary",
           "when": "resourceScheme == file && add-lib-show-button == true || resourceScheme == folder && add-lib-show-button == true",
           "group": "navigation@7"
+        },
+        {
+          "command": "vdm-vscode.importExample",
+          "group": "2_workspace@100"
         }
       ],
       "editor/context": [
