@@ -19,6 +19,7 @@ import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
 import * as fs from 'fs';
 import { AddLibraryHandler } from './AddLibrary';
+import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 
 globalThis.clients = new Map();
@@ -27,6 +28,7 @@ let translateHandlerLatex: TranslateHandler;
 let translateHandlerWord : TranslateHandler;
 let translateHandlerCov  : TranslateHandler;
 let addLibraryHandler: AddLibraryHandler; 
+let addRunConfigurationHandler: AddRunConfigurationHandler; 
 let addExampleHandler: AddExampleHandler; 
 
 let _sortedWorkspaceFolders: string[] | undefined;
@@ -86,6 +88,8 @@ export function activate(context: ExtensionContext) {
 
     // Show VDM VS Code buttons
     commands.executeCommand( 'setContext', 'add-lib-show-button', true );
+    commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
+
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
@@ -335,6 +339,7 @@ export function activate(context: ExtensionContext) {
     translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
 
     addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
+    addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
     addExampleHandler = new AddExampleHandler(globalThis.clients, context);
 
 

@@ -44,6 +44,12 @@
   "contributes": {
     "commands": [
       {
+        "command": "vdm-vscode.addRunConfiguration",
+        "title": "Add Run Configuration",
+        "category": "VDM",
+        "icon": "$(library)"
+      },
+      {
         "command": "vdm-vscode.addLibrary",
         "title": "Add VDM Library",
         "category": "VDM",
@@ -291,7 +297,12 @@
         {
           "command": "vdm-vscode.addLibrary",
           "when": "resourceScheme == file && add-lib-show-button == true || resourceScheme == folder && add-lib-show-button == true",
-          "group": "navigation@7"
+          "group": "vdm@1"
+        },
+        {
+          "command": "vdm-vscode.addRunConfiguration",
+          "when": "resourceScheme == file && add-runconf-show-button == true || resourceScheme == folder && add-runconf-show-button == true",
+          "group": "vdm@2"
         },
         {
           "command": "vdm-vscode.importExample",
@@ -379,6 +390,10 @@
         },
         {
           "command": "vdm-vscode.addLibrary",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.addRunConfiguration",
           "when": "false"
         }
       ]
@@ -547,11 +562,6 @@
                 "type": "string",
                 "description": "Run single execution of command and terminate.",
                 "default": ""
-              },
-              "arguments": {
-                "type": ["string", "null"],
-                "description": "Arguments for the command",
-                "default": null
               }
             }
           }
@@ -559,8 +569,8 @@
         "initialConfigurations": [
           {
             "name": "Launch VDM Debug Console",
-            "request": "launch",
             "type": "vdm",
+            "request": "launch",
             "noDebug": false,
             "defaultName": null
           }
@@ -571,8 +581,8 @@
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug Console",
-              "request": "launch",
               "type": "vdm",
+              "request": "launch",
               "noDebug": false,
               "defaultName": null
             }
@@ -582,8 +592,8 @@
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug from Entry Point",
-              "request": "launch",
               "type": "vdm",
+              "request": "launch",
               "noDebug": false,
               "defaultName": null,
               "command": "print ${1:Function/Operation}(${2:arguments})"
@@ -594,12 +604,11 @@
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug from Entry Point",
-              "request": "launch",
               "type": "vdm",
+              "request": "launch",
               "noDebug": false,
               "defaultName": null,
-              "command": "print new ${1:Class}().${2:Function/Operation}()",
-              "arguments": "${3:arguments}"
+              "command": "print new ${1:Class}().${2:Function/Operation}(${3:arguments})"
             }
           }
         ]
