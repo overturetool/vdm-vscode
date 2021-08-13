@@ -44,8 +44,7 @@ export class AddRunConfigurationHandler {
                 if(dialect == null) {
                     // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
                     window.showInformationMessage(`Add run configuration failed! Unable to guess VDM dialect for workspace`); 
-                    reject();
-                    return;
+                    return reject();
                 }
             }
 
@@ -67,7 +66,7 @@ export class AddRunConfigurationHandler {
             if (selectedClass != undefined) {
                 selectedCommand = await window.showInputBox({
                     prompt: "Input entry point function/operation",
-                    placeHolder: "Run()"
+                    placeHolder: "Run(args)"
                 }); 
             }
 
@@ -108,10 +107,9 @@ export class AddRunConfigurationHandler {
     }
 
     private saveRunConfiguration(runConf: vscode.DebugConfiguration, wsFolder: vscode.WorkspaceFolder) {
-
         const launchConfigurations  = vscode.workspace.getConfiguration("launch", wsFolder);
         const rawConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
         rawConfigs.push(runConf);
-        launchConfigurations.update("configurations",rawConfigs);
+        launchConfigurations.update("configurations", rawConfigs, vscode.ConfigurationTarget.WorkspaceFolder);
     }
 }
