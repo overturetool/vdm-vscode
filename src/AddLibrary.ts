@@ -78,7 +78,7 @@ export class AddLibraryHandler {
                         window.showInformationMessage(`Adding library ${lib}`);
 
                         // Copy library from resources/lib to here
-                        copyFile(path.resolve(libPath, lib), path.resolve(folderUri.path, lib), (reason) => {
+                        copyFile(path.resolve(libPath, lib), path.resolve(folderUri.fsPath, lib), (reason) => {
 
                             if (reason) {
                                 window.showInformationMessage(`Add library ${lib} failed`);

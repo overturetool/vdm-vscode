@@ -78,7 +78,7 @@ export class AddExampleHandler {
 
                     for (const file of files) {
 
-                        copyFile(path.resolve(srcPath, file), path.resolve(destURI.path,file), (reason) => {
+                        copyFile(path.resolve(srcPath, file), path.resolve(destURI.fsPath,file), (reason) => {
 
                             if (reason) {
                                 window.showInformationMessage(`Add example ${selectedEx} failed`);
