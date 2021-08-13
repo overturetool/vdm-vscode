@@ -108,32 +108,10 @@ export class AddRunConfigurationHandler {
     }
 
     private saveRunConfiguration(runConf: vscode.DebugConfiguration, wsFolder: vscode.WorkspaceFolder) {
-        let defaultLaunchFile: string = JSON.stringify(
-            {
-                "//": "Use IntelliSense to learn about possible attributes. Hover to view descriptions of existing attributes. For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387",
-                "version": "0.2.0",
-                "configurations": []
-            }, null, 4
-        )
-        
-        // Ensure that there exists a launch file
-        let path = Uri.joinPath(wsFolder.uri, ".vscode", "launch.json").fsPath;
-        util.ensureDirectoryExistence(path);
-        if (!fs.existsSync(path)){
-             fs.writeFileSync(path, defaultLaunchFile); // Create empty launch file
-        }
-    
-        // Load launch file
-        let launchFileString = fs.readFileSync(path).toString();
-        let launchFile = JSON.parse(launchFileString)
-        
-        // Add the new run configuration
-        let conf : Array<any> = launchFile.configurations;
-        conf.push(runConf);
-        launchFile.configurations = conf;
-    
-        // Save new launch file
-        launchFileString = JSON.stringify(launchFile, null, 4)
-        fs.writeFileSync(path, launchFileString)
+
+        const launchConfigurations  = vscode.workspace.getConfiguration("launch", wsFolder);
+        const rawConfigs: vscode.DebugConfiguration[] = launchConfigurations.configurations;
+        rawConfigs.push(runConf);
+        launchConfigurations.update("configurations",rawConfigs);
     }
 }
