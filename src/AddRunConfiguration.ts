@@ -5,7 +5,6 @@ import { commands, DebugConfiguration, ExtensionContext, RelativePattern, Uri, w
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 
-
 export class AddRunConfigurationHandler {
 
     constructor(
@@ -41,19 +40,17 @@ export class AddRunConfigurationHandler {
                    if(res.length == 1) dialect = dialects[dp];
                 } 
 
-                if(dialect == null)
-                {
+                if(dialect == null) {
                     // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
-                    window.showInformationMessage(`Add library failed! Unable to guess VDM dialect for workspace`); 
+                    window.showInformationMessage(`Add run configuration failed! Unable to guess VDM dialect for workspace`); 
                     reject();
                     return;
                 }
             }
 
+            // Prompt user for entry point class/module and function/operation   
             let selectedClass: string;
-            let selectedCommand: string;
-
-            // Prompt user for entry point class/module and function/operation       
+            let selectedCommand: string;    
             if(dialect == "SL") {
                 selectedClass = await window.showInputBox({
                     prompt: "Input entry point Module",
@@ -83,7 +80,6 @@ export class AddRunConfigurationHandler {
                 selectedCommand = selectedCommand.slice(0,selectedCommand.indexOf("("))
             }
 
-
             // Create run configuration
             let debugConfiguration: DebugConfiguration;
             if(dialect == "SL") {
@@ -109,7 +105,7 @@ export class AddRunConfigurationHandler {
             }
 
             // Save run configuration
-            let position = util.saveRunConfiguration(debugConfiguration, wsFolder);
+            util.saveRunConfiguration(debugConfiguration, wsFolder);
 
             // Open launch file
             vscode.window.showTextDocument(
