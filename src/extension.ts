@@ -20,6 +20,7 @@ import { TranslateHandler } from './TranslateHandler';
 import * as fs from 'fs';
 import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
+import { AddExampleHandler } from './ImportExample';
 
 globalThis.clients = new Map();
 let ctHandler: CTHandler;
@@ -28,6 +29,7 @@ let translateHandlerWord : TranslateHandler;
 let translateHandlerCov  : TranslateHandler;
 let addLibraryHandler: AddLibraryHandler; 
 let addRunConfigurationHandler: AddRunConfigurationHandler; 
+let addExampleHandler: AddExampleHandler; 
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -338,6 +340,7 @@ export function activate(context: ExtensionContext) {
 
     addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
     addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
+    addExampleHandler = new AddExampleHandler(globalThis.clients, context);
 
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);

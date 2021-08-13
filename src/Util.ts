@@ -2,7 +2,7 @@
 
 import * as path from 'path'
 import * as fs from 'fs'
-import { Uri } from 'vscode';
+import { Uri, window, workspace, WorkspaceFolder } from 'vscode';
 import { DocumentUri } from 'vscode-languageclient';
 
 export function ensureDirectoryExistence(filePath) {
@@ -14,6 +14,19 @@ export function ensureDirectoryExistence(filePath) {
     fs.mkdirSync(dirname);
     
     return fs.existsSync(dirname);
+}
+
+export function getDefaultWorkspaceFolder(): WorkspaceFolder | undefined {
+    if (workspace.workspaceFolders === undefined) {
+        return undefined;
+    }
+    if (workspace.workspaceFolders.length === 1) {
+        return workspace.workspaceFolders[0];
+    }
+    if (window.activeTextEditor) {
+        return workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+    }
+    return undefined;
 }
 
 export function getJarsFromFolder(resourcesPath: string): string[]{
@@ -53,19 +66,18 @@ export function isDir(path: fs.PathLike): boolean {
     return fs.lstatSync(path).isDirectory();
 }
 
-export function createLibDirectory(rootPath: Uri): Promise<DocumentUri>{
-    return new Promise( async (resolve, reject) => { // TODO any reason for the "async" keyword here?
-        let fullUri = Uri.joinPath(rootPath, "lib");
+export function createDirectory(fullUri: Uri): Promise<void>{
+    return new Promise( (resolve, reject) => { 
         ensureDirectoryExistence(fullUri.fsPath);
         fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
             if(!accessErr)
-                return resolve(fullUri.fsPath);
+                return resolve();
             if (accessErr.code === 'ENOENT'){
                 fs.mkdir(fullUri.fsPath, dirErr => {
                     if (dirErr){
                         return reject(dirErr);
                     }
-                    return resolve(fullUri.fsPath); // TODO this was .toString() before, was there a reason for that?
+                    return resolve();
                 });     
             }
             else
