@@ -11,7 +11,7 @@ export function ensureDirectoryExistence(filePath) {
         return true;
     }
 
-    fs.mkdirSync(dirname);
+    fs.mkdirSync(dirname,{recursive : true});
     
     return fs.existsSync(dirname);
 }

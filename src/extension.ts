@@ -20,14 +20,10 @@ import { TranslateHandler } from './TranslateHandler';
 import * as fs from 'fs';
 import { AddLibraryHandler } from './AddLibrary';
 import { AddExampleHandler } from './ImportExample';
+import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 
 globalThis.clients = new Map();
-let ctHandler: CTHandler;
-let translateHandlerLatex: TranslateHandler;
-let translateHandlerWord : TranslateHandler;
-let translateHandlerCov  : TranslateHandler;
-let addLibraryHandler: AddLibraryHandler; 
-let addExampleHandler: AddExampleHandler; 
+
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -329,14 +325,14 @@ export function activate(context: ExtensionContext) {
         return client;
     }
 
-    ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
-    translateHandlerWord  = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
-    translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
+    const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
+    const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
+    const translateHandlerWord  = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    const translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
 
-    addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
-    addExampleHandler = new AddExampleHandler(globalThis.clients, context);
-
+    const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
+    const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
+    const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);
