@@ -358,6 +358,13 @@ export function activate(context: ExtensionContext) {
     debug.onDidStartDebugSession(async (session) => {
         // Launch client if this has not been done
         if (!globalThis.clients.has(session.workspaceFolder.uri.toString())){
+
+            // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
+            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`,"Retry", "Close").then(res => {
+                if (res == "Retry")
+                    debug.startDebugging(session.workspaceFolder, session.configuration)
+            })
+
             let dialect = await Util.guessDialect(session.workspaceFolder);
             if (dialect)
                 await launchClient(session.workspaceFolder, dialect);           

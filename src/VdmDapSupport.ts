@@ -91,7 +91,7 @@ export namespace VdmDapSupport {
                 // Remove sessions from active sessions
                 let elems = sessions.filter(value => value != uri.toString());
                 sessions = elems;
-                return;
+                throw new Error(`Unable to find server for workspace folder ${session.workspaceFolder.name}`);
             }
             
             // make VS Code connect to debug server
