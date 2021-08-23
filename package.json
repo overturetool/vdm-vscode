@@ -568,7 +568,7 @@
         },
         "initialConfigurations": [
           {
-            "name": "Launch VDM Debug Console",
+            "name": "VDM Debug: Console",
             "type": "vdm",
             "request": "launch",
             "noDebug": false,

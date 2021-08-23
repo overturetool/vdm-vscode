@@ -2,7 +2,7 @@
 
 import * as path from 'path'
 import * as fs from 'fs'
-import { Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import { RelativePattern, Uri, window, workspace, WorkspaceFolder } from 'vscode';
 import { DocumentUri } from 'vscode-languageclient';
 
 export function ensureDirectoryExistence(filePath) {
@@ -144,4 +144,16 @@ export function findJavaExecutable(binname: string) {
 
     // Else return the binary name directly (this will likely always fail downstream) 
     return null;
+}
+
+export async function guessDialect(wsFolder: WorkspaceFolder){
+    const dialects = {"vdmsl" : "SL", "vdmpp" : "PP", "vdmrt" : "RT"}
+    let dialect = undefined;
+    for (var dp in dialects){
+        let pattern = new RelativePattern(wsFolder.uri.path, "*." + dp);
+        let res = await workspace.findFiles(pattern,null,1)
+        if(res.length == 1) dialect = dp;
+    }
+    
+    return dialect
 }

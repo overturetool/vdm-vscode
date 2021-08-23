@@ -6,6 +6,7 @@ import { WorkspaceFolder } from "vscode";
 export namespace VdmDapSupport {
     let initialized: boolean = false;
     let factory: VdmDebugAdapterDescriptorFactory;
+    let sessions : string[] = new Array(); // Array of running sessions
 
     export function initDebugConfig(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder, port: number) {
         if (!initialized){
@@ -24,13 +25,12 @@ export namespace VdmDapSupport {
     }
 
     export class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
-        private sessions : string[] = new Array(); // Array of running sessions
         
         constructor() { 
             // When a session terminates, remove it from the array of running sessions
             vscode.debug.onDidTerminateDebugSession(session => {
-                let elems = this.sessions.filter(value => value != session.workspaceFolder.uri.toString());
-                this.sessions = elems;
+                let elems = sessions.filter(value => value != session.workspaceFolder.uri.toString());
+                sessions = elems;
             })
         }
         /**
@@ -41,14 +41,14 @@ export namespace VdmDapSupport {
             let uri = folder.uri.toString();
 
             // Check if sessions is already runnig for the specification
-            if (this.sessions.includes(uri)){
+            if (sessions.includes(uri)){
                 vscode.window.showInformationMessage("Debug sessions already running, cannot lauch multiple sessions for the same specification");
                 return undefined; // Abort launch
             }
 
             // Add WSF to sessions
-            this.sessions.push(uri);
-
+            sessions.push(uri);
+            
             // if launch.json is missing or empty
             if (!config.type && !config.request && !config.name) {
                 config.type = 'vdm';
@@ -78,8 +78,24 @@ export namespace VdmDapSupport {
         }
 
         createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+            // Check if server has been launched
+            let uri = session.workspaceFolder.uri;
+            if (!this.dapPorts.get(uri.toString())){
+                // Open a file in the workspace folder to force the client to start for the folder
+                let pattern = new vscode.RelativePattern(uri.fsPath, "*.vdm*");
+                vscode.workspace.findFiles(pattern,null,1).then( async (res) => {
+                    if (res.length > 0)
+                        vscode.workspace.openTextDocument(res[0])
+                })
+
+                // Remove sessions from active sessions
+                let elems = sessions.filter(value => value != uri.toString());
+                sessions = elems;
+                return;
+            }
+            
             // make VS Code connect to debug server
-            return new vscode.DebugAdapterServer(this.dapPorts.get(session.workspaceFolder.uri.toString()));
+            return new vscode.DebugAdapterServer(this.dapPorts.get(uri.toString()));
         }
     }
 

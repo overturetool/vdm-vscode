@@ -5,7 +5,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -355,6 +355,14 @@ export function activate(context: ExtensionContext) {
             }
         }
     });
+    debug.onDidStartDebugSession(async (session) => {
+        // Launch client if this has not been done
+        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())){
+            let dialect = await Util.guessDialect(session.workspaceFolder);
+            if (dialect)
+                await launchClient(session.workspaceFolder, dialect);           
+        }
+    })
 }
 
 export function deactivate(): Thenable<void> | undefined {
