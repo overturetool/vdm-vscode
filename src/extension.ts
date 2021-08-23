@@ -112,17 +112,18 @@ export function activate(context: ExtensionContext) {
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
         folder = getOuterMostWorkspaceFolder(folder);
 
-        // If a client has not been started for the folder, start one
-        if (!globalThis.clients.has(folder.uri.toString())) {
-            globalThis.clients.set(folder.uri.toString(), null);
-            let dialect = getDialect(document);
-
-            launchClient(dialect, folder);
-        }
+        // Start client for the folder
+        launchClient(folder, getDialect(document));
     }
 
-    async function launchClient(dialect: string, wsFolder: WorkspaceFolder): Promise<void> {
-        let serverMainClass = 'lsp.LSPServerSocket';
+    async function launchClient(wsFolder: WorkspaceFolder, dialect: string): Promise<void> {
+        // Abort if client already exists
+        if (globalThis.clients.has(wsFolder.uri.toString())){
+            return;
+        }
+
+        // Create client
+        globalThis.clients.set(wsFolder.uri.toString(), null);
 
         // Add settings watch for workspace folder
         workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
@@ -221,7 +222,7 @@ export function activate(context: ExtensionContext) {
 
             args.push(...[
                 '-cp', classPath,
-                serverMainClass,
+                'lsp.LSPServerSocket',
                 '-' + dialect,
                 '-lsp', lspPort.toString(), '-dap', dapPort.toString()
             ]);
