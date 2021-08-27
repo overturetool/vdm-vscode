@@ -56,6 +56,12 @@
         "icon": "$(library)"
       },
       {
+        "command": "vdm-vscode.javaCodeGen",
+        "title": "Generate Java Code",
+        "category": "VDM",
+        "icon": "$(codegen)"
+      },
+      {
         "command": "vdm-vscode.importExample",
         "title": "Import VDM Example",
         "category": "VDM",
@@ -280,6 +286,11 @@
           "group": "verification@1"
         },
         {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "resourceLangId == vdmsl  || resourceLangId == vdmpp || resourceLangId == vdmrt",
+          "group": "translate@4"
+        },
+        {
           "command": "vdm-vscode.translateLatex",
           "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
@@ -314,6 +325,11 @@
           "command": "vdm-vscode.runPOG",
           "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
           "group": "verification@1"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
+          "group": "translate@4"
         },
         {
           "command": "vdm-vscode.translateLatex",
@@ -394,6 +410,10 @@
         },
         {
           "command": "vdm-vscode.addRunConfiguration",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
           "when": "false"
         }
       ]
