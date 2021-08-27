@@ -84,6 +84,8 @@ export function activate(context: ExtensionContext) {
     // Show VDM VS Code buttons
     commands.executeCommand( 'setContext', 'add-lib-show-button', true );
     commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
+    commands.executeCommand( 'setContext', 'jcg-show-button', true );
+
 
 
     // Ensure logging path exists

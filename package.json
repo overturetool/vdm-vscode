@@ -1,5 +1,5 @@
 {
-  "version": "1.1.4",
+  "version": "1.2.0",
   "name": "vdm-vscode",
   "displayName": "VDM VSCode",
   "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
@@ -45,7 +45,7 @@
     "commands": [
       {
         "command": "vdm-vscode.addRunConfiguration",
-        "title": "Add Run Configuration",
+        "title": "Add VDM Run Configuration",
         "category": "VDM",
         "icon": "$(library)"
       },
@@ -286,11 +286,6 @@
           "group": "verification@1"
         },
         {
-          "command": "vdm-vscode.javaCodeGen",
-          "when": "resourceLangId == vdmsl  || resourceLangId == vdmpp || resourceLangId == vdmrt",
-          "group": "translate@4"
-        },
-        {
           "command": "vdm-vscode.translateLatex",
           "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
@@ -304,6 +299,11 @@
           "command": "vdm-vscode.translateCov",
           "when": "resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
           "group": "translate@3"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt ",
+          "group": "translate@4"
         },
         {
           "command": "vdm-vscode.addLibrary",
@@ -327,11 +327,6 @@
           "group": "verification@1"
         },
         {
-          "command": "vdm-vscode.javaCodeGen",
-          "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
-          "group": "translate@4"
-        },
-        {
           "command": "vdm-vscode.translateLatex",
           "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
@@ -345,6 +340,21 @@
           "command": "vdm-vscode.translateCov",
           "when": "resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
           "group": "translate@3"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
+          "group": "translate@4"
+        },
+        {
+          "command": "vdm-vscode.addLibrary",
+          "when": "resourceLangId == vdmsl && add-lib-show-button == true || resourceLangId == vdmpp && add-lib-show-button == true || resourceLangId == vdmrt && add-lib-show-button == true",
+          "group": "vdm@1"
+        },
+        {
+          "command": "vdm-vscode.addRunConfiguration",
+          "when": "resourceLangId == vdmsl && add-runconf-show-button == true || resourceLangId == vdmpp && add-runconf-show-button == true || resourceLangId == vdmrt && add-runconf-show-button == true",
+          "group": "vdm@2"
         }
       ],
       "commandPalette": [
