@@ -1,4 +1,8 @@
-### 1.1.4
+### 1.2.0
+- Improved outline view
+- Fixes to MATH lib
+- Added import example projects
+- Added CSV lib support
 - Added more debug configuration snippets
 
 ### 1.1.3
