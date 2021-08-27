@@ -42,7 +42,7 @@ export namespace VdmDapSupport {
 
             // Check if sessions is already runnig for the specification
             if (sessions.includes(uri)){
-                vscode.window.showInformationMessage("Debug sessions already running, cannot lauch multiple sessions for the same specification");
+                vscode.window.showInformationMessage("Debug sessions already running, cannot launch multiple sessions for the same specification");
                 return undefined; // Abort launch
             }
 
