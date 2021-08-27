@@ -5,7 +5,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -19,13 +19,12 @@ import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
 import * as fs from 'fs';
 import { AddLibraryHandler } from './AddLibrary';
+import { AddRunConfigurationHandler } from './AddRunConfiguration';
+import { AddExampleHandler } from './ImportExample';
+import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 
 globalThis.clients = new Map();
-let ctHandler: CTHandler;
-let translateHandlerLatex: TranslateHandler;
-let translateHandlerWord : TranslateHandler;
-let translateHandlerCov  : TranslateHandler;
-let addLibraryHandler: AddLibraryHandler; 
+
 
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
@@ -84,6 +83,10 @@ export function activate(context: ExtensionContext) {
 
     // Show VDM VS Code buttons
     commands.executeCommand( 'setContext', 'add-lib-show-button', true );
+    commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
+    commands.executeCommand( 'setContext', 'jcg-show-button', true );
+
+
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
@@ -106,30 +109,31 @@ export function activate(context: ExtensionContext) {
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
         folder = getOuterMostWorkspaceFolder(folder);
 
-        // If a client has not been started for the folder, start one
-        if (!globalThis.clients.has(folder.uri.toString())) {
-            globalThis.clients.set(folder.uri.toString(), null);
-            let dialect = getDialect(document);
-
-            launchClient(dialect, folder);
-        }
+        // Start client for the folder
+        launchClient(folder, getDialect(document));
     }
 
-    async function launchClient(dialect: string, folder: WorkspaceFolder): Promise<void> {
-        let serverMainClass = 'lsp.LSPServerSocket';
+    async function launchClient(wsFolder: WorkspaceFolder, dialect: string): Promise<void> {
+        // Abort if client already exists
+        if (globalThis.clients.has(wsFolder.uri.toString())){
+            return;
+        }
+
+        // Create client
+        globalThis.clients.set(wsFolder.uri.toString(), null);
 
         // Add settings watch for workspace folder
-        workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, folder));
+        workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
 
         // If using experimental server
-        let debug = workspace.getConfiguration('vdm-vscode.debug', folder).experimentalServer;
+        let debug = workspace.getConfiguration('vdm-vscode.debug', wsFolder).experimentalServer;
         if (debug) {
-            let lspPort = workspace.getConfiguration('vdm-vscode.debug', folder).lspPort;
-            let dapPort = workspace.getConfiguration('vdm-vscode.debug', folder).dapPort;
+            let lspPort = workspace.getConfiguration('vdm-vscode.debug', wsFolder).lspPort;
+            let dapPort = workspace.getConfiguration('vdm-vscode.debug', wsFolder).dapPort;
             window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort} and DAP port ${dapPort}`);
 
-            let client = createClient(dialect, lspPort, dapPort, folder);
-            let clientKey = folder.uri.toString();
+            let client = createClient(dialect, lspPort, dapPort, wsFolder);
+            let clientKey = wsFolder.uri.toString();
             globalThis.clients.set(clientKey, client);
             return;
         }
@@ -139,7 +143,7 @@ export function activate(context: ExtensionContext) {
             if (err) {
                 window.showErrorMessage("An error occured when finding free ports: " + err)
                 Util.writeToLog(extensionLogPath, "An error occured when finding free ports: " + err);
-                globalThis.clients.delete(folder.uri.toString());
+                globalThis.clients.delete(wsFolder.uri.toString());
                 return;
             }
             let lspPort = ports[0];
@@ -147,7 +151,7 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
-            let JVMArguments: string = workspace.getConfiguration('vdm-vscode', folder).JVMArguments;
+            let JVMArguments: string = workspace.getConfiguration('vdm-vscode', wsFolder).JVMArguments;
             if (JVMArguments != ""){
                 let split = JVMArguments.split(" ").filter(v => v != "")
                 let i = 0;
@@ -161,17 +165,17 @@ export function activate(context: ExtensionContext) {
                 args.push(...split);
             }
 
-            let activateServerLog = workspace.getConfiguration('vdm-vscode.debug', folder).activateServerLog;
+            let activateServerLog = workspace.getConfiguration('vdm-vscode.debug', wsFolder).activateServerLog;
             if (activateServerLog){
                 // Ensure logging path exists
-                let languageServerLoggingPath = path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log');
+                let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
                 Util.ensureDirectoryExistence(languageServerLoggingPath);
                 
-                args.push('-Dlsp.log.filename=' + path.resolve(context.logUri.fsPath, folder.name.toString() + '_lang_server.log'));
+                args.push('-Dlsp.log.filename=' + path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log'));
             }
 
             let classPath = "";
-            let useHighprecision = workspace.getConfiguration('vdm-vscode', folder).highPrecision;
+            let useHighprecision = workspace.getConfiguration('vdm-vscode', wsFolder).highPrecision;
             if(useHighprecision && useHighprecision === true){
                 classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
             }
@@ -179,7 +183,7 @@ export function activate(context: ExtensionContext) {
                 classPath += vdmjPath + path.delimiter + lspServerPath;
             }
 
-            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', folder).annotationPaths;
+            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', wsFolder).annotationPaths;
             if(userProvidedAnnotationPaths){
                 let jarPaths = userProvidedAnnotationPaths.split(",");
                 jarPaths.forEach(jarPath => {
@@ -215,7 +219,7 @@ export function activate(context: ExtensionContext) {
 
             args.push(...[
                 '-cp', classPath,
-                serverMainClass,
+                'lsp.LSPServerSocket',
                 '-' + dialect,
                 '-lsp', lspPort.toString(), '-dap', dapPort.toString()
             ]);
@@ -225,7 +229,7 @@ export function activate(context: ExtensionContext) {
             if (!javaPath) {
                 window.showErrorMessage("Java runtime environment not found!")
                 Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
-                globalThis.clients.delete(folder.uri.toString());
+                globalThis.clients.delete(wsFolder.uri.toString());
                 return;
             }
             let server = child_process.spawn(javaPath, args);
@@ -242,24 +246,24 @@ export function activate(context: ExtensionContext) {
                 if (timeOutCounter++ == 100) {
                     window.showErrorMessage("ERROR: LSP server connection timeout");
                     Util.writeToLog(extensionLogPath, "ERROR: LSP server connection timeout");
-                    globalThis.clients.delete(folder.uri.toString());
+                    globalThis.clients.delete(wsFolder.uri.toString());
                     return;
                 }
             }
 
             // Create output channel for server stdout
-            let activateStdoutLogging = workspace.getConfiguration('vdm-vscode.stdio', folder).activateStdoutLogging;
-            let stdoutLogPath = workspace.getConfiguration('vdm-vscode.stdio', folder).stdioLogPath;
+            let activateStdoutLogging = workspace.getConfiguration('vdm-vscode.stdio', wsFolder).activateStdoutLogging;
+            let stdoutLogPath = workspace.getConfiguration('vdm-vscode.stdio', wsFolder).stdioLogPath;
             if (activateStdoutLogging) {
                 // Log to file
                 if (stdoutLogPath != ""){ 
-                    Util.ensureDirectoryExistence(stdoutLogPath+path.sep+folder.name.toString())
-                    server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+folder.name.toString()+"_stdout.log", chunk));
-                    server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+folder.name.toString()+"_stderr.log", chunk));
+                    Util.ensureDirectoryExistence(stdoutLogPath+path.sep+wsFolder.name.toString())
+                    server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+wsFolder.name.toString()+"_stdout.log", chunk));
+                    server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+wsFolder.name.toString()+"_stderr.log", chunk));
                 }
                 // Log to terminal
                 else { 
-                    let outputChannel: OutputChannel = window.createOutputChannel("VDM: "+folder.name.toString());
+                    let outputChannel: OutputChannel = window.createOutputChannel("VDM: "+wsFolder.name.toString());
                     server.stdout.addListener("data", chunk => {
                         outputChannel.show(true);
                         outputChannel.appendLine(chunk)
@@ -275,10 +279,10 @@ export function activate(context: ExtensionContext) {
                 server.stderr.addListener("data", chunk => {});
             } 
             
-            let client = createClient(dialect, lspPort, dapPort, folder);
+            let client = createClient(dialect, lspPort, dapPort, wsFolder);
 
             // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
-            let clientKey = folder.uri.toString();
+            let clientKey = wsFolder.uri.toString();
 
             // Save client
             globalThis.clients.set(clientKey, client);
@@ -327,12 +331,15 @@ export function activate(context: ExtensionContext) {
         return client;
     }
 
-    ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
-    translateHandlerWord  = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
-    translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
+    const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
+    const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
+    const translateHandlerWord  = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    const translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
 
-    addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
+    const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
+    const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
+    const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
+    const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);
@@ -345,6 +352,21 @@ export function activate(context: ExtensionContext) {
             }
         }
     });
+    debug.onDidStartDebugSession(async (session) => {
+        // Launch client if this has not been done
+        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())){
+
+            // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
+            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`,"Retry", "Close").then(res => {
+                if (res == "Retry")
+                    debug.startDebugging(session.workspaceFolder, session.configuration)
+            })
+
+            let dialect = await Util.guessDialect(session.workspaceFolder);
+            if (dialect)
+                await launchClient(session.workspaceFolder, dialect);           
+        }
+    })
 }
 
 export function deactivate(): Thenable<void> | undefined {

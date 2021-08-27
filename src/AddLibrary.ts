@@ -68,8 +68,9 @@ export class AddLibraryHandler {
             // None selected 
             if(selectedLibs === undefined || selectedLibs.length == 0) return resolve(`Empty selection. Add library completed.`)
 
+            let folderUri = Uri.joinPath(wsFolder.uri, "lib");
 
-            util.createLibDirectory(wsFolder.uri).then(async (projLibPath) => {
+            util.createDirectory(folderUri).then(async () => {
                 try {
 
                     for (let lib of selectedLibs) {
@@ -77,7 +78,7 @@ export class AddLibraryHandler {
                         window.showInformationMessage(`Adding library ${lib}`);
 
                         // Copy library from resources/lib to here
-                        copyFile(path.resolve(libPath, lib), path.resolve(projLibPath, lib), (reason) => {
+                        copyFile(path.resolve(libPath, lib), path.resolve(folderUri.fsPath, lib), (reason) => {
 
                             if (reason) {
                                 window.showInformationMessage(`Add library ${lib} failed`);
