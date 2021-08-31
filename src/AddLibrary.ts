@@ -60,7 +60,7 @@ export class AddLibraryHandler {
             
             let libsOptions: string[] = libsInFolder.map((x: Dirent) => x.name);
 
-            let selectedLibs: string[] = await window.showQuickPick(libsOptions, {
+            let selectedLibs: string[] = await window.showQuickPick(libsOptions, {   // TODO #25 Look here for user prompt
                 placeHolder: 'Choose libraries',
                 canPickMany: true,
             });
