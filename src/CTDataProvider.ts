@@ -28,7 +28,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public filterTree(enable: boolean): any
+    public filterTree(enable: boolean, toShow?: VerdictKind[]): any // TODO #25 store the filter settings
     {
         this._filter = enable;
         this._roots.forEach(symbol => symbol.getChildren().forEach(trace =>  this.rebuildViewFromElement(trace)));
@@ -117,7 +117,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                         break;
                     } 
                 }
-                if(!this._filter || verdict != VerdictKind.Passed && verdict != VerdictKind.Inconclusive && verdict != VerdictKind.Filtered)
+                if(!this._filter || verdict != VerdictKind.Passed && verdict != VerdictKind.Inconclusive && verdict != VerdictKind.Filtered) // TODO #25 filter according to the passed set instead of the current fixed categories
                     testGroups.push(new TestViewElement(
                         "test group", 
                         TreeItemType.TestGroup, 
@@ -147,7 +147,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             let testsViewElements = [];
             for(let i = 0; i < testsResultsLength; i++)
             {
-                if(!this._filter || testsResults[i].verdict  != VerdictKind.Passed && testsResults[i].verdict  != VerdictKind.Inconclusive && testsResults[i].verdict  != VerdictKind.Filtered)
+                if(!this._filter || testsResults[i].verdict  != VerdictKind.Passed && testsResults[i].verdict  != VerdictKind.Inconclusive && testsResults[i].verdict  != VerdictKind.Filtered) // TODO #25 filter according to the passed set instead of the current fixed categories
                     testsViewElements.push( new TestViewElement(
                         testsResults[i].id+"", 
                         TreeItemType.Test, 

@@ -419,11 +419,15 @@ export class CTTreeView {
     }
 
     private async ctTreeFilter(enable:boolean){
+        // TODO #25 prompt user for which type of CT they want to display (only if enable == true)
+            // If non are selected, abort filtering
+            // If all are selected remove filtering
+
         // Change button 
         this.showTreeFilterButton(!enable)
 
         // Set in testProvider
-        this._testProvider.filterTree(enable)
+        this._testProvider.filterTree(enable) // TODO #25 add such that it can take a set of CT results to show too
     }
     
     private async ctSendToInterpreter(testViewElement: TestViewElement) {
