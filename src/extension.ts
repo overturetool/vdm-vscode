@@ -151,6 +151,7 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
+            args.push("-Duser.dir=" + wsFolder.uri.fsPath) // Change java working directory to the workspace folder
             let JVMArguments: string = workspace.getConfiguration('vdm-vscode', wsFolder).JVMArguments;
             if (JVMArguments != ""){
                 let split = JVMArguments.split(" ").filter(v => v != "")
