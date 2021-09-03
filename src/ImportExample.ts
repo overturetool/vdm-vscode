@@ -89,9 +89,20 @@ export class AddExampleHandler {
                         );
                     }
 
-                    const openInNewWindow = workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0;
-                    await commands.executeCommand("vscode.openFolder", Uri.file(path.join(basePath, selectedEx)), openInNewWindow);
-
+                    let projectUri = Uri.file(path.join(basePath, selectedEx));
+                    if (workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0){ // Add imported example to workspace if there are workspace folders in the window
+                        workspace.updateWorkspaceFolders(
+                            workspace.workspaceFolders.length,
+                            null,
+                            {
+                                uri: projectUri,
+                                name: selectedEx
+                            }
+                        )
+                    } else { // Otherwise open the imported folder
+                        await commands.executeCommand("vscode.openFolder", projectUri);
+                    }
+                    
                     resolve(`Add example completed.`);
                 }
                 catch (error) {
