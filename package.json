@@ -282,7 +282,7 @@
       "explorer/context": [
         {
           "command": "vdm-vscode.runPOG",
-          "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
+          "when": "resourceScheme == file && pog-show-button == true || resourceScheme == folder && pog-show-button == true",
           "group": "verification@1"
         },
         {
