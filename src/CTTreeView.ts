@@ -419,15 +419,31 @@ export class CTTreeView {
     }
 
     private async ctTreeFilter(enable:boolean){
-        // TODO #25 prompt user for which type of CT they want to display (only if enable == true)
-            // If non are selected, abort filtering
-            // If all are selected remove filtering
+            let filtering = ["Passed","Failed","Inconclusive","Filtered"]; // each type of filters that the user can choose
+            let conversion : VerdictKind[] = [];
+            // prompt user for which type of CT they want to display (only if enable == true)
+            if(enable){
+                let selectedFilters = await window.showQuickPick(filtering,{
+                    placeHolder: 'Choose result types to show',
+                    canPickMany: true,
+                })
+                // If non are selected, abort filtering
+                if(selectedFilters === undefined || selectedFilters.length == 0) return 
+                // If all are selected remove filtering
+                if(selectedFilters.length == filtering.length) enable = false
+                // transform the selectedFilters(string []) in conversion(VerdictKind[]) to be able to use it in the function filterTree below
+                for(let i = 0; i <= filtering.length; i++){
+                    if(selectedFilters.includes(filtering[i])){
+                        conversion.push(i+1)
+                    }
+                }
+            }
 
         // Change button 
         this.showTreeFilterButton(!enable)
 
         // Set in testProvider
-        this._testProvider.filterTree(enable) // TODO #25 add such that it can take a set of CT results to show too
+        this._testProvider.filterTree(enable,conversion)
     }
     
     private async ctSendToInterpreter(testViewElement: TestViewElement) {
