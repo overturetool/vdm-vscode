@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "name": "vdm-vscode",
   "displayName": "VDM VSCode",
   "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
@@ -82,6 +82,12 @@
       {
         "command": "vdm-vscode.translateCov",
         "title": "Generate Coverage",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vdm-vscode.translateGraphviz",
+        "title": "Generate Dependency Graph",
         "category": "VDM",
         "icon": "$(references)"
       },
@@ -282,7 +288,7 @@
       "explorer/context": [
         {
           "command": "vdm-vscode.runPOG",
-          "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
+          "when": "resourceScheme == file && pog-show-button == true || resourceScheme == folder && pog-show-button == true",
           "group": "verification@1"
         },
         {
@@ -304,6 +310,11 @@
           "command": "vdm-vscode.javaCodeGen",
           "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt ",
           "group": "translate@4"
+        },
+        {
+          "command": "vdm-vscode.translateGraphviz",
+          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
+          "group": "translate@5"
         },
         {
           "command": "vdm-vscode.addLibrary",
@@ -345,6 +356,11 @@
           "command": "vdm-vscode.javaCodeGen",
           "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
           "group": "translate@4"
+        },
+        {
+          "command": "vdm-vscode.translateGraphviz",
+          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
+          "group": "translate@5"
         },
         {
           "command": "vdm-vscode.addLibrary",
@@ -412,6 +428,10 @@
         },
         {
           "command": "vdm-vscode.translateCov",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translateGraphviz",
           "when": "false"
         },
         {
