@@ -151,7 +151,6 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
-            args.push("-Duser.dir=" + wsFolder.uri.fsPath) // Change java working directory to the workspace folder
             let JVMArguments: string = workspace.getConfiguration('vdm-vscode', wsFolder).JVMArguments;
             if (JVMArguments != ""){
                 let split = JVMArguments.split(" ").filter(v => v != "")
@@ -233,7 +232,7 @@ export function activate(context: ExtensionContext) {
                 globalThis.clients.delete(wsFolder.uri.toString());
                 return;
             }
-            let server = child_process.spawn(javaPath, args);
+            let server = child_process.spawn(javaPath, args, {cwd: wsFolder.uri.fsPath});
 
             // Wait for the server to be ready
             let connected = false;
