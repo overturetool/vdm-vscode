@@ -86,6 +86,12 @@
         "icon": "$(references)"
       },
       {
+        "command": "vdm-vscode.translateGraphviz",
+        "title": "Generate Dependency Graph",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
         "command": "vdm-vscode.runPOG",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
@@ -306,6 +312,11 @@
           "group": "translate@4"
         },
         {
+          "command": "vdm-vscode.translateGraphviz",
+          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
+          "group": "translate@5"
+        },
+        {
           "command": "vdm-vscode.addLibrary",
           "when": "resourceScheme == file && add-lib-show-button == true || resourceScheme == folder && add-lib-show-button == true",
           "group": "vdm@1"
@@ -345,6 +356,11 @@
           "command": "vdm-vscode.javaCodeGen",
           "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
           "group": "translate@4"
+        },
+        {
+          "command": "vdm-vscode.translateGraphviz",
+          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
+          "group": "translate@5"
         },
         {
           "command": "vdm-vscode.addLibrary",
@@ -412,6 +428,10 @@
         },
         {
           "command": "vdm-vscode.translateCov",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translateGraphviz",
           "when": "false"
         },
         {
