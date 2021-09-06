@@ -12,7 +12,7 @@ export class SpecificationLanguageClient extends LanguageClient {
     public static readonly latexLanguageId = "latex"; // See the LSP specification for alternative language ids
     public static readonly wordLanguageId = "word"; // See the LSP specification for alternative language ids
     public static readonly covLanguageId = "coverage";
-    public static readonly graphvizLanguageId = "dependencies" // TODO use another language id
+    public static readonly graphvizLanguageId = "graphviz"
     public readonly projectRoot = this.clientOptions.workspaceFolder.uri; 
     public readonly projectSavedDataPath = Uri.joinPath(this.projectRoot, ".generated");
     public readonly logPath;

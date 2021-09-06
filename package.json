@@ -313,7 +313,7 @@
         },
         {
           "command": "vdm-vscode.translateGraphviz",
-          "when": "resourceLangId == vdmsl && tr-dependencies-show-button == true || resourceLangId == vdmpp && tr-dependencies-show-button == true || resourceLangId == vdmrt && tr-dependencies-show-button == true",
+          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
           "group": "translate@5"
         },
         {
@@ -359,7 +359,7 @@
         },
         {
           "command": "vdm-vscode.translateGraphviz",
-          "when": "resourceLangId == vdmsl && tr-dependencies-show-button == true || resourceLangId == vdmpp && tr-dependencies-show-button == true || resourceLangId == vdmrt && tr-dependencies-show-button == true",
+          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
           "group": "translate@5"
         },
         {
