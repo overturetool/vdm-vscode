@@ -22,6 +22,10 @@
     "type": "git",
     "url": "https://github.com/jonaskrask/vdm-vscode"
   },
+  "bugs": {
+    "type": "git",
+    "url": "https://github.com/jonaskrask/vdm-vscode/issues"
+  },
   "publisher": "jonaskrask",
   "engines": {
     "vscode": "^1.49.0"
