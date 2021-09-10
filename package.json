@@ -151,7 +151,7 @@
       },
       {
         "command": "vdm-vscode.ctEnableTreeFilter",
-        "title": "Show only failed tests",
+        "title": "Filter test results",
         "category": "VDM",
         "icon": "$(filter)"
       },
