@@ -4,7 +4,7 @@ import { commands, ExtensionContext, Uri, window, workspace, WorkspaceFolder } f
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import { Dirent, readdirSync } from 'fs';
-import { copy } from 'fs-extra';
+import { copySync } from 'fs-extra';
 import * as path from 'path'
 
 
@@ -54,6 +54,7 @@ export class AddExampleHandler {
             // None selected 
             if (selectedEx === undefined) return reject(`Empty selection. Add example completed.`)
 
+            // Get save location
             const workspaceFolder = util.getDefaultWorkspaceFolder();
             const location = await window.showOpenDialog({
                 defaultUri: workspaceFolder && workspaceFolder.uri,
@@ -63,23 +64,37 @@ export class AddExampleHandler {
                 openLabel: "Save",
                 title: "Save in folder..."
             });
-            if (!location || !location.length) {
-                return;
+
+             // None selected
+            if (!location || !location.length) { 
+                return; 
             }
 
-            copy(path.resolve(exaPath, selectedEx), path.resolve(location[0].fsPath,selectedEx), (reason) => {
+            // Project save location
+            let projectPath = path.resolve(location[0].fsPath,selectedEx);
+            let projectUri  = Uri.file(projectPath);
 
-                if (reason) {
-                    window.showInformationMessage(`Add example ${selectedEx} failed`);
-                    console.log(`Copy example files failed with error: ${reason}`);
-                    reject(`Add example  ${selectedEx} failed.`);
-                }
-                
+            // Sync copy
+            try {
+                copySync(path.resolve(exaPath, selectedEx), projectPath)
+            } catch (err) {
+                window.showInformationMessage(`Add example ${selectedEx} failed`);
+                console.log(`Copy example files failed with error: ${err}`);
             }
-            );
 
-            const openInNewWindow = workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0;
-            await commands.executeCommand("vscode.openFolder", Uri.file(path.resolve(location[0].fsPath, selectedEx)), openInNewWindow);
+            // Open project
+            if (workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0){ // Add imported example to workspace if there are workspace folders in the window
+                workspace.updateWorkspaceFolders(
+                    workspace.workspaceFolders.length,
+                    null,
+                    {
+                        uri: projectUri,
+                        name: selectedEx
+                    }
+                )
+            } else { // Otherwise open the imported folder
+                await commands.executeCommand("vscode.openFolder", projectUri);
+            }
 
             resolve(`Add example completed.`);
             
