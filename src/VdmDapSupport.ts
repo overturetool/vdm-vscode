@@ -66,7 +66,11 @@ export namespace VdmDapSupport {
                 config.request = 'launch';
                 config.stopOnEntry = true;
                 config.noDebug = false;
-                
+                config.dynamicTypeChecks = true;
+                config.invariantsChecks = true;
+                config.preConditionChecks = true;
+                config.postConditionChecks = true;
+                config.measureChecks = true
             }
 
             return config;
