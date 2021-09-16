@@ -5,6 +5,7 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import {spawn} from 'child_process';
 import * as path from 'path'
+import { config } from "process";
 
 
 
@@ -82,7 +83,21 @@ export class JavaCodeGenHandler {
                     args.push(...[
                         '-jar',
                         jarPath,
-                        '-' + dialect,
+                        '-' + dialect
+                    ]);
+
+                    const config = workspace.getConfiguration(
+                        'vdm-vscode',
+                         workspace.workspaceFolders[0].uri
+                      );
+                    
+                    const cloning = config.get('javaCodGen.cloning',true);
+                    
+                    if(!cloning) args.push('-nocloning')
+
+
+
+                    args.push(...[
                         '-output', folderUri.fsPath
                     ]);
 
