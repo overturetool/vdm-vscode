@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "vdm-vscode",
   "displayName": "VDM VSCode",
   "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
