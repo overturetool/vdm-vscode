@@ -3,7 +3,8 @@
 import { commands, ExtensionContext, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
-import { copyFile, Dirent, readdirSync } from 'fs';
+import { Dirent, readdirSync } from 'fs';
+import { copySync } from 'fs-extra';
 import * as path from 'path'
 
 
@@ -53,6 +54,7 @@ export class AddExampleHandler {
             // None selected 
             if (selectedEx === undefined) return reject(`Empty selection. Add example completed.`)
 
+            // Get save location
             const workspaceFolder = util.getDefaultWorkspaceFolder();
             const location = await window.showOpenDialog({
                 defaultUri: workspaceFolder && workspaceFolder.uri,
@@ -62,49 +64,44 @@ export class AddExampleHandler {
                 openLabel: "Save",
                 title: "Save in folder..."
             });
-            if (!location || !location.length) {
-                return;
+
+             // None selected
+            if (!location || !location.length) { 
+                return; 
             }
-        
-            const basePath: string = location[0].fsPath;
 
-            let destURI = Uri.joinPath(location[0], selectedEx);
-            util.createDirectory(destURI).then(async () => {
-                try {
+            // Project save location
+            let projectPath = path.resolve(location[0].fsPath,selectedEx);
+            let projectUri  = Uri.file(projectPath);
 
+            // Sync copy
+            try {
+                copySync(path.resolve(exaPath, selectedEx), projectPath)
+            } catch (err) {
+                window.showInformationMessage(`Add example ${selectedEx} failed`);
+                console.log(`Copy example files failed with error: ${err}`);
+            }
 
-                    const srcPath = path.resolve(exaPath, selectedEx);
-                    const files = readdirSync(srcPath);
-
-                    for (const file of files) {
-
-                        copyFile(path.resolve(srcPath, file), path.resolve(destURI.fsPath,file), (reason) => {
-
-                            if (reason) {
-                                window.showInformationMessage(`Add example ${selectedEx} failed`);
-                                console.log(`Copy example files failed with error: ${reason}`);
-                                reject(`Add example  ${selectedEx} failed.`);
-                            }
-                        }
-                        );
+            // Open project
+            if (workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0){ // Add imported example to workspace if there are workspace folders in the window
+                workspace.updateWorkspaceFolders(
+                    workspace.workspaceFolders.length,
+                    null,
+                    {
+                        uri: projectUri,
+                        name: selectedEx
                     }
+                )
+            } else { // Otherwise open the imported folder
+                await commands.executeCommand("vscode.openFolder", projectUri);
+            }
 
-                    const openInNewWindow = workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0;
-                    await commands.executeCommand("vscode.openFolder", Uri.file(path.join(basePath, selectedEx)), openInNewWindow);
-
-                    resolve(`Add example completed.`);
-                }
-                catch (error) {
-                    window.showWarningMessage(`Fetching example failed with error: ${error}`);
-                    console.log(`Fetching example failed with error: ${error}`);
-                    reject(`Add example  ${selectedEx} failed.`);
-                }
-            }, (reason) => {
-                window.showWarningMessage("Creating directory for example failed");
-                console.log(`Creating directory for example files failed with error: ${reason}`);
-                reject(`Add example  ${selectedEx} failed.`);
-            });
+            resolve(`Add example completed.`);
+            
+ 
         }));
 
     }
 }
+
+

@@ -40,10 +40,11 @@ export class TranslateHandler {
                     try {
                         // Setup message parameters
                         let params: TranslateParams = {
-                            uri: fileUri.toString(), // null, //Maybe: TODO Change this when workspace has been implemented. Note: this is only relevant when a single server controls multiple workspace folders
                             languageId: this.languageKind,
                             saveUri: saveUri.toString()
                         };
+                        if (fileUri.toString() != wsFolder.uri.toString()) // If it not the workspace folder add the uri. 
+                            params.uri = fileUri.toString();
 
                         // Send request
                         const response = await client.sendRequest(TranslateRequest.type, params);

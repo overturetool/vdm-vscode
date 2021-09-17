@@ -1,3 +1,8 @@
+### 1.2.1
+- Fixes to debug launching
+- Added dependency graph generation
+- Improved CT result filtering
+
 ### 1.2.0
 - Improved outline view
 - Fixes to MATH lib

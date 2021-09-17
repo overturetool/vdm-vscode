@@ -17,6 +17,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
     private _roots: TestViewElement[];
     private _filter: boolean = false;
     private _icons: Icons;
+    private _verdictKindToShow: VerdictKind[]; // variable used to store the filter settings
     constructor(
         private _ctView: CTTreeView,
         private _context: ExtensionContext) {
@@ -28,9 +29,10 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    public filterTree(enable: boolean): any
+    public filterTree(enable: boolean, toShow?: VerdictKind[]): any
     {
         this._filter = enable;
+        this._verdictKindToShow = toShow; // # store the filter settings with the added variable _verdictKindToShow
         this._roots.forEach(symbol => symbol.getChildren().forEach(trace =>  this.rebuildViewFromElement(trace)));
     }
 
@@ -104,8 +106,12 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                 let results = this._ctView.getTestResults(testRange, element.label);
                 let resultsLength = results.length;
                 let verdict = !results ? null : VerdictKind.Passed;
+                let toShow = !this._filter; // variable used to decide if we want to show the group or not
                 for(let k = 0; k < resultsLength; k++)
                 {
+                    if(!toShow && this._verdictKindToShow.includes(results[k].verdict)) // if we find, in a group, a verdict that corresponds to a _verdictKindToShow(verdict that we want to show) then we can have to show this group (if the group contains at least 1 desired verdict then the group is selected)
+                        toShow = true;
+
                     if(results[k].verdict == null)
                         {
                             verdict = null;
@@ -117,7 +123,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
                         break;
                     } 
                 }
-                if(!this._filter || verdict != VerdictKind.Passed && verdict != VerdictKind.Inconclusive && verdict != VerdictKind.Filtered)
+                if(toShow)
                     testGroups.push(new TestViewElement(
                         "test group", 
                         TreeItemType.TestGroup, 
@@ -147,7 +153,7 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             let testsViewElements = [];
             for(let i = 0; i < testsResultsLength; i++)
             {
-                if(!this._filter || testsResults[i].verdict  != VerdictKind.Passed && testsResults[i].verdict  != VerdictKind.Inconclusive && testsResults[i].verdict  != VerdictKind.Filtered)
+                if(!this._filter || this._verdictKindToShow.includes(testsResults[i].verdict)) // filter tests and show only the ones whick correspond to the right verdict
                     testsViewElements.push( new TestViewElement(
                         testsResults[i].id+"", 
                         TreeItemType.Test, 

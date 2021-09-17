@@ -27,11 +27,24 @@ export namespace VdmDapSupport {
     export class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
         
         constructor() { 
-            // When a session terminates, remove it from the array of running sessions
-            vscode.debug.onDidTerminateDebugSession(session => {
-                let elems = sessions.filter(value => value != session.workspaceFolder.uri.toString());
-                sessions = elems;
+            // When a session is started, add it to the array of running sessions
+            vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
+                if (session.type === 'vdm'){
+                    sessions.push(session.workspaceFolder.uri.toString())
+                }
             })
+
+            // When a session terminates, remove it from the array of running sessions
+            vscode.debug.registerDebugAdapterTrackerFactory('vdm', {
+                createDebugAdapterTracker(session: vscode.DebugSession) {
+                    return {
+                        onError: m => {
+                            if (m.message = 'connection closed')
+                                sessions = sessions.filter(value => value != session.workspaceFolder.uri.toString())
+                        },
+                    }
+                }
+            });
         }
         /**
          * Massage a debug configuration just before a debug session is being launched,
@@ -40,15 +53,12 @@ export namespace VdmDapSupport {
         resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
             let uri = folder.uri.toString();
 
-            // Check if sessions is already runnig for the specification
-            if (sessions.includes(uri)){
-                vscode.window.showInformationMessage("Debug sessions already running, cannot launch multiple sessions for the same specification");
+            // Check if there is a debug session running and if one of those sessions are for the specification
+            if (vscode.debug.activeDebugSession && sessions.includes(uri)){
+                vscode.window.showInformationMessage("Debug session already running, cannot launch multiple sessions for the same specification");
                 return undefined; // Abort launch
             }
 
-            // Add WSF to sessions
-            sessions.push(uri);
-            
             // if launch.json is missing or empty
             if (!config.type && !config.request && !config.name) {
                 config.type = 'vdm';

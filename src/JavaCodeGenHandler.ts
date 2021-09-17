@@ -16,6 +16,7 @@ export class JavaCodeGenHandler {
     ) {
         this.context = context;
         this.registerCommand((inputUri: Uri) => this.javaCodeGen(workspace.getWorkspaceFolder(inputUri)));
+        commands.executeCommand( 'setContext', 'jcg-show-button', true );
     }
 
     private registerCommand = (callback: (...args: any[]) => any) => {
@@ -57,7 +58,7 @@ export class JavaCodeGenHandler {
                 }
             }
 
-            let folderUri = Uri.joinPath(wsFolder.uri, "generated", "java");
+            let folderUri = Uri.joinPath(wsFolder.uri, ".generated", "java");
 
             util.createDirectory(folderUri).then(async () => {
                 try {

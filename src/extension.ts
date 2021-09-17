@@ -84,7 +84,6 @@ export function activate(context: ExtensionContext) {
     // Show VDM VS Code buttons
     commands.executeCommand( 'setContext', 'add-lib-show-button', true );
     commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
-    commands.executeCommand( 'setContext', 'jcg-show-button', true );
 
 
 
@@ -232,7 +231,7 @@ export function activate(context: ExtensionContext) {
                 globalThis.clients.delete(wsFolder.uri.toString());
                 return;
             }
-            let server = child_process.spawn(javaPath, args);
+            let server = child_process.spawn(javaPath, args, {cwd: wsFolder.uri.fsPath});
 
             // Wait for the server to be ready
             let connected = false;
@@ -332,9 +331,10 @@ export function activate(context: ExtensionContext) {
     }
 
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
-    const translateHandlerWord  = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
-    const translateHandlerCov   = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
+    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
+    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
+    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.graphvizLanguageId, "vdm-vscode.translateGraphviz");
 
     const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
     const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
