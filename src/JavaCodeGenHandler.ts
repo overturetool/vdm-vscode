@@ -91,14 +91,28 @@ export class JavaCodeGenHandler {
                          workspace.workspaceFolders[0].uri
                       );
                     
-                    const cloning = config.get('javaCodGen.cloning',true);
+                    const outputPackage = config.get('javaCodeGen.outputPackage','');
+                    const disableCloning = config.get('javaCodeGen.disableCloning',false);
+                    const concurrency = config.get('javaCodeGen.concurrencyMechanisms',false);
+                    const vdmloc = config.get('javaCodeGen.vdmLocationInformation',false);
                     
-                    if(!cloning) args.push('-nocloning')
-
-
-
+                    if(outputPackage){
+                        args.push('-package' + ' <' + outputPackage + '>');
+                    }
+                    if(vdmloc){
+                        args.push('-vdmloc');
+                    }
+                    if(disableCloning) 
+                    {
+                        args.push('-nocloning');
+                    }
+                    if(concurrency)
+                    {
+                        args.push('-concurrency');
+                    }
                     args.push(...[
-                        '-output', folderUri.fsPath
+                        '-output', 
+                        folderUri.fsPath
                     ]);
 
                     let pattern = new RelativePattern(wsFolder.uri.path, "*." + dialectext);
