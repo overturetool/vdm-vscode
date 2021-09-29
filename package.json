@@ -532,18 +532,6 @@
           "scope": "resource",
           "description": "Generate concurrency mechanisms"
         },
-        "vdm-vscode.javaCodeGen.jmlAnnotations":{
-          "type":"boolean",
-          "default": false,
-          "scope": "resource",
-          "description": "Generate Java Modeling Language annotations"
-        },
-        "vdm-vscode.javaCodeGen.jmlInvariant":{
-          "type":"boolean",
-          "default": false,
-          "scope": "resource",
-          "description": "Use JML invariant_for to explicitly check record invariants"
-        },
         "vdm-vscode.javaCodeGen.vdmLocationInformation":{
           "type":"boolean",
           "default": true,
@@ -554,13 +542,13 @@
           "type":"string",
           "default": "",
           "scope": "resource",
-          "description": "Choose output package"
+          "description": "Choose output package e.g : my.code"
         },
         "vdm-vscode.javaCodeGen.skipClassesModules":{
           "type":"string",
           "default": "",
           "scope": "resource",
-          "description": "Skip classes/modules during the code generation process"
+          "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
         }
       }
     },

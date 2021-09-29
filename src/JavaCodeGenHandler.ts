@@ -93,11 +93,17 @@ export class JavaCodeGenHandler {
                     
                     const outputPackage = config.get('javaCodeGen.outputPackage','');
                     const disableCloning = config.get('javaCodeGen.disableCloning',false);
+                    const sequencesAsStrings = config.get('javaCodeGen.sequencesAsStrings',true);
                     const concurrency = config.get('javaCodeGen.concurrencyMechanisms',false);
                     const vdmloc = config.get('javaCodeGen.vdmLocationInformation',false);
+                    const skipClassesModules = config.get('javaCodeGen.skipClassesModules','');
                     
                     if(outputPackage){
-                        args.push('-package' + ' <' + outputPackage + '>');
+                        args.push('-package');
+                        args.push(outputPackage);
+                    }
+                    if(!sequencesAsStrings){
+                        args.push('-nostrings');
                     }
                     if(vdmloc){
                         args.push('-vdmloc');
@@ -109,6 +115,10 @@ export class JavaCodeGenHandler {
                     if(concurrency)
                     {
                         args.push('-concurrency');
+                    }
+                   if(skipClassesModules){
+                        args.push('-skip');
+                        args.push(skipClassesModules);
                     }
                     args.push(...[
                         '-output', 
