@@ -513,6 +513,42 @@
           "default": "",
           "scope": "resource",
           "description": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.stdio.activateStdoutLogging#` is active."
+        },
+        "vdm-vscode.javaCodeGen.disableCloning":{
+          "type":"boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Disable cloning (may lead to code being generated that does not preserve the semantics of the input specification)"
+        },
+        "vdm-vscode.javaCodeGen.sequencesAsStrings":{
+          "type":"boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Generate character sequences as strings"
+        },
+        "vdm-vscode.javaCodeGen.concurrencyMechanisms":{
+          "type":"boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Generate concurrency mechanisms"
+        },
+        "vdm-vscode.javaCodeGen.vdmLocationInformation":{
+          "type":"boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Generate VDM location information for code generated constructs"
+        },
+        "vdm-vscode.javaCodeGen.outputPackage":{
+          "type":"string",
+          "default": "",
+          "scope": "resource",
+          "description": "Choose output package e.g : my.code"
+        },
+        "vdm-vscode.javaCodeGen.skipClassesModules":{
+          "type":"string",
+          "default": "",
+          "scope": "resource",
+          "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
         }
       }
     },
@@ -619,6 +655,31 @@
                 "type": "string",
                 "description": "Run single execution of command and terminate.",
                 "default": ""
+              },
+              "dynamicTypeChecks": {
+                "type": "boolean",
+                "description": "Type check values during interpretation of a VDM model.",
+                "default": true
+              },
+              "invariantsChecks": {
+                "type": "boolean",
+                "description": "Check both state and type invariants.",
+                "default": true
+              },
+              "preConditionChecks": {
+                "type": "boolean",
+                "description": "Check pre-conditions for all functions and operations during interpretation of a VDM model.",
+                "default": true
+              },
+              "postConditionChecks": {
+                "type": "boolean",
+                "description": "Check post-conditions for all functions and operations during interpretation of a VDM model.",
+                "default": true
+              },
+              "measureChecks": {
+                "type": "boolean",
+                "description": "Check recursive functions, for which a function has been defined.",
+                "default": true
               }
             }
           }
