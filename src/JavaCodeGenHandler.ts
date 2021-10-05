@@ -5,9 +5,6 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import {spawn} from 'child_process';
 import * as path from 'path'
-import { config } from "process";
-
-
 
 export class JavaCodeGenHandler {
 
@@ -16,8 +13,16 @@ export class JavaCodeGenHandler {
         private context: ExtensionContext
     ) {
         this.context = context;
-        this.registerCommand((inputUri: Uri) => this.javaCodeGen(workspace.getWorkspaceFolder(inputUri)));
-        commands.executeCommand( 'setContext', 'jcg-show-button', true );
+        let jarPath = util.recursivePathSearch(path.resolve(this.context.extensionPath, "resources", "jars"), /javagen.*jar/i);
+        if (!jarPath) {
+            console.log("Code generation jar not found - Disable code generation feature");
+            commands.executeCommand( 'setContext', 'jcg-show-button', false );
+        }
+        else {
+            // Activate code generation feature
+            this.registerCommand((inputUri: Uri) => this.javaCodeGen(workspace.getWorkspaceFolder(inputUri)));
+            commands.executeCommand( 'setContext', 'jcg-show-button', true );
+        }
     }
 
     private registerCommand = (callback: (...args: any[]) => any) => {

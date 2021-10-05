@@ -300,27 +300,27 @@
         },
         {
           "command": "vdm-vscode.translateLatex",
-          "when": "explorerResourceIsFolder || resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
+          "when": "explorerResourceIsFolder && tr-latex-show-button == true || resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
           "group": "translate@1"
         },
         {
           "command": "vdm-vscode.translateWord",
-          "when": "explorerResourceIsFolder || resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
+          "when": "explorerResourceIsFolder && tr-word-show-button == true || resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
           "group": "translate@2"
         },
         {
           "command": "vdm-vscode.translateCov",
-          "when": "explorerResourceIsFolder || resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
+          "when": "explorerResourceIsFolder && tr-coverage-show-button == true || resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
           "group": "translate@3"
         },
         {
           "command": "vdm-vscode.javaCodeGen",
-          "when": "explorerResourceIsFolder || resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt ",
+          "when": "explorerResourceIsFolder && jcg-show-button == true || resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
           "group": "translate@4"
         },
         {
           "command": "vdm-vscode.translateGraphviz",
-          "when": "explorerResourceIsFolder || resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
+          "when": "explorerResourceIsFolder && tr-graphviz-show-button == true || resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
           "group": "translate@5"
         },
         {
