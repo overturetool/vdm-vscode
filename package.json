@@ -690,7 +690,12 @@
             "type": "vdm",
             "request": "launch",
             "noDebug": false,
-            "defaultName": null
+            "defaultName": null,
+            "dynamicTypeChecks" : true,
+            "invariantsChecks" : true,
+            "preConditionChecks" : true,
+            "postConditionChecks" : true,
+            "measureChecks" : true
           }
         ],
         "configurationSnippets": [
@@ -702,7 +707,12 @@
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
-              "defaultName": null
+              "defaultName": null,            
+              "dynamicTypeChecks" : true,
+              "invariantsChecks" : true,
+              "preConditionChecks" : true,
+              "postConditionChecks" : true,
+              "measureChecks" : true
             }
           },
           {
@@ -714,6 +724,11 @@
               "request": "launch",
               "noDebug": false,
               "defaultName": null,
+              "dynamicTypeChecks" : true,
+              "invariantsChecks" : true,
+              "preConditionChecks" : true,
+              "postConditionChecks" : true,
+              "measureChecks" : true,
               "command": "print ${1:Function/Operation}(${2:arguments})"
             }
           },
@@ -726,6 +741,11 @@
               "request": "launch",
               "noDebug": false,
               "defaultName": null,
+              "dynamicTypeChecks" : true,
+              "invariantsChecks" : true,
+              "preConditionChecks" : true,
+              "postConditionChecks" : true,
+              "measureChecks" : true,
               "command": "print new ${1:Class}().${2:Function/Operation}(${3:arguments})"
             }
           }

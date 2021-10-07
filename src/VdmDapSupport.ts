@@ -66,11 +66,6 @@ export namespace VdmDapSupport {
                 config.request = 'launch';
                 config.stopOnEntry = true;
                 config.noDebug = false;
-                config.dynamicTypeChecks = true;
-                config.invariantsChecks = true;
-                config.preConditionChecks = true;
-                config.postConditionChecks = true;
-                config.measureChecks = true
             }
 
             return config;
@@ -118,7 +113,6 @@ export namespace VdmDapSupport {
             type: "vdm",               // The type of the debug session.
             name: "Launch command",    // The name of the debug session.
             request: "launch",         // The request type of the debug session.
-
             // Additional debug type specific properties.
             command: command
         }
