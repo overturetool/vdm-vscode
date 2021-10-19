@@ -30,7 +30,8 @@ export class SpecificationLanguageClient extends LanguageClient {
             new TranslateFeature(SpecificationLanguageClient.latexLanguageId),
             new TranslateFeature(SpecificationLanguageClient.wordLanguageId),
             new TranslateFeature(SpecificationLanguageClient.covLanguageId),
-            new TranslateFeature(SpecificationLanguageClient.graphvizLanguageId)
+            new TranslateFeature(SpecificationLanguageClient.graphvizLanguageId),
+            new TranslateFeature(SpecificationLanguageClient.isabelleLanguageId)
         ]);
     }
 }
