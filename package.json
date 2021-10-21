@@ -510,7 +510,7 @@
           "scope": "resource",
           "description": "JVM arguments used when launching the server."
         },
-        "vdm-vscode.annotationPaths": {
+        "vdm-vscode.classPathAdditions": {
           "type": "string",
           "default": "",
           "scope": "resource",

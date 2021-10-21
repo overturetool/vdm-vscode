@@ -76,10 +76,13 @@ The following displays snippets of the feature functionalities provided by the e
 - **Import of VDM libraries**: VDM libraries can be added to a project by accessing the explorer context menu by right-clicking in the explorer.
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/import_VDM_libraries.gif" width="700">
 
+- **Remote Control**: You can use remote control option by adding a new configuration and selecting "VDM Debug: Remote Control (VDM-SL/++/RT).
+<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/remote_control.gif" width="700">
+
 ## Settings
 This extension contributes the following settings:
 - `vdm-vscode.JVMArguments`: Arguments for the JVM that is executing the server (e.g. -Xmx2g).
-- `vdm-vscode.annotationPaths`: Comma separated list of folders and/or jar file paths for annotations that should be used with the language server.
+- `vdm-vscode.classPathAdditions`: Comma separated list of folders and/or jar file paths for annotations that should be used with the language server.
 - `vdm-vscode.highPrecision`: Use high precision server that use more memory for variables ("on" or "off").
 - `vdm-vscode.debug.activateServerLog`: Log server actions ("on" or "off").
 - `vdm-vscode.debug.experimentalServer`: Use an experimental/external server ("on" or "off"). If "on" the client will not launch a server but instead connect to one that is running in another process. E.g. executing the VDMJ server in a debugger.

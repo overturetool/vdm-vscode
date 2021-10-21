@@ -182,9 +182,9 @@ export function activate(context: ExtensionContext) {
                 classPath += vdmjPath + path.delimiter + lspServerPath;
             }
 
-            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', wsFolder).annotationPaths;
-            if(userProvidedAnnotationPaths){
-                let jarPaths = userProvidedAnnotationPaths.split(",");
+            let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
+            if(userProvidedClassPathAdditions){
+                let jarPaths = userProvidedClassPathAdditions.split(",");
                 jarPaths.forEach(jarPath => {
                     if(!fs.existsSync(jarPath)){
                         Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
@@ -195,9 +195,9 @@ export function activate(context: ExtensionContext) {
                 })
             }
 /*
-            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', wsFolder).annotationPaths;
-            if(userProvidedAnnotationPaths){
-                let jarPaths = userProvidedAnnotationPaths.split(",");
+            let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
+            if(userProvidedClassPathAdditions){
+                let jarPaths = userProvidedClassPathAdditions.split(",");
                 jarPaths.forEach(jarPath => {
                     if(!fs.existsSync(jarPath)){
                         Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
