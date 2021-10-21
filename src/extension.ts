@@ -190,6 +190,19 @@ export function activate(context: ExtensionContext) {
                         Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
                         return;
                     }
+
+                    classPath +=  path.delimiter + jarPath;
+                })
+            }
+/*
+            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', wsFolder).annotationPaths;
+            if(userProvidedAnnotationPaths){
+                let jarPaths = userProvidedAnnotationPaths.split(",");
+                jarPaths.forEach(jarPath => {
+                    if(!fs.existsSync(jarPath)){
+                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
+                        return;
+                    }
                     
                     if(Util.isDir(jarPath)){
                         let subJarPaths = Util.getJarsFromFolder(jarPath);
@@ -208,7 +221,7 @@ export function activate(context: ExtensionContext) {
                     }
                 });          
             }
-
+*/
             if(useHighprecision && useHighprecision === true){
                 classPath += path.delimiter + annotationsPath_hp;
             }
