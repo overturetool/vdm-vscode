@@ -53,6 +53,11 @@ export namespace VdmDapSupport {
         resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
             let uri = folder.uri.toString();
 
+            // Check for remote control violation
+            if(config.remoteControl && config.command){
+                vscode.window.showInformationMessage("Run aborted - Command and remoteControl are mutually exclusive");
+                return undefined;
+            }
             // Check if there is a debug session running and if one of those sessions are for the specification
             if (vscode.debug.activeDebugSession && sessions.includes(uri)){
                 vscode.window.showInformationMessage("Debug session already running, cannot launch multiple sessions for the same specification");

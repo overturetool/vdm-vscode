@@ -656,6 +656,11 @@
                 "description": "Run single execution of command and terminate.",
                 "default": ""
               },
+              "remoteControl": {
+                "type": "string",
+                "description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
+                "default": ""
+              },
               "dynamicTypeChecks": {
                 "type": "boolean",
                 "description": "Type check values during interpretation of a VDM model.",
@@ -690,12 +695,12 @@
             "type": "vdm",
             "request": "launch",
             "noDebug": false,
-            "defaultName": null,
             "dynamicTypeChecks" : true,
             "invariantsChecks" : true,
             "preConditionChecks" : true,
             "postConditionChecks" : true,
-            "measureChecks" : true
+            "measureChecks" : true,
+            "defaultName": null
           }
         ],
         "configurationSnippets": [
@@ -706,13 +711,13 @@
               "name": "Launch VDM Debug Console",
               "type": "vdm",
               "request": "launch",
-              "noDebug": false,
-              "defaultName": null,            
+              "noDebug": false,           
               "dynamicTypeChecks" : true,
               "invariantsChecks" : true,
               "preConditionChecks" : true,
               "postConditionChecks" : true,
-              "measureChecks" : true
+              "measureChecks" : true,
+              "defaultName": null
             }
           },
           {
@@ -723,12 +728,12 @@
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
-              "defaultName": null,
               "dynamicTypeChecks" : true,
               "invariantsChecks" : true,
               "preConditionChecks" : true,
               "postConditionChecks" : true,
               "measureChecks" : true,
+              "defaultName": null,
               "command": "print ${1:Function/Operation}(${2:arguments})"
             }
           },
@@ -747,6 +752,23 @@
               "postConditionChecks" : true,
               "measureChecks" : true,
               "command": "print new ${1:Class}().${2:Function/Operation}(${3:arguments})"
+            }
+          },
+          {
+            "label": "VDM Debug: Remote Control (VDM-SL/++/-RT)",
+            "description": "A new configuration for 'debugging' a VDM project.",
+            "body": {
+              "name": "Launch VDM Debug with Remote Control",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": false,
+              "dynamicTypeChecks" : true,
+              "invariantsChecks" : true,
+              "preConditionChecks" : true,
+              "postConditionChecks" : true,
+              "measureChecks" : true,
+              "defaultName": null,
+              "remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
             }
           }
         ]

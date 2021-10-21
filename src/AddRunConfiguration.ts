@@ -82,7 +82,12 @@ export class AddRunConfigurationHandler {
                 name: `Launch VDM Debug from ${selectedClass}\`${selectedCommand}(${selectedCommandArguments})`,    // The name of the debug session.
                 type: "vdm",               // The type of the debug session.
                 request: "launch",         // The request type of the debug session.
-                noDebug: false
+                noDebug: false,
+                dynamicTypeChecks: true,
+                invariantsChecks: true,
+                preConditionChecks: true,
+                postConditionChecks: true,
+                measureChecks: true
             }
             if(dialect == "SL") {
                 debugConfiguration.defaultName = `${selectedClass}`,
