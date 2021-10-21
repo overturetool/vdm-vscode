@@ -3,6 +3,10 @@
 import { commands, ConfigurationTarget, DebugConfiguration, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
+interface LensConfiguration {
+
+}
+
 export class AddRunConfigurationHandler {
 
     constructor(
@@ -10,11 +14,15 @@ export class AddRunConfigurationHandler {
         private context: ExtensionContext
     ) {
         this.context = context;
-        this.registerCommand((inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)));
+        // this.registerCommand("vdm-vscode.addRunConfiguration", (inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)));
+        this.registerCommand("vdm-vscode.addRunConfiguration", (input: any) => this.addLensRunConfiguration(input)); // TODO delete after testing
+
+        this.registerCommand("vdm-vscode.addLensRunConfiguration", (input: any) => this.addLensRunConfiguration(input));
+
     }
 
-    private registerCommand = (callback: (...args: any[]) => any) => {
-        let disposable = commands.registerCommand("vdm-vscode.addRunConfiguration", callback)
+    private registerCommand = (command: string, callback: (...args: any[]) => any) => {
+        let disposable = commands.registerCommand(command, callback)
         this.context.subscriptions.push(disposable);
         return disposable;
     };
@@ -114,4 +122,12 @@ export class AddRunConfigurationHandler {
         rawConfigs.push(runConf);
         launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
     }
+
+    private async addLensRunConfiguration(input: any) {
+
+
+        return input;
+        
+    }
+
 }
