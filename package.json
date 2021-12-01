@@ -335,18 +335,18 @@
           "group": "translate@6"
         },
         {
+          "command": "vdm-vscode.importExample",
+          "group": "vdm@1"
+        },
+        {
           "command": "vdm-vscode.addLibrary",
           "when": "resourceScheme == file && add-lib-show-button == true || resourceScheme == folder && add-lib-show-button == true",
-          "group": "vdm@1"
+          "group": "vdm@2"
         },
         {
           "command": "vdm-vscode.addRunConfiguration",
           "when": "resourceScheme == file && add-runconf-show-button == true || resourceScheme == folder && add-runconf-show-button == true",
-          "group": "vdm@2"
-        },
-        {
-          "command": "vdm-vscode.importExample",
-          "group": "2_workspace@100"
+          "group": "vdm@3"
         }
       ],
       "editor/context": [
