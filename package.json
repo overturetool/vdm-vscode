@@ -75,13 +75,13 @@
         "icon": "$(example)"
       },
       {
-        "command": "vdm-vscode.translateLatex",
+        "command": "vdm-vscode.translateToLatex",
         "title": "Translate to LaTeX",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "vdm-vscode.translateWord",
+        "command": "vdm-vscode.translateToWord",
         "title": "Translate to Word",
         "category": "VDM",
         "icon": "$(references)"
@@ -232,12 +232,12 @@
           "group": "verification@1"
         },
         {
-          "command": "vdm-vscode.translateLatex",
+          "command": "vdm-vscode.translateToLatex",
           "when": "tr-latex-show-button == true",
           "group": "translate@1"
         },
         {
-          "command": "vdm-vscode.translateWord",
+          "command": "vdm-vscode.translateToWord",
           "when": "tr-word-show-button == true",
           "group": "translate@2"
         },
@@ -415,11 +415,11 @@
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateLatex",
+          "command": "vdm-vscode.translateToLatex",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateWord",
+          "command": "vdm-vscode.translateToWord",
           "when": "false"
         },
         {
