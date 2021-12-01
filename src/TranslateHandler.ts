@@ -50,15 +50,7 @@ export class TranslateHandler {
                         const response = await client.sendRequest(TranslateRequest.type, params);
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-
-                            if ( this.languageKind !== SpecificationLanguageClient.covLanguageId ) {
-                                // Open the main file in the translation
-                                let doc = await workspace.openTextDocument(Uri.parse(response.uri));
-
-                                // Show the file
-                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
-                            }
-                            else {
+                            if ( this.languageKind == SpecificationLanguageClient.covLanguageId ) {
                                 // Open the main file in the translation
                                 let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 
@@ -74,7 +66,13 @@ export class TranslateHandler {
                                     .then( (editor) => editor.setDecorations(decorationType, ranges)
                                     );
                             }
+                            else {
+                                // Open the main file in the translation
+                                let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
+                                // Show the file
+                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                            }
                         }
 
                         resolve(`Generation of ${this.languageKind} succeeded.`);
