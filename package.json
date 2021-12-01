@@ -315,23 +315,23 @@
           "group": "translate@2"
         },
         {
+          "command": "vdm-vscode.translateIsabelle",
+          "when": "explorerResourceIsFolder && tr-isabelle-show-button == true || resourceLangId == vdmsl && tr-isabelle-show-button == true || resourceLangId == vdmpp && tr-isabelle-show-button == true || resourceLangId == vdmrt && tr-isabelle-show-button == true",
+          "group": "translate@3"
+        },
+        {
           "command": "vdm-vscode.translateCov",
           "when": "explorerResourceIsFolder && tr-coverage-show-button == true || resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
-          "group": "translate@3"
+          "group": "translate@4"
         },
         {
           "command": "vdm-vscode.javaCodeGen",
           "when": "explorerResourceIsFolder && jcg-show-button == true || resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
-          "group": "translate@4"
+          "group": "translate@5"
         },
         {
           "command": "vdm-vscode.translateGraphviz",
           "when": "explorerResourceIsFolder && tr-graphviz-show-button == true || resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
-          "group": "translate@5"
-        },
-        {
-          "command": "vdm-vscode.translateIsabelle",
-          "when": "explorerResourceIsFolder && tr-isabelle-show-button == true || resourceLangId == vdmsl && tr-isabelle-show-button == true || resourceLangId == vdmpp && tr-isabelle-show-button == true || resourceLangId == vdmrt && tr-isabelle-show-button == true",
           "group": "translate@6"
         },
         {
@@ -366,24 +366,24 @@
           "group": "translate@2"
         },
         {
+          "command": "vdm-vscode.translateIsabelle",
+          "when": "resourceLangId == vdmsl && tr-isabelle-show-button == true || resourceLangId == vdmpp && tr-isabelle-show-button == true || resourceLangId == vdmrt && tr-isabelle-show-button == true",
+          "group": "translate@3"
+        },
+        {
           "command": "vdm-vscode.translateCov",
           "when": "resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
-          "group": "translate@3"
+          "group": "translate@4"
         },
         {
           "command": "vdm-vscode.javaCodeGen",
           "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
-          "group": "translate@4"
+          "group": "translate@5"
         },
         {
           "command": "vdm-vscode.translateGraphviz",
           "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
-          "group": "translate@5"
-        },
-        {
-          "command": "vdm-vscode.translateIsabelle",
-          "when": "resourceLangId == vdmsl && tr-isabelle-show-button == true || resourceLangId == vdmpp && tr-isabelle-show-button == true || resourceLangId == vdmrt && tr-isabelle-show-button == true",
-          "group": "translate@5"
+          "group": "translate@6"
         },
         {
           "command": "vdm-vscode.addLibrary",
