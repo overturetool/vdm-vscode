@@ -218,7 +218,60 @@
         "contents": "[Generate test outline](command:vdm-vscode.ctRebuildOutline)"
       }
     ],
+    "submenus": [
+      {
+        "id": "vdm-vscode.vdmsubmenu",
+        "label": "VDM"
+      }
+    ],
     "menus": {
+      "vdm-vscode.vdmsubmenu": [
+        {
+          "command": "vdm-vscode.runPOG",
+          "when": "pog-show-button == true",
+          "group": "verification@1"
+        },
+        {
+          "command": "vdm-vscode.translateLatex",
+          "when": "tr-latex-show-button == true",
+          "group": "translate@1"
+        },
+        {
+          "command": "vdm-vscode.translateWord",
+          "when": "tr-word-show-button == true",
+          "group": "translate@2"
+        },
+        {
+          "command": "vdm-vscode.translateIsabelle",
+          "when": "tr-isabelle-show-button == true",
+          "group": "translate@3"
+        },
+        {
+          "command": "vdm-vscode.translateCov",
+          "when": "tr-coverage-show-button == true",
+          "group": "translate@4"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "jcg-show-button == true",
+          "group": "translate@5"
+        },
+        {
+          "command": "vdm-vscode.translateGraphviz",
+          "when": "tr-graphviz-show-button == true",
+          "group": "translate@6"
+        },
+        {
+          "command": "vdm-vscode.addLibrary",
+          "when": "add-lib-show-button == true",
+          "group": "workspace@1"
+        },
+        {
+          "command": "vdm-vscode.addRunConfiguration",
+          "when": "add-runconf-show-button == true",
+          "group": "workspace@2"
+        }
+      ],
       "view/title": [
         {
           "command": "vdm-vscode.ctFullExecute",
@@ -300,100 +353,20 @@
       ],
       "explorer/context": [
         {
-          "command": "vdm-vscode.runPOG",
-          "when": "resourceScheme == file && pog-show-button == true || resourceScheme == folder && pog-show-button == true",
-          "group": "verification@1"
-        },
-        {
-          "command": "vdm-vscode.translateLatex",
-          "when": "explorerResourceIsFolder && tr-latex-show-button == true || resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
-          "group": "translate@1"
-        },
-        {
-          "command": "vdm-vscode.translateWord",
-          "when": "explorerResourceIsFolder && tr-word-show-button == true || resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
-          "group": "translate@2"
-        },
-        {
-          "command": "vdm-vscode.translateIsabelle",
-          "when": "explorerResourceIsFolder && tr-isabelle-show-button == true || resourceLangId == vdmsl && tr-isabelle-show-button == true || resourceLangId == vdmpp && tr-isabelle-show-button == true || resourceLangId == vdmrt && tr-isabelle-show-button == true",
-          "group": "translate@3"
-        },
-        {
-          "command": "vdm-vscode.translateCov",
-          "when": "explorerResourceIsFolder && tr-coverage-show-button == true || resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
-          "group": "translate@4"
-        },
-        {
-          "command": "vdm-vscode.javaCodeGen",
-          "when": "explorerResourceIsFolder && jcg-show-button == true || resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
-          "group": "translate@5"
-        },
-        {
-          "command": "vdm-vscode.translateGraphviz",
-          "when": "explorerResourceIsFolder && tr-graphviz-show-button == true || resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
-          "group": "translate@6"
-        },
-        {
           "command": "vdm-vscode.importExample",
+          "group": "vdm@0"
+        },
+        {
+          "submenu": "vdm-vscode.vdmsubmenu",
+          "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
           "group": "vdm@1"
-        },
-        {
-          "command": "vdm-vscode.addLibrary",
-          "when": "resourceScheme == file && add-lib-show-button == true || resourceScheme == folder && add-lib-show-button == true",
-          "group": "vdm@2"
-        },
-        {
-          "command": "vdm-vscode.addRunConfiguration",
-          "when": "resourceScheme == file && add-runconf-show-button == true || resourceScheme == folder && add-runconf-show-button == true",
-          "group": "vdm@3"
         }
       ],
       "editor/context": [
         {
-          "command": "vdm-vscode.runPOG",
-          "when": "resourceLangId == vdmsl && pog-show-button == true || resourceLangId == vdmpp && pog-show-button == true || resourceLangId == vdmrt && pog-show-button == true",
-          "group": "verification@1"
-        },
-        {
-          "command": "vdm-vscode.translateLatex",
-          "when": "resourceLangId == vdmsl && tr-latex-show-button == true || resourceLangId == vdmpp && tr-latex-show-button == true || resourceLangId == vdmrt && tr-latex-show-button == true",
-          "group": "translate@1"
-        },
-        {
-          "command": "vdm-vscode.translateWord",
-          "when": "resourceLangId == vdmsl && tr-word-show-button == true || resourceLangId == vdmpp && tr-word-show-button == true || resourceLangId == vdmrt && tr-word-show-button == true",
-          "group": "translate@2"
-        },
-        {
-          "command": "vdm-vscode.translateIsabelle",
-          "when": "resourceLangId == vdmsl && tr-isabelle-show-button == true || resourceLangId == vdmpp && tr-isabelle-show-button == true || resourceLangId == vdmrt && tr-isabelle-show-button == true",
-          "group": "translate@3"
-        },
-        {
-          "command": "vdm-vscode.translateCov",
-          "when": "resourceLangId == vdmsl && tr-coverage-show-button == true || resourceLangId == vdmpp && tr-coverage-show-button == true || resourceLangId == vdmrt && tr-coverage-show-button == true",
-          "group": "translate@4"
-        },
-        {
-          "command": "vdm-vscode.javaCodeGen",
-          "when": "resourceLangId == vdmsl && jcg-show-button == true || resourceLangId == vdmpp && jcg-show-button == true || resourceLangId == vdmrt && jcg-show-button == true",
-          "group": "translate@5"
-        },
-        {
-          "command": "vdm-vscode.translateGraphviz",
-          "when": "resourceLangId == vdmsl && tr-graphviz-show-button == true || resourceLangId == vdmpp && tr-graphviz-show-button == true || resourceLangId == vdmrt && tr-graphviz-show-button == true",
-          "group": "translate@6"
-        },
-        {
-          "command": "vdm-vscode.addLibrary",
-          "when": "resourceLangId == vdmsl && add-lib-show-button == true || resourceLangId == vdmpp && add-lib-show-button == true || resourceLangId == vdmrt && add-lib-show-button == true",
+          "submenu": "vdm-vscode.vdmsubmenu",
+          "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
           "group": "vdm@1"
-        },
-        {
-          "command": "vdm-vscode.addRunConfiguration",
-          "when": "resourceLangId == vdmsl && add-runconf-show-button == true || resourceLangId == vdmpp && add-runconf-show-button == true || resourceLangId == vdmrt && add-runconf-show-button == true",
-          "group": "vdm@2"
         }
       ],
       "commandPalette": [

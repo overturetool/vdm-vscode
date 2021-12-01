@@ -82,10 +82,7 @@ export function activate(context: ExtensionContext) {
     let extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
 
     // Show VDM VS Code buttons
-    commands.executeCommand( 'setContext', 'add-lib-show-button', true );
-    commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
-
-
+    commands.executeCommand( 'setContext', 'vdm-submenus-show', true);
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
