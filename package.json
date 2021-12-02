@@ -36,9 +36,6 @@
     "Linters",
     "Snippets"
   ],
-  "extensionPack": [
-    "joaompinto.vscode-graphviz"
-  ],
   "activationEvents": [
     "onLanguage:vdmsl",
     "onLanguage:vdmpp",
