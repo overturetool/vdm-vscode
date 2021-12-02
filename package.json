@@ -33,7 +33,8 @@
   "categories": [
     "Programming Languages",
     "Debuggers",
-    "Linters"
+    "Linters",
+    "Snippets"
   ],
   "extensionPack": [
     "joaompinto.vscode-graphviz"
@@ -49,6 +50,20 @@
   ],
   "main": "./dist/extension",
   "contributes": {
+    "snippets": [
+      {
+        "language": "vdmsl",
+        "path": "./resources/snippets/vdmslSnippets.json"
+      },
+      {
+        "language": "vdmpp",
+        "path": "./resources/snippets/vdmppSnippets.json"
+      },
+      {
+        "language": "vdmrt",
+        "path": "./resources/snippets/vdmrtSnippets.json"
+      }
+    ],
     "commands": [
       {
         "command": "vdm-vscode.addRunConfiguration",

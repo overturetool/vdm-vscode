@@ -1,0 +1,303 @@
+{
+  "act": {
+    "prefix": [
+      "act"
+    ],
+    "body": "#act(${1:operationName})",
+    "description": "The number of times that operation name operation has been activated"
+  },
+  "active": {
+    "prefix": [
+      "active"
+    ],
+    "body": "#active(${1:operationName})",
+    "description": "The number of operation name operations that are currently active."
+  },
+  "bus": {
+    "prefix": [
+      "bus"
+    ],
+    "body": "${1:busName} : BUS := new BUS (${2:priority}, ${3:speed}, {${4:CPU1}, ${5:CPU2}});",
+    "description": "BUS (Priority <CSMACD>, capacity,set of connected CPUs)"
+  },
+  "caseExpression": {
+    "prefix": [
+      "caseExpression"
+    ],
+    "body": "cases ${1:expression}:\n\t${2:patternList1} -> ${3:expression1},\n\t${4:patternList2} -> ${5:expression2},\n\tothers -> ${6:expressionOthers}\nend;",
+    "description": "Case Expression"
+  },
+  "class": {
+    "prefix": [
+      "class"
+    ],
+    "body": "class ${1:className}\n\nend ${1:className}",
+    "description": "Class Definition"
+  },
+  "classSkeleton": {
+    "prefix": [
+      "classSkeleton"
+    ],
+    "body": "class ${1:className}\ntypes\n\t${2:cursor}\nvalues\n\t\ninstance variables\n\noperations\n\nfunctions\n\nend ${1:className}",
+    "description": "Class Definition full skeleton"
+  },
+  "cpu": {
+    "prefix": [
+      "cpu"
+    ],
+    "body": "${1:cpuName} : CPU := new CPU (${2:priority}, ${3:speed});",
+    "description": "CPU (Priority <FP/FCFS>, capacity)"
+  },
+  "cycle": {
+    "prefix": [
+      "cycle"
+    ],
+    "body": "cycles(${1:numberOfCycles})${2:statement};",
+    "description": "Cycles(number of cycles)statement"
+  },
+  "dclStatement": {
+    "prefix": [
+      "dclStatement"
+    ],
+    "body": "dcl ${1:name} : ${2:nameType};\n\t${1:name} := ${4:expression}",
+    "description": "Declare"
+  },
+  "defExpression": {
+    "prefix": [
+      "defExpression"
+    ],
+    "body": "def ${1:pattern} = ${2:expression1} in\n\t${3:expression2}",
+    "description": "def pattern = expression1 in expression2"
+  },
+  "duration": {
+    "prefix": [
+      "duration"
+    ],
+    "body": "duration(${1:time})${2:statement};",
+    "description": "Duration(time in milliceconds)statement"
+  },
+  "exists": {
+    "prefix": [
+      "exists"
+    ],
+    "body": "exists ${1:bindList} & ${2:predicate}",
+    "description": "exists bindList & predicate"
+  },
+  "fin": {
+    "prefix": [
+      "fin"
+    ],
+    "body": "#fin(${1:operationName})",
+    "description": "The number of times that the operation name operation has been completed"
+  },
+  "forall": {
+    "prefix": [
+      "forall"
+    ],
+    "body": "forall ${1:bindList} & ${2:predicate}",
+    "description": "forall bind list & predicate"
+  },
+  "forallinset": {
+    "prefix": [
+      "forallinset"
+    ],
+    "body": "for all ${1:pattern} in set ${2:s} do\n    ${3:statement}",
+    "description": "for all in set do"
+  },
+  "forallLoop": {
+    "prefix": [
+      "forallLoop"
+    ],
+    "body": "for ${1:identifier} = ${2:initialValue} to ${3:upperValue} do\n\t${4:statement}",
+    "description": "for identifier = expression1 to expression2 do\\n statement"
+  },
+  "functionExplicit": {
+    "prefix": [
+      "functionExplicit"
+    ],
+    "body": "${1:private} ${2:functionName} :  ${3:parameterTypes} -> ${4:resultType}\n${2:functionName} (${6:parameterNames}) == ${7:expression};",
+    "description": "Explicit function"
+  },
+  "functionImplicit": {
+    "prefix": [
+      "functionImplicit"
+    ],
+    "body": "${1:private} ${2:functionName} (${3:parameters}) ${4:resultName}: ${5:resultType}\npre ${6:predicate1}\npost ${7:predicate2}",
+    "description": "Implicit function"
+  },
+  "functions": {
+    "prefix": [
+      "functions"
+    ],
+    "body": "functions\n\t${1:cursor}",
+    "description": "Function block"
+  },
+  "ifthen": {
+    "prefix": [
+      "ifthen"
+    ],
+    "body": "if ${1:predicate} \nthen \n\t${2:expression1} \nelse\n\t${3:expression2}",
+    "description": "if predicate then expression1 else expression2"
+  },
+  "instancevariables": {
+    "prefix": [
+      "instancevariables"
+    ],
+    "body": "instance variables\n\t${1:cursor}",
+    "description": "Instance Variables block"
+  },
+  "isnotyetspecified": {
+    "prefix": [
+      "isnotyetspecified"
+    ],
+    "body": "is not yet specified",
+    "description": "is not yet specified"
+  },
+  "isofbaseclass": {
+    "prefix": [
+      "isofbaseclass"
+    ],
+    "body": "isofbaseclass(${1:ClassTypeName}, ${2:objectName})",
+    "description": "Test if an object is of a specific base class"
+  },
+  "isofclass": {
+    "prefix": [
+      "isofclass"
+    ],
+    "body": "isofclass(${1:ClassTypeName}, ${2:objectName})",
+    "description": "Test if an object is of class"
+  },
+  "issubclassof": {
+    "prefix": [
+      "issubclassof"
+    ],
+    "body": "is subclass of",
+    "description": "Is subclass of"
+  },
+  "issubclassresponsibility": {
+    "prefix": [
+      "issubclassresponsibility"
+    ],
+    "body": "is subclass responsibility",
+    "description": "Is subclass responsibility"
+  },
+  "let": {
+    "prefix": [
+      "let"
+    ],
+    "body": "let ${1:pattern} = ${2:expression1} in\n\t${3:expression2}",
+    "description": "let pattern = expression1 in expression2"
+  },
+  "mutex": {
+    "prefix": [
+      "mutex"
+    ],
+    "body": "mutex ${1:operationName}",
+    "description": "Mutex operation"
+  },
+  "operationExplicit": {
+    "prefix": [
+      "operationExplicit"
+    ],
+    "body": "${1:private} ${2:operationName} : ${3:parameterTypes} ==> ${4:resultType}\n${2:operationName} (${6:parameterNames}) == ${7:statements};",
+    "description": "Explicit Operation"
+  },
+  "operationImplicit": {
+    "prefix": [
+      "operationImplicit"
+    ],
+    "body": "${1:private} ${2:operationName} (${3:parameters}) ${4:resultName}: ${5:resultType}\n\text rd ${6:instanceVariable1} : ${7:instanceVariable1Type}\n\twr ${8:instanceVariable2} : ${9:instanceVariable2Type}\n\tpre ${10:predicate1}\n\tpost ${11:predicate2};",
+    "description": "Implicit operation"
+  },
+  "operations": {
+    "prefix": [
+      "operations"
+    ],
+    "body": "operations\n\t${1:cursor}",
+    "description": "Operation block"
+  },
+  "per": {
+    "prefix": [
+      "per"
+    ],
+    "body": "per ${1:operationName} => ${2:predicate}",
+    "description": "Permission predicate for an operation, history counters can be used: \u00c2\u00a3fin, #act, #active, #req, #waiting"
+  },
+  "periodic": {
+    "prefix": [
+      "periodic"
+    ],
+    "body": "periodic(${1:periode},${2:jitter},${3:delay},${4:offset})(${5:operationName});",
+    "description": "periodic(periode,jitter,delay,offset)(operation name)"
+  },
+  "req": {
+    "prefix": [
+      "req"
+    ],
+    "body": "#req(${1:operationName})",
+    "description": "The number of requests that has been issued for the operation name operation"
+  },
+  "samebaseclass": {
+    "prefix": [
+      "samebaseclass"
+    ],
+    "body": "samebaseclass(${1:objectName}, ${1:objectName})",
+    "description": "Test if two objects are of the same type"
+  },
+  "self": {
+    "prefix": [
+      "self"
+    ],
+    "body": "self",
+    "description": "Get a reference to the current object"
+  },
+  "sync": {
+    "prefix": [
+      "sync"
+    ],
+    "body": "sync\n\t${1:cursor}",
+    "description": "Synchronization block"
+  },
+  "system": {
+    "prefix": [
+      "system"
+    ],
+    "body": "system ${1:systemName}\ninstance variables\n\tcpu1 : CPU := new CPU(<FP>, 22E6);\n\tcpu2 : CPU := new CPU(<FP>, 22E6);\n\tbus1 : BUS := new BUS(<CSMACD>, 72E3,{ cpu1,cpu2});\n\n\t${2:cursor}\noperations\n\npublic ${1:systemName} : () ==> ${1:systemName}\n${1:systemName}()==\n(\n\tskip;\n);\n\nend ${1:systemName}",
+    "description": "System skeleton"
+  },
+  "time": {
+    "prefix": [
+      "time"
+    ],
+    "body": "time",
+    "description": "Get the current time"
+  },
+  "values": {
+    "prefix": [
+      "values"
+    ],
+    "body": "values\n\t${1:cursor}",
+    "description": "Values block"
+  },
+  "vdm_al": {
+    "prefix": [
+      "vdm_al"
+    ],
+    "body": "\\begin{vdm_al}\n${1:cursor}\n\\end{vdm_al}",
+    "description": "Literate VDM"
+  },
+  "waiting": {
+    "prefix": [
+      "waiting"
+    ],
+    "body": "#waiting(${1:operationName})",
+    "description": "The number of outstanding requests for the operation name operation"
+  },
+  "while": {
+    "prefix": [
+      "while"
+    ],
+    "body": "while ${1:predicate} \ndo ${2:statement}",
+    "description": "while predicate do statement"
+  }
+}
