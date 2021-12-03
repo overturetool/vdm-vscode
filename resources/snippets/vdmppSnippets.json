@@ -31,7 +31,7 @@
     "prefix": [
       "classSkeleton"
     ],
-    "body": "class ${1:className}\ntypes\n\t${2:cursor}\nvalues\n\t\ninstance variables\n\noperations\n\nfunctions\n\nend ${1:className}",
+    "body": "class ${1:className}\ntypes\n\t$0\nvalues\n\t\ninstance variables\n\noperations\n\nfunctions\n\nend ${1:className}",
     "description": "Class Definition full skeleton"
   },
   "dclStatement": {
@@ -101,7 +101,7 @@
     "prefix": [
       "functions"
     ],
-    "body": "functions\n\t${1:cursor}",
+    "body": "functions\n\t$0",
     "description": "Function block"
   },
   "ifthen": {
@@ -115,7 +115,7 @@
     "prefix": [
       "instancevariables"
     ],
-    "body": "instance variables\n\t${1:cursor}",
+    "body": "instance variables\n\t$0",
     "description": "Instance Variables block"
   },
   "isnotyetspecified": {
@@ -185,7 +185,7 @@
     "prefix": [
       "operations"
     ],
-    "body": "operations\n\t${1:cursor}",
+    "body": "operations\n\t$0",
     "description": "Operation block"
   },
   "per": {
@@ -220,21 +220,21 @@
     "prefix": [
       "sync"
     ],
-    "body": "sync\n\t${1:cursor}",
+    "body": "sync\n\t$0",
     "description": "Synchronization block"
   },
   "values": {
     "prefix": [
       "values"
     ],
-    "body": "values\n\t${1:cursor}",
+    "body": "values\n\t$0",
     "description": "Values block"
   },
   "vdm_al": {
     "prefix": [
       "vdm_al"
     ],
-    "body": "\\begin{vdm_al}\n${1:cursor}\n\\end{vdm_al}",
+    "body": "\\begin{vdm_al}\n$0\n\\end{vdm_al}",
     "description": "Literate VDM"
   },
   "waiting": {
