@@ -47,6 +47,10 @@ export interface TranslateParams extends WorkDoneProgressParams {
      * This should be an existing empty folder.
      */
     saveUri: DocumentUri;
+    /**
+	 * Arguments that the command handler should be invoked with.
+	 */
+	arguments?: any[];
 }
 
 /**
