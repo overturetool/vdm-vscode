@@ -170,8 +170,11 @@ export function activate(context: ExtensionContext) {
                 args.push('-Dlsp.log.filename=' + path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log'));
             }
 
+            // Construct class path
             let classPath = "";
             let useHighprecision = workspace.getConfiguration('vdm-vscode', wsFolder).highPrecision;
+
+            // Add VDMJ and LSP Server jar to class path
             if(useHighprecision && useHighprecision === true){
                 classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
             }
@@ -179,46 +182,20 @@ export function activate(context: ExtensionContext) {
                 classPath += vdmjPath + path.delimiter + lspServerPath;
             }
 
+            // Add user defined paths to class path
             let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
             if(userProvidedClassPathAdditions){
-                let jarPaths = userProvidedClassPathAdditions.split(",");
-                jarPaths.forEach(jarPath => {
-                    if(!fs.existsSync(jarPath)){
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
+                let pathArray = userProvidedClassPathAdditions.split(",");
+                pathArray.forEach(p => {
+                    if(!fs.existsSync(p)){
+                        Util.writeToLog(extensionLogPath, "Invalid path in class path additions: " + p);
                         return;
                     }
-
-                    classPath +=  path.delimiter + jarPath;
+                    classPath += path.delimiter + p;
                 })
             }
-/*
-            let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
-            if(userProvidedClassPathAdditions){
-                let jarPaths = userProvidedClassPathAdditions.split(",");
-                jarPaths.forEach(jarPath => {
-                    if(!fs.existsSync(jarPath)){
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
-                        return;
-                    }
-                    
-                    if(Util.isDir(jarPath)){
-                        let subJarPaths = Util.getJarsFromFolder(jarPath);
-                        if(subJarPaths.length === 0){
-                            Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
-                        }
-                        subJarPaths.forEach(subJarPath =>{
-                            classPath +=  path.delimiter + subJarPath;
-                        })
-                    }
-                    else if(jarPath.split(jarPath.sep)[jarPath.split(jarPath.sep).length -1].search(/.*jar/i) != -1){
-                        classPath +=  path.delimiter + jarPath;
-                    }
-                    else{
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation " + jarPath);
-                    }
-                });          
-            }
-*/
+
+            // Add standard annotations jar to class path
             if(useHighprecision && useHighprecision === true){
                 classPath += path.delimiter + annotationsPath_hp;
             }
@@ -226,6 +203,7 @@ export function activate(context: ExtensionContext) {
                 classPath += path.delimiter + annotationsPath;
             }
 
+            // Construct java launch arguments
             args.push(...[
                 '-cp', classPath,
                 'lsp.LSPServerSocket',
