@@ -188,7 +188,9 @@ export function activate(context: ExtensionContext) {
                 let pathArray = userProvidedClassPathAdditions.split(",");
                 pathArray.forEach(p => {
                     if(!fs.existsSync(p)){
-                        Util.writeToLog(extensionLogPath, "Invalid path in class path additions: " + p);
+                        let m = "Invalid path in class path additions: " + p;
+                        window.showWarningMessage(m)
+                        Util.writeToLog(extensionLogPath, m);
                         return;
                     }
                     classPath += path.delimiter + p;

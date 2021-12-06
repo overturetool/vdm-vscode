@@ -499,7 +499,7 @@
           "type": "string",
           "default": "",
           "scope": "resource",
-          "description": "Comma separated list of folder and/or jar file paths for annotations that should be used with the language server."
+          "description": "Comma separated list of folder and/or file paths that should be included in the class path for the language server."
         },
         "vdm-vscode.highPrecision": {
           "type": "boolean",
