@@ -518,7 +518,7 @@
           "type": "string",
           "default": "",
           "scope": "resource",
-          "description": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.stdio.activateStdoutLogging#` is active."
+          "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.stdio.activateStdoutLogging#` is active."
         },
         "vdm-vscode.javaCodeGen.disableCloning":{
           "type":"boolean",
