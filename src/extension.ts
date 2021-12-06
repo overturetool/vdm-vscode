@@ -82,10 +82,7 @@ export function activate(context: ExtensionContext) {
     let extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
 
     // Show VDM VS Code buttons
-    commands.executeCommand( 'setContext', 'add-lib-show-button', true );
-    commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
-
-
+    commands.executeCommand( 'setContext', 'vdm-submenus-show', true);
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
@@ -344,8 +341,8 @@ export function activate(context: ExtensionContext) {
     }
 
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
-    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateToLatex");
+    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateToWord");
     const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
     const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.graphvizLanguageId, "vdm-vscode.translateGraphviz");
     const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.isabelleLanguageId, "vdm-vscode.translateIsabelle");

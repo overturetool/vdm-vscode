@@ -15,6 +15,7 @@ export class AddLibraryHandler {
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext
     ) {
+        commands.executeCommand( 'setContext', 'add-lib-show-button', true );
         this.context = context;
         this.registerCommand((inputUri: Uri) => this.addLibrary(workspace.getWorkspaceFolder(inputUri)));
     }

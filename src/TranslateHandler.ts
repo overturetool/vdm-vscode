@@ -50,33 +50,29 @@ export class TranslateHandler {
                         const response = await client.sendRequest(TranslateRequest.type, params);
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
+                            if ( this.languageKind == SpecificationLanguageClient.covLanguageId ) {
+                                // Open the main file in the translation
+                                let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 
-                            if ( this.languageKind !== SpecificationLanguageClient.covLanguageId )
-                            {
-                                                           // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(Uri.parse(response.uri));
+                                const decorationType = window.createTextEditorDecorationType({
+                                    backgroundColor: '#0080FF80',
+                                    border: '2px solid black',
+                                })
 
-                            // Show the file
-                            window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                                let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
+
+                                // Show the file
+                                window.showTextDocument(doc.uri)
+                                    .then( (editor) => editor.setDecorations(decorationType, ranges)
+                                    );
                             }
-                        else
-                            {
-                            // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
+                            else {
+                                // Open the main file in the translation
+                                let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
-                            const decorationType = window.createTextEditorDecorationType({
-                                backgroundColor: '#0080FF80',
-                                border: '2px solid black',
-                              })
-
-                            let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
-
-                            // Show the file
-                            window.showTextDocument(doc.uri)
-                                .then( (editor) => editor.setDecorations(decorationType, ranges)
-                                      );
+                                // Show the file
+                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
                             }
-
                         }
 
                         resolve(`Generation of ${this.languageKind} succeeded.`);
