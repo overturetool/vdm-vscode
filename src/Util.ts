@@ -2,7 +2,7 @@
 
 import * as path from 'path'
 import * as fs from 'fs'
-import { RelativePattern, Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from 'vscode';
 import { DocumentUri } from 'vscode-languageclient';
 
 export function ensureDirectoryExistence(filePath) {
@@ -157,3 +157,9 @@ export async function guessDialect(wsFolder: WorkspaceFolder){
     
     return dialect
 }
+
+export function registerCommand(context: ExtensionContext, command: string, callback: (...args: any[]) => any){
+    let disposable = commands.registerCommand(command, callback)
+    context.subscriptions.push(disposable);
+    return disposable;
+};

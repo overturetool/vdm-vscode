@@ -22,6 +22,7 @@ import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
+import { AddToClassPathHandler } from './AddToClassPath';
 
 globalThis.clients = new Map();
 
@@ -325,6 +326,7 @@ export function activate(context: ExtensionContext) {
     const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
     const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
     const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
+    const addToClassPathHandler = new AddToClassPathHandler(context);
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);
