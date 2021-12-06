@@ -50,7 +50,7 @@ export interface TranslateParams extends WorkDoneProgressParams {
     /**
 	 * Arguments that the command handler should be invoked with.
 	 */
-	arguments?: any[];
+	arguments?: any[]; //TODO make LSPAny[] when LSP 3.17 is released
 }
 
 /**
