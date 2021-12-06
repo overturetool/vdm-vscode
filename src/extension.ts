@@ -185,8 +185,7 @@ export function activate(context: ExtensionContext) {
             // Add user defined paths to class path
             let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
             if(userProvidedClassPathAdditions){
-                let pathArray = userProvidedClassPathAdditions.split(",");
-                pathArray.forEach(p => {
+                userProvidedClassPathAdditions.forEach(p => {
                     if(!fs.existsSync(p)){
                         let m = "Invalid path in class path additions: " + p;
                         window.showWarningMessage(m)

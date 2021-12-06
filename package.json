@@ -496,10 +496,11 @@
           "description": "JVM arguments used when launching the server."
         },
         "vdm-vscode.classPathAdditions": {
-          "type": "string",
-          "default": "",
+          "type": "array",
+          "items": {"type":"string"},
+          "default": [],
           "scope": "resource",
-          "description": "Comma separated list of folder and/or file paths that should be included in the class path for the language server."
+          "description": "List of folder and/or file paths that should be included in the class path for the language server."
         },
         "vdm-vscode.highPrecision": {
           "type": "boolean",
