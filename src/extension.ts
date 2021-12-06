@@ -175,12 +175,10 @@ export function activate(context: ExtensionContext) {
             let useHighprecision = workspace.getConfiguration('vdm-vscode', wsFolder).highPrecision;
 
             // Add VDMJ and LSP Server jar to class path
-            if(useHighprecision && useHighprecision === true){
+            if(useHighprecision && useHighprecision === true)
                 classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
-            }
-            else{
+            else
                 classPath += vdmjPath + path.delimiter + lspServerPath;
-            }
 
             // Add user defined paths to class path
             let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
@@ -196,13 +194,9 @@ export function activate(context: ExtensionContext) {
                 })
             }
 
-            // Add standard annotations jar to class path
-            if(useHighprecision && useHighprecision === true){
-                classPath += path.delimiter + annotationsPath_hp;
-            }
-            else{
-                classPath += path.delimiter + annotationsPath;
-            }
+            // Add standard annotations jar to class path 
+            // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
+            classPath += path.delimiter + (useHighprecision && useHighprecision === true ? annotationsPath_hp : annotationsPath);
 
             // Construct java launch arguments
             args.push(...[
