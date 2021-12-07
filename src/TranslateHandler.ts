@@ -46,8 +46,8 @@ export class TranslateHandler {
                         if (fileUri.toString() != wsFolder.uri.toString()) // If it not the workspace folder add the uri. 
                             params.uri = fileUri.toString();
                         
-                        // Add arguments based on settings
-                        this.addArguments(params);
+                        // Add options based on configuration settings
+                        params = this.addOptions(params, wsFolder);
 
                         // Send request
                         const response = await client.sendRequest(TranslateRequest.type, params);
@@ -100,24 +100,25 @@ export class TranslateHandler {
 
     }
 
-    private addArguments(params:TranslateParams) : void {
+    private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder) : TranslateParams {
+        // Get configurations related to translation
         const config = workspace.getConfiguration(
             this.translationCommandName,
-            workspace.workspaceFolders[0].uri
+            wsFolder.uri
         );
 
+        // Add configurations to the command options
         let once = true;
         Object.keys(config).forEach(key => {
             if (typeof config[key] !== 'function') {
-                if (once){params.arguments = []; once = false;} // Initialise argument only once
+                if (once){params.options = {}; once = false;} // Initialise options only once
 
-                // Add argument object to array
-                let obj = {};
-                obj[key] = config[key];
-                params.arguments.push(obj)
-                // TODO Change to?: params.arguments.push(`${key}=${config[key]}`)
+                // Add options object to array
+                params.options[key] = config[key];
             }
         });
+
+        return params;
     }
 }
 
