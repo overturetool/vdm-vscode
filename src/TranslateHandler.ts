@@ -45,38 +45,38 @@ export class TranslateHandler {
                         };
                         if (fileUri.toString() != wsFolder.uri.toString()) // If it not the workspace folder add the uri. 
                             params.uri = fileUri.toString();
+                        
+                        // Add options based on configuration settings
+                        params = this.addOptions(params, wsFolder);
 
                         // Send request
                         const response = await client.sendRequest(TranslateRequest.type, params);
+
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
+                            if ( this.languageKind == SpecificationLanguageClient.covLanguageId ) {
+                                // Open the main file in the translation
+                                let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 
-                            if ( this.languageKind !== SpecificationLanguageClient.covLanguageId )
-                            {
-                                                           // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(Uri.parse(response.uri));
+                                const decorationType = window.createTextEditorDecorationType({
+                                    backgroundColor: '#0080FF80',
+                                    border: '2px solid black',
+                                })
 
-                            // Show the file
-                            window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                                let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
+
+                                // Show the file
+                                window.showTextDocument(doc.uri)
+                                    .then( (editor) => editor.setDecorations(decorationType, ranges)
+                                    );
                             }
-                        else
-                            {
-                            // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
+                            else {
+                                // Open the main file in the translation
+                                let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
-                            const decorationType = window.createTextEditorDecorationType({
-                                backgroundColor: '#0080FF80',
-                                border: '2px solid black',
-                              })
-
-                            let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
-
-                            // Show the file
-                            window.showTextDocument(doc.uri)
-                                .then( (editor) => editor.setDecorations(decorationType, ranges)
-                                      );
+                                // Show the file
+                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
                             }
-
                         }
 
                         resolve(`Generation of ${this.languageKind} succeeded.`);
@@ -98,6 +98,27 @@ export class TranslateHandler {
             }
         }));
 
+    }
+
+    private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder) : TranslateParams {
+        // Get configurations related to translation
+        const config = workspace.getConfiguration(
+            this.translationCommandName,
+            wsFolder.uri
+        );
+
+        // Add configurations to the command options
+        let once = true;
+        Object.keys(config).forEach(key => {
+            if (typeof config[key] !== 'function') {
+                if (once){params.options = {}; once = false;} // Initialise options only once
+
+                // Add options object to array
+                params.options[key] = config[key];
+            }
+        });
+
+        return params;
     }
 }
 

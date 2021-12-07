@@ -1,0 +1,142 @@
+{
+  "caseExpression": {
+    "prefix": [
+      "caseExpression"
+    ],
+    "body": "cases ${1:expression}:\n\t${2:patternList1} -> ${3:expression1},\n\t${4:patternList2} -> ${5:expression2},\n\tothers -> ${6:expressionOthers}\nend;",
+    "description": "Case Expression"
+  },
+  "dclStatement": {
+    "prefix": [
+      "dclStatement"
+    ],
+    "body": "dcl ${1:name} : ${2:nameType};\n\t${1:name} := ${4:expression}",
+    "description": "Declare"
+  },
+  "defExpression": {
+    "prefix": [
+      "defExpression"
+    ],
+    "body": "def ${1:pattern} = ${2:expression1} in\n\t${3:expression2}",
+    "description": "def pattern = expression1 in expression2"
+  },
+  "exists": {
+    "prefix": [
+      "exists"
+    ],
+    "body": "exists ${1:bindList} & ${2:predicate}",
+    "description": "exists bindList & predicate"
+  },
+  "forall": {
+    "prefix": [
+      "forall"
+    ],
+    "body": "forall ${1:bindList} & ${2:predicate}",
+    "description": "forall bind list & predicate"
+  },
+  "forallinset": {
+    "prefix": [
+      "forallinset"
+    ],
+    "body": "for all ${1:pattern} in set ${2:s} do\n    ${3:statement}",
+    "description": "for all in set do"
+  },
+  "forallLoop": {
+    "prefix": [
+      "forallLoop"
+    ],
+    "body": "for ${1:identifier} = ${2:initialValue} to ${3:upperValue} do\n\t${4:statement}",
+    "description": "for identifier = expression1 to expression2 do\\n statement"
+  },
+  "functionExplicit": {
+    "prefix": [
+      "functionExplicit"
+    ],
+    "body": "${1:functionName} :  ${2:parameterTypes} -> ${3:resultType}\n${1:functionName} (${5:parameterNames}) == ${6:expression};",
+    "description": "Explicit function"
+  },
+  "functionImplicit": {
+    "prefix": [
+      "functionImplicit"
+    ],
+    "body": "${1:functionName} (${2:parameters}) ${3:resultName}: ${4:resultType}\npre ${5:predicate1}\npost ${6:predicate2}",
+    "description": "Implicit function"
+  },
+  "functions": {
+    "prefix": [
+      "functions"
+    ],
+    "body": "functions\n\t$0",
+    "description": "Function block"
+  },
+  "ifthen": {
+    "prefix": [
+      "ifthen"
+    ],
+    "body": "if ${1:predicate} \nthen \n\t${2:expression1} \nelse\n\t${3:expression2}",
+    "description": "if predicate then expression1 else expression2"
+  },
+  "let": {
+    "prefix": [
+      "let"
+    ],
+    "body": "let ${1:pattern} = ${2:expression1} in\n\t${3:expression2}",
+    "description": "let pattern = expression1 in expression2"
+  },
+  "module": {
+    "prefix": [
+      "module"
+    ],
+    "body": "module ${1:moduleName}\n\texports all\n\tdefinitions\n\nend ${1:moduleName}",
+    "description": "Module"
+  },
+  "moduleSkeleton": {
+    "prefix": [
+      "moduleSkeleton"
+    ],
+    "body": "module ${1:moduleName}\n\texports all\n\tdefinitions\n\t\n\tstate ${2:stateName} of\n\tend\n\n\ttypes\n\n\tvalues\n\n\toperations\n\n\tfunctions\n\nend ${1:moduleName}",
+    "description": "Module Full skeleton of a module"
+  },
+  "operationExplicit": {
+    "prefix": [
+      "operationExplicit"
+    ],
+    "body": "${1:operationName} : ${2:parameterTypes} ==> ${3:resultType}\n${1:operationName} (${5:parameterNames}) == ${6:statements};",
+    "description": "Explicit Operation"
+  },
+  "operationImplicit": {
+    "prefix": [
+      "operationImplicit"
+    ],
+    "body": "${1:operationName} (${2:parameters}) ${3:resultName}: ${4:resultType}\n\text rd ${5:instanceVariable1} : ${6:instanceVariable1Type}\n\twr ${7:instanceVariable2} : ${8:instanceVariable2Type}\n\tpre ${9:predicate1}\n\tpost ${10:predicate2};",
+    "description": "Implicit operation"
+  },
+  "operations": {
+    "prefix": [
+      "operations"
+    ],
+    "body": "operations\n\t$0",
+    "description": "Operation block"
+  },
+  "state": {
+    "prefix": [
+      "state"
+    ],
+    "body": "state ${1:name} of\n\t  ${2:field1} : ${3:type1}\n\t  inv mk_${1:name}(${2:field1}) == ${6:exp1}\n\t  init s == s = mk_${1:name}(${8:exp2})\n\tend",
+    "description": "State Definition Block"
+  },
+  "vdm_al": {
+    "prefix": [
+      "vdm_al"
+    ],
+    "body": "\\begin{vdm_al}\n$0\n\\end{vdm_al}",
+    "description": "Literate VDM"
+  },
+  "while": {
+    "prefix": [
+      "while"
+    ],
+    "body": "while ${1:predicate} \ndo ${2:statement}",
+    "description": "while predicate do statement"
+  }
+}

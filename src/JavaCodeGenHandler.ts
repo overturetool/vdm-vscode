@@ -93,7 +93,7 @@ export class JavaCodeGenHandler {
 
                     const config = workspace.getConfiguration(
                         'vdm-vscode',
-                         workspace.workspaceFolders[0].uri
+                        wsFolder.uri
                       );
                     
                     const outputPackage = config.get('javaCodeGen.outputPackage','');

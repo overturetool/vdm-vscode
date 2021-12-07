@@ -5,7 +5,7 @@ import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug, WorkspaceConfiguration
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -22,6 +22,7 @@ import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
+import { AddToClassPathHandler } from './AddToClassPath';
 
 globalThis.clients = new Map();
 
@@ -63,8 +64,10 @@ function getDialect(document: TextDocument): string {
     return document.languageId;
 }
 
-function didChangeConfiguration(event: ConfigurationChangeEvent, folder: WorkspaceFolder){
-    if (event.affectsConfiguration("vdm-vscode", folder)){
+function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder){
+    // Restart the extension if changes has been made to the server settings
+    if (event.affectsConfiguration("vdm-vscode.server", wsFolder)){
+        // Ask the user to restart the extension if setting requires a restart
         window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
             if (res == "Reload Now") 
                 commands.executeCommand("workbench.action.reloadWindow");
@@ -82,10 +85,7 @@ export function activate(context: ExtensionContext) {
     let extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
 
     // Show VDM VS Code buttons
-    commands.executeCommand( 'setContext', 'add-lib-show-button', true );
-    commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
-
-
+    commands.executeCommand( 'setContext', 'vdm-submenus-show', true);
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
@@ -124,11 +124,15 @@ export function activate(context: ExtensionContext) {
         // Add settings watch for workspace folder
         workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
 
+        // Get server configurations
+        const serverConfig : WorkspaceConfiguration      = workspace.getConfiguration('vdm-vscode.server', wsFolder);
+        const developmentConfig : WorkspaceConfiguration = serverConfig.get("development")
+        const stdioConfig : WorkspaceConfiguration       = serverConfig.get("stdio")
+
         // If using experimental server
-        let debug = workspace.getConfiguration('vdm-vscode.debug', wsFolder).experimentalServer;
-        if (debug) {
-            let lspPort = workspace.getConfiguration('vdm-vscode.debug', wsFolder).lspPort;
-            let dapPort = workspace.getConfiguration('vdm-vscode.debug', wsFolder).dapPort;
+        if (developmentConfig.experimentalServer) {
+            let lspPort = developmentConfig.lspPort;
+            let dapPort = developmentConfig.dapPort;
             window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort} and DAP port ${dapPort}`);
 
             let client = createClient(dialect, lspPort, dapPort, wsFolder);
@@ -150,7 +154,7 @@ export function activate(context: ExtensionContext) {
 
             // Setup server arguments
             let args: string[] = [];
-            let JVMArguments: string = workspace.getConfiguration('vdm-vscode', wsFolder).JVMArguments;
+            let JVMArguments: string = serverConfig.JVMArguments;
             if (JVMArguments != ""){
                 let split = JVMArguments.split(" ").filter(v => v != "")
                 let i = 0;
@@ -164,58 +168,41 @@ export function activate(context: ExtensionContext) {
                 args.push(...split);
             }
 
-            let activateServerLog = workspace.getConfiguration('vdm-vscode.debug', wsFolder).activateServerLog;
-            if (activateServerLog){
+            if (developmentConfig.activateServerLog){
                 // Ensure logging path exists
                 let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
                 Util.ensureDirectoryExistence(languageServerLoggingPath);
-                
-                args.push('-Dlsp.log.filename=' + path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log'));
+                args.push('-Dlsp.log.filename=' + languageServerLoggingPath);
             }
 
+            // Construct class path
             let classPath = "";
-            let useHighprecision = workspace.getConfiguration('vdm-vscode', wsFolder).highPrecision;
-            if(useHighprecision && useHighprecision === true){
-                classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
-            }
-            else{
-                classPath += vdmjPath + path.delimiter + lspServerPath;
-            }
+            let useHighprecision = serverConfig.highPrecision;
 
-            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', wsFolder).annotationPaths;
-            if(userProvidedAnnotationPaths){
-                let jarPaths = userProvidedAnnotationPaths.split(",");
-                jarPaths.forEach(jarPath => {
-                    if(!fs.existsSync(jarPath)){
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
+            // Add VDMJ and LSP Server jar to class path
+            if(useHighprecision && useHighprecision === true)
+                classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
+            else
+                classPath += vdmjPath + path.delimiter + lspServerPath;
+
+            // Add user defined paths to class path
+            if (serverConfig.classPathAdditions){
+                serverConfig.classPathAdditions.forEach(p => {
+                    if (!fs.existsSync(p)){
+                        let m = "Invalid path in class path additions: " + p;
+                        window.showWarningMessage(m)
+                        Util.writeToLog(extensionLogPath, m);
                         return;
                     }
-                    
-                    if(Util.isDir(jarPath)){
-                        let subJarPaths = Util.getJarsFromFolder(jarPath);
-                        if(subJarPaths.length === 0){
-                            Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
-                        }
-                        subJarPaths.forEach(subJarPath =>{
-                            classPath +=  path.delimiter + subJarPath;
-                        })
-                    }
-                    else if(jarPath.split(jarPath.sep)[jarPath.split(jarPath.sep).length -1].search(/.*jar/i) != -1){
-                        classPath +=  path.delimiter + jarPath;
-                    }
-                    else{
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation " + jarPath);
-                    }
-                });          
+                    classPath += path.delimiter + p;
+                })
             }
 
-            if(useHighprecision && useHighprecision === true){
-                classPath += path.delimiter + annotationsPath_hp;
-            }
-            else{
-                classPath += path.delimiter + annotationsPath;
-            }
+            // Add standard annotations jar to class path 
+            // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
+            classPath += path.delimiter + (useHighprecision && useHighprecision === true ? annotationsPath_hp : annotationsPath);
 
+            // Construct java launch arguments
             args.push(...[
                 '-cp', classPath,
                 'lsp.LSPServerSocket',
@@ -251,9 +238,8 @@ export function activate(context: ExtensionContext) {
             }
 
             // Create output channel for server stdout
-            let activateStdoutLogging = workspace.getConfiguration('vdm-vscode.stdio', wsFolder).activateStdoutLogging;
-            let stdoutLogPath = workspace.getConfiguration('vdm-vscode.stdio', wsFolder).stdioLogPath;
-            if (activateStdoutLogging) {
+            let stdoutLogPath = stdioConfig.stdioLogPath;
+            if (stdioConfig.activateStdoutLogging) {
                 // Log to file
                 if (stdoutLogPath != ""){ 
                     Util.ensureDirectoryExistence(stdoutLogPath+path.sep+wsFolder.name.toString())
@@ -278,6 +264,7 @@ export function activate(context: ExtensionContext) {
                 server.stderr.addListener("data", chunk => {});
             } 
             
+            // Create client
             let client = createClient(dialect, lspPort, dapPort, wsFolder);
 
             // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
@@ -330,18 +317,19 @@ export function activate(context: ExtensionContext) {
         return client;
     }
 
+    // Initialise handlers
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateLatex");
-    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateWord");
+    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateToLatex");
+    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateToWord");
     const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
     const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.graphvizLanguageId, "vdm-vscode.translateGraphviz");
     const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.isabelleLanguageId, "vdm-vscode.translateIsabelle");
-
 
     const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
     const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
     const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
     const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
+    const addToClassPathHandler = new AddToClassPathHandler(context);
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);

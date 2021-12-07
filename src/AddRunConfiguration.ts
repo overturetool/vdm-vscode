@@ -13,6 +13,7 @@ export class AddRunConfigurationHandler {
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext
     ) {
+        commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
         this.context = context;
         // this.registerCommand("vdm-vscode.addRunConfiguration", (inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)));
         this.registerCommand("vdm-vscode.addRunConfiguration", (input: any) => this.addLensRunConfiguration(input)); // TODO delete after testing
