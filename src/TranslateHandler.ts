@@ -115,6 +115,7 @@ export class TranslateHandler {
                 let obj = {};
                 obj[key] = config[key];
                 params.arguments.push(obj)
+                // TODO Change to?: params.arguments.push(`${key}=${config[key]}`)
             }
         });
     }
