@@ -17,7 +17,8 @@ export class AddToClassPathHandler {
             const wsFolders = workspace.workspaceFolders;
             let defaultScopes = ["User","Workspace"];
             let scopes = defaultScopes;
-            wsFolders.forEach(f => scopes.push(f.name))
+            if (wsFolders.length > 1)
+                wsFolders.forEach(f => scopes.push(f.name))
             let scopeName: string = await window.showQuickPick(scopes, {
                 placeHolder: 'Choose scope',
                 canPickMany: false,
