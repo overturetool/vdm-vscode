@@ -64,23 +64,14 @@ function getDialect(document: TextDocument): string {
     return document.languageId;
 }
 
-function didChangeConfiguration(event: ConfigurationChangeEvent, folder: WorkspaceFolder){
-    if (event.affectsConfiguration("vdm-vscode", folder)){
-        let restart = true;
-
-        // Don't restart on settings under some scopes
-        const reloadExceptions = ["vdm-vscode.javaCodeGen","vdm-vscode.translateToLatex"];
-        reloadExceptions.forEach(str => {if (event.affectsConfiguration(str)) {
-            restart = false;
-        }});
-
+function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder){
+    // Restart the extension if changes has been made to the server settings
+    if (event.affectsConfiguration("vdm-vscode.server", wsFolder)){
         // Ask the user to restart the extension if setting requires a restart
-        if (restart){
-            window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
-                if (res == "Reload Now") 
-                    commands.executeCommand("workbench.action.reloadWindow");
-            })
-        }
+        window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
+            if (res == "Reload Now") 
+                commands.executeCommand("workbench.action.reloadWindow");
+        })
     }
 }
 
