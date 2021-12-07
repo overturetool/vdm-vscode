@@ -22,6 +22,7 @@ import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
+import { AddToClassPathHandler } from './AddToClassPath';
 
 globalThis.clients = new Map();
 
@@ -170,49 +171,35 @@ export function activate(context: ExtensionContext) {
                 args.push('-Dlsp.log.filename=' + path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log'));
             }
 
+            // Construct class path
             let classPath = "";
             let useHighprecision = workspace.getConfiguration('vdm-vscode', wsFolder).highPrecision;
-            if(useHighprecision && useHighprecision === true){
-                classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
-            }
-            else{
-                classPath += vdmjPath + path.delimiter + lspServerPath;
-            }
 
-            let userProvidedAnnotationPaths = workspace.getConfiguration('vdm-vscode', wsFolder).annotationPaths;
-            if(userProvidedAnnotationPaths){
-                let jarPaths = userProvidedAnnotationPaths.split(",");
-                jarPaths.forEach(jarPath => {
-                    if(!fs.existsSync(jarPath)){
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
+            // Add VDMJ and LSP Server jar to class path
+            if(useHighprecision && useHighprecision === true)
+                classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
+            else
+                classPath += vdmjPath + path.delimiter + lspServerPath;
+
+            // Add user defined paths to class path
+            let userProvidedClassPathAdditions = workspace.getConfiguration('vdm-vscode', wsFolder).classPathAdditions;
+            if(userProvidedClassPathAdditions){
+                userProvidedClassPathAdditions.forEach(p => {
+                    if(!fs.existsSync(p)){
+                        let m = "Invalid path in class path additions: " + p;
+                        window.showWarningMessage(m)
+                        Util.writeToLog(extensionLogPath, m);
                         return;
                     }
-                    
-                    if(Util.isDir(jarPath)){
-                        let subJarPaths = Util.getJarsFromFolder(jarPath);
-                        if(subJarPaths.length === 0){
-                            Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation: " + jarPath);
-                        }
-                        subJarPaths.forEach(subJarPath =>{
-                            classPath +=  path.delimiter + subJarPath;
-                        })
-                    }
-                    else if(jarPath.split(jarPath.sep)[jarPath.split(jarPath.sep).length -1].search(/.*jar/i) != -1){
-                        classPath +=  path.delimiter + jarPath;
-                    }
-                    else{
-                        Util.writeToLog(extensionLogPath, "Invalid path to user defined annotation " + jarPath);
-                    }
-                });          
+                    classPath += path.delimiter + p;
+                })
             }
 
-            if(useHighprecision && useHighprecision === true){
-                classPath += path.delimiter + annotationsPath_hp;
-            }
-            else{
-                classPath += path.delimiter + annotationsPath;
-            }
+            // Add standard annotations jar to class path 
+            // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
+            classPath += path.delimiter + (useHighprecision && useHighprecision === true ? annotationsPath_hp : annotationsPath);
 
+            // Construct java launch arguments
             args.push(...[
                 '-cp', classPath,
                 'lsp.LSPServerSocket',
@@ -339,6 +326,7 @@ export function activate(context: ExtensionContext) {
     const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
     const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
     const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
+    const addToClassPathHandler = new AddToClassPathHandler(context);
 
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);

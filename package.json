@@ -43,7 +43,9 @@
     "workspaceContains:*.vdmsl",
     "workspaceContains:*.vdmpp",
     "workspaceContains:*.vdmrt",
-    "onCommand:vdm-vscode.importExample"
+    "onCommand:vdm-vscode.importExample",
+    "onCommand:vdm-vscode.addFoldersToClassPath",
+    "onCommand:vdm-vscode.addFilesToClassPath"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -62,6 +64,16 @@
       }
     ],
     "commands": [
+      {
+        "command": "vdm-vscode.addFoldersToClassPath",
+        "title": "Add folders to Class Path",
+        "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.addFilesToClassPath",
+        "title": "Add files to Class Path",
+        "category": "VDM"
+      },
       {
         "command": "vdm-vscode.addRunConfiguration",
         "title": "Add VDM Run Configuration",
@@ -495,11 +507,12 @@
           "scope": "resource",
           "description": "JVM arguments used when launching the server."
         },
-        "vdm-vscode.annotationPaths": {
-          "type": "string",
-          "default": "",
+        "vdm-vscode.classPathAdditions": {
+          "type": "array",
+          "items": {"type":"string"},
+          "default": [],
           "scope": "resource",
-          "description": "Comma separated list of folder and/or jar file paths for annotations that should be used with the language server."
+          "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server.  [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or add manually."
         },
         "vdm-vscode.highPrecision": {
           "type": "boolean",
@@ -517,7 +530,7 @@
           "type": "string",
           "default": "",
           "scope": "resource",
-          "description": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.stdio.activateStdoutLogging#` is active."
+          "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.stdio.activateStdoutLogging#` is active."
         },
         "vdm-vscode.javaCodeGen.disableCloning":{
           "type":"boolean",

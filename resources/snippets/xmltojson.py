@@ -30,6 +30,9 @@ with open("overtureTemplates.xml") as xml_file:
         snippet["body"] = t["#text"]
         snippet["description"] = t["@description"]
 
+        # replace ${cursor} with $0
+        snippet["body"] = snippet["body"].replace("${cursor}","$0",1)
+
         # replace e.g. ${asd} with ${1:asd}
         i = 1
         counter = count(i)

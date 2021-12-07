@@ -66,7 +66,7 @@
     "prefix": [
       "functions"
     ],
-    "body": "functions\n\t${1:cursor}",
+    "body": "functions\n\t$0",
     "description": "Function block"
   },
   "ifthen": {
@@ -115,7 +115,7 @@
     "prefix": [
       "operations"
     ],
-    "body": "operations\n\t${1:cursor}",
+    "body": "operations\n\t$0",
     "description": "Operation block"
   },
   "state": {
@@ -129,7 +129,7 @@
     "prefix": [
       "vdm_al"
     ],
-    "body": "\\begin{vdm_al}\n${1:cursor}\n\\end{vdm_al}",
+    "body": "\\begin{vdm_al}\n$0\n\\end{vdm_al}",
     "description": "Literate VDM"
   },
   "while": {
