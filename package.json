@@ -475,62 +475,63 @@
     "configuration": {
       "title": "VDM VSCode",
       "properties": {
-        "vdm-vscode.debug.experimentalServer": {
+        "vdm-vscode.server.development.experimentalServer": {
           "type": "boolean",
           "default": false,
           "scope": "resource",
           "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
         },
-        "vdm-vscode.debug.lspPort": {
+        "vdm-vscode.server.development.lspPort": {
           "title": "LSP Port",
           "type": "integer",
           "default": 8000,
           "scope": "resource",
-          "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.debug.experimentalServer#` is active."
+          "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
         },
-        "vdm-vscode.debug.dapPort": {
+        "vdm-vscode.server.development.dapPort": {
           "title": "DAP Port",
           "type": "integer",
           "default": 8001,
           "scope": "resource",
-          "markdownDescription": "Port used for DAP. NOTE: Only used when `#vdm-vscode.debug.experimentalServer#` is active."
+          "markdownDescription": "Port used for DAP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
         },
-        "vdm-vscode.debug.activateServerLog": {
+        "vdm-vscode.server.development.activateServerLog": {
           "type": "boolean",
           "default": false,
           "scope": "resource",
           "description": "Activate logging of server actions and protocol communication."
         },
-        "vdm-vscode.JVMArguments": {
+        "vdm-vscode.server.JVMArguments": {
+          "title": "JVM Arguments",
           "type": "string",
           "default": "",
           "scope": "resource",
           "description": "JVM arguments used when launching the server."
         },
-        "vdm-vscode.classPathAdditions": {
+        "vdm-vscode.server.classPathAdditions": {
           "type": "array",
           "items": {"type":"string"},
           "default": [],
           "scope": "resource",
-          "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server.  [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or add manually."
+          "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server.  [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
         },
-        "vdm-vscode.highPrecision": {
+        "vdm-vscode.server.highPrecision": {
           "type": "boolean",
           "default": false,
           "scope": "resource",
           "description": "Use high precision variant of VDMJ."
         },
-        "vdm-vscode.stdio.activateStdoutLogging": {
+        "vdm-vscode.server.stdio.activateStdoutLogging": {
           "type": "boolean",
           "default": true,
           "scope": "resource",
           "description": "Activate logging of stdout/stderr to terminal window. NOTE: This may cause performance slowdown if specifications have many annotations."
         },
-        "vdm-vscode.stdio.stdioLogPath": {
+        "vdm-vscode.server.stdio.stdioLogPath": {
           "type": "string",
           "default": "",
           "scope": "resource",
-          "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.stdio.activateStdoutLogging#` is active."
+          "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
         },
         "vdm-vscode.javaCodeGen.disableCloning":{
           "type":"boolean",

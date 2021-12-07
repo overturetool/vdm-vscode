@@ -43,7 +43,7 @@ export class AddToClassPathHandler {
             }
 
             // Get current class path additions
-            const configuration = workspace.getConfiguration('vdm-vscode', workspaceFolder);
+            const configuration = workspace.getConfiguration('vdm-vscode.server', workspaceFolder);
             const cpa = configuration.inspect("classPathAdditions");
             let classPaths;
             if (scope == 0) // User
