@@ -3,6 +3,18 @@
 import * as vscode from "vscode";
 import { WorkspaceFolder } from "vscode";
 
+export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
+    noDebug?: boolean,
+    dynamicTypeChecks?: boolean,
+    invariantsChecks?: boolean,
+    preConditionChecks?: boolean,
+    postConditionChecks?: boolean,
+    measureChecks?: boolean,
+    defaultName?: string | null,
+    command?: string | null,
+    remoteControl?: string| null
+}
+
 export namespace VdmDapSupport {
     let initialized: boolean = false;
     let factory: VdmDebugAdapterDescriptorFactory;
@@ -50,8 +62,9 @@ export namespace VdmDapSupport {
          * Massage a debug configuration just before a debug session is being launched,
          * e.g. add all missing attributes to the debug configuration.
          */
-        resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
+        resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, inConfig: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
             let uri = folder.uri.toString();
+            let config : VdmDebugConfiguration = inConfig;
 
             // Check for remote control violation
             if(config.remoteControl && config.command){
@@ -114,7 +127,7 @@ export namespace VdmDapSupport {
     }
 
     export function startDebuggerWithCommand(command: string, folder: WorkspaceFolder | undefined, stopOnEntry?:boolean) {
-        var debugConfiguration: vscode.DebugConfiguration = {
+        var debugConfiguration: VdmDebugConfiguration = {
             type: "vdm",               // The type of the debug session.
             name: "Launch command",    // The name of the debug session.
             request: "launch",         // The request type of the debug session.
