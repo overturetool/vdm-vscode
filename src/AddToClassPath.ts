@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import path = require("path");
 import { ExtensionContext, window, workspace } from "vscode";
 import * as util from "./Util"
 
@@ -59,8 +60,14 @@ export class AddToClassPathHandler {
 
             // Add selected locations
             location.forEach(l => {
-                if(!classPaths.includes(l.fsPath))
-                    classPaths.push(l.fsPath);
+                let fsPath = l.fsPath;
+
+                // Add wildcard to folders
+                if (folders)
+                    fsPath = path.resolve(fsPath,"*")
+                
+                if(!classPaths.includes(fsPath))
+                    classPaths.push(fsPath);
             })
 
             // Save to configurations file
