@@ -107,7 +107,8 @@ export class AddRunConfigurationHandler {
         const launchConfigurations  = workspace.getConfiguration("launch", wsFolder);
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
 
-        let i = rawConfigs.findIndex(c => c.name == runConf.name) // Search for configuration with same name
+        // Only save one configuration with the same name
+        let i = rawConfigs.findIndex(c => c.name == runConf.name) 
         if (i >= 0)
             rawConfigs[i] = runConf;
         else
@@ -146,12 +147,14 @@ export class AddRunConfigurationHandler {
         }
 
         let runConfig : VdmDebugConfiguration = {
+            name: "Launch VDM Debug from Code Lens",
             type: input.type,
             request: input.request,
-            name: input.name,
             noDebug: input.noDebug,
-            remoteControl: input.remoteControl,
         };
+
+        if (input.remoteControl)
+            runConfig.remoteControl = input.remoteControl
         
         if (input.applyName){
             const dialect = await this.getDialect(wsFolder);
@@ -188,6 +191,9 @@ export class AddRunConfigurationHandler {
 
             runConfig.command = command;
         }
+
+        // Save configuration
+        this.saveRunConfiguration(runConfig, wsFolder);
         
         // Start debug session with custom debug configurations
         vscode.debug.startDebugging(wsFolder, runConfig)
