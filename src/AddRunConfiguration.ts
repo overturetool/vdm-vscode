@@ -6,6 +6,11 @@ import { commands, ConfigurationTarget, DebugConfiguration, ExtensionContext, Re
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { VdmDebugConfiguration } from "./VdmDapSupport";
 
+interface VdmArgument {
+    name: string,
+    type: string
+}
+
 interface VdmLaunchLensConfiguration {
     name: string,
     defaultName: string,
@@ -13,8 +18,9 @@ interface VdmLaunchLensConfiguration {
     request: string
     noDebug: boolean,
     remoteControl: string | null,
+    constructors?: [VdmArgument[]]
     applyName: string,
-    applyArgs: {"name": string,"type": string}[]
+    applyArgs: VdmArgument[]
 }
 
 export class AddRunConfigurationHandler {
@@ -26,8 +32,8 @@ export class AddRunConfigurationHandler {
         commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
         this.context = context;
         util.registerCommand(this.context,"vdm-vscode.addRunConfiguration", (inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)))
-        //util.registerCommand(this.context,"vdm-vscode.addRunConfiguration", (input: VdmLaunchLensConfiguration) => this.addLensRunConfiguration(input)) // TODO delete after testing
         util.registerCommand(this.context,"vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) => this.addLensRunConfiguration(input))
+        util.registerCommand(this.context,"vdm-vscode.addLensRunConfigurationWarning", () => this.addLensRunConfigurationWarning())
     }
 
     private async addRunConfiguration(wsFolder: WorkspaceFolder) {
@@ -42,7 +48,7 @@ export class AddRunConfigurationHandler {
             // Prompt user for entry point class/module and function/operation   
             let selectedClass: string;
             let selectedCommand: string;    
-            if(dialect == "SL") {
+            if(dialect == "vdmsl") {
                 selectedClass = await window.showInputBox({
                     prompt: "Input entry point Module",
                     placeHolder: "Module",
@@ -133,7 +139,7 @@ export class AddRunConfigurationHandler {
             for (const d in dialects){
                 let pattern = new RelativePattern(wsFolder.uri.path, "*." + d);
                 let res = await workspace.findFiles(pattern,null,1); 
-                if(res.length == 1) dialect = d;
+                if (res.length == 1) dialect = d;
             } 
         }
         return dialect;
@@ -146,56 +152,116 @@ export class AddRunConfigurationHandler {
             return;
         }
 
-        let runConfig : VdmDebugConfiguration = {
-            name: "Launch VDM Debug from Code Lens",
-            type: input.type,
-            request: input.request,
-            noDebug: input.noDebug,
-        };
+        window.setStatusBarMessage(`Adding Run Configuration`, new Promise(async (resolve, reject) => {
+            let runConfig : VdmDebugConfiguration = {
+                name: "Launch VDM Debug from Code Lens",
+                type: input.type,
+                request: input.request,
+                noDebug: input.noDebug,
+            };
 
-        if (input.remoteControl)
-            runConfig.remoteControl = input.remoteControl
-        
-        if (input.applyName){
-            const dialect = await this.getDialect(wsFolder);
+            // Add remote control
+            if (input.remoteControl)
+                runConfig.remoteControl = input.remoteControl
+            
+            // Add command
+            if (input.applyName){
+                // Command start
+                let command = "p ";
 
-            // Command start
-            let command = "p ";
-            if (dialect == "vdmsl"){
-                runConfig.defaultName = input.defaultName;
-                command += `${input.applyName}(`
+                // Set class and default name
+                if (input.constructors === undefined)
+                    runConfig.defaultName = input.defaultName
+                else {
+                    runConfig.defaultName = null;
+                    let cIndex = 0;
+
+                    // If multiple constructors to select from request the user to select one
+                    if (input.constructors.length > 1) {
+                        await this.requestConstructor(input.defaultName, input.constructors).then( 
+                            i => {cIndex = i},
+                            () => reject
+                        )
+                    }
+
+                    // Add class initialisation
+                    await this.requestArguments(input.constructors[cIndex], "constructor").then(
+                        (args) => {command += `new ${input.defaultName}(${args}).`},
+                        () => reject
+                    )
+                }
+                
+                // Add function/operation call to command
+                await this.requestArguments(input.applyArgs, "operation/function").then(
+                    (args) => {command += `${input.applyName}(${args})`},
+                    () => reject
+                )
+
+                // Set command
+                runConfig.command = command;
             }
-            else {
-                runConfig.defaultName = null,
-                command += `new ${input.defaultName}().${input.applyName}(` // TODO Currently assuming to use default consstructor, should be changed
-            }
+
+            // Save configuration
+            this.saveRunConfiguration(runConfig, wsFolder);
+            
+            // Start debug session with custom debug configurations
+            resolve;
+            vscode.debug.startDebugging(wsFolder, runConfig);
+        }))
+    }
+
+    private async requestArguments(args: VdmArgument[], forEntry: string): Promise<string>{
+        return new Promise( async (resolve, reject) => {
+            let argString: string = "";
 
             // Request arguments from user
-            for await (const a of input.applyArgs) {
+            for await (const a of args) {
                 let arg = await window.showInputBox({
-                    prompt: `Input argument`,
+                    prompt: `Input argument for ${forEntry}`,
                     ignoreFocusOut: true,
                     placeHolder: `${a.name} : ${a.type}`
                 })
 
-                if(arg === undefined) 
-                    return;
+                if (arg === undefined) 
+                    return reject;
                 else
-                    command += `${arg},`
+                    argString += `${arg},`
             }
 
-            // Command end
-            if (command.endsWith(",")) 
-                command = command.slice(0,command.length-1); // Remove trailing comma
-            command += ")";
+            // Remove trailing comma
+            if (argString.endsWith(",")) 
+                argString = argString.slice(0,argString.length-1); 
 
-            runConfig.command = command;
-        }
+            resolve(argString);
+        })
+    }
 
-        // Save configuration
-        this.saveRunConfiguration(runConfig, wsFolder);
-        
-        // Start debug session with custom debug configurations
-        vscode.debug.startDebugging(wsFolder, runConfig)
+    private async requestConstructor(className: string, constructors: [VdmArgument[]]): Promise<number>{
+        return new Promise( async (resolve, reject) => {
+            // Create strings of constructors to pick from
+            let ctorStrings: string[] = [];
+            constructors.forEach(ctor => {
+                let argString = "";
+                ctor.forEach(a => argString += `${a.name}:${a.type},`)
+                if (argString.endsWith(",")) 
+                    argString = argString.slice(0,argString.length-1); 
+                ctorStrings.push(`${className}(${argString})`)
+            })
+
+            let pick = await window.showQuickPick(ctorStrings,{
+                canPickMany: false,
+                ignoreFocusOut: false,
+                title: "Select constructor"
+            });
+
+            if (pick === undefined) 
+                return reject;
+            else 
+                return resolve(ctorStrings.indexOf(pick))
+        })
+    }
+
+    private addLensRunConfigurationWarning() {
+        window.showInformationMessage("Cannot launch until saved")
     }
 }
