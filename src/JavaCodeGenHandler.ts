@@ -7,14 +7,14 @@ import {spawn} from 'child_process';
 import * as path from 'path'
 
 export class JavaCodeGenHandler {
+    private jarPath; 
 
     constructor(
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext
     ) {
-        this.context = context;
-        let jarPath = util.recursivePathSearch(path.resolve(this.context.extensionPath, "resources", "jars"), /javagen.*jar/i);
-        if (!jarPath) {
+        this.jarPath = util.recursivePathSearch(path.resolve(this.context.extensionPath, "resources", "jars"), /javagen.*jar/i);
+        if (!this.jarPath) {
             console.log("Code generation jar not found - Disable code generation feature");
             commands.executeCommand( 'setContext', 'jcg-show-button', false );
         }
@@ -78,16 +78,10 @@ export class JavaCodeGenHandler {
                         console.log("Java runtime environment not found!");
                         reject();
                     }
-                   
-                    let jarPath = util.recursivePathSearch(path.resolve(this.context.extensionPath, "resources", "jars"), /javagen.*jar/i);
-                    if (!jarPath) {
-                        window.showErrorMessage("Code generation jar not found!")
-                        console.log("Code generation jar not found!");
-                        reject();
-                    }   
+                     
                     args.push(...[
                         '-jar',
-                        jarPath,
+                        this.jarPath,
                         '-' + dialect
                     ]);
 

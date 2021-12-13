@@ -76,22 +76,24 @@ function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: Works
 }
 
 export function activate(context: ExtensionContext) {
-    let vdmjPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /vdmj.*jar/i);
-    let lspServerPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /lsp.*jar/i);
-    let annotationsPath = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars"), /annotations.*jar/i);
-    let vdmjPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /vdmj.*jar/i);
-    let lspServerPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /lsp.*jar/i);
-    let annotationsPath_hp = Util.recursivePathSearch(path.resolve(context.extensionPath, "resources", "jars_highPrecision"), /annotations.*jar/i);
-    let extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
+    const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
+    const jarPath          = path.resolve(context.extensionPath, "resources", "jars");
+    const jarPath_sp       = path.resolve(jarPath,"std_precision");
+    const jarPath_hp       = path.resolve(jarPath,"high_precision");
+    const jarPath_shared   = path.resolve(jarPath,"shared");
+
+    // Make sure that the VDMJ and LSP jars are present
+    if (!Util.recursivePathSearch(jarPath_sp, /vdmj.*jar/i) || 
+        !Util.recursivePathSearch(jarPath_sp, /lsp.*jar/i) 
+    ){
+        return;
+    }
 
     // Show VDM VS Code buttons
     commands.executeCommand( 'setContext', 'vdm-submenus-show', true);
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
-
-    if (!vdmjPath || !lspServerPath || !annotationsPath)
-        return;
 
     // Initialise handlers
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
@@ -218,13 +220,6 @@ export function activate(context: ExtensionContext) {
 
             // Construct class path
             let classPath = "";
-            let useHighprecision = serverConfig.highPrecision;
-
-            // Add VDMJ and LSP Server jar to class path
-            if(useHighprecision && useHighprecision === true)
-                classPath += vdmjPath_hp + path.delimiter + lspServerPath_hp;
-            else
-                classPath += vdmjPath + path.delimiter + lspServerPath;
 
             // Add user defined paths to class path
             if (serverConfig.classPathAdditions){
@@ -235,13 +230,13 @@ export function activate(context: ExtensionContext) {
                         Util.writeToLog(extensionLogPath, m);
                         return;
                     }
-                    classPath += path.delimiter + p;
+                    classPath += p + path.delimiter;
                 })
             }
 
-            // Add standard annotations jar to class path 
+            // Add jars folders to class path
             // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-            classPath += path.delimiter + (useHighprecision && useHighprecision === true ? annotationsPath_hp : annotationsPath);
+            classPath += path.resolve(jarPath_shared,"*") + path.delimiter + path.resolve((serverConfig?.highPrecision === true ? jarPath_hp : jarPath_sp),"*");
 
             // Construct java launch arguments
             args.push(...[
