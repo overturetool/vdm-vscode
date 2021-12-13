@@ -78,13 +78,12 @@ function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: Works
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath          = path.resolve(context.extensionPath, "resources", "jars");
-    const jarPath_sp       = path.resolve(jarPath,"std_precision");
-    const jarPath_hp       = path.resolve(jarPath,"high_precision");
-    const jarPath_shared   = path.resolve(jarPath,"shared");
+    const jarPath_vdmj     = path.resolve(jarPath,"vdmj");
+    const jarPath_vdmj_hp  = path.resolve(jarPath,"vdmj_hp");
 
     // Make sure that the VDMJ and LSP jars are present
-    if (!Util.recursivePathSearch(jarPath_sp, /vdmj.*jar/i) || 
-        !Util.recursivePathSearch(jarPath_sp, /lsp.*jar/i) 
+    if (!Util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) || 
+        !Util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i) 
     ){
         return;
     }
@@ -224,7 +223,8 @@ export function activate(context: ExtensionContext) {
             // Add user defined paths to class path
             if (serverConfig.classPathAdditions){
                 serverConfig.classPathAdditions.forEach(p => {
-                    if (!fs.existsSync(p)){
+                    let pathToCheck = (p.endsWith(path.sep+'*') ? p.substr(0,p.length-2) : p)
+                    if (!fs.existsSync(pathToCheck)){
                         let m = "Invalid path in class path additions: " + p;
                         window.showWarningMessage(m)
                         Util.writeToLog(extensionLogPath, m);
@@ -236,7 +236,7 @@ export function activate(context: ExtensionContext) {
 
             // Add jars folders to class path
             // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-            classPath += path.resolve(jarPath_shared,"*") + path.delimiter + path.resolve((serverConfig?.highPrecision === true ? jarPath_hp : jarPath_sp),"*");
+            classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj),"*");
 
             // Construct java launch arguments
             args.push(...[
