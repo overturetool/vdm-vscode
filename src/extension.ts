@@ -93,6 +93,47 @@ export function activate(context: ExtensionContext) {
     if (!vdmjPath || !lspServerPath || !annotationsPath)
         return;
 
+    // Initialise handlers
+    const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
+    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateToLatex");
+    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateToWord");
+    const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
+    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.graphvizLanguageId, "vdm-vscode.translateGraphviz");
+    const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.isabelleLanguageId, "vdm-vscode.translateIsabelle");
+
+    const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
+    const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
+    const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
+    const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
+    const addToClassPathHandler = new AddToClassPathHandler(context);
+
+    workspace.onDidOpenTextDocument(didOpenTextDocument);
+    workspace.textDocuments.forEach(didOpenTextDocument);
+    workspace.onDidChangeWorkspaceFolders((event) => {
+        for (const folder of event.removed) {
+            const client = globalThis.clients.get(folder.uri.toString());
+            if (client) {
+                globalThis.clients.delete(folder.uri.toString());
+                client.stop();
+            }
+        }
+    });
+    debug.onDidStartDebugSession(async (session) => {
+        // Launch client if this has not been done
+        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())){
+
+            // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
+            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`,"Retry", "Close").then(res => {
+                if (res == "Retry")
+                    debug.startDebugging(session.workspaceFolder, session.configuration)
+            })
+
+            let dialect = await Util.guessDialect(session.workspaceFolder);
+            if (dialect)
+                await launchClient(session.workspaceFolder, dialect);           
+        }
+    })
+
     function didOpenTextDocument(document: TextDocument): void {
         // We are only interested in vdm text
         if (document.languageId !== 'vdmsl' && document.languageId !== 'vdmpp' && document.languageId !== 'vdmrt') {
@@ -316,47 +357,6 @@ export function activate(context: ExtensionContext) {
 
         return client;
     }
-
-    // Initialise handlers
-    const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateToLatex");
-    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateToWord");
-    const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
-    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.graphvizLanguageId, "vdm-vscode.translateGraphviz");
-    const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.isabelleLanguageId, "vdm-vscode.translateIsabelle");
-
-    const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
-    const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
-    const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
-    const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
-    const addToClassPathHandler = new AddToClassPathHandler(context);
-
-    workspace.onDidOpenTextDocument(didOpenTextDocument);
-    workspace.textDocuments.forEach(didOpenTextDocument);
-    workspace.onDidChangeWorkspaceFolders((event) => {
-        for (const folder of event.removed) {
-            const client = globalThis.clients.get(folder.uri.toString());
-            if (client) {
-                globalThis.clients.delete(folder.uri.toString());
-                client.stop();
-            }
-        }
-    });
-    debug.onDidStartDebugSession(async (session) => {
-        // Launch client if this has not been done
-        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())){
-
-            // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
-            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`,"Retry", "Close").then(res => {
-                if (res == "Retry")
-                    debug.startDebugging(session.workspaceFolder, session.configuration)
-            })
-
-            let dialect = await Util.guessDialect(session.workspaceFolder);
-            if (dialect)
-                await launchClient(session.workspaceFolder, dialect);           
-        }
-    })
 }
 
 export function deactivate(): Thenable<void> | undefined {
