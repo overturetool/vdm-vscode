@@ -210,55 +210,51 @@ export class AddRunConfigurationHandler {
         }))
     }
 
-    private async requestArguments(args: VdmArgument[], forEntry: string): Promise<string>{
-        return new Promise( async (resolve, reject) => {
-            let argString: string = "";
+    private async requestArguments(args: VdmArgument[], forEntry: string): Promise<string> {
+        let argString: string = "";
 
-            // Request arguments from user
-            for await (const a of args) {
-                let arg = await window.showInputBox({
-                    prompt: `Input argument for ${forEntry}`,
-                    ignoreFocusOut: true,
-                    placeHolder: `${a.name} : ${a.type}`
-                })
-
-                if (arg === undefined) 
-                    return reject;
-                else
-                    argString += `${arg},`
-            }
-
-            // Remove trailing comma
-            if (argString.endsWith(",")) 
-                argString = argString.slice(0,argString.length-1); 
-
-            resolve(argString);
-        })
-    }
-
-    private async requestConstructor(className: string, constructors: [VdmArgument[]]): Promise<number>{
-        return new Promise( async (resolve, reject) => {
-            // Create strings of constructors to pick from
-            let ctorStrings: string[] = [];
-            constructors.forEach(ctor => {
-                let argString = "";
-                ctor.forEach(a => argString += `${a.name}:${a.type},`)
-                if (argString.endsWith(",")) 
-                    argString = argString.slice(0,argString.length-1); 
-                ctorStrings.push(`${className}(${argString})`)
+        // Request arguments from user
+        for await (const a of args) {
+            let arg = await window.showInputBox({
+                prompt: `Input argument for ${forEntry}`,
+                ignoreFocusOut: true,
+                placeHolder: `${a.name} : ${a.type}`
             })
 
-            let pick = await window.showQuickPick(ctorStrings,{
-                canPickMany: false,
-                ignoreFocusOut: false,
-                title: "Select constructor"
-            });
+            if (arg === undefined)
+                return Promise.reject();
+            else
+                argString += `${arg},`
+        }
 
-            if (pick === undefined) 
-                return reject;
-            else 
-                return resolve(ctorStrings.indexOf(pick))
+        // Remove trailing comma
+        if (argString.endsWith(","))
+            argString = argString.slice(0, argString.length - 1);
+
+        return Promise.resolve(argString);
+    }
+
+    private async requestConstructor(className: string, constructors: [VdmArgument[]]): Promise<number> {
+        // Create strings of constructors to pick from
+        let ctorStrings: string[] = [];
+        constructors.forEach(ctor => {
+            let argString = "";
+            ctor.forEach(a => argString += `${a.name}:${a.type},`)
+            if (argString.endsWith(","))
+                argString = argString.slice(0, argString.length - 1);
+            ctorStrings.push(`${className}(${argString})`)
         })
+
+        let pick = await window.showQuickPick(ctorStrings, {
+            canPickMany: false,
+            ignoreFocusOut: false,
+            title: "Select constructor"
+        });
+
+        if (pick === undefined)
+            return Promise.reject();
+        else
+            return Promise.resolve(ctorStrings.indexOf(pick))
     }
 
     private addLensRunConfigurationWarning() {
