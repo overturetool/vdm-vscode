@@ -101,7 +101,7 @@ export class AddRunConfigurationHandler {
             }
 
             // Save run configuration
-            this.saveRunConfiguration(debugConfiguration, wsFolder);
+            this.saveRunConfiguration(wsFolder, debugConfiguration);
 
             // Open launch file
             window.showTextDocument(
@@ -111,7 +111,7 @@ export class AddRunConfigurationHandler {
         }));
     }
 
-    private saveRunConfiguration(runConf: DebugConfiguration, wsFolder: WorkspaceFolder) {
+    private saveRunConfiguration(wsFolder: WorkspaceFolder, runConf: DebugConfiguration) {
         // Get existing configurations
         const launchConfigurations = workspace.getConfiguration("launch", wsFolder);
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
@@ -193,9 +193,9 @@ export class AddRunConfigurationHandler {
                         }
 
                         // Add class initialisation
-                        await this.requestArguments(input.constructors[cIndex], "constructor").then(
-                            (args) => {
-                                command += `new ${input.defaultName}(${args}).`
+                        await this.requestArgumentValues(input.constructors[cIndex], input.defaultName, "constructor").then(
+                            () => {
+                                command += `new ${this.getCommandString(input.defaultName, input.constructors[cIndex])}.`;
                                 this.lastConfigCtorArgs = input.constructors[cIndex];
                             },
                             () => { throw new Error("Constructor arguments missing") }
@@ -203,9 +203,9 @@ export class AddRunConfigurationHandler {
                     }
 
                     // Add function/operation call to command
-                    await this.requestArguments(input.applyArgs, "operation/function").then(
-                        (args) => {
-                            command += `${input.applyName}(${args})`
+                    await this.requestArgumentValues(input.applyArgs, input.applyName, "operation/function").then(
+                        () => {
+                            command += this.getCommandString(input.defaultName, input.applyArgs);
                             this.lastConfigApplyArgs = input.applyArgs;
                         },
                         () => { throw new Error("Operation/function arguments missing") }
@@ -216,7 +216,7 @@ export class AddRunConfigurationHandler {
                 }
 
                 // Save configuration
-                this.saveRunConfiguration(runConfig, wsFolder);
+                this.saveRunConfiguration(wsFolder, runConfig);
 
                 // Start debug session with custom debug configurations
                 resolve("Launching");
@@ -227,42 +227,30 @@ export class AddRunConfigurationHandler {
         }))
     }
 
-    private async requestArguments(args: VdmArgument[], forEntry: string): Promise<string> {
-        let argString: string = "";
-
+    private async requestArgumentValues(args: VdmArgument[], name: string, type: string): Promise<void> {
         // Request arguments from user
+        const commandString = this.getCommandOutlineString(name, args)
         for await (let a of args) {
-            let arg = await window.showInputBox({
-                prompt: `Input argument for ${forEntry}`,
+            let value = await window.showInputBox({
+                prompt: `Input argument for ${type}`,
+                title: commandString,
                 ignoreFocusOut: true,
-                placeHolder: `${a.name} : ${a.type}`,
+                placeHolder: `${a.name}: ${a.type}`,
                 value: a.value
             })
 
-            if (arg === undefined)
+            if (value === undefined)
                 return Promise.reject();
 
-            argString += `${arg},`
-            a.value = arg;
+            a.value = value;
         }
 
-        // Remove trailing comma
-        if (argString.endsWith(","))
-            argString = argString.slice(0, argString.length - 1);
-
-        return Promise.resolve(argString);
+        return Promise.resolve();
     }
 
     private async requestConstructor(className: string, constructors: [VdmArgument[]]): Promise<number> {
         // Create strings of constructors to pick from
-        let ctorStrings: string[] = [];
-        constructors.forEach(ctor => {
-            let argString = "";
-            ctor.forEach(a => argString += `${a.name}:${a.type},`)
-            if (argString.endsWith(","))
-                argString = argString.slice(0, argString.length - 1);
-            ctorStrings.push(`${className}(${argString})`)
-        })
+        let ctorStrings: string[] = constructors.map(ctor => this.getCommandOutlineString(className, ctor));
 
         let pick = await window.showQuickPick(ctorStrings, {
             canPickMany: false,
@@ -283,7 +271,7 @@ export class AddRunConfigurationHandler {
     private transferArguments(config: VdmLaunchLensConfiguration) {
         // Transfer constructor arguments
         this.lastConfigCtorArgs?.forEach(lastArg => {
-            config.constructors.forEach(ctor => {
+            config.constructors?.forEach(ctor => {
                 ctor.forEach(arg => {
                     if (lastArg.name == arg.name && lastArg.type == arg.type)
                         arg.value = lastArg.value
@@ -298,5 +286,16 @@ export class AddRunConfigurationHandler {
                     arg.value = lastArg?.value
             })
         })
+    }
+
+    private getCommandOutlineString(name: string, args: VdmArgument[]): string {
+        let argOutlines: string[] = args.map(a => `${a.name}: ${a.type}`);
+        let command = `${name}(${argOutlines.join(', ')})`;
+        return command;
+    }
+
+    private getCommandString(name: string, args: VdmArgument[]): string {
+        let command = `${name}(${args.map(x => x.value).join((', '))}`;
+        return command;
     }
 }
