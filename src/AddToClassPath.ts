@@ -16,7 +16,7 @@ export class AddToClassPathHandler {
         window.setStatusBarMessage(`Adding to Class Path.`, new Promise(async (resolve, reject) => {
             // Determine scope
             const wsFolders = workspace.workspaceFolders;
-            let defaultScopes = ["User","Workspace"];
+            let defaultScopes = ["User", "Workspace"];
             let scopes = defaultScopes;
             if (wsFolders.length > 1)
                 wsFolders.forEach(f => scopes.push(f.name))
@@ -26,21 +26,21 @@ export class AddToClassPathHandler {
             });
             if (scopeName === undefined) return reject(`Empty selection. Aborting.`)
             let scope = scopes.findIndex(x => x == scopeName)
-            
+
             // Get location(s) to add
-            const workspaceFolder = (scope < 2 ? undefined : wsFolders[scope-2])
+            const workspaceFolder = (scope < 2 ? undefined : wsFolders[scope - 2])
             const location = await window.showOpenDialog({
                 defaultUri: workspaceFolder && workspaceFolder.uri,
                 canSelectFiles: !folders,
                 canSelectFolders: folders,
-                canSelectMany:true,
+                canSelectMany: true,
                 openLabel: "Add",
                 title: "Add to class path..."
             });
 
-             // None selected
-            if (!location || !location.length) { 
-                return reject("No location(s) selected"); 
+            // None selected
+            if (!location || !location.length) {
+                return reject("No location(s) selected");
             }
 
             // Get current class path additions
@@ -51,7 +51,7 @@ export class AddToClassPathHandler {
                 classPaths = cpa.globalValue;
             else if (scope == 1) // Workspace
                 classPaths = cpa.workspaceValue;
-            else 
+            else
                 classPaths = cpa.workspaceFolderValue;
 
             // Make sure a class path array exists
@@ -60,7 +60,7 @@ export class AddToClassPathHandler {
 
             // Add selected locations
             location.forEach(l => {
-                if(!classPaths.includes(l.fsPath))
+                if (!classPaths.includes(l.fsPath))
                     classPaths.push(l.fsPath);
             })
 

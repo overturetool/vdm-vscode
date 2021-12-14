@@ -60,19 +60,19 @@ export class AddExampleHandler {
                 defaultUri: workspaceFolder && workspaceFolder.uri,
                 canSelectFiles: false,
                 canSelectFolders: true,
-                canSelectMany:false,
+                canSelectMany: false,
                 openLabel: "Save",
                 title: "Save in folder..."
             });
 
-             // None selected
-            if (!location || !location.length) { 
-                return; 
+            // None selected
+            if (!location || !location.length) {
+                return;
             }
 
             // Project save location
-            let projectPath = path.resolve(location[0].fsPath,selectedEx);
-            let projectUri  = Uri.file(projectPath);
+            let projectPath = path.resolve(location[0].fsPath, selectedEx);
+            let projectUri = Uri.file(projectPath);
 
             // Sync copy
             try {
@@ -83,7 +83,7 @@ export class AddExampleHandler {
             }
 
             // Open project
-            if (workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0){ // Add imported example to workspace if there are workspace folders in the window
+            if (workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0) { // Add imported example to workspace if there are workspace folders in the window
                 workspace.updateWorkspaceFolders(
                     workspace.workspaceFolders.length,
                     null,
@@ -97,8 +97,8 @@ export class AddExampleHandler {
             }
 
             resolve(`Add example completed.`);
-            
- 
+
+
         }));
 
     }

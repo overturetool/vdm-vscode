@@ -14,18 +14,18 @@ export class SpecificationLanguageClient extends LanguageClient {
     public static readonly covLanguageId = "coverage";
     public static readonly graphvizLanguageId = "graphviz"
     public static readonly isabelleLanguageId = "isabelle"
-    public readonly projectRoot = this.clientOptions.workspaceFolder.uri; 
+    public readonly projectRoot = this.clientOptions.workspaceFolder.uri;
     public readonly projectSavedDataPath = Uri.joinPath(this.projectRoot, ".generated");
     public readonly logPath;
     public readonly dialect;
 
-    constructor(id: string, name: string, dialect: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, private readonly _context: ExtensionContext, public readonly dataStoragePath:Uri, forceDebug?: boolean) {
+    constructor(id: string, name: string, dialect: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, private readonly _context: ExtensionContext, public readonly dataStoragePath: Uri, forceDebug?: boolean) {
         super(id, name, serverOptions, clientOptions, forceDebug);
         this.dialect = dialect;
         this.logPath = path.resolve(this._context.logUri.fsPath, `${name}.log`);
         Util.ensureDirectoryExistence(this.logPath);
-        this.registerFeatures([ 
-            new ProofObligationGenerationFeature(this, this._context), 
+        this.registerFeatures([
+            new ProofObligationGenerationFeature(this, this._context),
             new CombinantorialTestingFeature(),
             new TranslateFeature(SpecificationLanguageClient.latexLanguageId),
             new TranslateFeature(SpecificationLanguageClient.wordLanguageId),

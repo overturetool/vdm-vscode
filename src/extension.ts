@@ -64,12 +64,12 @@ function getDialect(document: TextDocument): string {
     return document.languageId;
 }
 
-function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder){
+function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
     // Restart the extension if changes has been made to the server settings
-    if (event.affectsConfiguration("vdm-vscode.server", wsFolder)){
+    if (event.affectsConfiguration("vdm-vscode.server", wsFolder)) {
         // Ask the user to restart the extension if setting requires a restart
         window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
-            if (res == "Reload Now") 
+            if (res == "Reload Now")
                 commands.executeCommand("workbench.action.reloadWindow");
         })
     }
@@ -78,18 +78,18 @@ function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: Works
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath          = path.resolve(context.extensionPath, "resources", "jars");
-    const jarPath_vdmj     = path.resolve(jarPath,"vdmj");
-    const jarPath_vdmj_hp  = path.resolve(jarPath,"vdmj_hp");
+    const jarPath_vdmj     = path.resolve(jarPath, "vdmj");
+    const jarPath_vdmj_hp  = path.resolve(jarPath, "vdmj_hp");
 
     // Make sure that the VDMJ and LSP jars are present
-    if (!Util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) || 
-        !Util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i) 
-    ){
+    if (!Util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
+        !Util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i)
+    ) {
         return;
     }
 
     // Show VDM VS Code buttons
-    commands.executeCommand( 'setContext', 'vdm-submenus-show', true);
+    commands.executeCommand('setContext', 'vdm-submenus-show', true);
 
     // Ensure logging path exists
     Util.ensureDirectoryExistence(extensionLogPath);
@@ -121,17 +121,17 @@ export function activate(context: ExtensionContext) {
     });
     debug.onDidStartDebugSession(async (session) => {
         // Launch client if this has not been done
-        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())){
+        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())) {
 
             // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
-            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`,"Retry", "Close").then(res => {
+            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`, "Retry", "Close").then(res => {
                 if (res == "Retry")
                     debug.startDebugging(session.workspaceFolder, session.configuration)
             })
 
             let dialect = await Util.guessDialect(session.workspaceFolder);
             if (dialect)
-                await launchClient(session.workspaceFolder, dialect);           
+                await launchClient(session.workspaceFolder, dialect);
         }
     })
 
@@ -156,7 +156,7 @@ export function activate(context: ExtensionContext) {
 
     async function launchClient(wsFolder: WorkspaceFolder, dialect: string): Promise<void> {
         // Abort if client already exists
-        if (globalThis.clients.has(wsFolder.uri.toString())){
+        if (globalThis.clients.has(wsFolder.uri.toString())) {
             return;
         }
 
@@ -167,9 +167,9 @@ export function activate(context: ExtensionContext) {
         workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
 
         // Get server configurations
-        const serverConfig : WorkspaceConfiguration      = workspace.getConfiguration('vdm-vscode.server', wsFolder);
-        const developmentConfig : WorkspaceConfiguration = serverConfig.get("development")
-        const stdioConfig : WorkspaceConfiguration       = serverConfig.get("stdio")
+        const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
+        const developmentConfig: WorkspaceConfiguration = serverConfig.get("development")
+        const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
 
         // If using experimental server
         if (developmentConfig.experimentalServer) {
@@ -197,20 +197,20 @@ export function activate(context: ExtensionContext) {
             // Setup server arguments
             let args: string[] = [];
             let JVMArguments: string = serverConfig.JVMArguments;
-            if (JVMArguments != ""){
+            if (JVMArguments != "") {
                 let split = JVMArguments.split(" ").filter(v => v != "")
                 let i = 0;
-                while (i < split.length-1){
-                    if (split[i].includes("\"")){
-                        split[i] = split[i] + " " + split[i+1]
-                        split.splice(i+1, 1)
+                while (i < split.length - 1) {
+                    if (split[i].includes("\"")) {
+                        split[i] = split[i] + " " + split[i + 1]
+                        split.splice(i + 1, 1)
                     }
                     i++;
                 }
                 args.push(...split);
             }
 
-            if (developmentConfig.activateServerLog){
+            if (developmentConfig.activateServerLog) {
                 // Ensure logging path exists
                 let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
                 Util.ensureDirectoryExistence(languageServerLoggingPath);
@@ -221,10 +221,10 @@ export function activate(context: ExtensionContext) {
             let classPath = "";
 
             // Add user defined paths to class path
-            if (serverConfig.classPathAdditions){
+            if (serverConfig.classPathAdditions) {
                 serverConfig.classPathAdditions.forEach(p => {
-                    let pathToCheck = (p.endsWith(path.sep+'*') ? p.substr(0,p.length-2) : p)
-                    if (!fs.existsSync(pathToCheck)){
+                    let pathToCheck = (p.endsWith(path.sep + '*') ? p.substr(0, p.length - 2) : p)
+                    if (!fs.existsSync(pathToCheck)) {
                         let m = "Invalid path in class path additions: " + p;
                         window.showWarningMessage(m)
                         Util.writeToLog(extensionLogPath, m);
@@ -236,7 +236,7 @@ export function activate(context: ExtensionContext) {
 
             // Add jars folders to class path
             // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-            classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj),"*");
+            classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj), "*");
 
             // Construct java launch arguments
             args.push(...[
@@ -254,7 +254,7 @@ export function activate(context: ExtensionContext) {
                 globalThis.clients.delete(wsFolder.uri.toString());
                 return;
             }
-            let server = child_process.spawn(javaPath, args, {cwd: wsFolder.uri.fsPath});
+            let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
 
             // Wait for the server to be ready
             let connected = false;
@@ -277,14 +277,14 @@ export function activate(context: ExtensionContext) {
             let stdoutLogPath = stdioConfig.stdioLogPath;
             if (stdioConfig.activateStdoutLogging) {
                 // Log to file
-                if (stdoutLogPath != ""){ 
-                    Util.ensureDirectoryExistence(stdoutLogPath+path.sep+wsFolder.name.toString())
-                    server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+wsFolder.name.toString()+"_stdout.log", chunk));
-                    server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath+path.sep+wsFolder.name.toString()+"_stderr.log", chunk));
+                if (stdoutLogPath != "") {
+                    Util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
+                    server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
+                    server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
                 }
                 // Log to terminal
-                else { 
-                    let outputChannel: OutputChannel = window.createOutputChannel("VDM: "+wsFolder.name.toString());
+                else {
+                    let outputChannel: OutputChannel = window.createOutputChannel("VDM: " + wsFolder.name.toString());
                     server.stdout.addListener("data", chunk => {
                         outputChannel.show(true);
                         outputChannel.appendLine(chunk)
@@ -296,10 +296,10 @@ export function activate(context: ExtensionContext) {
                 }
             }
             else { //Discard stdout messages
-                server.stdout.addListener("data", chunk => {});
-                server.stderr.addListener("data", chunk => {});
-            } 
-            
+                server.stdout.addListener("data", chunk => { });
+                server.stderr.addListener("data", chunk => { });
+            }
+
             // Create client
             let client = createClient(dialect, lspPort, dapPort, wsFolder);
 
@@ -328,7 +328,7 @@ export function activate(context: ExtensionContext) {
         // Setup client options
         let clientOptions: LanguageClientOptions = {
             // Document selector defines which files from the workspace, that is also open in the client, to monitor.
-            documentSelector: [{ scheme: 'file', language: dialect, pattern: `${folder.uri.fsPath}/**/*`}],
+            documentSelector: [{ scheme: 'file', language: dialect, pattern: `${folder.uri.fsPath}/**/*` }],
             diagnosticCollectionName: "vdm-vscode",
             workspaceFolder: folder
         }

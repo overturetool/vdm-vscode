@@ -15,22 +15,22 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
     }
 
     getChildren(element?: CTResultElement): ProviderResult<CTResultElement[]> {
-        if(element)
+        if (element)
             return element.children;
-        
+
         return this._testSequenceResults;
     }
 
-    private convertToResultElements(resultPairs: CTResultPair[]): CTResultElement[]{
+    private convertToResultElements(resultPairs: CTResultPair[]): CTResultElement[] {
         return resultPairs.map(rp => new CTResultElement(rp.case, [new CTResultElement(!rp.result ? "n/a" : rp.result, [], TreeItemCollapsibleState.None, "Result")], TreeItemCollapsibleState.Expanded, "Test case"));
     }
 
-    public getTestSequenceResults(){
+    public getTestSequenceResults() {
         return this._testSequenceResults;
     }
 
-    public setTestSequenceResults(resultPairs: CTResultPair[]){
-        if(!resultPairs)
+    public setTestSequenceResults(resultPairs: CTResultPair[]) {
+        if (!resultPairs)
             return;
 
         this._testSequenceResults = this.convertToResultElements(resultPairs);
@@ -40,10 +40,10 @@ export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 
 export class CTResultElement extends TreeItem {
     constructor(
-    public readonly label: string,
-    public children: CTResultElement[],
-    public readonly collapsibleState?,
-    public tooltip = "") {
+        public readonly label: string,
+        public children: CTResultElement[],
+        public readonly collapsibleState?,
+        public tooltip = "") {
         super(label, TreeItemCollapsibleState.None);
     }
 }

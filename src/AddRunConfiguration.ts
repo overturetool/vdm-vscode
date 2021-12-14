@@ -32,11 +32,11 @@ export class AddRunConfigurationHandler {
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext
     ) {
-        commands.executeCommand( 'setContext', 'add-runconf-show-button', true );
+        commands.executeCommand('setContext', 'add-runconf-show-button', true);
         this.context = context;
-        util.registerCommand(this.context,"vdm-vscode.addRunConfiguration", (inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)))
-        util.registerCommand(this.context,"vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) => this.addLensRunConfiguration(input))
-        util.registerCommand(this.context,"vdm-vscode.addLensRunConfigurationWarning", () => this.addLensRunConfigurationWarning())
+        util.registerCommand(this.context, "vdm-vscode.addRunConfiguration", (inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)))
+        util.registerCommand(this.context, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) => this.addLensRunConfiguration(input))
+        util.registerCommand(this.context, "vdm-vscode.addLensRunConfigurationWarning", () => this.addLensRunConfigurationWarning())
     }
 
     private async addRunConfiguration(wsFolder: WorkspaceFolder) {
@@ -44,14 +44,14 @@ export class AddRunConfigurationHandler {
             let dialect = await this.getDialect(wsFolder);
             if (dialect == null) {
                 // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
-                window.showInformationMessage(`Add run configuration failed! Unable to guess VDM dialect for workspace`); 
+                window.showInformationMessage(`Add run configuration failed! Unable to guess VDM dialect for workspace`);
                 return reject()
             }
 
             // Prompt user for entry point class/module and function/operation   
             let selectedClass: string;
-            let selectedCommand: string;    
-            if(dialect == "vdmsl") {
+            let selectedCommand: string;
+            if (dialect == "vdmsl") {
                 selectedClass = await window.showInputBox({
                     prompt: "Input entry point Module",
                     placeHolder: "Module",
@@ -67,17 +67,17 @@ export class AddRunConfigurationHandler {
                 selectedCommand = await window.showInputBox({
                     prompt: "Input entry point function/operation",
                     placeHolder: "Run(args)"
-                }); 
+                });
             }
 
             // None selected 
-            if(selectedClass === undefined || selectedCommand === undefined) return resolve(`Empty selection. Add run configuration completed.`)
+            if (selectedClass === undefined || selectedCommand === undefined) return resolve(`Empty selection. Add run configuration completed.`)
 
             // Check for command arguments
             let selectedCommandArguments: string = ""
-            if (selectedCommand.includes("(")){
-                selectedCommandArguments = selectedCommand.slice(selectedCommand.indexOf("(")+1,selectedCommand.lastIndexOf(")"));
-                selectedCommand = selectedCommand.slice(0,selectedCommand.indexOf("("))
+            if (selectedCommand.includes("(")) {
+                selectedCommandArguments = selectedCommand.slice(selectedCommand.indexOf("(") + 1, selectedCommand.lastIndexOf(")"));
+                selectedCommand = selectedCommand.slice(0, selectedCommand.indexOf("("))
             }
 
             // Create run configuration
@@ -92,12 +92,12 @@ export class AddRunConfigurationHandler {
                 postConditionChecks: true,
                 measureChecks: true
             }
-            if(dialect == "vdmsl") {
+            if (dialect == "vdmsl") {
                 debugConfiguration.defaultName = `${selectedClass}`,
-                debugConfiguration.command = `print ${selectedCommand}(${selectedCommandArguments})`
+                    debugConfiguration.command = `print ${selectedCommand}(${selectedCommandArguments})`
             } else {
                 debugConfiguration.defaultName = null,
-                debugConfiguration.command = `print new ${selectedClass}().${selectedCommand}(${selectedCommandArguments})`
+                    debugConfiguration.command = `print new ${selectedClass}().${selectedCommand}(${selectedCommandArguments})`
             }
 
             // Save run configuration
@@ -106,44 +106,44 @@ export class AddRunConfigurationHandler {
             // Open launch file
             window.showTextDocument(
                 Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"),
-                {preview: true, preserveFocus: true}
+                { preview: true, preserveFocus: true }
             )
         }));
     }
 
     private saveRunConfiguration(runConf: DebugConfiguration, wsFolder: WorkspaceFolder) {
         // Get existing configurations
-        const launchConfigurations  = workspace.getConfiguration("launch", wsFolder);
+        const launchConfigurations = workspace.getConfiguration("launch", wsFolder);
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
 
         // Only save one configuration with the same name
-        let i = rawConfigs.findIndex(c => c.name == runConf.name) 
+        let i = rawConfigs.findIndex(c => c.name == runConf.name)
         if (i >= 0)
             rawConfigs[i] = runConf;
         else
             rawConfigs.push(runConf);
-        
+
         // Update settings file
         launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
     }
 
-    private async getDialect(wsFolder : WorkspaceFolder){
-        const dialects = ["vdmsl","vdmpp","vdmrt"];
+    private async getDialect(wsFolder: WorkspaceFolder) {
+        const dialects = ["vdmsl", "vdmpp", "vdmrt"];
         let dialect = null;
 
         let client = this.clients.get(wsFolder.uri.toString());
         if (client) {
             dialect = client.dialect;
-        } 
+        }
         else {
             console.log(`No client found for the folder: ${wsFolder.name}`);
 
             // Guess dialect
-            for (const d in dialects){
+            for (const d in dialects) {
                 let pattern = new RelativePattern(wsFolder.uri.path, "*." + d);
-                let res = await workspace.findFiles(pattern,null,1); 
+                let res = await workspace.findFiles(pattern, null, 1);
                 if (res.length == 1) dialect = d;
-            } 
+            }
         }
         return dialect;
     }
@@ -187,15 +187,15 @@ export class AddRunConfigurationHandler {
                         // If multiple constructors to select from request the user to select one
                         if (input.constructors.length > 1) {
                             await this.requestConstructor(input.defaultName, input.constructors).then(
-                                i  => { cIndex = i },
+                                i => { cIndex = i },
                                 () => { throw new Error("No constructor selected") }
                             )
                         }
 
                         // Add class initialisation
                         await this.requestArguments(input.constructors[cIndex], "constructor").then(
-                            (args) => { 
-                                command += `new ${input.defaultName}(${args}).` 
+                            (args) => {
+                                command += `new ${input.defaultName}(${args}).`
                                 this.lastConfigCtorArgs = input.constructors[cIndex];
                             },
                             () => { throw new Error("Constructor arguments missing") }
@@ -204,8 +204,8 @@ export class AddRunConfigurationHandler {
 
                     // Add function/operation call to command
                     await this.requestArguments(input.applyArgs, "operation/function").then(
-                        (args) => { 
-                            command += `${input.applyName}(${args})` 
+                        (args) => {
+                            command += `${input.applyName}(${args})`
                             this.lastConfigApplyArgs = input.applyArgs;
                         },
                         () => { throw new Error("Operation/function arguments missing") }
@@ -241,7 +241,7 @@ export class AddRunConfigurationHandler {
 
             if (arg === undefined)
                 return Promise.reject();
-            
+
             argString += `${arg},`
             a.value = arg;
         }

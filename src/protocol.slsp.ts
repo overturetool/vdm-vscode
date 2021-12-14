@@ -48,9 +48,9 @@ export interface TranslateParams extends WorkDoneProgressParams {
      */
     saveUri: DocumentUri;
     /**
-	 * Options that the command handler should be invoked with.
-	 */
-	options?: any; //TODO make LSPAny[] when LSP 3.17 is released
+     * Options that the command handler should be invoked with.
+     */
+    options?: any; //TODO make LSPAny[] when LSP 3.17 is released
 }
 
 /**

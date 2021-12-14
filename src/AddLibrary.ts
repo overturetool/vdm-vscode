@@ -5,9 +5,6 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import { copyFile, Dirent, readdirSync } from 'fs';
 import * as path from 'path'
-import { VdmDapSupport } from "./VdmDapSupport";
-import { SlowBuffer } from "buffer";
-
 
 export class AddLibraryHandler {
 
@@ -15,7 +12,7 @@ export class AddLibraryHandler {
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext
     ) {
-        commands.executeCommand( 'setContext', 'add-lib-show-button', true );
+        commands.executeCommand('setContext', 'add-lib-show-button', true);
         this.context = context;
         this.registerCommand((inputUri: Uri) => this.addLibrary(workspace.getWorkspaceFolder(inputUri)));
     }
@@ -29,26 +26,25 @@ export class AddLibraryHandler {
     private async addLibrary(wsFolder: WorkspaceFolder) {
 
         let dialect = null;
-        const dialects = {"vdmsl" : "SL", "vdmpp" : "PP", "vdmrt" : "RT"}
+        const dialects = { "vdmsl": "SL", "vdmpp": "PP", "vdmrt": "RT" }
 
         window.setStatusBarMessage(`Adding Libraries.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
             if (client) {
                 dialect = dialects[client.dialect];
-            }else{
-            console.log(`No client found for the folder: ${wsFolder.name}`);
+            } else {
+                console.log(`No client found for the folder: ${wsFolder.name}`);
 
                 // Guess dialect
-                for (var dp in dialects){
-                   let pattern = new RelativePattern(wsFolder.uri.path, "*." + dp);
-                   let res = await workspace.findFiles(pattern,null,1)
-                   if(res.length == 1) dialect = dialects[dp];
-                } 
+                for (var dp in dialects) {
+                    let pattern = new RelativePattern(wsFolder.uri.path, "*." + dp);
+                    let res = await workspace.findFiles(pattern, null, 1)
+                    if (res.length == 1) dialect = dialects[dp];
+                }
 
-                if(dialect == null)
-                {
+                if (dialect == null) {
                     // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
-                    window.showInformationMessage(`Add library failed! Unable to guess VDM dialect for workspace`); 
+                    window.showInformationMessage(`Add library failed! Unable to guess VDM dialect for workspace`);
                     reject();
                     return;
                 }
@@ -56,9 +52,9 @@ export class AddLibraryHandler {
 
             // Gather available libraries and let user select
             const libPath = path.resolve(this.context.extensionPath, "resources", "lib", dialect);
-            
+
             const libsInFolder: Dirent[] = readdirSync(libPath, { withFileTypes: true });
-            
+
             let libsOptions: string[] = libsInFolder.map((x: Dirent) => x.name);
 
             let selectedLibs: string[] = await window.showQuickPick(libsOptions, {
@@ -67,7 +63,7 @@ export class AddLibraryHandler {
             });
 
             // None selected 
-            if(selectedLibs === undefined || selectedLibs.length == 0) return resolve(`Empty selection. Add library completed.`)
+            if (selectedLibs === undefined || selectedLibs.length == 0) return resolve(`Empty selection. Add library completed.`)
 
             let folderUri = Uri.joinPath(wsFolder.uri, "lib");
 
@@ -83,7 +79,7 @@ export class AddLibraryHandler {
 
                             if (reason) {
                                 window.showInformationMessage(`Add library ${lib} failed`);
-                                console.log( `Copy library files failed with error: ${reason}`);
+                                console.log(`Copy library files failed with error: ${reason}`);
                                 reject(`Add library  ${lib} failed.`);
                             }
                             window.showInformationMessage(`Add library ${lib} completed`);

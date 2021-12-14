@@ -27,17 +27,17 @@ export class ProofObligationPanel {
         // Check if a panel already exists
         if (ProofObligationPanel.currentPanel) {
             // Check if panel is for another workspace folder
-            if (workspace && workspace != this.lastWorkspace){
+            if (workspace && workspace != this.lastWorkspace) {
                 ProofObligationPanel.currentPanel.dispose();
             }
             else {
                 // Put panel in focus
-                if(moveFocus)
+                if (moveFocus)
                     ProofObligationPanel.currentPanel._panel.reveal(column, true);
                 return;
             }
 
-            
+
         }
 
         // Create a new panel.
@@ -83,9 +83,9 @@ export class ProofObligationPanel {
 
                         // Open the specification file with the symbol responsible for the po
                         let doc = await workspace.openTextDocument(path);
-                        
+
                         // Show the file
-                        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(po.location.range) , viewColumn: 1 })
+                        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(po.location.range), viewColumn: 1 })
                         return;
                     case 'sort':
                         // Sort and post pos to javascript
@@ -116,8 +116,7 @@ export class ProofObligationPanel {
         // Sort and post pos to javascript
         this._pos = pos;
 
-        if(pos.length < 1)
-        {
+        if (pos.length < 1) {
             this._panel.webview.postMessage({ command: "newPOs", pos: pos });
             return;
         }
@@ -194,8 +193,8 @@ export class ProofObligationPanel {
         }
     }
 
-    private static resourcesUri(extensionUri: Uri){
-        let res = Uri.joinPath(extensionUri,'resources');
+    private static resourcesUri(extensionUri: Uri) {
+        let res = Uri.joinPath(extensionUri, 'resources');
         return res;
     }
 

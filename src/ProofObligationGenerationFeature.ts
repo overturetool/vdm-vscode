@@ -14,15 +14,15 @@ export class ProofObligationGenerationFeature implements StaticFeature {
 
     constructor(client: SpecificationLanguageClient, context: ExtensionContext) {
         this._client = client;
-        this._context = context;   
+        this._context = context;
     }
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         // Client supports POG
-        if(!capabilities.experimental)
+        if (!capabilities.experimental)
             capabilities.experimental = { proofObligationGeneration: true };
         else
-            Object.assign(capabilities.experimental, {proofObligationGeneration: true});
+            Object.assign(capabilities.experimental, { proofObligationGeneration: true });
     }
 
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
@@ -42,7 +42,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
     private registerPOGCommand(): void {
         if (!ProofObligationGenerationFeature.commandRegistered) {
             ProofObligationGenerationFeature.commandRegistered = true;
-            commands.executeCommand( "setContext", "pog-show-button", true );
+            commands.executeCommand("setContext", "pog-show-button", true);
             this.registerCommand("vdm-vscode.runPOG", (inputUri: Uri) => {
                 // Find client
                 let wsFolder = workspace.getWorkspaceFolder(inputUri);
@@ -58,14 +58,14 @@ export class ProofObligationGenerationFeature implements StaticFeature {
             let wsFolderUri = this._client.clientOptions.workspaceFolder.uri;
             // Only perform actions if POG View exists and if active editor is on a file from the clients workspace
             if (ProofObligationPanel.currentPanel &&
-                (workspace.getWorkspaceFolder(window.activeTextEditor.document.uri).uri.toString() == wsFolderUri.toString()) ) {
+                (workspace.getWorkspaceFolder(window.activeTextEditor.document.uri).uri.toString() == wsFolderUri.toString())) {
                 // If POG is possible
                 if (params.successful) {
                     // Request new POG 
-                    if (workspace.getWorkspaceFolder(ProofObligationGenerationFeature.lastUri).uri.toString() == wsFolderUri.toString()){ // The last uri was from this workspace
+                    if (workspace.getWorkspaceFolder(ProofObligationGenerationFeature.lastUri).uri.toString() == wsFolderUri.toString()) { // The last uri was from this workspace
                         ProofObligationGenerationFeature.run(ProofObligationGenerationFeature.lastUri, this._client, this._context, false);
                     } else { // The active workspace has changed
-                        ProofObligationGenerationFeature.run(wsFolderUri, this._client, this._context, false); 
+                        ProofObligationGenerationFeature.run(wsFolderUri, this._client, this._context, false);
                     }
                 }
                 else {
@@ -97,5 +97,5 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         catch (error) {
             window.showInformationMessage("Proof obligation generation failed. " + error);
         }
-    }   
+    }
 }

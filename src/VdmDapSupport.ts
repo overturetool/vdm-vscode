@@ -12,16 +12,16 @@ export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     measureChecks?: boolean,
     defaultName?: string | null,
     command?: string | null,
-    remoteControl?: string| null
+    remoteControl?: string | null
 }
 
 export namespace VdmDapSupport {
     let initialized: boolean = false;
     let factory: VdmDebugAdapterDescriptorFactory;
-    let sessions : string[] = new Array(); // Array of running sessions
+    let sessions: string[] = new Array(); // Array of running sessions
 
     export function initDebugConfig(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder, port: number) {
-        if (!initialized){
+        if (!initialized) {
             initialized = true;
             // register a configuration provider for 'vdm' debug type
             const provider = new VdmConfigurationProvider();
@@ -37,11 +37,11 @@ export namespace VdmDapSupport {
     }
 
     export class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
-        
-        constructor() { 
+
+        constructor() {
             // When a session is started, add it to the array of running sessions
             vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
-                if (session.type === 'vdm'){
+                if (session.type === 'vdm') {
                     sessions.push(session.workspaceFolder.uri.toString())
                 }
             })
@@ -64,15 +64,15 @@ export namespace VdmDapSupport {
          */
         resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, inConfig: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
             let uri = folder.uri.toString();
-            let config : VdmDebugConfiguration = inConfig;
+            let config: VdmDebugConfiguration = inConfig;
 
             // Check for remote control violation
-            if(config.remoteControl && config.command){
+            if (config.remoteControl && config.command) {
                 vscode.window.showInformationMessage("Run aborted - Command and remoteControl are mutually exclusive");
                 return undefined;
             }
             // Check if there is a debug session running and if one of those sessions are for the specification
-            if (vscode.debug.activeDebugSession && sessions.includes(uri)){
+            if (vscode.debug.activeDebugSession && sessions.includes(uri)) {
                 vscode.window.showInformationMessage("Debug session already running, cannot launch multiple sessions for the same specification");
                 return undefined; // Abort launch
             }
@@ -96,21 +96,21 @@ export namespace VdmDapSupport {
         constructor(
             folder: vscode.WorkspaceFolder,
             dapPort: number
-        ) { 
+        ) {
             this.dapPorts.set(folder.uri.toString(), dapPort);
         }
 
-        addPort(folder: vscode.WorkspaceFolder, dapPort: number){
+        addPort(folder: vscode.WorkspaceFolder, dapPort: number) {
             this.dapPorts.set(folder.uri.toString(), dapPort);
         }
 
         createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
             // Check if server has been launched
             let uri = session.workspaceFolder.uri;
-            if (!this.dapPorts.get(uri.toString())){
+            if (!this.dapPorts.get(uri.toString())) {
                 // Open a file in the workspace folder to force the client to start for the folder
                 let pattern = new vscode.RelativePattern(uri.fsPath, "*.vdm*");
-                vscode.workspace.findFiles(pattern,null,1).then( async (res) => {
+                vscode.workspace.findFiles(pattern, null, 1).then(async (res) => {
                     if (res.length > 0)
                         vscode.workspace.openTextDocument(res[0])
                 })
@@ -120,13 +120,13 @@ export namespace VdmDapSupport {
                 sessions = elems;
                 throw new Error(`Unable to find server for workspace folder ${session.workspaceFolder.name}`);
             }
-            
+
             // make VS Code connect to debug server
             return new vscode.DebugAdapterServer(this.dapPorts.get(uri.toString()));
         }
     }
 
-    export function startDebuggerWithCommand(command: string, folder: WorkspaceFolder | undefined, stopOnEntry?:boolean) {
+    export function startDebuggerWithCommand(command: string, folder: WorkspaceFolder | undefined, stopOnEntry?: boolean) {
         var debugConfiguration: VdmDebugConfiguration = {
             type: "vdm",               // The type of the debug session.
             name: "Launch command",    // The name of the debug session.

@@ -25,7 +25,7 @@ export class TranslateHandler {
     private async translate(fileUri: Uri, wsFolder: WorkspaceFolder) {
         window.setStatusBarMessage(`Generating ${this.languageKind}.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
-            if (client == undefined){
+            if (client == undefined) {
                 window.showInformationMessage(`No client found for the folder: ${wsFolder.name}`);
                 return;
             }
@@ -45,7 +45,7 @@ export class TranslateHandler {
                         };
                         if (fileUri.toString() != wsFolder.uri.toString()) // If it not the workspace folder add the uri. 
                             params.uri = fileUri.toString();
-                        
+
                         // Add options based on configuration settings
                         params = this.addOptions(params, wsFolder);
 
@@ -54,7 +54,7 @@ export class TranslateHandler {
 
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-                            if ( this.languageKind == SpecificationLanguageClient.covLanguageId ) {
+                            if (this.languageKind == SpecificationLanguageClient.covLanguageId) {
                                 // Open the main file in the translation
                                 let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 
@@ -67,7 +67,7 @@ export class TranslateHandler {
 
                                 // Show the file
                                 window.showTextDocument(doc.uri)
-                                    .then( (editor) => editor.setDecorations(decorationType, ranges)
+                                    .then((editor) => editor.setDecorations(decorationType, ranges)
                                     );
                             }
                             else {
@@ -100,7 +100,7 @@ export class TranslateHandler {
 
     }
 
-    private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder) : TranslateParams {
+    private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder): TranslateParams {
         // Get configurations related to translation
         const config = workspace.getConfiguration(
             this.translationCommandName,
@@ -111,7 +111,7 @@ export class TranslateHandler {
         let once = true;
         Object.keys(config).forEach(key => {
             if (typeof config[key] !== 'function') {
-                if (once){params.options = {}; once = false;} // Initialise options only once
+                if (once) { params.options = {}; once = false; } // Initialise options only once
 
                 // Add options object to array
                 params.options[key] = config[key];
@@ -136,20 +136,20 @@ function getCovtblFileRanges(fsPath: string): DecorationOptions[] {
         // iterate over each coverage region
         lines.forEach((line) => {
 
-            if ( line.length > 0){
+            if (line.length > 0) {
 
-            // Lines follow "ln c1-c2+ct"
-            let lnsplit = line.split(" ");
-            let c1split = lnsplit[1].split("-");
-            let c2split = c1split[1].split("=");
-            //
-            let ln = parseInt(lnsplit[0]);
-            let c1 = parseInt(c1split[0]);
-            let c2 = parseInt(c2split[0]);
+                // Lines follow "ln c1-c2+ct"
+                let lnsplit = line.split(" ");
+                let c1split = lnsplit[1].split("-");
+                let c2split = c1split[1].split("=");
+                //
+                let ln = parseInt(lnsplit[0]);
+                let c1 = parseInt(c1split[0]);
+                let c2 = parseInt(c2split[0]);
 
-            let range = new Range(ln-1, c1-1, ln-1, c2);
+                let range = new Range(ln - 1, c1 - 1, ln - 1, c2);
 
-            ranges.push({ range });
+                ranges.push({ range });
 
             }
 

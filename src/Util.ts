@@ -11,8 +11,8 @@ export function ensureDirectoryExistence(filePath) {
         return true;
     }
 
-    fs.mkdirSync(dirname,{recursive : true});
-    
+    fs.mkdirSync(dirname, { recursive: true });
+
     return fs.existsSync(dirname);
 }
 
@@ -29,17 +29,16 @@ export function getDefaultWorkspaceFolder(): WorkspaceFolder | undefined {
     return undefined;
 }
 
-export function getJarsFromFolder(resourcesPath: string): string[]{
+export function getJarsFromFolder(resourcesPath: string): string[] {
     if (!fs.existsSync(resourcesPath) || !isDir(resourcesPath))
         return null;
 
     let jarPaths: string[] = []
-    let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
-    for(let i = 0; i < elementsInFolder.length; i++)
-    {
+    let elementsInFolder = fs.readdirSync(resourcesPath, { withFileTypes: true });
+    for (let i = 0; i < elementsInFolder.length; i++) {
         let element: fs.Dirent = elementsInFolder[i];
-        let fullElementPath =  path.resolve(resourcesPath, element.name);
-        if(!isDir(fullElementPath) && element.name.search( /.*jar/i) != -1)
+        let fullElementPath = path.resolve(resourcesPath, element.name);
+        if (!isDir(fullElementPath) && element.name.search(/.*jar/i) != -1)
             jarPaths.push(fullElementPath);
     }
     return jarPaths;
@@ -49,14 +48,13 @@ export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.s
     if (!fs.existsSync(resourcesPath) || !isDir(resourcesPath))
         return null;
 
-    let elementsInFolder = fs.readdirSync(resourcesPath, {withFileTypes: true});
-    for(let i = 0; i < elementsInFolder.length; i++)
-    {
+    let elementsInFolder = fs.readdirSync(resourcesPath, { withFileTypes: true });
+    for (let i = 0; i < elementsInFolder.length; i++) {
         let element: fs.Dirent = elementsInFolder[i];
-        let fullElementPath =  path.resolve(resourcesPath, element.name);
-        if(isDir(fullElementPath))
+        let fullElementPath = path.resolve(resourcesPath, element.name);
+        if (isDir(fullElementPath))
             fullElementPath = recursivePathSearch(fullElementPath, searcher);
-        else if(fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length -1].search(searcher) != -1)
+        else if (fullElementPath.split(path.sep)[fullElementPath.split(path.sep).length - 1].search(searcher) != -1)
             return fullElementPath;
     }
     return null;
@@ -66,51 +64,51 @@ export function isDir(path: fs.PathLike): boolean {
     return fs.lstatSync(path).isDirectory();
 }
 
-export function createDirectory(fullUri: Uri): Promise<void>{
-    return new Promise( (resolve, reject) => { 
+export function createDirectory(fullUri: Uri): Promise<void> {
+    return new Promise((resolve, reject) => {
         ensureDirectoryExistence(fullUri.fsPath);
         fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
-            if(!accessErr)
+            if (!accessErr)
                 return resolve();
-            if (accessErr.code === 'ENOENT'){
+            if (accessErr.code === 'ENOENT') {
                 fs.mkdir(fullUri.fsPath, dirErr => {
-                    if (dirErr){
+                    if (dirErr) {
                         return reject(dirErr);
                     }
                     return resolve();
-                });     
+                });
             }
             else
-                return reject(accessErr);  
-        });      
-     });
+                return reject(accessErr);
+        });
+    });
 }
 
-export function createTimestampedDirectory(rootPath: Uri, dirName:string): Promise<DocumentUri>{
+export function createTimestampedDirectory(rootPath: Uri, dirName: string): Promise<DocumentUri> {
     return new Promise(async (resolve, reject) => {
         var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-        let fullUri = Uri.joinPath(rootPath, dirName+ " " + dateString);
+        let fullUri = Uri.joinPath(rootPath, dirName + " " + dateString);
         ensureDirectoryExistence(fullUri.fsPath);
         fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
-            if(!accessErr)
+            if (!accessErr)
                 return resolve(fullUri.fsPath);
-            if (accessErr.code === 'ENOENT'){
+            if (accessErr.code === 'ENOENT') {
                 fs.mkdir(fullUri.fsPath, dirErr => {
-                    if (dirErr){
+                    if (dirErr) {
                         return reject(dirErr);
                     }
                     return resolve(fullUri.toString());
-                });     
+                });
             }
             else
-                return reject(accessErr);  
-        });      
-     });
+                return reject(accessErr);
+        });
+    });
 }
 
 export function writeToLog(path: string, msg: string) {
     let logStream = fs.createWriteStream(path, { flags: 'a' });
-    let timeStamp =  `[${new Date(Date.now()).toLocaleString()}] `
+    let timeStamp = `[${new Date(Date.now()).toLocaleString()}] `
     logStream.write(timeStamp + msg + "\n");
     logStream.close();
 }
@@ -146,19 +144,19 @@ export function findJavaExecutable(binname: string) {
     return null;
 }
 
-export async function guessDialect(wsFolder: WorkspaceFolder){
-    const dialects = {"vdmsl" : "SL", "vdmpp" : "PP", "vdmrt" : "RT"}
+export async function guessDialect(wsFolder: WorkspaceFolder) {
+    const dialects = { "vdmsl": "SL", "vdmpp": "PP", "vdmrt": "RT" }
     let dialect = undefined;
-    for (var dp in dialects){
+    for (var dp in dialects) {
         let pattern = new RelativePattern(wsFolder.uri.path, "*." + dp);
-        let res = await workspace.findFiles(pattern,null,1)
-        if(res.length == 1) dialect = dp;
+        let res = await workspace.findFiles(pattern, null, 1)
+        if (res.length == 1) dialect = dp;
     }
-    
+
     return dialect
 }
 
-export function registerCommand(context: ExtensionContext, command: string, callback: (...args: any[]) => any){
+export function registerCommand(context: ExtensionContext, command: string, callback: (...args: any[]) => any) {
     let disposable = commands.registerCommand(command, callback)
     context.subscriptions.push(disposable);
     return disposable;
