@@ -8,7 +8,8 @@ import { VdmDebugConfiguration } from "./VdmDapSupport";
 
 interface VdmArgument {
     name: string,
-    type: string
+    type: string,
+    value?: string
 }
 
 interface VdmLaunchLensConfiguration {
@@ -24,6 +25,8 @@ interface VdmLaunchLensConfiguration {
 }
 
 export class AddRunConfigurationHandler {
+    private lastConfigCtorArgs: VdmArgument[];
+    private lastConfigApplyArgs: VdmArgument[];
 
     constructor(
         private readonly clients: Map<string, SpecificationLanguageClient>,
@@ -146,67 +149,81 @@ export class AddRunConfigurationHandler {
     }
 
     private async addLensRunConfiguration(input: VdmLaunchLensConfiguration) {
-        const wsFolder : WorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
-        if (wsFolder === undefined){
-            window.showInformationMessage("Could not find workspacefolder"); 
+        const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+        if (wsFolder === undefined) {
+            window.showInformationMessage("Could not find workspacefolder");
             return;
         }
 
         window.setStatusBarMessage(`Adding Run Configuration`, new Promise(async (resolve, reject) => {
-            let runConfig : VdmDebugConfiguration = {
-                name: "Launch VDM Debug from Code Lens",
-                type: input.type,
-                request: input.request,
-                noDebug: input.noDebug,
-            };
+            try {
+                // Transfer argument values if possible
+                this.transferArguments(input);
 
-            // Add remote control
-            if (input.remoteControl)
-                runConfig.remoteControl = input.remoteControl
-            
-            // Add command
-            if (input.applyName){
-                // Command start
-                let command = "p ";
+                // Create run configuration
+                let runConfig: VdmDebugConfiguration = {
+                    name: "Launch VDM Debug from Code Lens",
+                    type: input.type,
+                    request: input.request,
+                    noDebug: input.noDebug,
+                };
 
-                // Set class and default name
-                if (input.constructors === undefined)
-                    runConfig.defaultName = input.defaultName
-                else {
-                    runConfig.defaultName = null;
-                    let cIndex = 0;
+                // Add remote control
+                if (input.remoteControl)
+                    runConfig.remoteControl = input.remoteControl
 
-                    // If multiple constructors to select from request the user to select one
-                    if (input.constructors.length > 1) {
-                        await this.requestConstructor(input.defaultName, input.constructors).then( 
-                            i => {cIndex = i},
-                            () => reject
+                // Add command
+                if (input.applyName) {
+                    // Command start
+                    let command = "p ";
+
+                    // Set class and default name
+                    if (input.constructors === undefined)
+                        runConfig.defaultName = input.defaultName
+                    else {
+                        runConfig.defaultName = null;
+                        let cIndex = 0;
+
+                        // If multiple constructors to select from request the user to select one
+                        if (input.constructors.length > 1) {
+                            await this.requestConstructor(input.defaultName, input.constructors).then(
+                                i  => { cIndex = i },
+                                () => { throw new Error("No constructor selected") }
+                            )
+                        }
+
+                        // Add class initialisation
+                        await this.requestArguments(input.constructors[cIndex], "constructor").then(
+                            (args) => { 
+                                command += `new ${input.defaultName}(${args}).` 
+                                this.lastConfigCtorArgs = input.constructors[cIndex];
+                            },
+                            () => { throw new Error("Constructor arguments missing") }
                         )
                     }
 
-                    // Add class initialisation
-                    await this.requestArguments(input.constructors[cIndex], "constructor").then(
-                        (args) => {command += `new ${input.defaultName}(${args}).`},
-                        () => reject
+                    // Add function/operation call to command
+                    await this.requestArguments(input.applyArgs, "operation/function").then(
+                        (args) => { 
+                            command += `${input.applyName}(${args})` 
+                            this.lastConfigApplyArgs = input.applyArgs;
+                        },
+                        () => { throw new Error("Operation/function arguments missing") }
                     )
+
+                    // Set command
+                    runConfig.command = command;
                 }
-                
-                // Add function/operation call to command
-                await this.requestArguments(input.applyArgs, "operation/function").then(
-                    (args) => {command += `${input.applyName}(${args})`},
-                    () => reject
-                )
 
-                // Set command
-                runConfig.command = command;
+                // Save configuration
+                this.saveRunConfiguration(runConfig, wsFolder);
+
+                // Start debug session with custom debug configurations
+                resolve("Launching");
+                vscode.debug.startDebugging(wsFolder, runConfig);
+            } catch (e) {
+                reject(e)
             }
-
-            // Save configuration
-            this.saveRunConfiguration(runConfig, wsFolder);
-            
-            // Start debug session with custom debug configurations
-            resolve;
-            vscode.debug.startDebugging(wsFolder, runConfig);
         }))
     }
 
@@ -214,17 +231,19 @@ export class AddRunConfigurationHandler {
         let argString: string = "";
 
         // Request arguments from user
-        for await (const a of args) {
+        for await (let a of args) {
             let arg = await window.showInputBox({
                 prompt: `Input argument for ${forEntry}`,
                 ignoreFocusOut: true,
-                placeHolder: `${a.name} : ${a.type}`
+                placeHolder: `${a.name} : ${a.type}`,
+                value: a.value
             })
 
             if (arg === undefined)
                 return Promise.reject();
-            else
-                argString += `${arg},`
+            
+            argString += `${arg},`
+            a.value = arg;
         }
 
         // Remove trailing comma
@@ -259,5 +278,25 @@ export class AddRunConfigurationHandler {
 
     private addLensRunConfigurationWarning() {
         window.showInformationMessage("Cannot launch until saved")
+    }
+
+    private transferArguments(config: VdmLaunchLensConfiguration) {
+        // Transfer constructor arguments
+        this.lastConfigCtorArgs?.forEach(lastArg => {
+            config.constructors.forEach(ctor => {
+                ctor.forEach(arg => {
+                    if (lastArg.name == arg.name && lastArg.type == arg.type)
+                        arg.value = lastArg.value
+                })
+            });
+        })
+
+        // Transfer function/operation arguments
+        this.lastConfigApplyArgs?.forEach(lastArg => {
+            config.applyArgs.forEach(arg => {
+                if (lastArg.name == arg.name && lastArg.type == arg.type)
+                    arg.value = lastArg?.value
+            })
+        })
     }
 }
