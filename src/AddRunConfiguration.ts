@@ -61,7 +61,7 @@ export class AddRunConfigurationHandler {
             } else {
                 selectedClass = await window.showInputBox({
                     prompt: "Input name of the entry Class",
-                    placeHolder: "Class"
+                    placeHolder: "Class(args)"
                 });
             }
             if (selectedClass != undefined) {
@@ -74,16 +74,15 @@ export class AddRunConfigurationHandler {
             // None selected 
             if (selectedClass === undefined || selectedCommand === undefined) return resolve(`Empty selection. Add run configuration completed.`)
 
-            // Check for command arguments
-            let selectedCommandArguments: string = ""
-            if (selectedCommand.includes("(")) {
-                selectedCommandArguments = selectedCommand.slice(selectedCommand.indexOf("(") + 1, selectedCommand.lastIndexOf(")"));
-                selectedCommand = selectedCommand.slice(0, selectedCommand.indexOf("("))
-            }
+            // Make sure class and command has parenthesis
+            if (!selectedClass.includes('(') && !selectedClass.includes(')'))
+                selectedClass += "()";
+            if (!selectedCommand.includes('(') && !selectedCommand.includes(')'))
+                selectedCommand += "()";
 
             // Create run configuration
             let debugConfiguration: DebugConfiguration = {
-                name: `Launch VDM Debug from ${selectedClass}\`${selectedCommand}(${selectedCommandArguments})`,    // The name of the debug session.
+                name: `Launch VDM Debug from ${selectedClass.substr(0,selectedClass.indexOf('('))}\`${selectedCommand}`,    // The name of the debug session.
                 type: "vdm",               // The type of the debug session.
                 request: "launch",         // The request type of the debug session.
                 noDebug: false,
@@ -94,11 +93,11 @@ export class AddRunConfigurationHandler {
                 measureChecks: true
             }
             if (dialect == "vdmsl") {
-                debugConfiguration.defaultName = `${selectedClass}`,
-                    debugConfiguration.command = `print ${selectedCommand}(${selectedCommandArguments})`
+                debugConfiguration.defaultName = `${selectedClass}`;
+                debugConfiguration.command = `print ${selectedCommand}`;
             } else {
-                debugConfiguration.defaultName = null,
-                    debugConfiguration.command = `print new ${selectedClass}().${selectedCommand}(${selectedCommandArguments})`
+                debugConfiguration.defaultName = null;
+                debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
             }
 
             // Save run configuration

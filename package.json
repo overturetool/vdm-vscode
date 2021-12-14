@@ -782,13 +782,13 @@
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
-              "defaultName": null,
               "dynamicTypeChecks" : true,
               "invariantsChecks" : true,
               "preConditionChecks" : true,
               "postConditionChecks" : true,
               "measureChecks" : true,
-              "command": "print new ${1:Class}().${2:Function/Operation}(${3:arguments})"
+              "defaultName": null,
+              "command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
             }
           },
           {
