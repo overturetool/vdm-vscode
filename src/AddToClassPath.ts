@@ -60,14 +60,8 @@ export class AddToClassPathHandler {
 
             // Add selected locations
             location.forEach(l => {
-                let fsPath = l.fsPath;
-
-                // Add wildcard to folders
-                if (folders)
-                    fsPath = path.resolve(fsPath,"*")
-                
-                if(!classPaths.includes(fsPath))
-                    classPaths.push(fsPath);
+                if(!classPaths.includes(l.fsPath))
+                    classPaths.push(l.fsPath);
             })
 
             // Save to configurations file
