@@ -25,8 +25,9 @@ interface VdmLaunchLensConfiguration {
 }
 
 export class AddRunConfigurationHandler {
-    private lastConfigCtorArgs: VdmArgument[];
-    private lastConfigApplyArgs: VdmArgument[];
+    // Argument storage, map from workspacefolder name to arguments
+    private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map;
+    private lastConfigApplyArgs: Map<string, VdmArgument[]> = new Map;
 
     constructor(
         private readonly clients: Map<string, SpecificationLanguageClient>,
@@ -158,7 +159,7 @@ export class AddRunConfigurationHandler {
         window.setStatusBarMessage(`Adding Run Configuration`, new Promise(async (resolve, reject) => {
             try {
                 // Transfer argument values if possible
-                this.transferArguments(input);
+                this.transferArguments(input, wsFolder.name);
 
                 // Create run configuration
                 let runConfig: VdmDebugConfiguration = {
@@ -196,7 +197,7 @@ export class AddRunConfigurationHandler {
                         await this.requestArgumentValues(input.constructors[cIndex], input.defaultName, "constructor").then(
                             () => {
                                 command += `new ${this.getCommandString(input.defaultName, input.constructors[cIndex])}.`;
-                                this.lastConfigCtorArgs = input.constructors[cIndex];
+                                this.lastConfigCtorArgs[wsFolder.name] = input.constructors[cIndex];
                             },
                             () => { throw new Error("Constructor arguments missing") }
                         )
@@ -205,8 +206,8 @@ export class AddRunConfigurationHandler {
                     // Add function/operation call to command
                     await this.requestArgumentValues(input.applyArgs, input.applyName, "operation/function").then(
                         () => {
-                            command += this.getCommandString(input.defaultName, input.applyArgs);
-                            this.lastConfigApplyArgs = input.applyArgs;
+                            command += this.getCommandString(input.applyName, input.applyArgs);
+                            this.lastConfigApplyArgs[wsFolder.name] = input.applyArgs;
                         },
                         () => { throw new Error("Operation/function arguments missing") }
                     )
@@ -268,9 +269,9 @@ export class AddRunConfigurationHandler {
         window.showInformationMessage("Cannot launch until saved")
     }
 
-    private transferArguments(config: VdmLaunchLensConfiguration) {
+    private transferArguments(config: VdmLaunchLensConfiguration, ws: string) {
         // Transfer constructor arguments
-        this.lastConfigCtorArgs?.forEach(lastArg => {
+        this.lastConfigCtorArgs[ws]?.forEach(lastArg => {
             config.constructors?.forEach(ctor => {
                 ctor.forEach(arg => {
                     if (lastArg.name == arg.name && lastArg.type == arg.type)
@@ -280,7 +281,7 @@ export class AddRunConfigurationHandler {
         })
 
         // Transfer function/operation arguments
-        this.lastConfigApplyArgs?.forEach(lastArg => {
+        this.lastConfigApplyArgs[ws]?.forEach(lastArg => {
             config.applyArgs.forEach(arg => {
                 if (lastArg.name == arg.name && lastArg.type == arg.type)
                     arg.value = lastArg?.value
@@ -295,7 +296,7 @@ export class AddRunConfigurationHandler {
     }
 
     private getCommandString(name: string, args: VdmArgument[]): string {
-        let command = `${name}(${args.map(x => x.value).join((', '))}`;
+        let command = `${name}(${args.map(x => x.value).join(', ')})`;
         return command;
     }
 }
