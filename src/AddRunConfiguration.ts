@@ -84,7 +84,7 @@ export class AddRunConfigurationHandler {
 
             // Create run configuration
             let debugConfiguration: DebugConfiguration = {
-                name: `Launch VDM Debug from ${selectedClass.substr(0,selectedClass.indexOf('('))}\`${selectedCommand}`,    // The name of the debug session.
+                name: `Launch VDM Debug from ${selectedClass.substr(0, selectedClass.indexOf('('))}\`${selectedCommand}`,    // The name of the debug session.
                 type: "vdm",               // The type of the debug session.
                 request: "launch",         // The request type of the debug session.
                 noDebug: false,
@@ -140,12 +140,11 @@ export class AddRunConfigurationHandler {
                 // Add command
                 if (input.applyName) {
                     // Warn user that types might be unresolved for projects with unsaved files
-                    if (AddRunConfigurationHandler.showArgumentTypeWarning && 
-                        (input.applyArgs.length > 0 || input.constructors.some(c => c.length > 0)) && 
-                        workspace.textDocuments.some(doc => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) == wsFolder)) 
-                        {
+                    if (AddRunConfigurationHandler.showArgumentTypeWarning &&
+                        (input.applyArgs.length > 0 || input.constructors.some(c => c.length > 0)) &&
+                        workspace.textDocuments.some(doc => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) == wsFolder)) {
                         window.showInformationMessage("Types might be unresolved until all documents have been saved", "Do not show again").then(
-                            v => {if (v) AddRunConfigurationHandler.showArgumentTypeWarning = false})
+                            v => { if (v) AddRunConfigurationHandler.showArgumentTypeWarning = false })
                     }
 
                     // Command start
