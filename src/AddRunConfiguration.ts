@@ -113,43 +113,6 @@ export class AddRunConfigurationHandler {
         }));
     }
 
-    private saveRunConfiguration(wsFolder: WorkspaceFolder, runConf: DebugConfiguration) {
-        // Get existing configurations
-        const launchConfigurations = workspace.getConfiguration("launch", wsFolder);
-        const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
-
-        // Only save one configuration with the same name
-        let i = rawConfigs.findIndex(c => c.name == runConf.name)
-        if (i >= 0)
-            rawConfigs[i] = runConf;
-        else
-            rawConfigs.push(runConf);
-
-        // Update settings file
-        launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
-    }
-
-    private async getDialect(wsFolder: WorkspaceFolder) {
-        const dialects = ["vdmsl", "vdmpp", "vdmrt"];
-        let dialect = null;
-
-        let client = this.clients.get(wsFolder.uri.toString());
-        if (client) {
-            dialect = client.dialect;
-        }
-        else {
-            console.log(`No client found for the folder: ${wsFolder.name}`);
-
-            // Guess dialect
-            for (const d in dialects) {
-                let pattern = new RelativePattern(wsFolder.uri.path, "*." + d);
-                let res = await workspace.findFiles(pattern, null, 1);
-                if (res.length == 1) dialect = d;
-            }
-        }
-        return dialect;
-    }
-
     private async addLensRunConfiguration(input: VdmLaunchLensConfiguration) {
         const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
         if (wsFolder === undefined) {
@@ -238,6 +201,47 @@ export class AddRunConfigurationHandler {
         }))
     }
 
+    private addLensRunConfigurationWarning() {
+        window.showInformationMessage("Cannot launch until saved")
+    }
+
+    private saveRunConfiguration(wsFolder: WorkspaceFolder, runConf: DebugConfiguration) {
+        // Get existing configurations
+        const launchConfigurations = workspace.getConfiguration("launch", wsFolder);
+        const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
+
+        // Only save one configuration with the same name
+        let i = rawConfigs.findIndex(c => c.name == runConf.name)
+        if (i >= 0)
+            rawConfigs[i] = runConf;
+        else
+            rawConfigs.push(runConf);
+
+        // Update settings file
+        launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
+    }
+
+    private async getDialect(wsFolder: WorkspaceFolder) {
+        const dialects = ["vdmsl", "vdmpp", "vdmrt"];
+        let dialect = null;
+
+        let client = this.clients.get(wsFolder.uri.toString());
+        if (client) {
+            dialect = client.dialect;
+        }
+        else {
+            console.log(`No client found for the folder: ${wsFolder.name}`);
+
+            // Guess dialect
+            for (const d in dialects) {
+                let pattern = new RelativePattern(wsFolder.uri.path, "*." + d);
+                let res = await workspace.findFiles(pattern, null, 1);
+                if (res.length == 1) dialect = d;
+            }
+        }
+        return dialect;
+    }
+
     private async requestArgumentValues(args: VdmArgument[], name: string, type: string): Promise<void> {
         // Request arguments from user
         const commandString = this.getCommandOutlineString(name, args)
@@ -273,10 +277,6 @@ export class AddRunConfigurationHandler {
             return Promise.reject();
         else
             return Promise.resolve(ctorStrings.indexOf(pick))
-    }
-
-    private addLensRunConfigurationWarning() {
-        window.showInformationMessage("Cannot launch until saved")
     }
 
     private transferArguments(config: VdmLaunchLensConfiguration, ws: string) {
