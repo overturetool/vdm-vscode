@@ -25,6 +25,8 @@ interface VdmLaunchLensConfiguration {
 }
 
 export class AddRunConfigurationHandler {
+    static showArgumentTypeWarning = true;
+
     // Argument storage, map from workspacefolder name to arguments
     private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map;
     private lastConfigApplyArgs: Map<string, VdmArgument[]> = new Map;
@@ -174,6 +176,15 @@ export class AddRunConfigurationHandler {
 
                 // Add command
                 if (input.applyName) {
+                    // Warn user that types might be unresolved for projects with unsaved files
+                    if (AddRunConfigurationHandler.showArgumentTypeWarning && 
+                        (input.applyArgs.length > 0 || input.constructors.some(c => c.length > 0)) && 
+                        workspace.textDocuments.some(doc => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) == wsFolder)) 
+                        {
+                        window.showInformationMessage("Types might be unresolved until all documents have been saved", "Do not show again").then(
+                            v => {if (v) AddRunConfigurationHandler.showArgumentTypeWarning = false})
+                    }
+
                     // Command start
                     let command = "p ";
 
