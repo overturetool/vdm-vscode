@@ -4,6 +4,7 @@ import path = require("path");
 import { ExtensionContext, Uri } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
+import { LensRefreshFeature } from "./LensRefreshFeature";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
 import { TranslateFeature } from "./TranslateFeature";
 import * as Util from "./Util"
@@ -31,7 +32,8 @@ export class SpecificationLanguageClient extends LanguageClient {
             new TranslateFeature(SpecificationLanguageClient.wordLanguageId),
             new TranslateFeature(SpecificationLanguageClient.covLanguageId),
             new TranslateFeature(SpecificationLanguageClient.graphvizLanguageId),
-            new TranslateFeature(SpecificationLanguageClient.isabelleLanguageId)
+            new TranslateFeature(SpecificationLanguageClient.isabelleLanguageId),
+            new LensRefreshFeature(this) // TODO Delete if codeLens.refresh support is added to VS Code
         ]);
     }
 }
