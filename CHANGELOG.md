@@ -1,11 +1,13 @@
 ### 1.2.2
+- Added Launch and Debug code lenses
 - Added code snippets (template expansion)
-- Improved breakpoint support
 - Added support for Remote Control class
+- Added Java Gen. options
+- Improved breakpoint support
+- Improved import example interface
 - Changed annotations path setting to class path setting, and improved UI
 - Changed names for server related settings
 - Correction to IO lib
-- Added Java Gen. options
 - Fixes to VDMJ
 
 ### 1.2.1
