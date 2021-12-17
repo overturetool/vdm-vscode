@@ -192,6 +192,7 @@ export class AddRunConfigurationHandler {
 
                 // Start debug session with custom debug configurations
                 resolve("Launching");
+                vscode.commands.executeCommand("workbench.debug.action.focusRepl");
                 vscode.debug.startDebugging(wsFolder, runConfig);
             } catch (e) {
                 reject(e)
