@@ -55,9 +55,9 @@ export class AddExampleHandler {
             if (selectedEx === undefined) return reject(`Empty selection. Add example completed.`)
 
             // Get save location
-            const workspaceFolder = util.getDefaultWorkspaceFolder();
+            const workspaceFolderLocation = util.getDefaultWorkspaceFolderLocation();
             const location = await window.showOpenDialog({
-                defaultUri: workspaceFolder && workspaceFolder.uri,
+                defaultUri: workspaceFolderLocation,
                 canSelectFiles: false,
                 canSelectFolders: true,
                 canSelectMany: false,

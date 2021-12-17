@@ -16,15 +16,18 @@ export function ensureDirectoryExistence(filePath) {
     return fs.existsSync(dirname);
 }
 
-export function getDefaultWorkspaceFolder(): WorkspaceFolder | undefined {
+export function getDefaultWorkspaceFolderLocation(): Uri | undefined {
     if (workspace.workspaceFolders === undefined) {
         return undefined;
     }
+    if (workspace.workspaceFile && workspace.workspaceFile.scheme == 'file') {
+        return Uri.parse(path.dirname(workspace.workspaceFile.path));
+    }
     if (workspace.workspaceFolders.length === 1) {
-        return workspace.workspaceFolders[0];
+        return workspace.workspaceFolders[0].uri;
     }
     if (window.activeTextEditor) {
-        return workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+        return workspace.getWorkspaceFolder(window.activeTextEditor.document.uri).uri;
     }
     return undefined;
 }
