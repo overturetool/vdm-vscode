@@ -61,8 +61,8 @@ export class AddExampleHandler {
                 canSelectFiles: false,
                 canSelectFolders: true,
                 canSelectMany: false,
-                openLabel: "Save",
-                title: "Save in folder..."
+                openLabel: "Select project location",
+                title: `Select Folder that the project ${selectedEx} should be created within`
             });
 
             // None selected
