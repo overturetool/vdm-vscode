@@ -39,7 +39,6 @@ export class AddRunConfigurationHandler {
         this.context = context;
         util.registerCommand(this.context, "vdm-vscode.addRunConfiguration", (inputUri: Uri) => this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)))
         util.registerCommand(this.context, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) => this.addLensRunConfiguration(input))
-        util.registerCommand(this.context, "vdm-vscode.addLensRunConfigurationWarning", () => this.addLensRunConfigurationWarning())
     }
 
     private async addRunConfiguration(wsFolder: WorkspaceFolder) {
@@ -198,10 +197,6 @@ export class AddRunConfigurationHandler {
                 reject(e)
             }
         }))
-    }
-
-    private addLensRunConfigurationWarning() {
-        window.showInformationMessage("Cannot launch until saved")
     }
 
     private saveRunConfiguration(wsFolder: WorkspaceFolder, runConf: DebugConfiguration) {
