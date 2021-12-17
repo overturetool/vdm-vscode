@@ -23,11 +23,8 @@ export function getDefaultWorkspaceFolderLocation(): Uri | undefined {
     if (workspace.workspaceFile && workspace.workspaceFile.scheme == 'file') {
         return Uri.parse(path.dirname(workspace.workspaceFile.path));
     }
-    if (workspace.workspaceFolders.length === 1) {
-        return workspace.workspaceFolders[0].uri;
-    }
-    if (window.activeTextEditor) {
-        return workspace.getWorkspaceFolder(window.activeTextEditor.document.uri).uri;
+    if (workspace.workspaceFolders.length > 0) {
+        return Uri.parse(path.dirname(workspace.workspaceFolders[0].uri.path));
     }
     return undefined;
 }

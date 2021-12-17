@@ -46,13 +46,17 @@ export class AddExampleHandler {
 
             let exsOptions: string[] = exsInFolder.map((x: Dirent) => x.name);
 
-            let selectedEx: string = await window.showQuickPick(exsOptions, {
+            let selectedExs: string | string[] = await window.showQuickPick(exsOptions, {
                 placeHolder: 'Choose example',
-                canPickMany: false,
+                canPickMany: (workspace.workspaceFolders != undefined),
             });
 
             // None selected 
-            if (selectedEx === undefined) return reject(`Empty selection. Add example completed.`)
+            if (selectedExs === undefined || selectedExs.length == 0) return reject(`Empty selection. Add example completed.`)
+
+            // Make sure selectedExs is an array
+            if (typeof selectedExs == "string")
+                selectedExs = [selectedExs]
 
             // Get save location
             const workspaceFolderLocation = util.getDefaultWorkspaceFolderLocation();
@@ -62,7 +66,7 @@ export class AddExampleHandler {
                 canSelectFolders: true,
                 canSelectMany: false,
                 openLabel: "Select project location",
-                title: `Select Folder that the project ${selectedEx} should be created within`
+                title: `Select Folder that the project${(selectedExs.length == 1 ? ' ' + selectedExs[0] : 's')} should be created within`
             });
 
             // None selected
@@ -70,37 +74,39 @@ export class AddExampleHandler {
                 return;
             }
 
-            // Project save location
-            let projectPath = path.resolve(location[0].fsPath, selectedEx);
-            let projectUri = Uri.file(projectPath);
+            let workspaceFoldersToAdd : { uri: Uri, name?: string }[] = []
+            for await (const selectedEx of selectedExs) {
+                // Project save location
+                let projectPath = path.resolve(location[0].fsPath, selectedEx);
+                let projectUri = Uri.file(projectPath);
 
-            // Sync copy
-            try {
-                copySync(path.resolve(exaPath, selectedEx), projectPath)
-            } catch (err) {
-                window.showInformationMessage(`Add example ${selectedEx} failed`);
-                console.log(`Copy example files failed with error: ${err}`);
+                // Sync copy
+                try {
+                    copySync(path.resolve(exaPath, selectedEx), projectPath)
+                } catch (err) {
+                    window.showInformationMessage(`Add example ${selectedEx} failed`);
+                    console.log(`Copy example files failed with error: ${err}`);
+                }
+
+                // Open workspace if non is open
+                if (!workspace.workspaceFolders){
+                    await commands.executeCommand("vscode.openFolder", projectUri);
+                    return;
+                } else {
+                    workspaceFoldersToAdd.push({uri: projectUri, name: selectedEx})
+                }
             }
 
-            // Open project
-            if (workspace && workspace.workspaceFolders && workspace.workspaceFolders.length > 0) { // Add imported example to workspace if there are workspace folders in the window
+            if (workspace.workspaceFolders) {
                 workspace.updateWorkspaceFolders(
-                    workspace.workspaceFolders.length,
+                    workspace.workspaceFolders ? workspace.workspaceFolders.length : 0,
                     null,
-                    {
-                        uri: projectUri,
-                        name: selectedEx
-                    }
+                    ...workspaceFoldersToAdd
                 )
-            } else { // Otherwise open the imported folder
-                await commands.executeCommand("vscode.openFolder", projectUri);
             }
 
             resolve(`Add example completed.`);
-
-
         }));
-
     }
 }
 
