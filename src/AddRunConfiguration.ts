@@ -25,7 +25,8 @@ interface VdmLaunchLensConfiguration {
 }
 
 export class AddRunConfigurationHandler {
-    static showArgumentTypeWarning = true;
+    private static readonly lensNameBegin: string = "Lens config:";
+    private static showArgumentTypeWarning = true;
 
     // Argument storage, map from workspacefolder name to arguments
     private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map;
@@ -94,9 +95,9 @@ export class AddRunConfigurationHandler {
                 measureChecks: true,
                 defaultName: selectedClass
             }
-            if (dialect == "vdmsl") 
+            if (dialect == "vdmsl")
                 debugConfiguration.command = `print ${selectedCommand}`;
-            else 
+            else
                 debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
 
             // Save run configuration
@@ -124,7 +125,7 @@ export class AddRunConfigurationHandler {
 
                 // Create run configuration
                 let runConfig: VdmDebugConfiguration = {
-                    name: "Launch VDM Debug from Code Lens",
+                    name: `${AddRunConfigurationHandler.lensNameBegin} ${input.noDebug ? "Launch" : "Debug"} ${input.defaultName}\`${input.applyName}`,
                     type: input.type,
                     request: input.request,
                     noDebug: input.noDebug,
@@ -202,7 +203,8 @@ export class AddRunConfigurationHandler {
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
 
         // Only save one configuration with the same name
-        let i = rawConfigs.findIndex(c => c.name == runConf.name)
+        const lensConfig: boolean = this.isLensConfig(runConf);
+        let i = rawConfigs.findIndex(c => (c.name == runConf.name || (lensConfig && this.isLensConfig(c))));
         if (i >= 0)
             rawConfigs[i] = runConf;
         else
@@ -210,6 +212,10 @@ export class AddRunConfigurationHandler {
 
         // Update settings file
         launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
+    }
+
+    private isLensConfig(runConf: DebugConfiguration): boolean {
+        return runConf.name.startsWith(AddRunConfigurationHandler.lensNameBegin);
     }
 
     private async getDialect(wsFolder: WorkspaceFolder) {
