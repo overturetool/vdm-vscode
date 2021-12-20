@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch trafficSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print ToAmber(p3,kernel)"
+	}
+    ]
+}

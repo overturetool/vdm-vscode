@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch VFSPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "UseFileSystemLayerAlg",
+	    "command": "print new UseFileSystemLayerAlg().dummy()"
+	}
+    ]
+}

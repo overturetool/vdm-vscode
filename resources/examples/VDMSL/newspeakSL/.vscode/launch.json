@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch newspeakSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print max({3,1,5,8,3,2,5,4,22})"
+	}
+    ]
+}

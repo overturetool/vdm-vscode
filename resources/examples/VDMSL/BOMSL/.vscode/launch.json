@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch BOMSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Parts(1,bom)"
+	}
+	,
+	{
+	    "name": "Launch BOMSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Parts(1,cycle)"
+	}
+    ]
+}

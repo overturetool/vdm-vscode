@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch memoryproofPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Example3",
+	    "command": "print new Example3().RunTest()"
+	}
+    ]
+}

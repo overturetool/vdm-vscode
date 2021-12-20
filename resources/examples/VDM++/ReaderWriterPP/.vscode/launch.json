@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch ReaderWriterPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "TestClass",
+	    "command": "print new TestClass().Run()"
+	}
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch TrackerSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Permission(tracker_inital,cid1,mk_token(\"Unpacking\"))"
+	}
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch oldcarradioRT Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "RadNavSys",
+	    "command": "print new RadNavSys(1).Run()"
+	}
+	,
+	{
+	    "name": "Launch oldcarradioRT Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "RadNavSys",
+	    "command": "print new RadNavSys(2).Run()"
+	}
+    ]
+}

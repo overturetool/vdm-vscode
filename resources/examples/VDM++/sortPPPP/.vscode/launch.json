@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch sortPPPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "SortMachine",
+	    "command": "print new SortMachine().GoSorting([4,2,5,6,4,42,1,1,99,5])"
+	}
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch recursiveSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print AllLabDesc(lgraph,1)"
+	}
+    ]
+}

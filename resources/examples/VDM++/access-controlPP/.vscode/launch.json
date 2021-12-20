@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch access-controlPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Test",
+	    "command": "print new Test().Run()"
+	}
+    ]
+}

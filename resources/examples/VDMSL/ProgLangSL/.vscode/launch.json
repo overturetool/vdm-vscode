@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch ProgLangSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Test",
+	    "command": "print RunTypeCheck()"
+	}
+	,
+	{
+	    "name": "Launch ProgLangSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Test",
+	    "command": "print RunEval()"
+	}
+    ]
+}

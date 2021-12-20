@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch CodegenPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "codegen_Util",
+	    "command": "print new codegen_Util().Run()"
+	}
+    ]
+}

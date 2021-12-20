@@ -1,0 +1,183 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch LUPSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp1Gries(a1)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp1Gries(a2)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp1Gries(a3)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 4",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp1Gries(a4)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 5",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp1Gries(a5)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 6",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp1Laski(a1)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 7",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp1Laski(a2)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 8",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp1Laski(a3)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 9",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp1Laski(a4)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 10",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp1Laski(a5)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 11",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp2Gries(a1)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 12",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp2Gries(a2)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 13",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp2Gries(a3)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 14",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp2Gries(a4)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 15",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupsmOp2Gries(a5)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 16",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp2Laski(a1)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 17",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp2Laski(a2)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 18",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp2Laski(a3)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 19",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp2Laski(a4)"
+	}
+	,
+	{
+	    "name": "Launch LUPSL Debug 20",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print lupslOp2Laski(a5)"
+	}
+    ]
+}

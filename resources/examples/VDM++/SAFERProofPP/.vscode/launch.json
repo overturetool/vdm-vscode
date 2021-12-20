@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch SAFERProofPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "SAFERSys",
+	    "command": "print new SAFERSys().BigTest()"
+	}
+	,
+	{
+	    "name": "Launch SAFERProofPP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "SAFERSys",
+	    "command": "print new SAFERSys().HugeTest()"
+	}
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch CashDispenserConcPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Main",
+	    "command": "print new Main().Run()"
+	}
+    ]
+}

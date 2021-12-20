@@ -1,0 +1,30 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch TempoCollaborativePP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "",
+	    "command": "print "
+	}
+	,
+	{
+	    "name": "Launch TempoCollaborativePP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World().Run(\"RotterdamNetwork.csv\", \"TMSconfiguration.csv\", 300)"
+	}
+	,
+	{
+	    "name": "Launch TempoCollaborativePP Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World().runwithoutcollab()"
+	}
+    ]
+}

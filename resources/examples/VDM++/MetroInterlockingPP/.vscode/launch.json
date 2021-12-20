@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch MetroInterlockingPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World().Run(18)"
+	}
+	,
+	{
+	    "name": "Launch MetroInterlockingPP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "UnitTestRunner",
+	    "command": "print new UnitTestRunner().Execute()"
+	}
+    ]
+}

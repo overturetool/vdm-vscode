@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch VCParser-masterSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "MMParser",
+	    "command": "print eval(\"1+1+4+0\")"
+	}
+    ]
+}

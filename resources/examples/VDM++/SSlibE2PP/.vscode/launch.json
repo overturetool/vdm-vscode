@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch SSlibE2PP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "AllT",
+	    "command": "print new AllT().run()"
+	}
+    ]
+}

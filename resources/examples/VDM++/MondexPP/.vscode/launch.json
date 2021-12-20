@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch MondexPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "AbPurseFunctional",
+	    "command": "print new AbPurseFunctional().RunTest()"
+	}
+    ]
+}

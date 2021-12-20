@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch diet2japanPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Diet",
+	    "command": "print BMI(100,200)"
+	}
+	,
+	{
+	    "name": "Launch diet2japanPP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Diet",
+	    "command": "print getWeightFromBMI(55,76)"
+	}
+    ]
+}

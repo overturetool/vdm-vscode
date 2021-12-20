@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch RobotRT Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World().Run()"
+	}
+    ]
+}

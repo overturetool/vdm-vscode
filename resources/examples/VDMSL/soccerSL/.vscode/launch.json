@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch soccerSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "SOCCER_EXPL",
+	    "command": "print SUBSTITUTION(3,15)"
+	}
+    ]
+}

@@ -1,0 +1,39 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch PacemakerSeqPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioGoodHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerSeqPP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioBrokenHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerSeqPP Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioDoubleHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerSeqPP Debug 4",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioSometimesHeart.arg\",<DOO>).Run()"
+	}
+    ]
+}

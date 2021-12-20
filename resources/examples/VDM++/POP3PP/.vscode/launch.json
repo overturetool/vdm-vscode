@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch POP3PP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "POP3Test",
+	    "command": "print new POP3Test().Test1()"
+	}
+	,
+	{
+	    "name": "Launch POP3PP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "POP3Test",
+	    "command": "print new POP3Test().Test2()"
+	}
+    ]
+}

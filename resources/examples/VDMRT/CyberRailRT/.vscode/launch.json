@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch CyberRailRT Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"test1_10.txt\").run()"
+	}
+	,
+	{
+	    "name": "Launch CyberRailRT Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"test2.txt\").run()"
+	}
+    ]
+}

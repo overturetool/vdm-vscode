@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch Alarm++proofPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "alarm",
+	    "command": "print new alarm().RunTest()"
+	}
+    ]
+}

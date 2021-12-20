@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch realmSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "REALM",
+	    "command": "print AllLists({TEST`s1,TEST`s2,TEST`s3})"
+	}
+    ]
+}

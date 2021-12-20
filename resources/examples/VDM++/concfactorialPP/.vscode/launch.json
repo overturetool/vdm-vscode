@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch concfactorialPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Factorial",
+	    "command": "print new Factorial().factorial(20)"
+	}
+    ]
+}

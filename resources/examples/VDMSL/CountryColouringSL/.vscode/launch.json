@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch CountryColouringSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print colMapExpl({mk_(\"Denmark\",\"Sweden\"),mk_(\"Denmark\",\"Germany\"),mk_(\"Germany\",\"Poland\")})"
+	}
+    ]
+}

@@ -1,0 +1,75 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch AlarmSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e1)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e2)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e3)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 4",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e4)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 5",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e5)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 6",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e6)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 7",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e7)"
+	}
+	,
+	{
+	    "name": "Launch AlarmSL Debug 8",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Run(e8)"
+	}
+    ]
+}

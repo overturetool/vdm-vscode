@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch cashdispenserSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Sum([1,2,3,4,5,6,7,8,9])"
+	}
+    ]
+}

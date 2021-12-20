@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch CarNaviRadioRT Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World().RunScenario1()"
+	}
+	,
+	{
+	    "name": "Launch CarNaviRadioRT Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World().RunScenario2()"
+	}
+    ]
+}

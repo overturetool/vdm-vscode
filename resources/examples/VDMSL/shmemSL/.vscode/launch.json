@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch shmemSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "M",
+	    "command": "print main(5,100)"
+	}
+    ]
+}

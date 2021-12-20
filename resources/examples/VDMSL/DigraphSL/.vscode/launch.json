@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch DigraphSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "relations",
+	    "command": "print IsTransitive(A5)"
+	}
+	,
+	{
+	    "name": "Launch DigraphSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "relations",
+	    "command": "print IsTransitive(A7)"
+	}
+    ]
+}

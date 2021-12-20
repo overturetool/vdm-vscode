@@ -1,0 +1,147 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch PacemakerRT Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioGoodHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioDoubleHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioBrokenHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 4",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioSometimesHeart.arg\",<DOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 5",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioGoodHeart.arg\",<AOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 6",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioDoubleHeart.arg\",<AOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 7",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioBrokenHeart.arg\",<AOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 8",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioSometimesHeart.arg\",<AOO>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 9",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioGoodHeart.arg\",<AAI>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 10",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioDoubleHeart.arg\",<AAI>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 11",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioBrokenHeart.arg\",<AAI>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 12",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioSometimesHeart.arg\",<AAI>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 13",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioGoodHeart.arg\",<DDD>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 14",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioDoubleHeart.arg\",<DDD>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 15",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioBrokenHeart.arg\",<DDD>).Run()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerRT Debug 16",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "World",
+	    "command": "print new World(\"tests/scenarioSometimesHeart.arg\",<DDD>).Run()"
+	}
+    ]
+}

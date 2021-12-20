@@ -1,0 +1,21 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch PacemakerSimplePP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Heart",
+	    "command": "print new Heart().IdealHeart()"
+	}
+	,
+	{
+	    "name": "Launch PacemakerSimplePP Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Pacemaker",
+	    "command": "print new Pacemaker().Pace(wrongTR,5,2)"
+	}
+    ]
+}

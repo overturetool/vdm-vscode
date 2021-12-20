@@ -1,0 +1,30 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch LUHNSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "LUHN",
+	    "command": "print luhn([1,2,3,4,5])"
+	}
+	,
+	{
+	    "name": "Launch LUHNSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "LUHN",
+	    "command": "print luhns(\"12345\")"
+	}
+	,
+	{
+	    "name": "Launch LUHNSL Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "LUHN",
+	    "command": "print luhnn(12345)"
+	}
+    ]
+}

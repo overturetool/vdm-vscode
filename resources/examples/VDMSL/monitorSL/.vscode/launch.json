@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch monitorSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print OverLimit([4,2,8,555,123])"
+	}
+    ]
+}

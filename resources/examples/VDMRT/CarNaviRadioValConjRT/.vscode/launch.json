@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch CarNaviRadioValConjRT Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Testing",
+	    "command": "print new Testing().Test()"
+	}
+    ]
+}

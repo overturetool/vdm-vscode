@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch ProductLinePP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "UserTest",
+	    "command": "print new UserTest().test()"
+	}
+    ]
+}

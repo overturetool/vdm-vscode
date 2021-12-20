@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch stackPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "",
+	    "command": "print "
+	}
+    ]
+}

@@ -1,0 +1,30 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch looseSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print LooseEvalExpr(expr2)"
+	}
+	,
+	{
+	    "name": "Launch looseSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print LooseEvalExpr(mk_NumLit(8))"
+	}
+	,
+	{
+	    "name": "Launch looseSL Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print LooseEvalExpr(expr)"
+	}
+    ]
+}

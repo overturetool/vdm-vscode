@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch gatewaySL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "DEFAULT",
+	    "command": "print Occurs(\"topsecret\",\"peter87topsecrethere next\")"
+	}
+    ]
+}

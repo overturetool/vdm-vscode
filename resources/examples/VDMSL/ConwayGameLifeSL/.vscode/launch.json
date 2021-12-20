@@ -1,0 +1,39 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch ConwayGameLifeSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Conway",
+	    "command": "print periodN(PULSAR,3)"
+	}
+	,
+	{
+	    "name": "Launch ConwayGameLifeSL Debug 2",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Conway",
+	    "command": "print tests()"
+	}
+	,
+	{
+	    "name": "Launch ConwayGameLifeSL Debug 3",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Conway",
+	    "command": "print generations(130,DIEHARD)"
+	}
+	,
+	{
+	    "name": "Launch ConwayGameLifeSL Debug 4",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "gui_Graphics",
+	    "command": "print generations_animate(130,DIEHARD)"
+	}
+    ]
+}
