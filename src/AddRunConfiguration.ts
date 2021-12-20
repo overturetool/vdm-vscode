@@ -83,7 +83,7 @@ export class AddRunConfigurationHandler {
 
             // Create run configuration
             let debugConfiguration: DebugConfiguration = {
-                name: `Launch VDM Debug from ${selectedClass.substr(0, selectedClass.indexOf('('))}\`${selectedCommand}`,    // The name of the debug session.
+                name: `Launch VDM Debug from ${selectedClass.substring(0, selectedClass.indexOf('('))}\`${selectedCommand}`,    // The name of the debug session.
                 type: "vdm",               // The type of the debug session.
                 request: "launch",         // The request type of the debug session.
                 noDebug: false,
@@ -91,15 +91,13 @@ export class AddRunConfigurationHandler {
                 invariantsChecks: true,
                 preConditionChecks: true,
                 postConditionChecks: true,
-                measureChecks: true
+                measureChecks: true,
+                defaultName: selectedClass
             }
-            if (dialect == "vdmsl") {
-                debugConfiguration.defaultName = `${selectedClass}`;
+            if (dialect == "vdmsl") 
                 debugConfiguration.command = `print ${selectedCommand}`;
-            } else {
-                debugConfiguration.defaultName = null;
+            else 
                 debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
-            }
 
             // Save run configuration
             this.saveRunConfiguration(wsFolder, debugConfiguration);
@@ -130,6 +128,7 @@ export class AddRunConfigurationHandler {
                     type: input.type,
                     request: input.request,
                     noDebug: input.noDebug,
+                    defaultName: input.defaultName
                 };
 
                 // Add remote control
@@ -149,11 +148,8 @@ export class AddRunConfigurationHandler {
                     // Command start
                     let command = "p ";
 
-                    // Set class and default name
-                    if (input.constructors === undefined)
-                        runConfig.defaultName = input.defaultName
-                    else {
-                        runConfig.defaultName = null;
+                    // Set class 
+                    if (input.constructors != undefined) {
                         let cIndex = 0;
 
                         // If multiple constructors to select from request the user to select one

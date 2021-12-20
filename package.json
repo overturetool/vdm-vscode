@@ -770,7 +770,7 @@
               "preConditionChecks" : true,
               "postConditionChecks" : true,
               "measureChecks" : true,
-              "defaultName": null,
+              "defaultName": "DEFAULT",
               "command": "print ${1:Function/Operation}(${2:arguments})"
             }
           },
@@ -787,7 +787,7 @@
               "preConditionChecks" : true,
               "postConditionChecks" : true,
               "measureChecks" : true,
-              "defaultName": null,
+              "defaultName": "${1:Class}",
               "command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
             }
           },
