@@ -826,12 +826,13 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile && webpack --mode production",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "webpack": "npm run compile && webpack --mode development",
+    "vscode:prepublish": "npm run package",
+    "webpack": "webpack --mode development",
     "webpack-dev": "webpack --mode development --watch",
-    "test-compile": "tsc -p ./"
+    "package": "webpack --mode production",
+    "compile": "tsc -p ./",
+    "test-compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
     "@types/mocha": "^9.0.0",
