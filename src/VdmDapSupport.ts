@@ -131,11 +131,11 @@ export namespace VdmDapSupport {
             type: "vdm",               // The type of the debug session.
             name: "Launch command",    // The name of the debug session.
             request: "launch",         // The request type of the debug session.
+            noDebug: false,            // Start debugger
+            stopOnEntry: stopOnEntry,
             // Additional debug type specific properties.
             command: command
-        }
-        if (stopOnEntry != undefined)
-            debugConfiguration.stopOnEntry = stopOnEntry;
+        }           
 
         // Start debug session with custom debug configurations
         vscode.debug.startDebugging(folder, debugConfiguration)
