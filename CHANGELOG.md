@@ -1,11 +1,12 @@
-### 1.2.2
+### 1.3.0
 - Added Launch and Debug code lenses
 - Added code snippets (template expansion)
 - Added support for Remote Control class
+- Added coverage reporting to Latex
 - Added Java Gen. options
 - Improved breakpoint support
 - Improved import example interface
-- Changed annotations path setting to class path setting, and improved UI
+- Changed annotations path setting to class path setting, and improved UI in settings
 - Changed names for server related settings
 - Correction to IO lib
 - Fixes to VDMJ
