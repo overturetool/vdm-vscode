@@ -11,8 +11,8 @@ export class TranslateHandler {
     constructor(
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext,
-        private readonly languageKind: string,
-        private readonly translationCommandName
+        private readonly language: string,
+        private readonly translationCommandName: string
     ) {
         this.registerCommand(this.translationCommandName, (inputUri: Uri) => this.translate(inputUri, workspace.getWorkspaceFolder(inputUri)));
     }
@@ -24,7 +24,7 @@ export class TranslateHandler {
     };
 
     private async translate(fileUri: Uri, wsFolder: WorkspaceFolder) {
-        window.setStatusBarMessage(`Generating ${this.languageKind}.`, new Promise(async (resolve, reject) => {
+        window.setStatusBarMessage(`Generating ${this.language}.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
             if (client == undefined) {
                 window.showInformationMessage(`No client found for the folder: ${wsFolder.name}`);
@@ -34,14 +34,13 @@ export class TranslateHandler {
             // Check if server supports the translation
             if (client.initializeResult.capabilities?.experimental?.translateProvider
                 && (typeof client.initializeResult.capabilities.experimental.translateProvider != "boolean")
-                && (client.initializeResult.capabilities.experimental.translateProvider.languageId?.includes(this.languageKind))
+                && (client.initializeResult.capabilities.experimental.translateProvider.languageId?.includes(this.language))
             ) {
-
-                util.createTimestampedDirectory(client.projectSavedDataPath, this.languageKind).then(async (saveUri): Promise<void> => {
+                util.createTimestampedDirectory(client.projectSavedDataPath, this.language).then(async (saveUri): Promise<void> => {
                     try {
                         // Setup message parameters
                         let params: TranslateParams = {
-                            languageId: this.languageKind,
+                            languageId: this.language,
                             saveUri: saveUri.toString()
                         };
                         if (fileUri.toString() != wsFolder.uri.toString()) // If it not the workspace folder add the uri. 
@@ -55,7 +54,7 @@ export class TranslateHandler {
 
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-                            if (this.languageKind == LanguageId.coverage) {
+                            if (this.language == LanguageId.coverage) {
                                 // Open the main file in the translation
                                 let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 
@@ -80,12 +79,12 @@ export class TranslateHandler {
                             }
                         }
 
-                        resolve(`Generation of ${this.languageKind} succeeded.`);
-                        window.showInformationMessage(`Generation of ${this.languageKind} completed`);
+                        resolve(`Generation of ${this.language} succeeded.`);
+                        window.showInformationMessage(`Generation of ${this.language} completed`);
                     }
                     catch (error) {
-                        window.showWarningMessage(`Generation of ${this.languageKind} failed with error: ${error}`);
-                        util.writeToLog(client.logPath, `Generation of ${this.languageKind} failed with error: ${error}`);
+                        window.showWarningMessage(`Generation of ${this.language} failed with error: ${error}`);
+                        util.writeToLog(client.logPath, `Generation of ${this.language} failed with error: ${error}`);
                         reject();
                     }
                 }, (reason) => {
@@ -95,7 +94,7 @@ export class TranslateHandler {
                 });
             }
             else {
-                window.showInformationMessage(`Generation of ${this.languageKind} is not supported`);
+                window.showInformationMessage(`Generation of ${this.language} is not supported`);
             }
         }));
 
@@ -151,9 +150,7 @@ function getCovtblFileRanges(fsPath: string): DecorationOptions[] {
                 let range = new Range(ln - 1, c1 - 1, ln - 1, c2);
 
                 ranges.push({ range });
-
             }
-
         });
 
     } catch (err) {
