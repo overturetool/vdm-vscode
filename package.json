@@ -571,19 +571,19 @@
           "scope": "resource",
           "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
         },
-        "vdm-vscode.translateToLatex.modelOnly": {
+        "vdm-vscode.translate.latex.modelOnly": {
           "type": "boolean",
           "default": true,
           "scope": "resource",
           "description": "Only model part will be included in the Latex translation, i.e., everything enclosed within '\\begin{vdm_al}' and '\\end{vdm_al}'"
         },
-        "vdm-vscode.translateToLatex.markCoverage": {
+        "vdm-vscode.translate.latex.markCoverage": {
           "type": "boolean",
           "default": false,
           "scope": "resource",
           "description": "Mark coverage in the Latex translation"
         },
-        "vdm-vscode.translateToLatex.insertCoverageTables": {
+        "vdm-vscode.translate.latex.insertCoverageTables": {
           "type": "boolean",
           "default": false,
           "scope": "resource",

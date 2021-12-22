@@ -102,8 +102,9 @@ export class TranslateHandler {
 
     private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder): TranslateParams {
         // Get configurations related to translation
+        const extensionName: string = this.context.extension?.id?.split('.')[1];
         const config = workspace.getConfiguration(
-            this.translationCommandName,
+            [extensionName, 'translate', this.language].join('.'),
             wsFolder.uri
         );
 
