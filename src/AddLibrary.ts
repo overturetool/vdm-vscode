@@ -31,7 +31,7 @@ export class AddLibraryHandler {
         window.setStatusBarMessage(`Adding Libraries.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
             if (client) {
-                dialect = dialects[client.dialect];
+                dialect = dialects[client.language];
             } else {
                 console.log(`No client found for the folder: ${wsFolder.name}`);
 

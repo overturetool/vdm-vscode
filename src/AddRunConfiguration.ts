@@ -224,7 +224,7 @@ export class AddRunConfigurationHandler {
 
         let client = this.clients.get(wsFolder.uri.toString());
         if (client) {
-            dialect = client.dialect;
+            dialect = client.language;
         }
         else {
             console.log(`No client found for the folder: ${wsFolder.name}`);

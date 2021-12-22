@@ -5,6 +5,7 @@ import { commands, DecorationOptions, ExtensionContext, Range, Uri, ViewColumn, 
 import { TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
+import * as LanguageId from "./LanguageId"
 
 export class TranslateHandler {
     constructor(
@@ -54,7 +55,7 @@ export class TranslateHandler {
 
                         // Check if a directory has been returned
                         if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-                            if (this.languageKind == SpecificationLanguageClient.covLanguageId) {
+                            if (this.languageKind == LanguageId.coverage) {
                                 // Open the main file in the translation
                                 let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 

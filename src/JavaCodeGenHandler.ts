@@ -39,9 +39,9 @@ export class JavaCodeGenHandler {
 
         window.setStatusBarMessage(`Starting code generation.`, new Promise(async (resolve, reject) => {
             let client = this.clients.get(wsFolder.uri.toString());
-            if (client && client.dialect) {
-                dialect = dialects[client.dialect];
-                dialectext = client.dialect;
+            if (client?.language) {
+                dialect = dialects[client.language];
+                dialectext = client.language;
 
             } else {
                 console.log(`No client found for the folder: ${wsFolder.name}`);

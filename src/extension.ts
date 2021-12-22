@@ -4,6 +4,7 @@ import * as path from 'path'
 import * as net from 'net';
 import * as child_process from 'child_process';
 import * as portfinder from 'portfinder';
+import * as LanguageId from './LanguageId'
 import {
     ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug, WorkspaceConfiguration
 } from 'vscode';
@@ -96,11 +97,11 @@ export function activate(context: ExtensionContext) {
 
     // Initialise handlers
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.latexLanguageId, "vdm-vscode.translateToLatex");
-    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.wordLanguageId, "vdm-vscode.translateToWord");
-    const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.covLanguageId, "vdm-vscode.translateCov");
-    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.graphvizLanguageId, "vdm-vscode.translateGraphviz");
-    const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, SpecificationLanguageClient.isabelleLanguageId, "vdm-vscode.translateIsabelle");
+    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
+    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, LanguageId.word, "vdm-vscode.translateToWord");
+    const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
+    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
+    const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
 
     const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
     const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);

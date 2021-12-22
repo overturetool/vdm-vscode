@@ -8,7 +8,7 @@ export class TranslateFeature implements StaticFeature {
     public supportWorkDone: boolean = false;
 
     constructor(
-        private readonly languageKind: string) {
+        private readonly language: string) {
     }
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -22,9 +22,9 @@ export class TranslateFeature implements StaticFeature {
         // If server supports Translate
         if (capabilities?.experimental?.translateProvider) {
             if (typeof capabilities.experimental.translateProvider != "boolean") {
-                if (capabilities.experimental.translateProvider.languageId?.includes(this.languageKind))
+                if (capabilities.experimental.translateProvider.languageId?.includes(this.language))
                     // Only register commands for the ones that the server says it can
-                    commands.executeCommand('setContext', 'tr-' + this.languageKind + '-show-button', true);
+                    commands.executeCommand('setContext', 'tr-' + this.language + '-show-button', true);
             }
 
             // Check if support work done progress
