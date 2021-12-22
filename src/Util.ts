@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as path from 'path'
-import * as fs from 'fs'
+// import * as fs from 'fs'
+import * as fs from 'fs-extra'
 import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from 'vscode';
-import { DocumentUri } from 'vscode-languageclient';
 
 export function ensureDirectoryExistence(filePath) {
     var dirname = path.dirname(filePath);
-    if (fs.existsSync(dirname)) {
-        return true;
-    }
-
-    fs.mkdirSync(dirname, { recursive: true });
-
-    return fs.existsSync(dirname);
+    return fs.ensureDirSync(dirname);
 }
 
 export function getDefaultWorkspaceFolderLocation(): Uri | undefined {
@@ -27,21 +21,6 @@ export function getDefaultWorkspaceFolderLocation(): Uri | undefined {
         return Uri.parse(path.dirname(workspace.workspaceFolders[0].uri.path));
     }
     return undefined;
-}
-
-export function getJarsFromFolder(resourcesPath: string): string[] {
-    if (!fs.existsSync(resourcesPath) || !isDir(resourcesPath))
-        return null;
-
-    let jarPaths: string[] = []
-    let elementsInFolder = fs.readdirSync(resourcesPath, { withFileTypes: true });
-    for (let i = 0; i < elementsInFolder.length; i++) {
-        let element: fs.Dirent = elementsInFolder[i];
-        let fullElementPath = path.resolve(resourcesPath, element.name);
-        if (!isDir(fullElementPath) && element.name.search(/.*jar/i) != -1)
-            jarPaths.push(fullElementPath);
-    }
-    return jarPaths;
 }
 
 export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.search](string: string): number; }): string {
@@ -64,45 +43,15 @@ export function isDir(path: fs.PathLike): boolean {
     return fs.lstatSync(path).isDirectory();
 }
 
-export function createDirectory(fullUri: Uri): Promise<void> {
+export function createDirectory(fullUri: Uri, timestamped?: boolean): Promise<Uri> {
     return new Promise((resolve, reject) => {
-        ensureDirectoryExistence(fullUri.fsPath);
-        fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
-            if (!accessErr)
-                return resolve();
-            if (accessErr.code === 'ENOENT') {
-                fs.mkdir(fullUri.fsPath, dirErr => {
-                    if (dirErr) {
-                        return reject(dirErr);
-                    }
-                    return resolve();
-                });
-            }
-            else
-                return reject(accessErr);
-        });
-    });
-}
+        if (timestamped){
+            var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
+            fullUri = Uri.parse(fullUri + " " + dateString);
+        }
 
-export function createTimestampedDirectory(rootPath: Uri, dirName: string): Promise<DocumentUri> {
-    return new Promise(async (resolve, reject) => {
-        var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-        let fullUri = Uri.joinPath(rootPath, dirName + " " + dateString);
-        ensureDirectoryExistence(fullUri.fsPath);
-        fs.access(fullUri.fsPath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
-            if (!accessErr)
-                return resolve(fullUri.fsPath);
-            if (accessErr.code === 'ENOENT') {
-                fs.mkdir(fullUri.fsPath, dirErr => {
-                    if (dirErr) {
-                        return reject(dirErr);
-                    }
-                    return resolve(fullUri.toString());
-                });
-            }
-            else
-                return reject(accessErr);
-        });
+        fs.ensureDirSync(fullUri.fsPath);
+        return resolve(fullUri)
     });
 }
 

@@ -12,9 +12,9 @@ import * as Util from "./Util"
 
 export class SpecificationLanguageClient extends LanguageClient {
     public readonly projectRoot = this.clientOptions.workspaceFolder.uri;
-    public readonly projectSavedDataPath = Uri.joinPath(this.projectRoot, ".generated");
-    public readonly logPath;
-    public readonly language;
+    public readonly projectSavedDataUri = Uri.joinPath(this.projectRoot, ".generated");
+    public readonly logPath: string;
+    public readonly language: string;
 
     constructor(id: string, name: string, language: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, private readonly _context: ExtensionContext, public readonly dataStoragePath: Uri, forceDebug?: boolean) {
         super(id, name, serverOptions, clientOptions, forceDebug);

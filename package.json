@@ -588,6 +588,18 @@
           "default": false,
           "scope": "resource",
           "description": "Insert coverage tables in the Latex translation"
+        },
+        "vdm-vscode.translate.general.storeAllTranslations": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Stores each translation in a timestamped folder instead of overwriting the previouse content"
+        },
+        "vdm-vscode.translate.general.allowSingleFileTranslation": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Translates only the selected file. If false, translate is always applied to the whole project"
         }
       }
     },
@@ -835,6 +847,7 @@
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/mocha": "^9.0.0",
     "@types/node": "^17.0.1",
     "@types/vscode": "^1.63.0",

@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { readFileSync } from "fs";
+import * as fs from 'fs-extra'
 import { commands, DecorationOptions, ExtensionContext, Range, Uri, ViewColumn, window, workspace, WorkspaceFolder } from "vscode";
 import { TranslateParams, TranslateRequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import * as LanguageId from "./LanguageId"
 
+
 export class TranslateHandler {
+    readonly extensionName: string;
     constructor(
         private readonly clients: Map<string, SpecificationLanguageClient>,
         private context: ExtensionContext,
@@ -15,6 +17,7 @@ export class TranslateHandler {
         private readonly translationCommandName: string
     ) {
         this.registerCommand(this.translationCommandName, (inputUri: Uri) => this.translate(inputUri, workspace.getWorkspaceFolder(inputUri)));
+        this.extensionName = this.context.extension?.id?.split('.')[1];
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
@@ -36,62 +39,74 @@ export class TranslateHandler {
                 && (typeof client.initializeResult.capabilities.experimental.translateProvider != "boolean")
                 && (client.initializeResult.capabilities.experimental.translateProvider.languageId?.includes(this.language))
             ) {
-                util.createTimestampedDirectory(client.projectSavedDataPath, this.language).then(async (saveUri): Promise<void> => {
-                    try {
-                        // Setup message parameters
-                        let params: TranslateParams = {
-                            languageId: this.language,
-                            saveUri: saveUri.toString()
-                        };
-                        if (fileUri.toString() != wsFolder.uri.toString()) // If it not the workspace folder add the uri. 
-                            params.uri = fileUri.toString();
+                // Check timestamp setting
+                const translateConfig = workspace.getConfiguration(
+                    [this.extensionName, 'translate', 'general'].join('.'),
+                    wsFolder.uri
+                );
+                let saveLocation = Uri.joinPath(client.projectSavedDataUri, this.language);
+                util.createDirectory(saveLocation, translateConfig?.get("storeAllTranslations")).then(
+                    async (saveUri): Promise<void> => {
+                        try {
+                            // Make sure the directory is empty
+                            fs.emptyDirSync(saveUri.fsPath);
 
-                        // Add options based on configuration settings
-                        params = this.addOptions(params, wsFolder);
+                            // Setup message parameters
+                            let params: TranslateParams = {
+                                languageId: this.language,
+                                saveUri: saveUri.toString()
+                            };
 
-                        // Send request
-                        const response = await client.sendRequest(TranslateRequest.type, params);
+                            // If it not the workspace folder add the uri. 
+                            if (translateConfig?.allowSingleFileTranslation && fileUri.toString() != wsFolder.uri.toString())
+                                params.uri = fileUri.toString();
 
-                        // Check if a directory has been returned
-                        if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-                            if (this.language == LanguageId.coverage) {
-                                // Open the main file in the translation
-                                let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
+                            // Add options based on configuration settings
+                            params = this.addOptions(params, wsFolder);
 
-                                const decorationType = window.createTextEditorDecorationType({
-                                    backgroundColor: '#0080FF80',
-                                    border: '2px solid black',
-                                })
+                            // Send request
+                            const response = await client.sendRequest(TranslateRequest.type, params);
 
-                                let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
+                            // Check if a directory has been returned
+                            if (!util.isDir(Uri.parse(response.uri).fsPath)) {
+                                if (this.language == LanguageId.coverage) {
+                                    // Open the main file in the translation
+                                    let doc = await workspace.openTextDocument(Uri.parse(fileUri.toString()));
 
-                                // Show the file
-                                window.showTextDocument(doc.uri)
-                                    .then((editor) => editor.setDecorations(decorationType, ranges)
-                                    );
+                                    const decorationType = window.createTextEditorDecorationType({
+                                        backgroundColor: '#0080FF80',
+                                        border: '2px solid black',
+                                    })
+
+                                    let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
+
+                                    // Show the file
+                                    window.showTextDocument(doc.uri)
+                                        .then((editor) => editor.setDecorations(decorationType, ranges));
+                                }
+                                else {
+                                    // Open the main file in the translation
+                                    let doc = await workspace.openTextDocument(Uri.parse(response.uri));
+
+                                    // Show the file
+                                    window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                                }
                             }
-                            else {
-                                // Open the main file in the translation
-                                let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
-                                // Show the file
-                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
-                            }
+                            resolve(`Generation of ${this.language} succeeded.`);
+                            window.showInformationMessage(`Generation of ${this.language} completed`);
                         }
-
-                        resolve(`Generation of ${this.language} succeeded.`);
-                        window.showInformationMessage(`Generation of ${this.language} completed`);
-                    }
-                    catch (error) {
-                        window.showWarningMessage(`Generation of ${this.language} failed with error: ${error}`);
-                        util.writeToLog(client.logPath, `Generation of ${this.language} failed with error: ${error}`);
+                        catch (error) {
+                            window.showWarningMessage(`Generation of ${this.language} failed with error: ${error}`);
+                            util.writeToLog(client.logPath, `Generation of ${this.language} failed with error: ${error}`);
+                            reject();
+                        }
+                    }, 
+                    (reason) => {
+                        window.showWarningMessage("Creating timestamped directory failed");
+                        util.writeToLog(client.logPath, `Creating timestamped directory failed with error: ${reason}`);
                         reject();
-                    }
-                }, (reason) => {
-                    window.showWarningMessage("Creating timestamped directory failed");
-                    util.writeToLog(client.logPath, `Creating timestamped directory failed with error: ${reason}`);
-                    reject();
-                });
+                    });
             }
             else {
                 window.showInformationMessage(`Generation of ${this.language} is not supported`);
@@ -102,9 +117,8 @@ export class TranslateHandler {
 
     private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder): TranslateParams {
         // Get configurations related to translation
-        const extensionName: string = this.context.extension?.id?.split('.')[1];
         const config = workspace.getConfiguration(
-            [extensionName, 'translate', this.language].join('.'),
+            [this.extensionName, 'translate', this.language].join('.'),
             wsFolder.uri
         );
 
@@ -129,7 +143,7 @@ function getCovtblFileRanges(fsPath: string): DecorationOptions[] {
 
     try {
         // read contents of the file
-        const data = readFileSync(fsPath, { encoding: 'utf8' });
+        const data = fs.readFileSync(fsPath, { encoding: 'utf8' });
 
         // split the contents by new line
         const lines = data.split(/\r?\n/);
