@@ -599,7 +599,7 @@
           "type": "boolean",
           "default": true,
           "scope": "resource",
-          "description": "Translates only the selected file. If false, translate is always applied to the whole project"
+          "description": "If true, translates only the selected file. If false, translate is always applied to the whole project"
         }
       }
     },
