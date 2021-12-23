@@ -4,6 +4,7 @@ import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, 
 import path = require("path")
 import { ProofObligation } from "./protocol.slsp"
 import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
+import * as util from "./Util"
 
 export class ProofObligationPanel {
     private readonly _panel: WebviewPanel;
@@ -194,13 +195,13 @@ export class ProofObligationPanel {
     }
 
     private static resourcesUri(extensionUri: Uri) {
-        let res = Uri.joinPath(extensionUri, 'resources');
+        let res = util.joinUriPath(extensionUri, 'resources');
         return res;
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.js'));
-        const styleUri = webview.asWebviewUri(Uri.joinPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.css'));
+        const scriptUri = webview.asWebviewUri(util.joinUriPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.js'));
+        const styleUri = webview.asWebviewUri(util.joinUriPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.css'));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();

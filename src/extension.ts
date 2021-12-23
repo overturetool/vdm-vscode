@@ -11,7 +11,7 @@ import {
     LanguageClientOptions, ServerOptions
 } from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
-import * as Util from "./Util"
+import * as util from "./Util"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
@@ -82,8 +82,8 @@ export function activate(context: ExtensionContext) {
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
 
     // Make sure that the VDMJ and LSP jars are present
-    if (!Util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
-        !Util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i)
+    if (!util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
+        !util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i)
     ) {
         return;
     }
@@ -92,7 +92,7 @@ export function activate(context: ExtensionContext) {
     commands.executeCommand('setContext', 'vdm-submenus-show', true);
 
     // Ensure logging path exists
-    Util.ensureDirectoryExistence(extensionLogPath);
+    util.ensureDirectoryExistence(extensionLogPath);
 
     // Initialise handlers
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
@@ -129,7 +129,7 @@ export function activate(context: ExtensionContext) {
                     debug.startDebugging(session.workspaceFolder, session.configuration)
             })
 
-            let dialect = await Util.guessDialect(session.workspaceFolder);
+            let dialect = await util.guessDialect(session.workspaceFolder);
             if (dialect)
                 // await launchClient(session.workspaceFolder, dialect);
                 launchClient(session.workspaceFolder, dialect);
@@ -213,7 +213,7 @@ export function activate(context: ExtensionContext) {
             serverOptions,
             clientOptions,
             context,
-            Uri.joinPath(wsFolder.uri, ".generated")
+            util.joinUriPath(wsFolder.uri, ".generated")
         );
 
         // Setup DAP
@@ -260,7 +260,7 @@ export function activate(context: ExtensionContext) {
         if (developmentConfig.activateServerLog) {
             // Ensure logging path exists
             let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
-            Util.ensureDirectoryExistence(languageServerLoggingPath);
+            util.ensureDirectoryExistence(languageServerLoggingPath);
             args.push('-Dlsp.log.filename=' + languageServerLoggingPath);
         }
 
@@ -274,7 +274,7 @@ export function activate(context: ExtensionContext) {
                 if (!fs.existsSync(pathToCheck)) {
                     let m = "Invalid path in class path additions: " + p;
                     window.showWarningMessage(m)
-                    Util.writeToLog(extensionLogPath, m);
+                    util.writeToLog(extensionLogPath, m);
                     return;
                 }
                 classPath += p + path.delimiter;
@@ -294,10 +294,10 @@ export function activate(context: ExtensionContext) {
         ]);
 
         // Start the LSP server
-        let javaPath = Util.findJavaExecutable('java');
+        let javaPath = util.findJavaExecutable('java');
         if (!javaPath) {
             window.showErrorMessage("Java runtime environment not found!")
-            Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
+            util.writeToLog(extensionLogPath, "Java runtime environment not found!");
             globalThis.clients.delete(wsFolder.uri.toString());
             return;
         }
@@ -308,9 +308,9 @@ export function activate(context: ExtensionContext) {
         if (stdioConfig.activateStdoutLogging) {
             // Log to file
             if (stdoutLogPath != "") {
-                Util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
-                server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
-                server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
+                util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
+                server.stdout.addListener("data", chunk => util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
+                server.stderr.addListener("data", chunk => util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
             }
             // Log to terminal
             else {

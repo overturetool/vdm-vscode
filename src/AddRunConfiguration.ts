@@ -83,8 +83,9 @@ export class AddRunConfigurationHandler {
                 selectedCommand += "()";
 
             // Create run configuration
+            let className = selectedClass.substring(0, selectedClass.indexOf('('));
             let debugConfiguration: DebugConfiguration = {
-                name: `Launch VDM Debug from ${selectedClass.substring(0, selectedClass.indexOf('('))}\`${selectedCommand}`,    // The name of the debug session.
+                name: `Launch VDM Debug from ${className}\`${selectedCommand}`,    // The name of the debug session.
                 type: "vdm",               // The type of the debug session.
                 request: "launch",         // The request type of the debug session.
                 noDebug: false,
@@ -93,7 +94,7 @@ export class AddRunConfigurationHandler {
                 preConditionChecks: true,
                 postConditionChecks: true,
                 measureChecks: true,
-                defaultName: selectedClass
+                defaultName: className
             }
             if (dialect == "vdmsl")
                 debugConfiguration.command = `print ${selectedCommand}`;
@@ -105,7 +106,7 @@ export class AddRunConfigurationHandler {
 
             // Open launch file
             window.showTextDocument(
-                Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"),
+                util.joinUriPath(wsFolder.uri, ".vscode", "launch.json"),
                 { preview: true, preserveFocus: true }
             )
         }));

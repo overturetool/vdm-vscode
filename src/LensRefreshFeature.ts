@@ -40,9 +40,11 @@ class RefreshCodeLensProvider implements vscode.CodeLensProvider {
         this.onDidChangeCodeLenses = this._onDidChangeCodeLenses.event;
         vscode.languages.registerCodeLensProvider({ scheme: 'file' }, this);
     }
-
+    
     onDidChangeCodeLenses: vscode.Event<void>;
-    provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CodeLens[]> {
+    provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.CodeLens[]>;
+    provideCodeLenses<T=vscode.CodeLens>(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<T[]>;
+    provideCodeLenses<T=vscode.CodeLens>(document: any, token: any): vscode.ProviderResult<vscode.CodeLens[]> | vscode.ProviderResult<T[]> {
         return [];
     }
 

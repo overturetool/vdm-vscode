@@ -110,3 +110,8 @@ export function registerCommand(context: ExtensionContext, command: string, call
     context.subscriptions.push(disposable);
     return disposable;
 };
+
+export function joinUriPath(uri: Uri, ...additions: string[]): Uri{
+    let uriString = uri.toString() + '/' + additions.join('/')
+    return Uri.parse(uriString);
+}

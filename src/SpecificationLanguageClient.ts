@@ -8,11 +8,11 @@ import * as LanguageId from "./LanguageId";
 import { LensRefreshFeature } from "./LensRefreshFeature";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
 import { TranslateFeature } from "./TranslateFeature";
-import * as Util from "./Util"
+import * as util from "./Util"
 
 export class SpecificationLanguageClient extends LanguageClient {
     public readonly projectRoot = this.clientOptions.workspaceFolder.uri;
-    public readonly projectSavedDataUri = Uri.joinPath(this.projectRoot, ".generated");
+    public readonly projectSavedDataUri = util.joinUriPath(this.projectRoot, ".generated");
     public readonly logPath: string;
     public readonly language: string;
 
@@ -20,7 +20,7 @@ export class SpecificationLanguageClient extends LanguageClient {
         super(id, name, serverOptions, clientOptions, forceDebug);
         this.language = language;
         this.logPath = path.resolve(this._context.logUri.fsPath, `${name}.log`);
-        Util.ensureDirectoryExistence(this.logPath);
+        util.ensureDirectoryExistence(this.logPath);
         this.registerFeatures([
             new ProofObligationGenerationFeature(this, this._context),
             new CombinantorialTestingFeature(),

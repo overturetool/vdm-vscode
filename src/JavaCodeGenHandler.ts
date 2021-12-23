@@ -64,7 +64,7 @@ export class JavaCodeGenHandler {
                 }
             }
 
-            let folderUri = Uri.joinPath(wsFolder.uri, ".generated", "java");
+            let folderUri = util.joinUriPath(wsFolder.uri, ".generated", "java");
 
             util.createDirectory(folderUri).then(async () => {
                 try {

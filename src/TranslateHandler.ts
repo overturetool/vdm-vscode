@@ -44,7 +44,7 @@ export class TranslateHandler {
                     [this.extensionName, 'translate', 'general'].join('.'),
                     wsFolder.uri
                 );
-                let saveLocation = Uri.joinPath(client.projectSavedDataUri, this.language);
+                let saveLocation = util.joinUriPath(client.projectSavedDataUri, this.language);
                 util.createDirectory(saveLocation, translateConfig?.get("storeAllTranslations")).then(
                     async (saveUri): Promise<void> => {
                         try {

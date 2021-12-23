@@ -86,7 +86,7 @@ export class CTTreeView {
     public saveCTs() {
         this._combinatorialTests.forEach(ct => {
             // Create full path
-            let savePath = Uri.joinPath(this._ctHandler.currentClient.dataStoragePath, "Combinatorial Testing", `${ct.symbolName}.json`).fsPath;
+            let savePath = util.joinUriPath(this._ctHandler.currentClient.dataStoragePath, "Combinatorial Testing", `${ct.symbolName}.json`).fsPath;
 
             // Ensure that path exists
             util.ensureDirectoryExistence(savePath)
@@ -106,7 +106,7 @@ export class CTTreeView {
             let completeCTs: completeCT[] = [];
 
             // Create full path
-            let savePath = Uri.joinPath(this._ctHandler.currentClient.dataStoragePath, "Combinatorial Testing").fsPath;
+            let savePath = util.joinUriPath(this._ctHandler.currentClient.dataStoragePath, "Combinatorial Testing").fsPath;
             fs.access(savePath, fs.constants.F_OK | fs.constants.R_OK, (accessErr) => {
                 if (!accessErr) {
                     fs.readdir(savePath, { withFileTypes: true }, (dirErr, files) => {
