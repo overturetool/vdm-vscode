@@ -342,17 +342,10 @@ export function activate(context: ExtensionContext) {
                 // If using experimental server
                 const devConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server.development', wsFolder);
                 if (devConfig.experimentalServer) {
-                    // const lspPort = devConfig.lspPort;
-                    // window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort}`);
-                    // const socket = net.connect(lspPort)
-                    // resolve({ writer: socket, reader: socket })
-
-                    // Create socket connection
-                    const server = net.createServer((socket) => {
-                        resolve({ writer: socket, reader: socket });
-                    });
-                    // Select a random port
-                    server.listen(8000, 'localhost', null, () => {});
+                    const lspPort = devConfig.lspPort;
+                    window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort}`);
+                    const socket = net.connect(lspPort)
+                    resolve({ writer: socket, reader: socket })
                 }
                 else {
                     // Create socket connection
