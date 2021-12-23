@@ -78,9 +78,9 @@ function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: Works
 
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
-    const jarPath          = path.resolve(context.extensionPath, "resources", "jars");
-    const jarPath_vdmj     = path.resolve(jarPath, "vdmj");
-    const jarPath_vdmj_hp  = path.resolve(jarPath, "vdmj_hp");
+    const jarPath = path.resolve(context.extensionPath, "resources", "jars");
+    const jarPath_vdmj = path.resolve(jarPath, "vdmj");
+    const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
 
     // Make sure that the VDMJ and LSP jars are present
     if (!Util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
@@ -97,9 +97,9 @@ export function activate(context: ExtensionContext) {
 
     // Initialise handlers
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex    = new TranslateHandler(globalThis.clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
-    const translateHandlerWord     = new TranslateHandler(globalThis.clients, context, LanguageId.word, "vdm-vscode.translateToWord");
-    const translateHandlerCov      = new TranslateHandler(globalThis.clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
+    const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
+    const translateHandlerWord = new TranslateHandler(globalThis.clients, context, LanguageId.word, "vdm-vscode.translateToWord");
+    const translateHandlerCov = new TranslateHandler(globalThis.clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
     const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
     const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
 
@@ -132,7 +132,8 @@ export function activate(context: ExtensionContext) {
 
             let dialect = await Util.guessDialect(session.workspaceFolder);
             if (dialect)
-                await launchClient(session.workspaceFolder, dialect);
+                // await launchClient(session.workspaceFolder, dialect);
+                launchClient(session.workspaceFolder, dialect);
         }
     })
 
@@ -155,161 +156,338 @@ export function activate(context: ExtensionContext) {
         launchClient(folder, getDialect(document));
     }
 
-    async function launchClient(wsFolder: WorkspaceFolder, dialect: string): Promise<void> {
+    // async function launchClientOld(wsFolder: WorkspaceFolder, dialect: string): Promise<void> {
+    //     // Abort if client already exists
+    //     if (globalThis.clients.has(wsFolder.uri.toString())) {
+    //         return;
+    //     }
+
+    //     // Create client
+    //     globalThis.clients.set(wsFolder.uri.toString(), null);
+
+    //     // Add settings watch for workspace folder
+    //     workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
+
+    //     // Get server configurations
+    //     const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
+    //     const developmentConfig: WorkspaceConfiguration = serverConfig.get("development")
+    //     const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
+
+    //     // If using experimental server
+    //     if (developmentConfig.experimentalServer) {
+    //         let lspPort = developmentConfig.lspPort;
+    //         let dapPort = developmentConfig.dapPort;
+    //         window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort} and DAP port ${dapPort}`);
+
+    //         let client = createClient(dialect, lspPort, dapPort, wsFolder);
+    //         let clientKey = wsFolder.uri.toString();
+    //         globalThis.clients.set(clientKey, client);
+    //         return;
+    //     }
+
+    //     // Get two available ports, start the server and create the client
+    //     portfinder.getPorts(2, { host: undefined, startPort: undefined, port: undefined, stopPort: undefined }, async (err, ports) => {
+    //         if (err) {
+    //             window.showErrorMessage("An error occured when finding free ports: " + err)
+    //             Util.writeToLog(extensionLogPath, "An error occured when finding free ports: " + err);
+    //             globalThis.clients.delete(wsFolder.uri.toString());
+    //             return;
+    //         }
+    //         let lspPort = ports[0];
+    //         let dapPort = ports[1];
+
+    //         // Setup server arguments
+    //         let args: string[] = [];
+    //         let JVMArguments: string = serverConfig.JVMArguments;
+    //         if (JVMArguments != "") {
+    //             let split = JVMArguments.split(" ").filter(v => v != "")
+    //             let i = 0;
+    //             while (i < split.length - 1) {
+    //                 if (split[i].includes("\"")) {
+    //                     split[i] = split[i] + " " + split[i + 1]
+    //                     split.splice(i + 1, 1)
+    //                 }
+    //                 i++;
+    //             }
+    //             args.push(...split);
+    //         }
+
+    //         if (developmentConfig.activateServerLog) {
+    //             // Ensure logging path exists
+    //             let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
+    //             Util.ensureDirectoryExistence(languageServerLoggingPath);
+    //             args.push('-Dlsp.log.filename=' + languageServerLoggingPath);
+    //         }
+
+    //         // Construct class path
+    //         let classPath = "";
+
+    //         // Add user defined paths to class path
+    //         if (serverConfig.classPathAdditions) {
+    //             serverConfig.classPathAdditions.forEach(p => {
+    //                 let pathToCheck = (p.endsWith(path.sep + '*') ? p.substr(0, p.length - 2) : p)
+    //                 if (!fs.existsSync(pathToCheck)) {
+    //                     let m = "Invalid path in class path additions: " + p;
+    //                     window.showWarningMessage(m)
+    //                     Util.writeToLog(extensionLogPath, m);
+    //                     return;
+    //                 }
+    //                 classPath += p + path.delimiter;
+    //             })
+    //         }
+
+    //         // Add jars folders to class path
+    //         // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
+    //         classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj), "*");
+
+    //         // Construct java launch arguments
+    //         args.push(...[
+    //             '-cp', classPath,
+    //             'lsp.LSPServerSocket',
+    //             '-' + dialect,
+    //             '-lsp', lspPort.toString(), '-dap', dapPort.toString()
+    //         ]);
+
+    //         // Start the LSP server
+    //         let javaPath = Util.findJavaExecutable('java');
+    //         if (!javaPath) {
+    //             window.showErrorMessage("Java runtime environment not found!")
+    //             Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
+    //             globalThis.clients.delete(wsFolder.uri.toString());
+    //             return;
+    //         }
+    //         let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
+
+    //         // Wait for the server to be ready
+    //         let connected = false;
+    //         let timeOutCounter = 0;
+    //         while (!connected) {
+    //             var sock = net.connect(lspPort, 'localhost', () => {
+    //                 sock.destroy();
+    //                 connected = true;
+    //             });
+    //             await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
+    //             if (timeOutCounter++ == 100) {
+    //                 window.showErrorMessage("ERROR: LSP server connection timeout");
+    //                 Util.writeToLog(extensionLogPath, "ERROR: LSP server connection timeout");
+    //                 globalThis.clients.delete(wsFolder.uri.toString());
+    //                 return;
+    //             }
+    //         }
+
+    //         // Create output channel for server stdout
+    //         let stdoutLogPath = stdioConfig.stdioLogPath;
+    //         if (stdioConfig.activateStdoutLogging) {
+    //             // Log to file
+    //             if (stdoutLogPath != "") {
+    //                 Util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
+    //                 server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
+    //                 server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
+    //             }
+    //             // Log to terminal
+    //             else {
+    //                 let outputChannel: OutputChannel = window.createOutputChannel("VDM: " + wsFolder.name.toString());
+    //                 server.stdout.addListener("data", chunk => {
+    //                     outputChannel.show(true);
+    //                     outputChannel.appendLine(chunk)
+    //                 })
+    //                 server.stderr.addListener("data", chunk => {
+    //                     outputChannel.show(true);
+    //                     outputChannel.appendLine(chunk)
+    //                 })
+    //             }
+    //         }
+    //         else { //Discard stdout messages
+    //             server.stdout.addListener("data", chunk => { });
+    //             server.stderr.addListener("data", chunk => { });
+    //         }
+
+    //         // Create client
+    //         let client = createClient(dialect, lspPort, dapPort, wsFolder);
+
+    //         // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
+    //         let clientKey = wsFolder.uri.toString();
+
+    //         // Save client
+    //         globalThis.clients.set(clientKey, client);
+    //     });
+    // }
+
+
+    async function launchClient(wsFolder: WorkspaceFolder, dialect: string) {
+        const clientKey = wsFolder.uri.toString();
+
         // Abort if client already exists
-        if (globalThis.clients.has(wsFolder.uri.toString())) {
+        if (globalThis.clients.has(clientKey)) {
             return;
         }
 
-        // Create client
-        globalThis.clients.set(wsFolder.uri.toString(), null);
+        // Add client to list
+        globalThis.clients.set(clientKey, null);
 
         // Add settings watch for workspace folder
         workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
 
+        // Setup client options
+        const clientOptions: LanguageClientOptions = {
+            // Document selector defines which files from the workspace, that is also open in the client, to monitor.
+            documentSelector: [{ scheme: 'file', language: dialect, pattern: `${wsFolder.uri.fsPath}/**/*` }],
+            diagnosticCollectionName: "vdm-vscode",
+            workspaceFolder: wsFolder
+        }
+
+        // Setup server options
+        const serverOptions: ServerOptions = () => {
+            return new Promise( (resolve, reject) => {
+                // If using experimental server
+                const devConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server.development', wsFolder);
+                if (devConfig.experimentalServer) {
+                    // const lspPort = devConfig.lspPort;
+                    // window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort}`);
+                    // const socket = net.connect(lspPort)
+                    // resolve({ writer: socket, reader: socket })
+
+                    // Create socket connection
+                    const server = net.createServer((socket) => {
+                        resolve({ writer: socket, reader: socket });
+                    });
+                    // Select a random port
+                    server.listen(8000, 'localhost', null, () => {});
+                }
+                else {
+                    // Create socket connection
+                    const server = net.createServer((socket) => {
+                        resolve({ writer: socket, reader: socket })
+                    });
+                    // Select a random port
+                    server.listen(0, 'localhost', null, () => {
+                        let address = server.address();
+                        if (address && typeof address != "string")
+                            launchServer(wsFolder, dialect, address.port)
+                        else
+                            reject("Could not get port")
+                    })
+                }
+                
+            })
+        };
+
+        // Create the language client with the defined client options and the function to create and setup the server.
+        let client = new SpecificationLanguageClient(
+            `vdm-vscode_${wsFolder.name}_client`,
+            `${wsFolder.name}_client`,
+            dialect,
+            serverOptions,
+            clientOptions,
+            context,
+            Uri.joinPath(wsFolder.uri, ".generated")
+        );
+
+        // Start the and launch the client
+        let disposable = client.start();
+
+        // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
+        context.subscriptions.push(disposable);
+
+        // Save client
+        globalThis.clients.set(clientKey, client);
+    }
+
+    function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
         // Get server configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
         const developmentConfig: WorkspaceConfiguration = serverConfig.get("development")
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
 
-        // If using experimental server
-        if (developmentConfig.experimentalServer) {
-            let lspPort = developmentConfig.lspPort;
-            let dapPort = developmentConfig.dapPort;
-            window.showInformationMessage(`Connecting to experimental server on LSP port ${lspPort} and DAP port ${dapPort}`);
-
-            let client = createClient(dialect, lspPort, dapPort, wsFolder);
-            let clientKey = wsFolder.uri.toString();
-            globalThis.clients.set(clientKey, client);
-            return;
+        // Setup server arguments
+        let args: string[] = [];
+        let JVMArguments: string = serverConfig.JVMArguments;
+        if (JVMArguments != "") {
+            let split = JVMArguments.split(" ").filter(v => v != "")
+            let i = 0;
+            while (i < split.length - 1) {
+                if (split[i].includes("\"")) {
+                    split[i] = split[i] + " " + split[i + 1]
+                    split.splice(i + 1, 1)
+                }
+                i++;
+            }
+            args.push(...split);
         }
 
-        // Get two available ports, start the server and create the client
-        portfinder.getPorts(2, { host: undefined, startPort: undefined, port: undefined, stopPort: undefined }, async (err, ports) => {
-            if (err) {
-                window.showErrorMessage("An error occured when finding free ports: " + err)
-                Util.writeToLog(extensionLogPath, "An error occured when finding free ports: " + err);
-                globalThis.clients.delete(wsFolder.uri.toString());
-                return;
-            }
-            let lspPort = ports[0];
-            let dapPort = ports[1];
+        // Activate server log
+        if (developmentConfig.activateServerLog) {
+            // Ensure logging path exists
+            let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
+            Util.ensureDirectoryExistence(languageServerLoggingPath);
+            args.push('-Dlsp.log.filename=' + languageServerLoggingPath);
+        }
 
-            // Setup server arguments
-            let args: string[] = [];
-            let JVMArguments: string = serverConfig.JVMArguments;
-            if (JVMArguments != "") {
-                let split = JVMArguments.split(" ").filter(v => v != "")
-                let i = 0;
-                while (i < split.length - 1) {
-                    if (split[i].includes("\"")) {
-                        split[i] = split[i] + " " + split[i + 1]
-                        split.splice(i + 1, 1)
-                    }
-                    i++;
-                }
-                args.push(...split);
-            }
+        // Construct class path
+        let classPath = "";
 
-            if (developmentConfig.activateServerLog) {
-                // Ensure logging path exists
-                let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
-                Util.ensureDirectoryExistence(languageServerLoggingPath);
-                args.push('-Dlsp.log.filename=' + languageServerLoggingPath);
-            }
-
-            // Construct class path
-            let classPath = "";
-
-            // Add user defined paths to class path
-            if (serverConfig.classPathAdditions) {
-                serverConfig.classPathAdditions.forEach(p => {
-                    let pathToCheck = (p.endsWith(path.sep + '*') ? p.substr(0, p.length - 2) : p)
-                    if (!fs.existsSync(pathToCheck)) {
-                        let m = "Invalid path in class path additions: " + p;
-                        window.showWarningMessage(m)
-                        Util.writeToLog(extensionLogPath, m);
-                        return;
-                    }
-                    classPath += p + path.delimiter;
-                })
-            }
-
-            // Add jars folders to class path
-            // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-            classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj), "*");
-
-            // Construct java launch arguments
-            args.push(...[
-                '-cp', classPath,
-                'lsp.LSPServerSocket',
-                '-' + dialect,
-                '-lsp', lspPort.toString(), '-dap', dapPort.toString()
-            ]);
-
-            // Start the LSP server
-            let javaPath = Util.findJavaExecutable('java');
-            if (!javaPath) {
-                window.showErrorMessage("Java runtime environment not found!")
-                Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
-                globalThis.clients.delete(wsFolder.uri.toString());
-                return;
-            }
-            let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
-
-            // Wait for the server to be ready
-            let connected = false;
-            let timeOutCounter = 0;
-            while (!connected) {
-                var sock = net.connect(lspPort, 'localhost', () => {
-                    sock.destroy();
-                    connected = true;
-                });
-                await new Promise(resolve => sock.once("close", () => setTimeout(resolve, 25)))
-                if (timeOutCounter++ == 100) {
-                    window.showErrorMessage("ERROR: LSP server connection timeout");
-                    Util.writeToLog(extensionLogPath, "ERROR: LSP server connection timeout");
-                    globalThis.clients.delete(wsFolder.uri.toString());
+        // Add user defined paths to class path
+        if (serverConfig.classPathAdditions) {
+            serverConfig.classPathAdditions.forEach(p => {
+                let pathToCheck = (p.endsWith(path.sep + '*') ? p.substr(0, p.length - 2) : p)
+                if (!fs.existsSync(pathToCheck)) {
+                    let m = "Invalid path in class path additions: " + p;
+                    window.showWarningMessage(m)
+                    Util.writeToLog(extensionLogPath, m);
                     return;
                 }
+                classPath += p + path.delimiter;
+            })
+        }
+
+        // Add jars folders to class path
+        // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
+        classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj), "*");
+
+        // Construct java launch arguments
+        args.push(...[
+            '-cp', classPath,
+            'lsp.LSPServerSocket',
+            '-' + dialect,
+            '-lsp', lspPort.toString(), '-dap', '0'
+        ]);
+
+        // Start the LSP server
+        let javaPath = Util.findJavaExecutable('java');
+        if (!javaPath) {
+            window.showErrorMessage("Java runtime environment not found!")
+            Util.writeToLog(extensionLogPath, "Java runtime environment not found!");
+            globalThis.clients.delete(wsFolder.uri.toString());
+            return;
+        }
+        let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
+
+        // Create output channel for server stdout
+        let stdoutLogPath = stdioConfig.stdioLogPath;
+        if (stdioConfig.activateStdoutLogging) {
+            // Log to file
+            if (stdoutLogPath != "") {
+                Util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
+                server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
+                server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
             }
-
-            // Create output channel for server stdout
-            let stdoutLogPath = stdioConfig.stdioLogPath;
-            if (stdioConfig.activateStdoutLogging) {
-                // Log to file
-                if (stdoutLogPath != "") {
-                    Util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
-                    server.stdout.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
-                    server.stderr.addListener("data", chunk => Util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
-                }
-                // Log to terminal
-                else {
-                    let outputChannel: OutputChannel = window.createOutputChannel("VDM: " + wsFolder.name.toString());
-                    server.stdout.addListener("data", chunk => {
-                        outputChannel.show(true);
-                        outputChannel.appendLine(chunk)
-                    })
-                    server.stderr.addListener("data", chunk => {
-                        outputChannel.show(true);
-                        outputChannel.appendLine(chunk)
-                    })
-                }
+            // Log to terminal
+            else {
+                let outputChannel: OutputChannel = window.createOutputChannel("VDM: " + wsFolder.name.toString());
+                server.stdout.addListener("data", chunk => {
+                    outputChannel.show(true);
+                    outputChannel.appendLine(chunk)
+                })
+                server.stderr.addListener("data", chunk => {
+                    outputChannel.show(true);
+                    outputChannel.appendLine(chunk)
+                })
             }
-            else { //Discard stdout messages
-                server.stdout.addListener("data", chunk => { });
-                server.stderr.addListener("data", chunk => { });
-            }
-
-            // Create client
-            let client = createClient(dialect, lspPort, dapPort, wsFolder);
-
-            // It is assumed that the last part of the uri is the name of the specification. This logic is used in the ctHandler.
-            let clientKey = wsFolder.uri.toString();
-
-            // Save client
-            globalThis.clients.set(clientKey, client);
-        });
+        }
+        else { //Discard stdout messages
+            server.stdout.addListener("data", chunk => { });
+            server.stderr.addListener("data", chunk => { });
+        }
     }
 
     function createClient(dialect: string, lspPort: number, dapPort: number, folder: WorkspaceFolder): SpecificationLanguageClient {
@@ -319,7 +497,7 @@ export function activate(context: ExtensionContext) {
         // Setup server options
         let serverOptions: ServerOptions = () => {
             // Create socket connection
-            let socket = net.connect({ port: lspPort });
+            let socket = net.createConnection({ port: lspPort });
             return Promise.resolve({
                 writer: socket,
                 reader: socket
