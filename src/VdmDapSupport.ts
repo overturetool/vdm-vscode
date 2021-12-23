@@ -105,7 +105,7 @@ export namespace VdmDapSupport {
         }
 
         createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-            // Check if server has been launched
+            // Check if server has not been launched
             let uri = session.workspaceFolder.uri;
             if (!this.dapPorts.get(uri.toString())) {
                 // Open a file in the workspace folder to force the client to start for the folder
