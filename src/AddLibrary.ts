@@ -2,9 +2,8 @@
 
 import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import * as util from "./Util"
-import { copyFile, Dirent, readdirSync } from 'fs';
 import * as path from 'path'
+import * as fs from 'fs-extra'
 
 export class AddLibraryHandler {
 
@@ -53,9 +52,9 @@ export class AddLibraryHandler {
             // Gather available libraries and let user select
             const libPath = path.resolve(this.context.extensionPath, "resources", "lib", dialect);
 
-            const libsInFolder: Dirent[] = readdirSync(libPath, { withFileTypes: true });
+            const libsInFolder: fs.Dirent[] = fs.readdirSync(libPath, { withFileTypes: true });
 
-            let libsOptions: string[] = libsInFolder.map((x: Dirent) => x.name);
+            let libsOptions: string[] = libsInFolder.map((x: fs.Dirent) => x.name);
 
             let selectedLibs: string[] = await window.showQuickPick(libsOptions, {
                 placeHolder: 'Choose libraries',
@@ -65,26 +64,35 @@ export class AddLibraryHandler {
             // None selected 
             if (selectedLibs === undefined || selectedLibs.length == 0) return resolve(`Empty selection. Add library completed.`)
 
-            let folderUri = Uri.joinPath(wsFolder.uri, "lib");
-
-            util.createDirectory(folderUri).then(async () => {
+            const folderPath = path.resolve(wsFolder.uri.fsPath, "lib");
+            fs.ensureDir(folderPath).then(async () => {
                 try {
-
-                    for (let lib of selectedLibs) {
-
-                        window.showInformationMessage(`Adding library ${lib}`);
-
-                        // Copy library from resources/lib to here
-                        copyFile(path.resolve(libPath, lib), path.resolve(folderUri.fsPath, lib), (reason) => {
-
-                            if (reason) {
-                                window.showInformationMessage(`Add library ${lib} failed`);
-                                console.log(`Copy library files failed with error: ${reason}`);
-                                reject(`Add library  ${lib} failed.`);
-                            }
-                            window.showInformationMessage(`Add library ${lib} completed`);
+                    for (const lib of selectedLibs) {
+                        const encoding = workspace.getConfiguration('files', wsFolder).get('encoding','utf8');
+                        const src = path.resolve(libPath, lib);
+                        const dest = path.resolve(folderPath, lib);
+                        if (encoding == 'utf8'){
+                            // Copy library from resources/lib to here
+                            fs.copyFile(src, dest, (reason) => {
+                                if (reason) {
+                                    window.showInformationMessage(`Add library ${lib} failed`);
+                                    console.log(`Copy library files failed with error: ${reason}`);
+                                    return reject(`Add library ${lib} failed.`);
+                                }
+                                window.showInformationMessage(`Add library ${lib} completed`);
+                            });
                         }
-                        );
+                        else {
+                            // Convert encoding
+                            try {
+                                fs.writeFileSync(dest, fs.readFileSync(src,{encoding: 'utf8'}), {encoding: encoding});
+                            }
+                            catch (e) {
+                                window.showInformationMessage(`Add library ${lib} failed`);
+                                console.log(`Copy library files failed with error: ${e}`);
+                                return reject(`Add library ${lib} failed.`);
+                            }
+                        }
                     }
                     resolve(`Add library completed.`);
                 }
@@ -93,9 +101,9 @@ export class AddLibraryHandler {
                     console.log(`Add library failed with error: ${error}`);
                     reject();
                 }
-            }, (reason) => {
+            }).catch(error => {
                 window.showWarningMessage("Creating directory for library failed");
-                console.log(`Creating directory for library files failed with error: ${reason}`);
+                console.log(`Creating directory for library files failed with error: ${error}`);
                 reject();
             });
         }));
