@@ -376,6 +376,14 @@ export function activate(context: ExtensionContext) {
             Uri.joinPath(wsFolder.uri, ".generated")
         );
 
+        // Setup DAP
+        client.onReady().then(() => {
+            let port = (client?.initializeResult?.capabilities?.experimental?.dapServer?.port);
+            if (!port)
+                port = workspace.getConfiguration('vdm-vscode.server.development', wsFolder).get("dapPort", 8001)
+            dapSupport.initDebugConfig(context, wsFolder, port)
+        })
+
         // Start the and launch the client
         let disposable = client.start();
 
