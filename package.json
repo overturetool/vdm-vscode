@@ -861,7 +861,6 @@
   "dependencies": {
     "compile": "0.0.2",
     "fs-extra": "^10.0.0",
-    "portfinder": "^1.0.28",
     "run": "^1.4.0",
     "vscode-languageclient": "^6.1.3"
   }
