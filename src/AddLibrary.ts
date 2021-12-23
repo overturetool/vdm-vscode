@@ -68,15 +68,31 @@ export class AddLibraryHandler {
             fs.ensureDir(folderPath).then(async () => {
                 try {
                     for (const lib of selectedLibs) {
-                        // Copy library from resources/lib to here
-                        fs.copyFile(path.resolve(libPath, lib), path.resolve(folderPath, lib), (reason) => {
-                            if (reason) {
+                        const encoding = workspace.getConfiguration('files', wsFolder).get('encoding','utf8');
+                        const src = path.resolve(libPath, lib);
+                        const dest = path.resolve(folderPath, lib);
+                        if (encoding == 'utf8'){
+                            // Copy library from resources/lib to here
+                            fs.copyFile(src, dest, (reason) => {
+                                if (reason) {
+                                    window.showInformationMessage(`Add library ${lib} failed`);
+                                    console.log(`Copy library files failed with error: ${reason}`);
+                                    return reject(`Add library ${lib} failed.`);
+                                }
+                                window.showInformationMessage(`Add library ${lib} completed`);
+                            });
+                        }
+                        else {
+                            // Convert encoding
+                            try {
+                                fs.writeFileSync(dest, fs.readFileSync(src,{encoding: 'utf8'}), {encoding: encoding});
+                            }
+                            catch (e) {
                                 window.showInformationMessage(`Add library ${lib} failed`);
-                                console.log(`Copy library files failed with error: ${reason}`);
+                                console.log(`Copy library files failed with error: ${e}`);
                                 return reject(`Add library ${lib} failed.`);
                             }
-                            window.showInformationMessage(`Add library ${lib} completed`);
-                        });
+                        }
                     }
                     resolve(`Add library completed.`);
                 }
