@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import * as fs from 'fs';
 import * as path from 'path'
 import * as net from 'net';
 import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
+import * as util from "./Util"
 import {
     ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug, WorkspaceConfiguration
 } from 'vscode';
@@ -11,18 +13,17 @@ import {
     LanguageClientOptions, ServerOptions
 } from 'vscode-languageclient';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
-import * as util from "./Util"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
-import * as fs from 'fs';
 import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
+import { checkEncodingMatch } from './Encoding';
 
 globalThis.clients = new Map();
 
@@ -142,6 +143,9 @@ export function activate(context: ExtensionContext) {
             return;
         }
 
+        // Check that the document encoding matches the encoding setting
+        checkEncodingMatch(document, extensionLogPath)
+
         const uri = document.uri;
         let folder = workspace.getWorkspaceFolder(uri);
         // Files outside a folder can't be handled. 
@@ -154,6 +158,8 @@ export function activate(context: ExtensionContext) {
         // Start client for the folder
         launchClient(folder, getDialect(document));
     }
+
+
 
     async function launchClient(wsFolder: WorkspaceFolder, dialect: string) {
         const clientKey = wsFolder.uri.toString();
@@ -179,7 +185,7 @@ export function activate(context: ExtensionContext) {
 
         // Setup server options
         const serverOptions: ServerOptions = () => {
-            return new Promise( (resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 // If using experimental server
                 const devConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server.development', wsFolder);
                 if (devConfig.experimentalServer) {
