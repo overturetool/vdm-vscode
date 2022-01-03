@@ -6,3 +6,4 @@ dist
 *.log
 .VSCodeCounter
 dist/**
+.vscode/settings.json
