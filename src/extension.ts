@@ -66,7 +66,7 @@ function getDialect(document: TextDocument): string {
 
 function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
     // Restart the extension if changes has been made to the server settings
-    if (event.affectsConfiguration("vdm-vscode.server", wsFolder)) {
+    if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
         // Ask the user to restart the extension if setting requires a restart
         window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
             if (res == "Reload Now")
@@ -259,10 +259,15 @@ export function activate(context: ExtensionContext) {
         // Activate server log
         if (developmentConfig.activateServerLog) {
             // Ensure logging path exists
-            let languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
+            const languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
             util.ensureDirectoryExistence(languageServerLoggingPath);
-            args.push('-Dlsp.log.filename=' + languageServerLoggingPath);
+            args.push(`-Dlsp.log.filename=${languageServerLoggingPath}`);
         }
+
+        // Set encoding
+        const encoding = workspace.getConfiguration('files', wsFolder).get('encoding');
+        if (encoding)
+            args.push(`-Dlsp.encoding=${encoding}`)
 
         // Construct class path
         let classPath = "";
