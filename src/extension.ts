@@ -23,7 +23,7 @@ import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
-import { checkEncodingMatch } from './Encoding';
+import * as encoding from './Encoding';
 
 globalThis.clients = new Map();
 
@@ -144,7 +144,7 @@ export function activate(context: ExtensionContext) {
         }
 
         // Check that the document encoding matches the encoding setting
-        checkEncodingMatch(document, extensionLogPath)
+        encoding.checkEncodingMatch(document, extensionLogPath)
 
         const uri = document.uri;
         let folder = workspace.getWorkspaceFolder(uri);
@@ -271,9 +271,10 @@ export function activate(context: ExtensionContext) {
         }
 
         // Set encoding
-        const encoding = workspace.getConfiguration('files', wsFolder).get('encoding');
-        if (encoding)
-            args.push(`-Dlsp.encoding=${encoding}`)
+        const encodingSetting = workspace.getConfiguration('files', wsFolder).get('encoding', 'utf8');
+        const javaEncoding = encoding.toJavaName(encodingSetting)
+        if (javaEncoding)
+            args.push(`-Dlsp.encoding=${javaEncoding}`)
 
         // Construct class path
         let classPath = "";

@@ -67,31 +67,25 @@ export class AddLibraryHandler {
             const folderPath = path.resolve(wsFolder.uri.fsPath, "lib");
             fs.ensureDir(folderPath).then(async () => {
                 try {
+                    const wsEncoding = workspace.getConfiguration('files', wsFolder).get('encoding', 'utf8');
+                    if (!Buffer.isEncoding(wsEncoding))
+                        console.log(`Encoding (${wsEncoding}) not possible using the default: UTF-8`)
+
                     for (const lib of selectedLibs) {
-                        const encoding = workspace.getConfiguration('files', wsFolder).get('encoding','utf8');
                         const src = path.resolve(libPath, lib);
                         const dest = path.resolve(folderPath, lib);
-                        if (encoding == 'utf8'){
+
+                        // Copy files to project with UTF-8 encoding
+                        if (wsEncoding == 'utf8' || !Buffer.isEncoding(wsEncoding)) {
                             // Copy library from resources/lib to here
-                            fs.copyFile(src, dest, (reason) => {
-                                if (reason) {
-                                    window.showInformationMessage(`Add library ${lib} failed`);
-                                    console.log(`Copy library files failed with error: ${reason}`);
-                                    return reject(`Add library ${lib} failed.`);
-                                }
-                                window.showInformationMessage(`Add library ${lib} completed`);
+                            fs.copyFile(src, dest).catch((e) => {
+                                window.showInformationMessage(`Add library ${lib} failed`);
+                                console.log(`Copy library files failed with error: ${e}`);
                             });
                         }
                         else {
                             // Convert encoding
-                            try {
-                                fs.writeFileSync(dest, fs.readFileSync(src,{encoding: 'utf8'}), {encoding: encoding});
-                            }
-                            catch (e) {
-                                window.showInformationMessage(`Add library ${lib} failed`);
-                                console.log(`Copy library files failed with error: ${e}`);
-                                return reject(`Add library ${lib} failed.`);
-                            }
+                            fs.writeFileSync(dest, fs.readFileSync(src, { encoding: 'utf8' }), { encoding: wsEncoding });
                         }
                     }
                     resolve(`Add library completed.`);
