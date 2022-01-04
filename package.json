@@ -827,6 +827,17 @@
               "defaultName": null,
               "remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
             }
+          },
+          {
+            "label": "VDM: Test Runner",
+            "description": "Configuration to run VDM tests using the VDMUnit framework",
+            "body": {
+              "name": "Launch VDM Test Runner",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": true,
+              "command": "p new TestRunner().run()"
+            }
           }
         ]
       }
