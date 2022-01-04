@@ -748,7 +748,7 @@
         },
         "initialConfigurations": [
           {
-            "name": "VDM Debug: Console",
+            "name": "VDM: Console",
             "type": "vdm",
             "request": "launch",
             "noDebug": false,
@@ -762,7 +762,7 @@
         ],
         "configurationSnippets": [
           {
-            "label": "VDM Debug: Console",
+            "label": "VDM: Console",
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug Console",
@@ -778,7 +778,7 @@
             }
           },
           {
-            "label": "VDM Debug: Entry Point (VDM-SL)",
+            "label": "VDM: Entry Point (VDM-SL)",
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug from Entry Point",
@@ -795,7 +795,7 @@
             }
           },
           {
-            "label": "VDM Debug: Entry Point (VDM++/-RT)",
+            "label": "VDM: Entry Point (VDM++/-RT)",
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug from Entry Point",
@@ -812,7 +812,7 @@
             }
           },
           {
-            "label": "VDM Debug: Remote Control (VDM-SL/++/-RT)",
+            "label": "VDM: Remote Control (VDM-SL/++/-RT)",
             "description": "A new configuration for 'debugging' a VDM project.",
             "body": {
               "name": "Launch VDM Debug with Remote Control",
