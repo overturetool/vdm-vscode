@@ -1,6 +1,6 @@
 
-# Program to convert an xml
-# file to json file
+# Program to convert overture xml templates to json format snippets
+# !! OBS: Additional snippets has been added since this was run !! 
  
 # import json module and xmltodict
 # module provided by python

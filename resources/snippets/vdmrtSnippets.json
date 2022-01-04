@@ -241,7 +241,7 @@
     "prefix": [
       "samebaseclass"
     ],
-    "body": "samebaseclass(${1:objectName}, ${1:objectName})",
+    "body": "samebaseclass(${1:objectName}, ${2:objectName})",
     "description": "Test if two objects are of the same type"
   },
   "self": {
@@ -299,5 +299,68 @@
     ],
     "body": "while ${1:predicate} \ndo ${2:statement}",
     "description": "while predicate do statement"
+  },
+  "VDMUnit TestCase": {
+    "prefix": "testCase",
+    "body": [
+      "class ${1:TestCaseName} is subclass of TestCase",
+      "",
+      "operations",
+      "\tprotected setUp: () ==> ()",
+      "\tsetUp () == skip;",
+      "",
+      "\tprotected runTest: () ==> ()",
+      "\trunTest () ==",
+      "\t\t$0",
+      "",
+      "\tprotected tearDown: () ==> ()",
+      "\ttearDown () == skip;",
+      "",
+      "end ${1:TestCaseName}"
+    ],
+    "description": "Test Case from VDMUnit framework"
+  },
+  "VDMUnit Test Execute using automated reflection search": {
+    "prefix": "testExecuteReflection",
+    "body": [
+      "class ${1:ProjectTest}",
+      "operations",
+      "\tpublic execute: () ==> ()",
+      "\texecute () == (",
+      "\t\tlet tests : set of Test = {new ${2:SomeTest()}, new ${3:SomeOtherTest()}$0},",
+      "\t\t    ts : TestSuite = new TestSuite(tests),",
+      "\t\t    result = new TestResult()",
+      "\t\tin",
+      "\t\t(",
+      "\t\t\tts.run(result);",
+      "\t\t\tIO`println(result.toString());",
+      "\t\t);",
+      "\t)",
+      "",
+      "end ${1:ProjectTest}"
+    ],
+    "description": "Test Case from VDMUnit framework"
+  },
+  "VDMUnit Test Execute using explicit definition": {
+    "prefix": "testExecuteExplicit",
+    "body": [
+      "class ${1:ProjectTest}",
+      "operations",
+      "\tpublic execute: () ==> ()",
+      "\texecute () == (",
+      "\t\tlet ts : TestSuite = new TestSuite(),",
+      "\t\t    result = new TestResult()",
+      "\t\tin",
+      "\t\t(",
+      "\t\t\tts.addTest(new ${2:SomeTest(\"TestName\")});",
+      "\t\t\t$0",
+      "\t\t\tts.run(result);",
+      "\t\t\tIO`println(result.toString());",
+      "\t\t);",
+      "\t)",
+      "",
+      "end ${1:ProjectTest}"
+    ],
+    "description": "Test Case from VDMUnit framework"
   }
 }
