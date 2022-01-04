@@ -600,6 +600,12 @@
           "default": true,
           "scope": "resource",
           "description": "If true, translates only the selected file. If false, translate is always applied to the whole project"
+        },
+        "vdm-vscode.encoding.showWarning": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
         }
       }
     },
@@ -861,6 +867,7 @@
   "dependencies": {
     "compile": "0.0.2",
     "fs-extra": "^10.0.0",
+    "jschardet": "^3.0.0",
     "run": "^1.4.0",
     "vscode-languageclient": "^6.1.3"
   }

@@ -143,6 +143,9 @@ export function activate(context: ExtensionContext) {
             return;
         }
 
+        // Check that the document encoding matches the encoding setting
+        encoding.checkEncoding(document, extensionLogPath)
+
         const uri = document.uri;
         let folder = workspace.getWorkspaceFolder(uri);
         // Files outside a folder can't be handled. 

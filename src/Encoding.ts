@@ -1,24 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// import { TextDocument, workspace, window, ConfigurationTarget } from "vscode";
-// import * as jschardet from 'jschardet'
-// import * as fs from 'fs-extra';
-// import * as util from "./Util"
+import { TextDocument, workspace, window, ConfigurationTarget, commands } from "vscode";
+import * as jschardet from 'jschardet'
+import * as fs from 'fs-extra';
+import * as util from "./Util"
 
 
 // ************* Not used *****************
-// If used, include following in package.json:
-//  Under 'configuration':
-//      "vdm-vscode.encoding.showWarning": {
-//          "type": "boolean",
-//          "default": true,
-//          "scope": "resource",
-//           "markdownDescription": "If enabled, shows a warning if document encodings does not match `#encoding.files#`"
-//      }
-//  Under 'dependencies':
-//      "jschardet": "^3.0.0",
-
-
 // export function checkEncodingMatch(document: TextDocument, logPath: string): void {
 //     const wsFolder = workspace.getWorkspaceFolder(document.uri);
 //
@@ -52,6 +40,38 @@
 //     }
 // }
 // *******************************************
+
+let once = false;
+export function checkEncoding(document: TextDocument, logPath: string): void {
+    // Check if done before
+    if (once)
+        return;
+
+    const wsFolder = workspace.getWorkspaceFolder(document.uri);
+
+    // Get document encoding
+    let encodingDocument = jschardet.detect(fs.readFileSync(document.fileName));
+    if (!encodingDocument) {
+        util.writeToLog(logPath, `Could not determine document encoding for document: ${document.fileName}`);
+        return;
+    }
+
+    // Prompt user with warning, if not UTF-8
+    if (encodingDocument.encoding != 'ascii' && encodingDocument.encoding != 'UTF-8') {
+        const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
+        if (encodingConfig?.showWarning) {
+            window.showWarningMessage(`Document encoding is not UTF-8. Please set files.encoding to the correct encoding. Not doing so may cause issues for the VDM extensions`, 'Go to setting', 'Do not show again', 'Close').then(
+                press => {
+                    once = true;
+                    if (press == 'Open settings UI')
+                        commands.executeCommand('workbench.action.openSettings2', 'files.encoding')
+                    if (press == 'Do not show again')
+                        encodingConfig.update("showWarning", false, ConfigurationTarget.Global)
+                }
+            );
+        }
+    }
+}
 
 export function toJavaName(encoding: string): string {
     if (!nameMapVSC2Java.has(encoding))
