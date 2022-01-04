@@ -763,9 +763,9 @@
         "configurationSnippets": [
           {
             "label": "VDM: Console",
-            "description": "A new configuration for 'debugging' a VDM project.",
+            "description": "Initialise interpreter for a VDM project.",
             "body": {
-              "name": "Launch VDM Debug Console",
+              "name": "Debug Console",
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
@@ -779,9 +779,9 @@
           },
           {
             "label": "VDM: Entry Point (VDM-SL)",
-            "description": "A new configuration for 'debugging' a VDM project.",
+            "description": "Launch a VDM project from the specified entry point.",
             "body": {
-              "name": "Launch VDM Debug from Entry Point",
+              "name": "Entry Point: ${1:Function/Operation}",
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
@@ -796,9 +796,9 @@
           },
           {
             "label": "VDM: Entry Point (VDM++/-RT)",
-            "description": "A new configuration for 'debugging' a VDM project.",
+            "description": "Launch a VDM project from the specified entry point.",
             "body": {
-              "name": "Launch VDM Debug from Entry Point",
+              "name": "Entry Point: ${1:Class}`${3:Function/Operation}",
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
@@ -813,9 +813,9 @@
           },
           {
             "label": "VDM: Remote Control (VDM-SL/++/-RT)",
-            "description": "A new configuration for 'debugging' a VDM project.",
+            "description": "Launch VDM project using remote control.",
             "body": {
-              "name": "Launch VDM Debug with Remote Control",
+              "name": "Remote Control",
               "type": "vdm",
               "request": "launch",
               "noDebug": false,
@@ -830,9 +830,9 @@
           },
           {
             "label": "VDM: Test Runner",
-            "description": "Configuration to run VDM tests using the VDMUnit framework",
+            "description": "Run VDM tests using the VDMUnit frameworks TestRunner class.",
             "body": {
-              "name": "Launch VDM Test Runner",
+              "name": "Test Runner",
               "type": "vdm",
               "request": "launch",
               "noDebug": true,
