@@ -60,7 +60,7 @@ export function checkEncoding(document: TextDocument, logPath: string): void {
     if (encodingDocument.encoding != 'ascii' && encodingDocument.encoding != 'UTF-8') {
         const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
         if (encodingConfig?.showWarning) {
-            window.showWarningMessage(`Document encoding is not UTF-8. Please set files.encoding to the correct encoding. Not doing so may cause issues for the VDM extensions`, 'Go to setting', 'Do not show again', 'Close').then(
+            window.showWarningMessage(`Document encoding is not UTF-8. Please set files.encoding to the correct encoding. Not doing so may cause issues for the VDM extensions`, 'Go to setting', 'Do not show again').then(
                 press => {
                     once = true;
                     if (press == 'Open settings UI')
