@@ -69,7 +69,7 @@ export class AddLibraryHandler {
                 try {
                     const wsEncoding = workspace.getConfiguration('files', wsFolder).get('encoding', 'utf8');
                     if (!Buffer.isEncoding(wsEncoding))
-                        console.log(`Encoding (${wsEncoding}) not possible using the default: UTF-8`)
+                        console.log(`Encoding (files.encoding: ${wsEncoding}) not possible using the default: UTF-8`)
 
                     for (const lib of selectedLibs) {
                         const src = path.resolve(libPath, lib);

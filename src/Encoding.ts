@@ -1,56 +1,70 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { TextDocument, workspace, window, ConfigurationTarget } from "vscode";
-import * as jschardet from 'jschardet'
-import * as fs from 'fs-extra';
-import * as util from "./Util"
+// import { TextDocument, workspace, window, ConfigurationTarget } from "vscode";
+// import * as jschardet from 'jschardet'
+// import * as fs from 'fs-extra';
+// import * as util from "./Util"
 
-export function checkEncodingMatch(document: TextDocument, logPath: string): void {
-    const wsFolder = workspace.getWorkspaceFolder(document.uri);
 
-    // Get encoding setting
-    const encodingSetting: string = workspace.getConfiguration('files', wsFolder).get('encoding');
-    if (!encodingSetting || Buffer.isEncoding(encodingSetting)) {
-        util.writeToLog(logPath, `Encoding setting not found`)
-        return;
-    }
+// ************* Not used *****************
+// If used, include following in package.json:
+//  Under 'configuration':
+//      "vdm-vscode.encoding.showWarning": {
+//          "type": "boolean",
+//          "default": true,
+//          "scope": "resource",
+//           "markdownDescription": "If enabled, shows a warning if document encodings does not match `#encoding.files#`"
+//      }
+//  Under 'dependencies':
+//      "jschardet": "^3.0.0",
 
-    // Get document encoding
-    let encodingDocument = jschardet.detect(fs.readFileSync(document.fileName));
-    if (!encodingDocument) {
-        util.writeToLog(logPath, `Could not determine document encoding for document: ${document.fileName}`);
-        return;
-    }
-    if (encodingDocument.encoding == 'ascii') // Interpret ascii encoding as utf8
-        encodingDocument.encoding = 'utf8'
 
-    // Compare the encodings
-    if (encodingDocument.encoding != encodingSetting) {
-        util.writeToLog(logPath, `Document encoding (${encodingDocument.encoding}) does not match the encoding.files setting (${encodingSetting})`);
-
-        // Prompt user with warning
-        const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
-        if (encodingConfig?.showWarning) {
-            window.showWarningMessage(`Document encoding (${encodingDocument.encoding}) does not match the encoding.files setting (${encodingSetting}) this may cause issues for the VDM extension`, "Do not show again").then(
-                press => { if (press) encodingConfig.update("showWarning", false, ConfigurationTarget.Global) }
-            );
-        }
-    }
-
-}
+// export function checkEncodingMatch(document: TextDocument, logPath: string): void {
+//     const wsFolder = workspace.getWorkspaceFolder(document.uri);
+//
+//     // Get encoding setting
+//     const encodingSetting: string = workspace.getConfiguration('files', wsFolder).get('encoding');
+//     if (!encodingSetting || Buffer.isEncoding(encodingSetting)) {
+//         util.writeToLog(logPath, `Encoding setting not found`)
+//         return;
+//     }
+//
+//     // Get document encoding
+//     let encodingDocument = jschardet.detect(fs.readFileSync(document.fileName));
+//     if (!encodingDocument) {
+//         util.writeToLog(logPath, `Could not determine document encoding for document: ${document.fileName}`);
+//         return;
+//     }
+//     if (encodingDocument.encoding == 'ascii') // Interpret ascii encoding as utf8
+//         encodingDocument.encoding = 'utf8'
+//
+//     // Compare the encodings
+//     if (encodingDocument.encoding != encodingSetting) { // FIXME names from jschardet are not the same as the ones usen for files.encoding
+//         util.writeToLog(logPath, `Document encoding (${encodingDocument.encoding}) does not match the encoding.files setting (${encodingSetting})`);
+//
+//         // Prompt user with warning
+//         const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
+//         if (encodingConfig?.showWarning) {
+//             window.showWarningMessage(`Document encoding (${encodingDocument.encoding}) does not match the encoding.files setting (${encodingSetting}) this may cause issues for the VDM extension`, "Do not show again").then(
+//                 press => { if (press) encodingConfig.update("showWarning", false, ConfigurationTarget.Global) }
+//             );
+//         }
+//     }
+// }
+// *******************************************
 
 export function toJavaName(encoding: string): string {
-    if (!nameMap.has(encoding))
+    if (!nameMapVSC2Java.has(encoding))
         return undefined
 
-    let javaname = nameMap.get(encoding);
+    let javaname = nameMapVSC2Java.get(encoding);
     if (javaname == '')
         return undefined;
 
     return javaname;
 }
 
-const nameMap = new Map<string, string>([
+const nameMapVSC2Java = new Map<string, string>([
     ['big5hkscs', 'big5hkscs'],
     ['cp437', 'cp437'],
     ['cp850', 'cp850'],
@@ -99,3 +113,10 @@ const nameMap = new Map<string, string>([
     ['windows1258', 'windows-1258'],
     ['windows874', 'windows-874'],
 ])
+
+// const nameMapJSCharDet2VSC = new Map<string, string>([
+//     ['GB2312', 'gb2312'],
+//     ['EUC-TW', 'euctw'],
+//     ['EUC-KR', 'euckr'],
+//     ...
+// ])

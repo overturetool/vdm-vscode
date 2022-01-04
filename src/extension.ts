@@ -143,9 +143,6 @@ export function activate(context: ExtensionContext) {
             return;
         }
 
-        // Check that the document encoding matches the encoding setting
-        encoding.checkEncodingMatch(document, extensionLogPath)
-
         const uri = document.uri;
         let folder = workspace.getWorkspaceFolder(uri);
         // Files outside a folder can't be handled. 
@@ -275,6 +272,8 @@ export function activate(context: ExtensionContext) {
         const javaEncoding = encoding.toJavaName(encodingSetting)
         if (javaEncoding)
             args.push(`-Dlsp.encoding=${javaEncoding}`)
+        else
+            util.writeToLog(extensionLogPath, `Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`)
 
         // Construct class path
         let classPath = "";
