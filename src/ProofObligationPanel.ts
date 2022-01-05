@@ -11,9 +11,9 @@ export class ProofObligationPanel {
     private _disposables: Disposable[] = [];
     private readonly _extensionUri: Uri;
     private _pos: ProofObligation[];
-    private _showProvedPOs = true;
     private _sorting = new Map<string, boolean>(); // Maps a header to a boolean telling if sorting should be done DESCENDING.
     private _currentSortingHeader: string;
+    private _statusFilter: string[] = [];
 
     public static currentPanel: ProofObligationPanel | undefined;
     public static readonly viewType = 'proofObligationPanel';
@@ -93,10 +93,13 @@ export class ProofObligationPanel {
                         this._currentSortingHeader = message.text;
                         this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, true) });
                         return;
-                    case 'toggleDisplayProvedPOs':
-                        this._showProvedPOs = this._showProvedPOs ? false : true;
+                    case 'filterPOs':
+                        this.filterByStatus();
+                        return;
+                    case 'filterPOsDisable':
+                        this._statusFilter = []; // Remove filter
+                        this._panel.webview.postMessage({ command: "updateFilterBtn", active: false });
                         this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
-                        this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });
                         return;
                 }
             },
@@ -126,7 +129,23 @@ export class ProofObligationPanel {
             this._currentSortingHeader = Object.keys(pos[0])[0];
 
         this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos], this._currentSortingHeader, false) });
-        this._panel.webview.postMessage({ command: "displayProvedPOsToggled", toggleState: this._showProvedPOs });
+    }
+
+    private onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+    }
+
+    public filterByStatus() {
+        let items: string[] = this._pos.map(po => po.status).filter(this.onlyUnique); // Create list of available status's
+        window.showQuickPick(items, { title: 'Select which to show', canPickMany: true }).then((selected: string[]) => {
+            if (!selected || selected.length == 0 || selected.length == items.length)
+                return; // Abort
+
+            // Update filter and UI
+            this._statusFilter = selected;
+            this._panel.webview.postMessage({ command: "updateFilterBtn", active: true });
+            this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
+        })
     }
 
     private sortPOs(pos, sortingHeader, changeSortingDirection) {
@@ -141,10 +160,8 @@ export class ProofObligationPanel {
 
 
         // Filter proved pos
-        if (!this._showProvedPOs)
-            pos = pos.filter(function (po) {
-                return po.proved !== true;
-            });
+        if (this._statusFilter.length != 0)
+            pos = pos.filter(po => this._statusFilter.includes(po.status))
 
         // Check if values are numbers - assumes all values found in the column are of the same type
         let isNum = /^\d+$/.test(pos[0][sortingHeader]);
@@ -217,7 +234,7 @@ export class ProofObligationPanel {
         </head>
         <body>
             <button id="expandPOsBtn">Expand all proof obligations</button>
-            <button id="hideProvedPosBtn">Hide proved proof obligations</button>
+            <button id="filterPOsBtn">Filter by status</button>
             <br>
             <p id="posInvalid"><b>Warning:</b> Proof obligations are no longer guaranteed to be valid!</p>
             <div id="poContainer"></div>

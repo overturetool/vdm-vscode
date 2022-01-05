@@ -51,7 +51,7 @@ th {
     width: 1%;
 }
 
-.expandPOsBtn, .hideProvedPosBtn {
+.expandPOsBtn, .filterPOsBtn {
     cursor: pointer;  
     font-size: 1rem;
     margin-top: 6px;
