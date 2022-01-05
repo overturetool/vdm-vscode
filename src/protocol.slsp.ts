@@ -104,9 +104,9 @@ export interface ProofObligation {
      */
     source: string | string[];
     /**
-     * An optional flag indicating if the PO has been proved.
+     * An optional status of the PO, e.g., "Unproved" or "Proved".
      */
-    proved?: boolean;
+    status?: string;
 }
 
 /**
