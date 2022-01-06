@@ -34,6 +34,14 @@
     "body": "class ${1:className}\ntypes\n\t$0\nvalues\n\t\ninstance variables\n\noperations\n\nfunctions\n\nend ${1:className}",
     "description": "Class Definition full skeleton"
   },
+  "default constructor": {
+    "prefix": "ctor",
+    "body": [
+      "public ${1:ClassName} : () ==> ${1:ClassName}",
+      "${1:ClassName}() == ${2:statement};"
+    ],
+    "description": "Default constructor"
+  },
   "dclStatement": {
     "prefix": [
       "dclStatement"
@@ -257,14 +265,14 @@
       "class ${1:TestCaseName} is subclass of TestCase",
       "",
       "operations",
-      "\tprotected setUp: () ==> ()",
+      "\tpublic setUp: () ==> ()",
       "\tsetUp () == skip;",
       "",
       "\tprotected runTest: () ==> ()",
       "\trunTest () ==",
       "\t\t$0",
       "",
-      "\tprotected tearDown: () ==> ()",
+      "\tpublic tearDown: () ==> ()",
       "\ttearDown () == skip;",
       "",
       "end ${1:TestCaseName}"

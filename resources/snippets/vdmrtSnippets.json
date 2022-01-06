@@ -38,7 +38,7 @@
     "prefix": [
       "classSkeleton"
     ],
-    "body": "class ${1:className}\ntypes\n\t$0\nvalues\n\t\ninstance variables\n\noperations\n\nfunctions\n\nend ${1:className}",
+    "body": "class ${1:className}\ntypes\n\t$0\nvalues\n\t\ninstance variables\n\noperations\n\nfunctions\n\traces\n\nend ${1:className}",
     "description": "Class Definition full skeleton"
   },
   "cpu": {
@@ -47,6 +47,14 @@
     ],
     "body": "${1:cpuName} : CPU := new CPU (${2:priority}, ${3:speed});",
     "description": "CPU (Priority <FP/FCFS>, capacity)"
+  },
+  "default constructor": {
+    "prefix": "ctor",
+    "body": [
+      "public ${1:ClassName} : () ==> ${1:ClassName}",
+      "${1:ClassName}() == ${2:statement};"
+    ],
+    "description": "Default constructor"
   },
   "cycle": {
     "prefix": [
@@ -306,14 +314,14 @@
       "class ${1:TestCaseName} is subclass of TestCase",
       "",
       "operations",
-      "\tprotected setUp: () ==> ()",
+      "\tpublic setUp: () ==> ()",
       "\tsetUp () == skip;",
       "",
       "\tprotected runTest: () ==> ()",
       "\trunTest () ==",
       "\t\t$0",
       "",
-      "\tprotected tearDown: () ==> ()",
+      "\tpublic tearDown: () ==> ()",
       "\ttearDown () == skip;",
       "",
       "end ${1:TestCaseName}"
