@@ -684,7 +684,7 @@
     "debuggers": [
       {
         "type": "vdm",
-        "label": "VDM Debug",
+        "label": "VDM (SL, PP or RT)",
         "runtime": "node",
         "configurationAttributes": {
           "launch": {
