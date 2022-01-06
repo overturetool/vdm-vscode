@@ -225,9 +225,10 @@ export function activate(context: ExtensionContext) {
         // Setup DAP
         client.onReady().then(() => {
             let port = (client?.initializeResult?.capabilities?.experimental?.dapServer?.port);
-            if (!port)
-                port = workspace.getConfiguration('vdm-vscode.server.development', wsFolder).get("dapPort", 8001)
-            dapSupport.initDebugConfig(context, wsFolder, port)
+            if (port)
+                dapSupport.initDebugConfig(context, wsFolder, port);
+            else
+                util.writeToLog(extensionLogPath, "Did not receive a DAP port on start up, debugging is not activated");
         })
 
         // Start the and launch the client
