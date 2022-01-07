@@ -1,3 +1,7 @@
+### 1.3.1
+
+- Improved Debug Watch
+
 ### 1.3.0
 - Added Launch and Debug code lenses
 - Added code snippets (template expansion)
