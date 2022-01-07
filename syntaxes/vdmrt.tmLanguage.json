@@ -3,12 +3,6 @@
 	"name": "VDM-RT",
 	"patterns": [
 		{
-			"include": "source.vdm"
-		},
-		{
-			"include": "source.vdmpp"
-		},
-		{
 			"name": "storage.type.system.vdmrt",
 			"match": "\\b(system)\\b"
 		},
@@ -19,6 +13,9 @@
 		{
 			"name": "support.function.timing.vdmrt",
 			"match": "\\b(cycles|duration)\\b"
+		},
+		{
+			"include": "source.vdmpp"
 		}
 	],
 	"scopeName": "source.vdmrt"

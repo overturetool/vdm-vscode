@@ -3,9 +3,6 @@
 	"name": "VDM++",
 	"patterns": [
 		{
-			"include": "source.vdm"
-		},
-		{
 			"name": "storage.type.class.vdmpp",
 			"match": "\\b(class|self)\\b"
 		},
@@ -36,6 +33,9 @@
 		{
 			"name": "support.function.startstop.vdmpp",
 			"match": "\\b(start|startlist|stop|stoplist)\\b"
+		},
+		{
+			"include": "source.vdm"
 		}
 	],
 	"scopeName": "source.vdmpp"

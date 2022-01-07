@@ -27,13 +27,13 @@
 			"include": "source.vdm.type"
 		},
 		{
-            "include": "source.vdm.operators"
+			"include": "source.vdm.statements"
+		},
+		{
+			"include": "source.vdm.operators"
 		},
 		{
 			"include": "source.vdm.number"
-		},
-		{
-			"include": "source.vdm.statements"
 		},
 		{
 			"include": "#constants"
@@ -76,8 +76,8 @@
 					]
 				},
 				{
-                    "include": "#block-comments"
-                },
+					"include": "#block-comments"
+				},
 				{
 					"name": "comment.block.vdm",
 					"begin": "/\\*",
@@ -95,41 +95,41 @@
 		},
 		"block-comments": {
 			"patterns": [
-                {
+				{
 					"name": "comment.block.empty.vdm",
-                    "match": "/\\*\\*/",
-                    "captures": {
-                        "0": {
-                            "name": "punctuation.definition.comment.vdm"
-                        }
-                    }
-                },
-                {
+					"match": "/\\*\\*/",
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.vdm"
+						}
+					}
+				},
+				{
 					"name": "comment.block.vdm",
-                    "begin": "/\\*",
+					"begin": "/\\*",
 					"end": "\\*/",
-                    "beginCaptures": {
-                        "1": {
-                            "name": "punctuation.definition.comment.vdm"
-                        }
-                    },
-                    "patterns": [
-                        {
-                            "include": "#annotation-keywords"
-                        },
-                        {
-                            "include": "#block-comments"
-                        }
-                    ],
-                    "endCaptures": {
-                        "0": {
-                            "name": "punctuation.definition.comment.vdm"
-                        }
-                    }
-                }
-            ]
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.definition.comment.vdm"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#annotation-keywords"
+						},
+						{
+							"include": "#block-comments"
+						}
+					],
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.vdm"
+						}
+					}
+				}
+			]
 		},
-		"function-name":{
+		"function-name": {
 			"match": "(\\w+)(\\()(\\S+|\\s+)(\\))(\\s+)(==)",
 			"captures": {
 				"1": {
@@ -165,11 +165,11 @@
 				}
 			]
 		},
-		"storage":{
+		"storage": {
 			"name": "storage.type.dcl.vdm",
 			"match": "\\b(dcl|struct|state|def|atomic)\\b"
 		},
-		"end":{
+		"end": {
 			"patterns": [
 				{
 					"name": "keyword.other.end.vdm",
@@ -177,7 +177,7 @@
 				}
 			]
 		},
-		"prefixes":{
+		"prefixes": {
 			"patterns": [
 				{
 					"name": "keyword.other.prefix.vdm",
@@ -569,12 +569,12 @@
 				}
 			]
 		},
-		"use-function":{
+		"use-function": {
 			"name": "meta.use-function.vdm",
 			"begin": "(\\S+)\\s*\\(",
 			"end": "\\)",
 			"beginCaptures": {
-				"1":{
+				"1": {
 					"name": "support.function.vdm"
 				}
 			}
