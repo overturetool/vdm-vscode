@@ -24,7 +24,7 @@
     "prefix": [
       "class"
     ],
-    "body": "class ${1:className}\n\nend ${1:className}",
+    "body": "class ${1:className}\n$0\nend ${1:className}",
     "description": "Class Definition"
   },
   "classSkeleton": {
