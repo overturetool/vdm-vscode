@@ -1,8 +1,8 @@
 class ProjectTest
 operations
-    public execute: () ==> ()
-    execute () == (
-        let tests : set of Test = {new Tests()},
+    public executeReflection: () ==> ()
+    executeReflection () == (
+        let tests : set of Test = {new TestReflection(), new TestReflection2()},
             ts : TestSuite = new TestSuite(tests),
             result = new TestResult()
         in
@@ -10,6 +10,22 @@ operations
             ts.run(result);
             IO`println(result.toString());
         );
-    )
+    );
+
+    public executeExplicit: () ==> ()
+    executeExplicit () == (
+        let ts : TestSuite = new TestSuite(),
+            result = new TestResult()
+        in
+        (
+            ts.addTest(new TestExplicitSuccess("TestExplicitSuccess"));
+            ts.addTest(new TestExplicitFail("TestExplicitFail"));
+            ts.addTest(new TestExplicitFailMessage("TestExplicitFailMessage"));
+            ts.addTest(new TestExplicitFailNoName());
+            
+            ts.run(result);
+            IO`println(result.toString());
+        );
+    );
 
 end ProjectTest

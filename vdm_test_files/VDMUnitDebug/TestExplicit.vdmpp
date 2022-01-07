@@ -1,0 +1,66 @@
+class TestExplicitSuccess is subclass of TestCase
+operations
+    public TestExplicitSuccess: seq of char ==> TestExplicitSuccess
+    TestExplicitSuccess(name) == TestCase(name);
+
+    public setUp: () ==> ()
+    setUp() == skip;
+
+    protected runTest: () ==> ()
+    runTest() == assertTrue(true);
+
+    public tearDown: () ==> ()
+    tearDown() == skip;
+
+end TestExplicitSuccess
+
+
+class TestExplicitFail is subclass of TestCase
+operations
+    public TestExplicitFail: seq of char ==> TestExplicitFail
+    TestExplicitFail(name) == TestCase(name);
+
+    public setUp: () ==> ()
+    setUp() == skip;
+
+    protected runTest: () ==> ()
+    runTest() == assertTrue(false);
+
+    public tearDown: () ==> ()
+    tearDown() == skip;
+
+end TestExplicitFail
+
+
+class TestExplicitFailMessage is subclass of TestCase
+operations
+    public TestExplicitFailMessage: seq of char ==> TestExplicitFailMessage
+    TestExplicitFailMessage(name) == TestCase(name);
+
+    public setUp: () ==> ()
+    setUp() == skip;
+
+    protected runTest: () ==> ()
+    runTest() == assertTrue("TestExplicitFailMessage fail as expected", false);
+    
+    public tearDown: () ==> ()
+    tearDown() == skip;
+
+end TestExplicitFailMessage
+
+
+class TestExplicitFailNoName is subclass of TestCase
+operations
+    -- public TestExplicitFailNoName: seq of char ==> TestExplicitFailNoName
+    -- TestExplicitFailNoName(name) == TestCase(name);
+
+    public setUp: () ==> ()
+    setUp() == skip;
+
+    protected runTest: () ==> ()
+    runTest() == assertTrue(false);
+
+    public tearDown: () ==> ()
+    tearDown() == skip;
+
+end TestExplicitFailNoName

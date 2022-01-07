@@ -1,4 +1,4 @@
-class Tests is subclass of TestCase
+class TestReflection is subclass of TestCase
 
 operations
     public setUp: () ==> ()
@@ -39,12 +39,29 @@ operations
 
     public testTrueFailMessage: () ==> ()
     testTrueFailMessage() == (
-        assertTrue("test true fail", false);
+        assertTrue("testTrueFailMessage fail (expected)", false);
     );
 
     public testFalseFailMessage: () ==> ()
     testFalseFailMessage() == (
-        assertFalse("test false fail", true);
+        assertFalse("testFalseFailMessage fail (expected)", true);
     );
 
-end Tests
+end TestReflection
+
+
+class TestReflection2 is subclass of TestCase
+operations
+    public setUp: () ==> ()
+    setUp() == skip;
+
+    public tearDown: () ==> ()
+    tearDown() == skip;
+
+    public testReflection2Success: () ==> ()
+    testReflection2Success() == assertTrue(true);
+
+    public testReflection2Fail: () ==> ()
+    testReflection2Fail() == assertTrue(false);
+
+end TestReflection2
