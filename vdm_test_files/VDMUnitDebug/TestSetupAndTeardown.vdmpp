@@ -1,0 +1,33 @@
+class TestSetupAndTeardown is subclass of TestCase
+instance variables
+    i : int := 1;
+    b : BClass := new BClass(0);
+
+operations
+    public setUp: () ==> ()
+    setUp() == (
+        IO`println("setUp"); 
+        b := new BClass(i);
+        i := i + 1;
+    );
+
+    public tearDown: () ==> ()
+    tearDown() == IO`println("tearDown"); 
+
+    public testSetup: () ==> ()
+    testSetup() == assertTrue(b.var = 1);
+
+    public testSetup2: () ==> ()
+    testSetup2() == assertTrue(b.var = 1);
+
+end TestSetupAndTeardown
+
+
+class BClass
+instance variables
+    public var : int;
+
+ operations
+    public BClass : int ==> BClass
+    BClass(v) == var := v;
+end BClass

@@ -8,12 +8,12 @@
             "command": "p new TestRunner().run()"
         },
         {
-            "name": "Lens config: Launch ProjectTest`executeExplicit",
+            "name": "Lens config: Debug ProjectTest`executeReflection",
             "type": "vdm",
             "request": "launch",
-            "noDebug": true,
+            "noDebug": false,
             "defaultName": "ProjectTest",
-            "command": "p new ProjectTest().executeExplicit()"
+            "command": "p new ProjectTest().executeReflection()"
         }
     ]
 }

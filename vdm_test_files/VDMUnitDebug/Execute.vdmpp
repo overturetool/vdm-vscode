@@ -2,7 +2,7 @@ class ProjectTest
 operations
     public executeReflection: () ==> ()
     executeReflection () == (
-        let tests : set of Test = {new TestReflection(), new TestReflection2()},
+        let tests : set of Test = {new TestReflection(), new TestReflection2(), new TestSetupAndTeardown()},
             ts : TestSuite = new TestSuite(tests),
             result = new TestResult()
         in
