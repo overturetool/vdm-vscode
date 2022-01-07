@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "debugging"
+		},
+		{
+			"path": "VDMUnitDebug"
 		}
 	],
 	"settings": {}

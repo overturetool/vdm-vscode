@@ -1,0 +1,15 @@
+class ProjectTest
+operations
+    public execute: () ==> ()
+    execute () == (
+        let tests : set of Test = {new Tests()},
+            ts : TestSuite = new TestSuite(tests),
+            result = new TestResult()
+        in
+        (
+            ts.run(result);
+            IO`println(result.toString());
+        );
+    )
+
+end ProjectTest

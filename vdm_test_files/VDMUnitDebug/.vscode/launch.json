@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Lens config: Debug ProjectTest`execute",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "defaultName": "ProjectTest",
+            "command": "p new ProjectTest().execute()"
+        }
+    ]
+}

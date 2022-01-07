@@ -1,0 +1,50 @@
+class Tests is subclass of TestCase
+
+operations
+    public setUp: () ==> ()
+    setUp () == skip;
+
+    public tearDown: () ==> ()
+    tearDown () == skip;
+
+    public testTrueSuccess: () ==> ()
+    testTrueSuccess() == (
+        assertTrue(true)
+    );
+
+    public testFalseSuccess: () ==> ()
+    testFalseSuccess() == (
+        assertFalse(false)
+    );
+
+    public testTrueSuccessMessage: () ==> ()
+    testTrueSuccessMessage() == (
+        assertTrue("dummy", true)
+    );
+
+    public testFalseSuccessMessage: () ==> ()
+    testFalseSuccessMessage() == (
+        assertFalse("dummy", false)
+    );
+
+    public testTrueFail: () ==> ()
+    testTrueFail() == (
+        assertTrue(false)
+    );
+
+    public testFalseFail: () ==> ()
+    testFalseFail() == (
+        assertFalse(true);
+    );
+
+    public testTrueFailMessage: () ==> ()
+    testTrueFailMessage() == (
+        assertTrue("test true fail", false);
+    );
+
+    public testFalseFailMessage: () ==> ()
+    testFalseFailMessage() == (
+        assertFalse("test false fail", true);
+    );
+
+end Tests
