@@ -213,8 +213,8 @@ export function activate(context: ExtensionContext) {
 
         // Create the language client with the defined client options and the function to create and setup the server.
         let client = new SpecificationLanguageClient(
-            `vdm-vscode_${wsFolder.name}_client`,
-            `${wsFolder.name}_client`,
+            `vdm-vscode`,
+            `vdm-vscode: ${wsFolder.name}`,
             dialect,
             serverOptions,
             clientOptions,
@@ -264,11 +264,13 @@ export function activate(context: ExtensionContext) {
         }
 
         // Activate server log
-        if (developmentConfig.activateServerLog) {
+        const logLevel = serverConfig.get("logLevel", "off");
+        if (logLevel != "off") {
             // Ensure logging path exists
             const languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
             util.ensureDirectoryExistence(languageServerLoggingPath);
             args.push(`-Dlsp.log.filename=${languageServerLoggingPath}`);
+            args.push(`-Dlsp.log.level=${logLevel}`)
         }
 
         // Set encoding

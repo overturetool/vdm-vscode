@@ -488,11 +488,22 @@
           "scope": "resource",
           "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
         },
-        "vdm-vscode.server.development.activateServerLog": {
-          "type": "boolean",
-          "default": false,
+        "vdm-vscode.server.logLevel": {
+          "type": "string",
+          "enum": [
+            "off",
+            "severe",
+            "warning",
+            "info",
+            "config",
+            "fine",
+            "finer",
+            "finest",
+            "all"
+          ],
+          "default": "off",
           "scope": "resource",
-          "description": "Activate logging of server actions and protocol communication."
+          "description": "Enables logging of the VDMJ server to a file. This log can be used to diagnose Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
         },
         "vdm-vscode.server.JVMArguments": {
           "title": "JVM Arguments",
@@ -599,6 +610,17 @@
           "default": true,
           "scope": "resource",
           "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
+        },
+        "vdm-vscode.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project.",
+          "scope": "window"
         }
       }
     },
