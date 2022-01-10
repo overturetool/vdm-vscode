@@ -1,6 +1,13 @@
 ### 1.3.1
+- Added VDMUnit lib
+- Added translation settings
+- Changed POG View's "proved" with "status"
+- Improved completion suggestions
 - Improved Server logging
 - Improved Debug Watch
+- Improved file encodidin support
+- Removed dependency on portfinder
+- Fixes to VDMJ
 
 ### 1.3.0
 - Added Launch and Debug code lenses
