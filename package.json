@@ -615,7 +615,7 @@
           "type": "boolean",
           "default": true,
           "scope": "resource",
-          "description": "If true, translates only the selected file. If false, translate is always applied to the whole project"
+          "description": "If enabled, translates only the selected file. If disabled, translate is always applied to the whole project"
         },
         "vdm-vscode.encoding.showWarning": {
           "type": "boolean",
@@ -631,7 +631,7 @@
             "verbose"
           ],
           "default": "off",
-          "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project.",
+          "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
           "scope": "window"
         }
       }
