@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as path from 'path'
 import * as net from 'net';
 import * as child_process from 'child_process';
@@ -109,6 +109,8 @@ export function activate(context: ExtensionContext) {
     const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
     const addToClassPathHandler = new AddToClassPathHandler(context);
 
+    commands.registerCommand("vdm-vscode.openServerLog", openServerLog);
+    commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder);
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);
     workspace.onDidChangeWorkspaceFolders((event) => {
@@ -158,8 +160,6 @@ export function activate(context: ExtensionContext) {
         // Start client for the folder
         launchClient(folder, getDialect(document));
     }
-
-
 
     async function launchClient(wsFolder: WorkspaceFolder, dialect: string) {
         const clientKey = wsFolder.uri.toString();
@@ -346,6 +346,36 @@ export function activate(context: ExtensionContext) {
             server.stdout.addListener("data", chunk => { });
             server.stderr.addListener("data", chunk => { });
         }
+    }
+
+    function openServerLog() {
+        const logFolder: Uri = context.logUri;
+
+        if (!fs.existsSync(logFolder.fsPath))
+            return window.showErrorMessage("No logs found");
+
+        const logsInFolder: string[] = fs.readdirSync(logFolder.fsPath).filter(x => x.endsWith(".log"));
+
+        if (!logsInFolder || logsInFolder.length == 0)
+            return window.showErrorMessage("No logs found");
+
+        if (logsInFolder.length == 1) {
+            let uri = Uri.joinPath(logFolder, logsInFolder[0]);
+            window.showTextDocument(uri)
+        }
+        else {
+            window.showQuickPick(logsInFolder, { title: 'select log to open', canPickMany: false }).then(log => {
+                if (log) {
+                    let uri = Uri.joinPath(logFolder, log);
+                    window.showTextDocument(uri)
+                }
+            })
+        }
+    }
+
+    function openServerLogFolder() {
+        fs.ensureDirSync(context.logUri.fsPath);
+        commands.executeCommand("revealFileInOS", context.logUri);
     }
 }
 

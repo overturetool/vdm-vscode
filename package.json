@@ -45,7 +45,9 @@
     "workspaceContains:*.vdmrt",
     "onCommand:vdm-vscode.importExample",
     "onCommand:vdm-vscode.addFoldersToClassPath",
-    "onCommand:vdm-vscode.addFilesToClassPath"
+    "onCommand:vdm-vscode.addFilesToClassPath",
+    "onCommand:vdm-vscode.openServerLog",
+    "onCommand:vdm-vscode.openServerLogFolder"
   ],
   "main": "./dist/extension",
   "contributes": {
@@ -205,6 +207,16 @@
         "title": "Cancel Combinatorial Test Request",
         "category": "VDM",
         "icon": "$(debug-stop)"
+      },
+      {
+        "command": "vdm-vscode.openServerLog",
+        "title": "Open Server Log",
+        "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.openServerLogFolder",
+        "title": "Open Server Log Folder",
+        "category": "VDM"
       }
     ],
     "viewsContainers": {
@@ -503,7 +515,7 @@
           ],
           "default": "off",
           "scope": "resource",
-          "description": "Enables logging of the VDMJ server to a file. This log can be used to diagnose Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
+          "markdownDescription": "Enables logging of the VDMJ server to a file [in this folder](command:vdm-vscode.openServerLogFolder). This log can be used to diagnose Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
         },
         "vdm-vscode.server.JVMArguments": {
           "title": "JVM Arguments",
