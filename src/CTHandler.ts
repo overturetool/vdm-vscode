@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, Uri, window, WorkspaceFolder } from "vscode";
-import { CancellationTokenSource, ErrorCodes, WorkDoneProgress } from "vscode-languageclient";
+import { CancellationTokenSource, LSPErrorCodes, WorkDoneProgress } from "vscode-languageclient";
 import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
@@ -142,7 +142,7 @@ export class CTHandler {
                 this._ctTreeView.addNewTestResults(name, tests)
         }
         catch (err) {
-            if (err?.code == ErrorCodes.RequestCancelled) {
+            if (err?.code == LSPErrorCodes.RequestCancelled) {
                 if (err?.data != null)
                     this._ctTreeView.addNewTestResults(name, err.data);
             }

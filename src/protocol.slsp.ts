@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
-import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/messages";
+import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/common/messages";
 /**
  * The experimental capabilities that the server can reply.
  */
@@ -57,7 +57,7 @@ export interface TranslateParams extends WorkDoneProgressParams {
  * translate request and return type.
  */
 export namespace TranslateRequest {
-    export const type = new RequestType<TranslateParams, TranslateResponse | null, void, void>('slsp/TR/translate');
+    export const type = new RequestType<TranslateParams, TranslateResponse | null, void>('slsp/TR/translate');
 }
 
 /**
@@ -124,7 +124,7 @@ export interface GeneratePOParams {
  * POG/generate request and return type.
  */
 export namespace GeneratePORequest {
-    export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void, void>('slsp/POG/generate');
+    export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void>('slsp/POG/generate');
 }
 
 /**
@@ -273,7 +273,7 @@ export interface CTTracesParameters {
  * CT/traces request and return type.
  */
 export namespace CTTracesRequest {
-    export const type = new RequestType<CTTracesParameters, CTSymbol[] | null, void, void>('slsp/CT/traces');
+    export const type = new RequestType<CTTracesParameters, CTSymbol[] | null, void>('slsp/CT/traces');
 }
 
 /**
@@ -292,7 +292,7 @@ export interface CTGenerateParameters
  * CT/generate request and return type.
  */
 export namespace CTGenerateRequest {
-    export const type = new RequestType<CTGenerateParameters, CTGenerateResponse | null, void, void>('slsp/CT/generate');
+    export const type = new RequestType<CTGenerateParameters, CTGenerateResponse | null, void>('slsp/CT/generate');
 }
 
 /**
@@ -351,7 +351,7 @@ interface TPLemmasParams {
  * TP/lemmas request and return type.
  */
 export namespace TPLemmasRequest {
-    export const type = new RequestType<TPLemmasParams, Lemma[] | null, void, void>('slsp/TP/lemmas');
+    export const type = new RequestType<TPLemmasParams, Lemma[] | null, void>('slsp/TP/lemmas');
 }
 
 /**
@@ -368,7 +368,7 @@ interface TPBeginProofParams {
  * TP/beginProof request and return type.
  */
 export namespace TPBeginProofRequest {
-    export const type = new RequestType<TPBeginProofParams, ProofState | null, void, void>('slsp/TP/beginProof');
+    export const type = new RequestType<TPBeginProofParams, ProofState | null, void>('slsp/TP/beginProof');
 }
 
 /**
@@ -410,14 +410,14 @@ interface TPProveResponse {
  * TP/prove request and return type.
  */
 export namespace TPProveRequest {
-    export const type = new RequestType<TPProveParams, TPProveResponse | null, void, void>('slsp/TP/prove');
+    export const type = new RequestType<TPProveParams, TPProveResponse | null, void>('slsp/TP/prove');
 }
 
 /**
  * TP/getCommands request and return type.
  */
 export namespace TPGetCommandsRequest {
-    export const type = new RequestType<null, TPCommand[] | null, void, void>('slsp/TP/getCommands');
+    export const type = new RequestType<null, TPCommand[] | null, void>('slsp/TP/getCommands');
 }
 
 /**
@@ -449,7 +449,7 @@ interface TPCommandResponse {
  * TP/command request and return type.
  */
 export namespace TPCommandRequest {
-    export const type = new RequestType<TPCommandParams, TPCommandResponse | null, void, void>('slsp/TP/command');
+    export const type = new RequestType<TPCommandParams, TPCommandResponse | null, void>('slsp/TP/command');
 }
 
 /**
@@ -467,7 +467,7 @@ interface TPUndoParams {
  * TP/undo request and return type.
  */
 export namespace TPUndoRequest {
-    export const type = new RequestType<TPUndoParams, ProofState | null, void, void>('slsp/TP/undo');
+    export const type = new RequestType<TPUndoParams, ProofState | null, void>('slsp/TP/undo');
 }
 
 /**

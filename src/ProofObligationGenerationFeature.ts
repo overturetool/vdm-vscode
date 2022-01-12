@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { ExtensionContext, Uri, window, commands, workspace } from "vscode";
-import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
+import { StaticFeature, ClientCapabilities, ServerCapabilities, InitializeParams } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
 import { ExperimentalCapabilities, POGUpdatedNotification, GeneratePOParams, GeneratePORequest } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
@@ -16,7 +16,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         this._client = client;
         this._context = context;
     }
-
+    fillInitializeParams?: (params: InitializeParams) => void;
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         // Client supports POG
         if (!capabilities.experimental)
@@ -24,13 +24,15 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         else
             Object.assign(capabilities.experimental, { proofObligationGeneration: true });
     }
-
     initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
         // If server supports POG
         if (capabilities?.experimental?.proofObligationProvider) {
             this.registerPOGCommand();
             this.registerPOGUpdatedNotificationHandler();
         }
+    }
+    dispose(): void {
+        // Nothing to be done
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {

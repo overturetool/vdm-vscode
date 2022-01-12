@@ -11,7 +11,7 @@ import {
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
-} from 'vscode-languageclient';
+} from 'vscode-languageclient/node';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
 import { CTHandler } from './CTHandler';
