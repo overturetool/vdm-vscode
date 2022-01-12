@@ -644,6 +644,7 @@
           "vdmsl"
         ],
         "extensions": [
+          "vdmsl",
           ".vdmsl"
         ],
         "configuration": "./language-configuration.json"
@@ -655,6 +656,7 @@
           "vdmpp"
         ],
         "extensions": [
+          "vdmpp",
           ".vdmpp"
         ],
         "configuration": "./language-configuration.json"
@@ -666,6 +668,7 @@
           "vdmrt"
         ],
         "extensions": [
+          "vdmrt",
           ".vdmrt"
         ],
         "configuration": "./language-configuration.json"
