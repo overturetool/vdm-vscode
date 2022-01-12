@@ -60,12 +60,16 @@ export function checkEncoding(document: TextDocument, logPath: string): void {
     if (encodingDocument.encoding != null && encodingDocument.encoding != 'ascii' && encodingDocument.encoding != 'UTF-8') {
         const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
         if (encodingConfig?.showWarning) {
-            window.showWarningMessage(`Document encoding is not UTF-8. Please set files.encoding to the correct encoding. Not doing so may cause issues for the VDM extensions`, 'Go to setting', 'Do not show again').then(
+            const buttons: string[] = [
+                'Open settings UI',
+                'Do not show again'
+            ]
+            window.showWarningMessage(`Document encoding is not UTF-8. Please set files.encoding to the correct encoding. Not doing so may cause issues for the VDM extensions`, ...buttons).then(
                 press => {
                     once = true;
-                    if (press == 'Open settings UI')
+                    if (press == buttons[0])
                         commands.executeCommand('workbench.action.openSettings2', 'files.encoding')
-                    if (press == 'Do not show again')
+                    if (press == buttons[1])
                         encodingConfig.update("showWarning", false, ConfigurationTarget.Global)
                 }
             );
