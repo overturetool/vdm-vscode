@@ -7,7 +7,7 @@ import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration, Disposable
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -27,53 +27,7 @@ import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 
 let clients: Map<string, SpecificationLanguageClient> = new Map();
-let _sortedWorkspaceFolders: string[] | undefined;
-function sortedWorkspaceFolders(): string[] {
-    if (_sortedWorkspaceFolders === void 0) {
-        _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
-            let result = folder.uri.toString();
-            if (result.charAt(result.length - 1) !== '/') {
-                result = result + '/';
-            }
-            return result;
-        }).sort(
-            (a, b) => {
-                return a.length - b.length;
-            }
-        ) : [];
-    }
-    return _sortedWorkspaceFolders;
-}
-workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined);
-
-function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
-    const sorted = sortedWorkspaceFolders();
-    for (const element of sorted) {
-        let uri = folder.uri.toString();
-        if (uri.charAt(uri.length - 1) !== '/') {
-            uri = uri + '/';
-        }
-        if (uri.startsWith(element)) {
-            return workspace.getWorkspaceFolder(Uri.parse(element))!;
-        }
-    }
-    return folder;
-}
-
-function getDialect(document: TextDocument): string {
-    return document.languageId;
-}
-
-function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
-    // Restart the extension if changes has been made to the server settings
-    if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
-        // Ask the user to restart the extension if setting requires a restart
-        window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
-            if (res == "Reload Now")
-                commands.executeCommand("workbench.action.reloadWindow");
-        })
-    }
-}
+let disposeables: Disposable[] = new Array<Disposable>();
 
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
@@ -136,7 +90,7 @@ export function activate(context: ExtensionContext) {
         folder = getOuterMostWorkspaceFolder(folder);
 
         // Start client for the folder
-        launchClient(folder, getDialect(document));
+        launchClient(folder, document.languageId);
     }
 
     async function launchClient(wsFolder: WorkspaceFolder, dialect: string) {
@@ -366,10 +320,56 @@ function stopClients(wsFolders: readonly WorkspaceFolder[]) {
     }
 }
 
+function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
+    // Restart the extension if changes has been made to the server settings
+    if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
+        // Ask the user to restart the extension if setting requires a restart
+        window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
+            if (res == "Reload Now")
+                commands.executeCommand("workbench.action.reloadWindow");
+        })
+    }
+}
+
+let _sortedWorkspaceFolders: string[] | undefined;
+function sortedWorkspaceFolders(): string[] {
+    if (_sortedWorkspaceFolders === void 0) {
+        _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
+            let result = folder.uri.toString();
+            if (result.charAt(result.length - 1) !== '/') {
+                result = result + '/';
+            }
+            return result;
+        }).sort(
+            (a, b) => {
+                return a.length - b.length;
+            }
+        ) : [];
+    }
+    return _sortedWorkspaceFolders;
+}
+disposeables.push(workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined));
+
+function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
+    const sorted = sortedWorkspaceFolders();
+    for (const element of sorted) {
+        let uri = folder.uri.toString();
+        if (uri.charAt(uri.length - 1) !== '/') {
+            uri = uri + '/';
+        }
+        if (uri.startsWith(element)) {
+            return workspace.getWorkspaceFolder(Uri.parse(element))!;
+        }
+    }
+    return folder;
+}
+
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
     for (let client of clients.values()) {
         promises.push(client.stop());
     }
-    return Promise.all(promises).then(() => undefined);
+    return Promise.all(promises).then(() =>
+        disposeables.forEach(d => d.dispose())
+    );
 }
