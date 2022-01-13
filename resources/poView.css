@@ -24,6 +24,8 @@ table {
     cursor: pointer;
     padding: 6px;
     border-top: 1px solid rgb(91, 91, 91);   
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
 }
 
 .subrowcell {
@@ -33,6 +35,8 @@ table {
     border-bottom: 1px solid rgb(91, 91, 91);
     border-left: 1px solid rgb(91, 91, 91);
     border-right: 1px solid rgb(91, 91, 91);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
 }
 
 th {
@@ -57,4 +61,6 @@ th {
     margin-top: 6px;
     margin-left: 6px;
     margin-bottom: 6px; 
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
 }
