@@ -7,7 +7,7 @@ import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration, Disposable
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -26,14 +26,14 @@ import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 
-let clients: Map<string, SpecificationLanguageClient> = new Map();
-let disposeables: Disposable[] = new Array<Disposable>();
-
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
     const jarPath_vdmj = path.resolve(jarPath, "vdmj");
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
+
+    let clients: Map<string, SpecificationLanguageClient> = new Map();
+    let _sortedWorkspaceFolders: string[] | undefined;
 
     // Make sure that the VDMJ and LSP jars are present
     if (!util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
@@ -63,13 +63,20 @@ export function activate(context: ExtensionContext) {
     const javaCodeGenHandler = new JavaCodeGenHandler(clients, context);
     const addToClassPathHandler = new AddToClassPathHandler(context);
 
+    // Initialise debug handler
     dapSupport.initDebugConfig(context);
 
-    commands.registerCommand("vdm-vscode.openServerLog", openServerLog);
-    commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder);
-    workspace.onDidOpenTextDocument(didOpenTextDocument);
+    // Register commands and event handlers
+    context.subscriptions.push(commands.registerCommand("vdm-vscode.openServerLog", openServerLog));
+    context.subscriptions.push(commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder));
+    context.subscriptions.push(workspace.onDidOpenTextDocument(didOpenTextDocument));
     workspace.textDocuments.forEach(didOpenTextDocument);
-    workspace.onDidChangeWorkspaceFolders(e => stopClients(e.removed));
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(e => stopClients(e.removed)));
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined));
+
+    // ******************************************************************************
+    // ******************** Function definitions below ******************************
+    // ******************************************************************************
 
     function didOpenTextDocument(document: TextDocument): void {
         // We are only interested in vdm text
@@ -105,7 +112,7 @@ export function activate(context: ExtensionContext) {
         clients.set(clientKey, null);
 
         // Add settings watch for workspace folder
-        workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
+        context.subscriptions.push(workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder)));
 
         // Setup client options
         const clientOptions: LanguageClientOptions = {
@@ -308,68 +315,65 @@ export function activate(context: ExtensionContext) {
         fs.ensureDirSync(context.logUri.fsPath);
         commands.executeCommand("revealFileInOS", context.logUri);
     }
-}
 
-function stopClients(wsFolders: readonly WorkspaceFolder[]) {
-    for (const folder of wsFolders) {
-        const client = clients.get(folder.uri.toString());
-        if (client) {
-            clients.delete(folder.uri.toString());
-            client.stop();
-        }
-    }
-}
-
-function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
-    // Restart the extension if changes has been made to the server settings
-    if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
-        // Ask the user to restart the extension if setting requires a restart
-        window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
-            if (res == "Reload Now")
-                commands.executeCommand("workbench.action.reloadWindow");
-        })
-    }
-}
-
-let _sortedWorkspaceFolders: string[] | undefined;
-function sortedWorkspaceFolders(): string[] {
-    if (_sortedWorkspaceFolders === void 0) {
-        _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
-            let result = folder.uri.toString();
-            if (result.charAt(result.length - 1) !== '/') {
-                result = result + '/';
+    function stopClients(wsFolders: readonly WorkspaceFolder[]) {
+        for (const folder of wsFolders) {
+            const client = clients.get(folder.uri.toString());
+            if (client) {
+                clients.delete(folder.uri.toString());
+                client.stop();
             }
-            return result;
-        }).sort(
-            (a, b) => {
-                return a.length - b.length;
-            }
-        ) : [];
+        }
     }
-    return _sortedWorkspaceFolders;
-}
-disposeables.push(workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined));
 
-function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
-    const sorted = sortedWorkspaceFolders();
-    for (const element of sorted) {
-        let uri = folder.uri.toString();
-        if (uri.charAt(uri.length - 1) !== '/') {
-            uri = uri + '/';
-        }
-        if (uri.startsWith(element)) {
-            return workspace.getWorkspaceFolder(Uri.parse(element))!;
+    function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
+        // Restart the extension if changes has been made to the server settings
+        if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
+            // Ask the user to restart the extension if setting requires a restart
+            window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
+                if (res == "Reload Now")
+                    commands.executeCommand("workbench.action.reloadWindow");
+            })
         }
     }
-    return folder;
+
+    function sortedWorkspaceFolders(): string[] {
+        if (_sortedWorkspaceFolders === void 0) {
+            _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
+                let result = folder.uri.toString();
+                if (result.charAt(result.length - 1) !== '/') {
+                    result = result + '/';
+                }
+                return result;
+            }).sort(
+                (a, b) => {
+                    return a.length - b.length;
+                }
+            ) : [];
+        }
+        return _sortedWorkspaceFolders;
+    }
+
+    function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
+        const sorted = sortedWorkspaceFolders();
+        for (const element of sorted) {
+            let uri = folder.uri.toString();
+            if (uri.charAt(uri.length - 1) !== '/') {
+                uri = uri + '/';
+            }
+            if (uri.startsWith(element)) {
+                return workspace.getWorkspaceFolder(Uri.parse(element))!;
+            }
+        }
+        return folder;
+    }
 }
 
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
-    for (let client of clients.values()) {
-        promises.push(client.stop());
-    }
-    return Promise.all(promises).then(() =>
-        disposeables.forEach(d => d.dispose())
-    );
+
+    // Hide VDM VS Code buttons
+    promises.push(commands.executeCommand('setContext', 'vdm-submenus-show', false));
+
+    return Promise.all(promises).then(() => undefined);
 }
