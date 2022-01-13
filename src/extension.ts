@@ -14,6 +14,7 @@ import {
 } from 'vscode-languageclient/node';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
+import { ProofObligationGenerationHandler } from './ProofObligationGenerationHandler';
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
@@ -96,6 +97,7 @@ export function activate(context: ExtensionContext) {
     util.ensureDirectoryExistence(extensionLogPath);
 
     // Initialise handlers
+    const pogHandler = new ProofObligationGenerationHandler(globalThis.clients, context);
     const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
     const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
     const translateHandlerWord = new TranslateHandler(globalThis.clients, context, LanguageId.word, "vdm-vscode.translateToWord");

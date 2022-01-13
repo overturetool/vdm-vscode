@@ -21,7 +21,7 @@ export class SpecificationLanguageClient extends LanguageClient {
         this.logPath = path.resolve(this._context.logUri.fsPath, `${name}.log`);
         util.ensureDirectoryExistence(this.logPath);
         this.registerFeatures([
-            new ProofObligationGenerationFeature(this, this._context),
+            new ProofObligationGenerationFeature(this),
             new CombinantorialTestingFeature(),
             new TranslateFeature(LanguageId.latex),
             new TranslateFeature(LanguageId.word),
