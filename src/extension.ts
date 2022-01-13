@@ -113,15 +113,7 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder);
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);
-    workspace.onDidChangeWorkspaceFolders((event) => {
-        for (const folder of event.removed) {
-            const client = globalThis.clients.get(folder.uri.toString());
-            if (client) {
-                globalThis.clients.delete(folder.uri.toString());
-                client.stop();
-            }
-        }
-    });
+    workspace.onDidChangeWorkspaceFolders(e => stopClients(e.removed));
     debug.onDidStartDebugSession(async (session) => {
         // Launch client if this has not been done
         if (!globalThis.clients.has(session.workspaceFolder.uri.toString())) {
@@ -376,6 +368,16 @@ export function activate(context: ExtensionContext) {
     function openServerLogFolder() {
         fs.ensureDirSync(context.logUri.fsPath);
         commands.executeCommand("revealFileInOS", context.logUri);
+    }
+}
+
+function stopClients(wsFolders: readonly WorkspaceFolder[]) {
+    for (const folder of wsFolders) {
+        const client = globalThis.clients.get(folder.uri.toString());
+        if (client) {
+            globalThis.clients.delete(folder.uri.toString());
+            client.stop();
+        }
     }
 }
 
