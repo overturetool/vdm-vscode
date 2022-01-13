@@ -7,7 +7,7 @@ import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug, WorkspaceConfiguration
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -109,27 +109,13 @@ export function activate(context: ExtensionContext) {
     const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
     const addToClassPathHandler = new AddToClassPathHandler(context);
 
+    dapSupport.initDebugConfig(context);
+
     commands.registerCommand("vdm-vscode.openServerLog", openServerLog);
     commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder);
     workspace.onDidOpenTextDocument(didOpenTextDocument);
     workspace.textDocuments.forEach(didOpenTextDocument);
     workspace.onDidChangeWorkspaceFolders(e => stopClients(e.removed));
-    debug.onDidStartDebugSession(async (session) => {
-        // Launch client if this has not been done
-        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())) {
-
-            // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
-            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`, "Retry", "Close").then(res => {
-                if (res == "Retry")
-                    debug.startDebugging(session.workspaceFolder, session.configuration)
-            })
-
-            let dialect = await util.guessDialect(session.workspaceFolder);
-            if (dialect)
-                // await launchClient(session.workspaceFolder, dialect);
-                launchClient(session.workspaceFolder, dialect);
-        }
-    })
 
     function didOpenTextDocument(document: TextDocument): void {
         // We are only interested in vdm text
@@ -218,7 +204,7 @@ export function activate(context: ExtensionContext) {
         client.onReady().then(() => {
             let port = (client?.initializeResult?.capabilities?.experimental?.dapServer?.port);
             if (port)
-                dapSupport.initDebugConfig(context, wsFolder, port);
+                dapSupport.addPort(wsFolder, port);
             else
                 util.writeToLog(extensionLogPath, "Did not receive a DAP port on start up, debugging is not activated");
         })
@@ -236,7 +222,6 @@ export function activate(context: ExtensionContext) {
     function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
         // Get server configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
-        const developmentConfig: WorkspaceConfiguration = serverConfig.get("development")
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
 
         // Setup server arguments

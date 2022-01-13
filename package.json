@@ -715,7 +715,6 @@
       {
         "type": "vdm",
         "label": "VDM (SL, PP or RT)",
-        "runtime": "node",
         "configurationAttributes": {
           "launch": {
             "required": [],
