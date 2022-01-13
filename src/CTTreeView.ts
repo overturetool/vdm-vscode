@@ -233,8 +233,14 @@ export class CTTreeView {
 
         // Prompt user to chose a specification for CT. This also changes the client-server connection.
         // Skip if using current client
+        let didSelect: boolean;
         if (!useCurrentClient || this._ctHandler.currentClient == undefined)
-            await this._ctHandler.showAvailableSpecsForCT();
+            didSelect = await this._ctHandler.showAvailableSpecsForCT();
+
+        if (!didSelect || this._ctHandler.currentClient == undefined) {
+            this._isRebuildingTraceOutline = false;
+            return;
+        }
 
         //Change viewname
         this._testView.title = this._ctHandler.currentClientName;

@@ -38,11 +38,11 @@ export class CTHandler {
         return disposable;
     };
 
-    public async showAvailableSpecsForCT(): Promise<void> {
+    public async showAvailableSpecsForCT(): Promise<boolean> {
         // Skip if only one client available
         if (this._clients.size == 1) {
             this.setCurrentClientFromKey(this._clients.keys().next().value)
-            return;
+            return true;
         }
 
         let showOptions: string[] = [];
@@ -51,13 +51,14 @@ export class CTHandler {
         });
         showOptions.push("> Cancel");
 
-        await vscode.window.showQuickPick(showOptions).then(res => {
-            if (res == undefined || res == "> Cancel") {  // Exit on 'esc' or 'Cancel'
-                return;
-            }
+        let res = await vscode.window.showQuickPick(showOptions)
 
-            this.setCurrentClientFromKey(Array.from(this._clients.keys()).find(k => Uri.parse(k).fsPath.includes(res)));
-        })
+        if (res == undefined || res == "> Cancel") {  // Exit on 'esc' or 'Cancel'
+            return false;
+        }
+
+        this.setCurrentClientFromKey(Array.from(this._clients.keys()).find(k => Uri.parse(k).fsPath.includes(res)));
+        return true;
     }
 
     private setCurrentClientFromKey(clientKey: string) {
