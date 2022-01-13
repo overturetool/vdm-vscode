@@ -4,22 +4,10 @@
 			"path": "Alarm++tracesPP"
 		},
 		{
-			"path": "AlarmErrPP"
-		},
-		{
 			"path": "AlarmPP"
 		},
 		{
 			"path": "AlarmSL"
-		},
-		{
-			"path": "barSL"
-		},
-		{
-			"path": "buffersPP"
-		},
-		{
-			"path": "CashDispenserPP"
 		},
 		{
 			"path": "debugging"
@@ -38,12 +26,6 @@
 		},
 		{
 			"path": "POGTestSL"
-		},
-		{
-			"path": "SimpleTests"
-		},
-		{
-			"path": "TestRT"
 		},
 		{
 			"path": "UTF16"
