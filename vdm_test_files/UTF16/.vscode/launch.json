@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Lens config: Launch DEFAULT`ch",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": true,
+            "defaultName": "DEFAULT",
+            "command": "p ch()"
+        }
+    ]
+}

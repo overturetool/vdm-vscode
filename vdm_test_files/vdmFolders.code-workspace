@@ -1,22 +1,52 @@
 {
 	"folders": [
 		{
-			"path": "SimpleTests"
+			"path": "Alarm++tracesPP"
 		},
 		{
-			"path": "POGTestSL"
-		},
-		{
-			"path": "AlarmSL"
+			"path": "AlarmErrPP"
 		},
 		{
 			"path": "AlarmPP"
 		},
 		{
-			"path": "Alarm++tracesPP"
+			"path": "AlarmSL"
+		},
+		{
+			"path": "barSL"
+		},
+		{
+			"path": "buffersPP"
+		},
+		{
+			"path": "CashDispenserPP"
 		},
 		{
 			"path": "debugging"
+		},
+		{
+			"path": "LUHNSL"
+		},
+		{
+			"path": "PacemakerRT"
+		},
+		{
+			"path": "PacemakerSeqPP"
+		},
+		{
+			"path": "POGTestPP"
+		},
+		{
+			"path": "POGTestSL"
+		},
+		{
+			"path": "SimpleTests"
+		},
+		{
+			"path": "TestRT"
+		},
+		{
+			"path": "UTF16"
 		},
 		{
 			"path": "VDMUnitDebug"
