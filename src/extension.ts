@@ -26,9 +26,7 @@ import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 
-globalThis.clients = new Map();
-
-
+let clients: Map<string, SpecificationLanguageClient> = new Map();
 let _sortedWorkspaceFolders: string[] | undefined;
 function sortedWorkspaceFolders(): string[] {
     if (_sortedWorkspaceFolders === void 0) {
@@ -97,18 +95,18 @@ export function activate(context: ExtensionContext) {
     util.ensureDirectoryExistence(extensionLogPath);
 
     // Initialise handlers
-    const pogHandler = new ProofObligationGenerationHandler(globalThis.clients, context);
-    const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
-    const translateHandlerWord = new TranslateHandler(globalThis.clients, context, LanguageId.word, "vdm-vscode.translateToWord");
-    const translateHandlerCov = new TranslateHandler(globalThis.clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
-    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
-    const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
+    const pogHandler = new ProofObligationGenerationHandler(clients, context);
+    const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
+    const translateHandlerLatex = new TranslateHandler(clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
+    const translateHandlerWord = new TranslateHandler(clients, context, LanguageId.word, "vdm-vscode.translateToWord");
+    const translateHandlerCov = new TranslateHandler(clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
+    const translateHandlerGraphviz = new TranslateHandler(clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
+    const translateHandlerIsabelle = new TranslateHandler(clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
 
-    const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
-    const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
-    const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
-    const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
+    const addLibraryHandler = new AddLibraryHandler(clients, context);
+    const addRunConfigurationHandler = new AddRunConfigurationHandler(clients, context);
+    const addExampleHandler = new AddExampleHandler(clients, context);
+    const javaCodeGenHandler = new JavaCodeGenHandler(clients, context);
     const addToClassPathHandler = new AddToClassPathHandler(context);
 
     dapSupport.initDebugConfig(context);
@@ -145,12 +143,12 @@ export function activate(context: ExtensionContext) {
         const clientKey = wsFolder.uri.toString();
 
         // Abort if client already exists
-        if (globalThis.clients.has(clientKey)) {
+        if (clients.has(clientKey)) {
             return;
         }
 
         // Add client to list
-        globalThis.clients.set(clientKey, null);
+        clients.set(clientKey, null);
 
         // Add settings watch for workspace folder
         workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
@@ -218,7 +216,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(disposable);
 
         // Save client
-        globalThis.clients.set(clientKey, client);
+        clients.set(clientKey, client);
     }
 
     function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
@@ -294,7 +292,7 @@ export function activate(context: ExtensionContext) {
         if (!javaPath) {
             window.showErrorMessage("Java runtime environment not found!")
             util.writeToLog(extensionLogPath, "Java runtime environment not found!");
-            globalThis.clients.delete(wsFolder.uri.toString());
+            clients.delete(wsFolder.uri.toString());
             return;
         }
         let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
@@ -360,9 +358,9 @@ export function activate(context: ExtensionContext) {
 
 function stopClients(wsFolders: readonly WorkspaceFolder[]) {
     for (const folder of wsFolders) {
-        const client = globalThis.clients.get(folder.uri.toString());
+        const client = clients.get(folder.uri.toString());
         if (client) {
-            globalThis.clients.delete(folder.uri.toString());
+            clients.delete(folder.uri.toString());
             client.stop();
         }
     }
@@ -370,7 +368,7 @@ function stopClients(wsFolders: readonly WorkspaceFolder[]) {
 
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
-    for (let client of globalThis.clients.values()) {
+    for (let client of clients.values()) {
         promises.push(client.stop());
     }
     return Promise.all(promises).then(() => undefined);
