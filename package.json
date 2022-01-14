@@ -7,7 +7,14 @@
   },
   "displayName": "VDM VSCode",
   "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
-  "author": "Jonas K. Rask and Frederik P. Madsen",
+  "contributors": [
+    "Jonas K. Rask",
+    "Frederik P. Madsen",
+    "Nick Battle",
+    "Hugo D. Macedo",
+    "Tom Montout",
+    "Futa Hirakoba"
+  ],
   "license": "GPL-3.0-or-later",
   "categories": [
     "Programming Languages",
