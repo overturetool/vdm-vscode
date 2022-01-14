@@ -14,20 +14,24 @@ export class SpecificationLanguageClient extends LanguageClient {
     public readonly projectSavedDataUri = util.joinUriPath(this.projectRoot, ".generated");
     public readonly logPath: string;
     public readonly language: string;
+    public readonly name: string;
 
-    constructor(id: string, name: string, language: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, private readonly _context: ExtensionContext, public readonly dataStoragePath: Uri, forceDebug?: boolean) {
-        super(id, name, serverOptions, clientOptions, forceDebug);
+    constructor(name: string, language: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, private readonly _context: ExtensionContext, public readonly dataStoragePath: Uri, forceDebug?: boolean) {
+        super(name, serverOptions, clientOptions, forceDebug);
+        this.name = name;
         this.language = language;
         this.logPath = path.resolve(this._context.logUri.fsPath, `${name}.log`);
         util.ensureDirectoryExistence(this.logPath);
         this.registerFeatures([
             new ProofObligationGenerationFeature(this),
             new CombinantorialTestingFeature(),
-            new TranslateFeature(LanguageId.latex),
-            new TranslateFeature(LanguageId.word),
-            new TranslateFeature(LanguageId.coverage),
-            new TranslateFeature(LanguageId.graphviz),
-            new TranslateFeature(LanguageId.isabelle),
+            new TranslateFeature(this),
+
+            // new TranslateFeature(LanguageId.latex),
+            // new TranslateFeature(LanguageId.word),
+            // new TranslateFeature(LanguageId.coverage),
+            // new TranslateFeature(LanguageId.graphviz),
+            // new TranslateFeature(LanguageId.isabelle),
         ]);
     }
 }

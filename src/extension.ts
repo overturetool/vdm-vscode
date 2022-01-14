@@ -18,7 +18,7 @@ import { ProofObligationGenerationHandler } from './ProofObligationGenerationHan
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
-import { TranslateHandler } from './TranslateHandler';
+// import { TranslateHandler } from './TranslateHandler';
 import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
@@ -51,11 +51,11 @@ export function activate(context: ExtensionContext) {
     // Initialise handlers
     const pogHandler = new ProofObligationGenerationHandler(clients, context);
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex = new TranslateHandler(clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
-    const translateHandlerWord = new TranslateHandler(clients, context, LanguageId.word, "vdm-vscode.translateToWord");
-    const translateHandlerCov = new TranslateHandler(clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
-    const translateHandlerGraphviz = new TranslateHandler(clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
-    const translateHandlerIsabelle = new TranslateHandler(clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
+    // const translateHandlerLatex = new TranslateHandler(clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
+    // const translateHandlerWord = new TranslateHandler(clients, context, LanguageId.word, "vdm-vscode.translateToWord");
+    // const translateHandlerCov = new TranslateHandler(clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
+    // const translateHandlerGraphviz = new TranslateHandler(clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
+    // const translateHandlerIsabelle = new TranslateHandler(clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
 
     const addLibraryHandler = new AddLibraryHandler(clients, context);
     const addRunConfigurationHandler = new AddRunConfigurationHandler(clients, context);
@@ -119,7 +119,8 @@ export function activate(context: ExtensionContext) {
             // Document selector defines which files from the workspace, that is also open in the client, to monitor.
             documentSelector: [{ scheme: 'file', language: dialect, pattern: `${wsFolder.uri.fsPath}/**/*` }],
             diagnosticCollectionName: "vdm-vscode",
-            workspaceFolder: wsFolder
+            workspaceFolder: wsFolder,
+            traceOutputChannel: window.createOutputChannel(`vdm-vscode: ${wsFolder.name}`)
         }
 
         // Setup server options
@@ -153,7 +154,6 @@ export function activate(context: ExtensionContext) {
         // Create the language client with the defined client options and the function to create and setup the server.
         let client = new SpecificationLanguageClient(
             `vdm-vscode`,
-            `vdm-vscode: ${wsFolder.name}`,
             dialect,
             serverOptions,
             clientOptions,

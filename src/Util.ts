@@ -4,6 +4,7 @@ import * as path from 'path'
 // import * as fs from 'fs'
 import * as fs from 'fs-extra'
 import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import { LanguageClient } from 'vscode-languageclient/node';
 
 export function ensureDirectoryExistence(filePath) {
     var dirname = path.dirname(filePath);
@@ -45,7 +46,7 @@ export function isDir(path: fs.PathLike): boolean {
 
 export function createDirectory(fullUri: Uri, timestamped?: boolean): Promise<Uri> {
     return new Promise((resolve, reject) => {
-        if (timestamped){
+        if (timestamped) {
             var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
             fullUri = Uri.parse(fullUri + " " + dateString);
         }
@@ -111,7 +112,11 @@ export function registerCommand(context: ExtensionContext, command: string, call
     return disposable;
 };
 
-export function joinUriPath(uri: Uri, ...additions: string[]): Uri{
+export function joinUriPath(uri: Uri, ...additions: string[]): Uri {
     let uriString = uri.toString() + '/' + additions.join('/')
     return Uri.parse(uriString);
+}
+
+export function belongsToClient(uri: Uri, client: LanguageClient) {
+    return uri.toString().startsWith(client.clientOptions?.workspaceFolder?.uri.toString());
 }

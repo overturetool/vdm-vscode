@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { ClientCapabilities, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { ExperimentalCapabilities } from "./protocol.slsp";
+import { ExperimentalServerCapabilities } from "./protocol.slsp";
 
 export class CombinantorialTestingFeature implements StaticFeature {
     public SupportsCT: boolean = false;
@@ -14,7 +14,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
         else
             Object.assign(capabilities.experimental, { combinatorialTesting: true });
     }
-    initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
+    initialize(capabilities: ServerCapabilities<ExperimentalServerCapabilities>): void {
         // If server supports CT
         if (capabilities?.experimental?.combinatorialTestProvider) {
             this.SupportsCT = true;

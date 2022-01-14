@@ -3,7 +3,7 @@
 import { window, commands, workspace } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities, InitializeParams } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
-import { ExperimentalCapabilities, POGUpdatedNotification } from "./protocol.slsp";
+import { ExperimentalServerCapabilities, POGUpdatedNotification } from "./protocol.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class ProofObligationGenerationFeature implements StaticFeature {
@@ -19,7 +19,7 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         else
             Object.assign(capabilities.experimental, { proofObligationGeneration: true });
     }
-    initialize(capabilities: ServerCapabilities<ExperimentalCapabilities>): void {
+    initialize(capabilities: ServerCapabilities<ExperimentalServerCapabilities>): void {
         // If server supports POG
         if (capabilities?.experimental?.proofObligationProvider) {
             commands.executeCommand("setContext", "pog-show-button", true);

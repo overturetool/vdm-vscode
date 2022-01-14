@@ -185,31 +185,31 @@
         "icon": "$(example)"
       },
       {
-        "command": "vdm-vscode.translateToLatex",
+        "command": "vdm-vscode.translate.latex",
         "title": "Translate to LaTeX",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "vdm-vscode.translateToWord",
+        "command": "vdm-vscode.translate.word",
         "title": "Translate to Word",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "vdm-vscode.translateCov",
+        "command": "vdm-vscode.translate.coverage",
         "title": "Generate Coverage",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "vdm-vscode.translateGraphviz",
+        "command": "vdm-vscode.translate.graphviz",
         "title": "Generate Dependency Graph",
         "category": "VDM",
         "icon": "$(references)"
       },
       {
-        "command": "vdm-vscode.translateIsabelle",
+        "command": "vdm-vscode.translate.isabelle",
         "title": "Translate to Isabelle",
         "category": "VDM",
         "icon": "$(references)"
@@ -352,23 +352,23 @@
           "group": "verification@1"
         },
         {
-          "command": "vdm-vscode.translateToLatex",
-          "when": "tr-latex-show-button == true",
+          "command": "vdm-vscode.translate.latex",
+          "when": "vdm-vscode.translate.latex == true",
           "group": "translate@1"
         },
         {
-          "command": "vdm-vscode.translateToWord",
-          "when": "tr-word-show-button == true",
+          "command": "vdm-vscode.translate.word",
+          "when": "vdm-vscode.translate.word == true",
           "group": "translate@2"
         },
         {
-          "command": "vdm-vscode.translateIsabelle",
-          "when": "tr-isabelle-show-button == true",
+          "command": "vdm-vscode.translate.isabelle",
+          "when": "vdm-vscode.translate.isabelle == true",
           "group": "translate@3"
         },
         {
-          "command": "vdm-vscode.translateCov",
-          "when": "tr-coverage-show-button == true",
+          "command": "vdm-vscode.translate.coverage",
+          "when": "vdm-vscode.translate.coverage == true",
           "group": "translate@4"
         },
         {
@@ -377,8 +377,8 @@
           "group": "translate@5"
         },
         {
-          "command": "vdm-vscode.translateGraphviz",
-          "when": "tr-graphviz-show-button == true",
+          "command": "vdm-vscode.translate.graphviz",
+          "when": "vdm-vscode.translate.graphviz == true",
           "group": "translate@6"
         },
         {
@@ -535,23 +535,23 @@
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateToLatex",
+          "command": "vdm-vscode.translate.latex",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateToWord",
+          "command": "vdm-vscode.translate.word",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateCov",
+          "command": "vdm-vscode.translate.coverage",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateGraphviz",
+          "command": "vdm-vscode.translate.graphviz",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.translateIsabelle",
+          "command": "vdm-vscode.translate.isabelle",
           "when": "false"
         },
         {
