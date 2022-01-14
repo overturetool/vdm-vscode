@@ -3,6 +3,8 @@
 import * as fs from "fs-extra"
 import * as util from "./Util"
 import * as LanguageId from "./LanguageId"
+import * as vscode from 'vscode'
+import * as slspEvent from "./protocol/SpecificationLanguageServerProtocolEvents"
 import { commands, DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder, Range } from "vscode";
 import { ClientCapabilities, Disposable, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateInitializeParams, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "./protocol/translate.slsp";
@@ -41,21 +43,7 @@ export class TranslateFeature implements StaticFeature {
         let languageIds = translateCapabilities.languageId
         this._languages = typeof languageIds == "string" ? [languageIds] : languageIds;
 
-        this._languages.forEach(async language => {
-            let commandName = `${this._clientName}.translate.${language}`
-
-            // Only register commands for the ones that the server says it can
-            let existingCommands = await commands.getCommands();
-            if (!existingCommands.includes(commandName)) {
-                // Register command
-                let disposable = commands.registerCommand(commandName, inputUri => this.translate(inputUri, language));
-                TranslateFeature._disposables.push(disposable);
-
-                // Show button
-                commands.executeCommand('setContext', commandName, true);    // commands.executeCommand('setContext', 'tr-' + this.language + '-show-button', true);
-                TranslateFeature._disposables.push({ dispose: () => commands.executeCommand('setContext', commandName, false) })
-            }
-        })
+        slspEvent.Translate.onDidRequestTranslate(info => this.translate(info.uri, info.language))
     }
     dispose(): void {
         --TranslateFeature._clients;

@@ -7,7 +7,7 @@ import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration, EventEmitter
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -25,6 +25,8 @@ import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
+import * as slspEvent from "./protocol/SpecificationLanguageServerProtocolEvents"
+
 
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
@@ -47,6 +49,18 @@ export function activate(context: ExtensionContext) {
 
     // Ensure logging path exists
     util.ensureDirectoryExistence(extensionLogPath);
+
+    /**************Latex translate ************/
+    // Register command
+    let ee = new EventEmitter<slspEvent.Translate.TranslateInfo>();
+    slspEvent.Translate.setEmitter(ee);
+    let commandName = "vdm-vscode.translate.latex";
+    let disposable = commands.registerCommand(commandName, inputUri => ee.fire({ uri: inputUri, language: LanguageId.latex }));
+    context.subscriptions.push(disposable);
+    // Show button
+    commands.executeCommand('setContext', commandName, true);    // commands.executeCommand('setContext', 'tr-' + this.language + '-show-button', true);
+    context.subscriptions.push({ dispose: () => commands.executeCommand('setContext', commandName, false) })
+    /**************Latex translate ************/
 
     // Initialise handlers
     const pogHandler = new ProofObligationGenerationHandler(clients, context);
