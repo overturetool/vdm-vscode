@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { CancellationToken, DocumentUri, HandlerResult, RequestHandler, RequestHandler0, RequestType, RequestType0, URI, WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceFolder } from "vscode-languageclient";
+import { CancellationToken, DocumentUri, HandlerResult, RequestHandler, RequestType, URI, WorkDoneProgressOptions, WorkDoneProgressParams } from "vscode-languageclient";
 
 export interface TranslateClientCapabilities {
     /**
