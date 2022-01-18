@@ -126,7 +126,7 @@ export interface CTGenerateResult {
 }
 
 /**
- * CT/execute request and return type.
+ * The `slsp/CT/execute` request is sent from the client to the server to execute the tests of a trace.
  */
 export namespace CTExecuteRequest {
     export const method = 'slsp/CT/execute';
