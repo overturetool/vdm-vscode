@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { CancellationToken, DocumentUri, HandlerResult, Location, NotificationHandler, NotificationType, RequestHandler, RequestType } from "vscode-languageclient";
 
 export interface ProofObligationGenerationClientCapabilities {
