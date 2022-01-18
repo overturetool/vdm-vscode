@@ -1,16 +1,5 @@
 import { CancellationToken, DocumentUri, HandlerResult, RequestHandler, RequestHandler0, RequestType, RequestType0, URI, WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceFolder } from "vscode-languageclient";
 
-export interface TranslateInitializeParams {
-    /**
-    * Information about the client
-    */
-    clientInfo: {
-        /**
-         * The name of the client as defined by the client.
-         */
-        name: string;
-    }
-}
 export interface TranslateClientCapabilities {
     /**
      * The experimental client capabilities.
@@ -46,7 +35,7 @@ export interface TranslateOptions extends WorkDoneProgressOptions {
 export namespace TranslateRequest {
     export const type = new RequestType<TranslateParams, TranslateResponse | null, void>('slsp/TR/translate');
     export type HandlerSignature = RequestHandler<TranslateParams, TranslateResponse | null, void>;
-    export type MiddlewareSignature = (token: CancellationToken, next: HandlerSignature) => HandlerResult<TranslateResponse | null, void>;
+    export type MiddlewareSignature = (params: TranslateParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<TranslateResponse | null, void>;
 }
 
 /**
