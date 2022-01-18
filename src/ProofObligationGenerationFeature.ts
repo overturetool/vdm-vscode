@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { window, commands, workspace } from "vscode";
-import { StaticFeature, ClientCapabilities, ServerCapabilities, InitializeParams } from "vscode-languageclient";
+import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
-import { ExperimentalServerCapabilities, POGUpdatedNotification } from "./protocol.slsp";
+import { POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "./protocol/proofObligationGeneration.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class ProofObligationGenerationFeature implements StaticFeature {
@@ -11,17 +11,16 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         private _client: SpecificationLanguageClient) {
     }
 
-    fillInitializeParams?: (params: InitializeParams) => void;
     fillClientCapabilities(capabilities: ClientCapabilities): void {
-        // Client supports POG
-        if (!capabilities.experimental)
-            capabilities.experimental = { proofObligationGeneration: true };
-        else
-            Object.assign(capabilities.experimental, { proofObligationGeneration: true });
+        capabilities.experimental = capabilities.experimental || {};
+        let pogCapabilities = capabilities as ProofObligationGenerationClientCapabilities;
+        pogCapabilities.experimental.proofObligationGeneration = true;
     }
-    initialize(capabilities: ServerCapabilities<ExperimentalServerCapabilities>): void {
+    initialize(capabilities: ServerCapabilities): void {
+        let pogCapabilities = (capabilities as ProofObligationGenerationServerCapabilities);
+
         // If server supports POG
-        if (capabilities?.experimental?.proofObligationProvider) {
+        if (pogCapabilities?.experimental?.proofObligationProvider) {
             commands.executeCommand("setContext", "pog-show-button", true);
             this.registerPOGUpdatedNotificationHandler();
         }

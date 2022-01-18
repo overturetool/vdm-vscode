@@ -2,7 +2,7 @@
 
 import { ExtensionContext, Uri, window, workspace } from "vscode";
 import { ProofObligationPanel } from "./ProofObligationPanel";
-import { GeneratePOParams, GeneratePORequest } from "./protocol.slsp";
+import { GeneratePOParams, GeneratePORequest } from "./protocol/proofObligationGeneration.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 

@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { NotificationType, RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
+import { RequestType, Location, PartialResultParams, WorkDoneProgressParams, ProgressType, WorkDoneProgressOptions, DocumentUri } from "vscode-languageclient";
 import { ProtocolRequestType } from "vscode-languageserver-protocol/lib/common/messages";
 /**
  * The experimental capabilities that the server can reply.
  */
 export interface ExperimentalServerCapabilities {
-    /**
-     * Capabilities specific to the `slsp/POG/` messages.
-     */
-    proofObligationProvider?: boolean;
     /**
      * Capabilities specific to the `slsp/CT/` messages.
      */
@@ -20,145 +16,6 @@ export interface ExperimentalServerCapabilities {
     // translateProvider?: boolean | TranslateOptions;
 }
 
-////////////////////// Translate to LaTex /////////////////////////////
-// /**
-//  * Client capability for the translate feature
-//  */
-// export interface TranslateClientCapabilities {
-//     /**
-//      * The experimental client capabilities.
-//      */
-//     experimental: {
-//         /**
-//          * The client has support for translation.
-//          */
-//         translateProvider?: boolean;
-//     }
-// }
-// /**
-//  * Options for the translate feature. 
-//  */
-// export interface TranslateOptions extends WorkDoneProgressOptions {
-//     languageId: string | string[];
-// }
-
-
-// /**
-//  * Parameters for the translate request.
-//  */
-// export interface TranslateParams extends WorkDoneProgressParams {
-//     /**
-//      * DocumentUri specifying the root of the project to translate.
-//      */
-//     uri?: DocumentUri;
-//     /**
-//      * language id defined by a LanguageKind or a string.
-//      */
-//     languageId: string;
-//     /**
-//      * DocumentUri specifying the location of the resulting 
-//      * translation.
-//      * This should be an existing empty folder.
-//      */
-//     saveUri: DocumentUri;
-//     /**
-//      * Options that the command handler should be invoked with.
-//      */
-//     options?: any; //TODO make LSPAny[] when LSP 3.17 is released
-// }
-
-// /**
-//  * translate request and return type.
-//  */
-// export namespace TranslateRequest {
-//     export const type = new RequestType<TranslateParams, TranslateResponse | null, void>('slsp/TR/translate');
-// }
-
-// /**
-//  * Response to the 'slsp/TR/translate' request
-//  */
-// export interface TranslateResponse {
-//     /**
-//      * URI specifying the "main" file of the resulting translation 
-//      * if multiple files are generated, this is the uri to where 
-//      * "main" is.
-//      */
-//     uri: DocumentUri;
-// }
-
-
-////////////////////// Proof Obligation Generation (POG) /////////////////////////////
-/**
- * Parameters describing a Proof Obligation (PO) and meta data.
- */
-export interface ProofObligation {
-    /**
-     * Unique identifier of the PO.
-     */
-    id: number;
-    /**
-     * Name of the PO.
-     * Array describe the hieracy of the name, 
-     * e.g. ["classA", "function1"].
-     */
-    name: string[];
-    /**
-     * Type of the PO.
-     */
-    type: string;
-    /**
-     * Location where the PO applies.
-     */
-    location: Location;
-    /**
-     * Source code of the PO. 
-     * String array can be used to provide visual formatting 
-     * information, e.g. the PO view can put a "\n\t" between 
-     * each string in the array.
-     */
-    source: string | string[];
-    /**
-     * An optional status of the PO, e.g., "Unproved" or "Proved".
-     */
-    status?: string;
-}
-
-/**
- * Parameters for the POG/generate request.
- */
-export interface GeneratePOParams {
-    /**
-     * Uri to the file/folder for which Proof Obligations
-     * should be generated.
-     */
-    uri: DocumentUri;
-}
-
-/**
- * POG/generate request and return type.
- */
-export namespace GeneratePORequest {
-    export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void>('slsp/POG/generate');
-}
-
-/**
- * Parameters for the POG/updated request.
- */
-export interface POGUpdatedParams {
-    /**
-     * Describes the state of the specification. 
-     * True if POG is possible.
-     * False otherwise, e.g. the specification is not type-correct.
-     */
-    successful: boolean;
-}
-
-/**
- * POG/updated notification. Sent by the server when there has been a change in the specification.
- */
-export namespace POGUpdatedNotification {
-    export const type = new NotificationType<POGUpdatedParams>('slsp/POG/updated')
-}
 
 
 ////////////////////// Combinatorial Testing (CT) ///////////////////////////////////
