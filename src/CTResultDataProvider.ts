@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Event, EventEmitter, ProviderResult, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
-import { CTResultPair } from "./protocol.slsp";
+import { CTResultPair } from "./protocol/combinatorialTesting.slsp";
 
 export class CTResultDataProvider implements TreeDataProvider<CTResultElement> {
 

@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, Uri, window, WorkspaceFolder } from "vscode";
 import { CancellationTokenSource, LSPErrorCodes, WorkDoneProgress } from "vscode-languageclient";
-import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParameters, CTTracesRequest, CTGenerateParameters, CTGenerateRequest, CTExecuteParameters, CTExecuteRequest, NumberRange } from "./protocol.slsp";
+import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParams, CTTracesRequest, CTGenerateParams, CTGenerateRequest, CTExecuteParams, CTExecuteRequest, NumberRange } from "./protocol/combinatorialTesting.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
 import * as util from "./Util"
@@ -71,7 +71,7 @@ export class CTHandler {
 
         try {
             // Setup message parameters
-            let params: CTTracesParameters = {};
+            let params: CTTracesParams = {};
             if (uri)
                 params.uri = uri.toString();
 
@@ -90,7 +90,7 @@ export class CTHandler {
     public async requestGenerate(name: string): Promise<number> {
         try {
             // Setup message parameters
-            let params: CTGenerateParameters = { name: name };
+            let params: CTGenerateParams = { name: name };
 
             // Send request
             const res = await this.currentClient.sendRequest(CTGenerateRequest.type, params);
@@ -115,7 +115,7 @@ export class CTHandler {
 
         try {
             // Setup message parameters
-            let params: CTExecuteParameters = { name: name };
+            let params: CTExecuteParams = { name: name };
             if (filtered) {
                 params.filter = await this._filterHandler.getCTFilter();
             }

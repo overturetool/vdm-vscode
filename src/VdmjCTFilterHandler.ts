@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { CTFilterHandler } from "./CTHandler";
-import { CTFilterOption } from "./protocol.slsp";
+import { CTFilterOption } from "./protocol/combinatorialTesting.slsp";
 import * as vscode from 'vscode'
 
 export class VdmjCTFilterHandler implements CTFilterHandler {
