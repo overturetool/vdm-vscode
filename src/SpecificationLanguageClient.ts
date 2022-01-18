@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import path = require("path");
-import { ExtensionContext, Uri } from "vscode";
-import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
+import { Event, ExtensionContext, Uri } from "vscode";
+import { DynamicFeature, LanguageClient, LanguageClientOptions, ServerOptions, StaticFeature } from "vscode-languageclient/node";
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import * as LanguageId from "./LanguageId";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
@@ -15,23 +15,51 @@ export class SpecificationLanguageClient extends LanguageClient {
     public readonly logPath: string;
     public readonly language: string;
     public readonly name: string;
+    public readonly dataStoragePath: Uri
+    public readonly events: SLSPClientEvents
 
-    constructor(name: string, language: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, private readonly _context: ExtensionContext, public readonly dataStoragePath: Uri, forceDebug?: boolean) {
+    constructor(
+        name: string,
+        language: string,
+        serverOptions: ServerOptions,
+        clientOptions: LanguageClientOptions,
+        context: ExtensionContext,
+        dataStoragePath: Uri,
+        events: SLSPClientEvents,
+        forceDebug?: boolean) {
         super(name, serverOptions, clientOptions, forceDebug);
         this.name = name;
         this.language = language;
-        this.logPath = path.resolve(this._context.logUri.fsPath, `${name}.log`);
+        this.dataStoragePath = dataStoragePath;
+        this.events = events;
+        this.logPath = path.resolve(context.logUri.fsPath, `${name}.log`);
         util.ensureDirectoryExistence(this.logPath);
-        this.registerFeatures([
-            new ProofObligationGenerationFeature(this),
-            new CombinantorialTestingFeature(),
-            new TranslateFeature(this),
 
-            // new TranslateFeature(LanguageId.latex),
-            // new TranslateFeature(LanguageId.word),
-            // new TranslateFeature(LanguageId.coverage),
-            // new TranslateFeature(LanguageId.graphviz),
-            // new TranslateFeature(LanguageId.isabelle),
-        ]);
-    }
+        let features: (StaticFeature | DynamicFeature<any>)[] = [];
+        features.push(new ProofObligationGenerationFeature(this));
+        features.push(new CombinantorialTestingFeature());
+
+        if (events.onDidRequestTranslateLatex)
+            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateLatex));
+        if (events.onDidRequestTranslateWord)
+            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateWord));
+        if (events.onDidRequestTranslateCoverage)
+            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateCoverage));
+        if (events.onDidRequestTranslateGraphviz)
+            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateGraphviz));
+        if (events.onDidRequestTranslateIsabelle)
+            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateIsabelle));
+
+        this.registerFeatures(features);
+    };
+
+
+}
+
+export interface SLSPClientEvents {
+    readonly onDidRequestTranslateLatex?: Event<Uri>;
+    readonly onDidRequestTranslateWord?: Event<Uri>;
+    readonly onDidRequestTranslateCoverage?: Event<Uri>;
+    readonly onDidRequestTranslateGraphviz?: Event<Uri>;
+    readonly onDidRequestTranslateIsabelle?: Event<Uri>;
 }

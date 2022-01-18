@@ -4,10 +4,9 @@ import * as fs from 'fs-extra';
 import * as path from 'path'
 import * as net from 'net';
 import * as child_process from 'child_process';
-import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration, EventEmitter
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -18,23 +17,24 @@ import { ProofObligationGenerationHandler } from './ProofObligationGenerationHan
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
-// import { TranslateHandler } from './TranslateHandler';
 import { AddLibraryHandler } from './AddLibrary';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
-import * as slspEvent from "./protocol/SpecificationLanguageServerProtocolEvents"
+import { SLSPClientEventsDispatcher } from './SLSPClientEventsDispatcher'
 
-
+let clients: Map<string, SpecificationLanguageClient>;
+let eventsDispatcher: SLSPClientEventsDispatcher;
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
     const jarPath_vdmj = path.resolve(jarPath, "vdmj");
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
 
-    let clients: Map<string, SpecificationLanguageClient> = new Map();
+    clients = new Map();
+    eventsDispatcher = new SLSPClientEventsDispatcher();
     let _sortedWorkspaceFolders: string[] | undefined;
 
     // Make sure that the VDMJ and LSP jars are present
@@ -50,26 +50,9 @@ export function activate(context: ExtensionContext) {
     // Ensure logging path exists
     util.ensureDirectoryExistence(extensionLogPath);
 
-    /**************Latex translate ************/
-    // Register command
-    let ee = new EventEmitter<slspEvent.Translate.TranslateInfo>();
-    slspEvent.Translate.setEmitter(ee);
-    let commandName = "vdm-vscode.translate.latex";
-    let disposable = commands.registerCommand(commandName, inputUri => ee.fire({ uri: inputUri, language: LanguageId.latex }));
-    context.subscriptions.push(disposable);
-    // Show button
-    commands.executeCommand('setContext', commandName, true);    // commands.executeCommand('setContext', 'tr-' + this.language + '-show-button', true);
-    context.subscriptions.push({ dispose: () => commands.executeCommand('setContext', commandName, false) })
-    /**************Latex translate ************/
-
     // Initialise handlers
     const pogHandler = new ProofObligationGenerationHandler(clients, context);
-    const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    // const translateHandlerLatex = new TranslateHandler(clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
-    // const translateHandlerWord = new TranslateHandler(clients, context, LanguageId.word, "vdm-vscode.translateToWord");
-    // const translateHandlerCov = new TranslateHandler(clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
-    // const translateHandlerGraphviz = new TranslateHandler(clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
-    // const translateHandlerIsabelle = new TranslateHandler(clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
+    const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);
 
     const addLibraryHandler = new AddLibraryHandler(clients, context);
     const addRunConfigurationHandler = new AddRunConfigurationHandler(clients, context);
@@ -172,7 +155,8 @@ export function activate(context: ExtensionContext) {
             serverOptions,
             clientOptions,
             context,
-            util.joinUriPath(wsFolder.uri, ".generated")
+            util.joinUriPath(wsFolder.uri, ".generated"),
+            eventsDispatcher
         );
 
         // Setup DAP
@@ -388,6 +372,16 @@ export function deactivate(): Thenable<void> | undefined {
 
     // Hide VDM VS Code buttons
     promises.push(commands.executeCommand('setContext', 'vdm-submenus-show', false));
+
+    // Stop clients
+    if (clients) {
+        clients.forEach(client => {
+            promises.push(client.stop())
+        });
+    }
+
+    if (eventsDispatcher)
+        promises.push(new Promise(() => eventsDispatcher.dispose()));
 
     return Promise.all(promises).then(() => undefined);
 }

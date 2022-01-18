@@ -3,23 +3,20 @@
 import * as fs from "fs-extra"
 import * as util from "./Util"
 import * as LanguageId from "./LanguageId"
-import * as vscode from 'vscode'
-import * as slspEvent from "./protocol/SpecificationLanguageServerProtocolEvents"
-import { commands, DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder, Range } from "vscode";
-import { ClientCapabilities, Disposable, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { TranslateClientCapabilities, TranslateInitializeParams, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "./protocol/translate.slsp";
+import { DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder, Range, Event } from "vscode";
+import { ClientCapabilities, Disposable, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
+import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "./protocol/translate.slsp";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class TranslateFeature implements StaticFeature {
-    private static _clients: number = 0;
-    private static _disposables: Disposable[] = [];
+    private _listener: Disposable;
     private _supportWorkDone: boolean = false;
-    private _languages: string[];
     private _clientName: string;
 
     constructor(
-        private _client: SpecificationLanguageClient) {
-        ++TranslateFeature._clients;
+        private _client: SpecificationLanguageClient,
+        private _language: string,
+        private _onDidRequestTranslate: Event<Uri>) {
         this._clientName = this._client.name;
     }
 
@@ -35,27 +32,27 @@ export class TranslateFeature implements StaticFeature {
         if (!translateCapabilities || typeof translateCapabilities == "boolean")
             return;
 
+        // Check server supported languages
+        let languageIds = translateCapabilities.languageId
+        let languages = typeof languageIds == "string" ? [languageIds] : languageIds;
+
+        // Check for feature's language
+        if (languages.includes(this._language))
+            this._listener = this._onDidRequestTranslate(event => this.translate(event, this._language));
+
         // Check if support work done progress
         if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
             this._supportWorkDone = translateCapabilities.workDoneProgress
-
-        // Initialize for each lanuage
-        let languageIds = translateCapabilities.languageId
-        this._languages = typeof languageIds == "string" ? [languageIds] : languageIds;
-
-        slspEvent.Translate.onDidRequestTranslate(info => this.translate(info.uri, info.language))
     }
     dispose(): void {
-        --TranslateFeature._clients;
-        if (TranslateFeature._clients == 0) {
-            for (let disposable of TranslateFeature._disposables)
-                disposable.dispose()
+        if (this._listener) {
+            this._listener.dispose()
+            this._listener = undefined;
         }
     }
 
-
     private translate(uri: Uri, language: string) {
-        if (!util.belongsToClient(uri, this._client) || !this._languages.includes(language))
+        if (!util.belongsToClient(uri, this._client))
             return;
 
         let client = this._client;
@@ -112,12 +109,11 @@ export class TranslateFeature implements StaticFeature {
                                 let doc = await workspace.openTextDocument(Uri.parse(response.uri));
 
                                 // Show the file
-                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside })
+                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: true })
                             }
                         }
 
                         resolve(`Generation of ${language} succeeded.`);
-                        window.showInformationMessage(`Generation of ${language} completed`);
                     }
                     catch (error) {
                         window.showWarningMessage(`Generation of ${language} failed with error: ${error}`);
