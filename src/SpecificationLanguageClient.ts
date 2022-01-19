@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import path = require("path");
-import { Event, ExtensionContext, Uri } from "vscode";
+import { Event, EventEmitter, ExtensionContext, Uri } from "vscode";
 import { DynamicFeature, LanguageClient, LanguageClientOptions, ServerOptions, StaticFeature } from "vscode-languageclient/node";
+import { ButtonEmitter } from "./ButtonEmitter";
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import * as LanguageId from "./LanguageId";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
+import { TranslateRequest } from "./protocol/slsp/translate";
 import { TranslateFeature } from "./TranslateFeature";
 import * as util from "./Util"
 
@@ -42,13 +44,13 @@ export class SpecificationLanguageClient extends LanguageClient {
         if (events.onDidRequestTranslateLatex)
             features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateLatex));
         if (events.onDidRequestTranslateWord)
-            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateWord));
+            features.push(new TranslateFeature(this, LanguageId.word, events.onDidRequestTranslateWord));
         if (events.onDidRequestTranslateCoverage)
-            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateCoverage));
+            features.push(new TranslateFeature(this, LanguageId.coverage, events.onDidRequestTranslateCoverage));
         if (events.onDidRequestTranslateGraphviz)
-            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateGraphviz));
+            features.push(new TranslateFeature(this, LanguageId.graphviz, events.onDidRequestTranslateGraphviz));
         if (events.onDidRequestTranslateIsabelle)
-            features.push(new TranslateFeature(this, LanguageId.latex, events.onDidRequestTranslateIsabelle));
+            features.push(new TranslateFeature(this, LanguageId.isabelle, events.onDidRequestTranslateIsabelle));
 
         this.registerFeatures(features);
     };

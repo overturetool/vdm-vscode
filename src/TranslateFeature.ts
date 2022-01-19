@@ -4,8 +4,8 @@ import * as fs from "fs-extra"
 import * as util from "./Util"
 import * as LanguageId from "./LanguageId"
 import { DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder, Range, Event } from "vscode";
-import { ClientCapabilities, Disposable, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "./protocol/translate.slsp";
+import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
+import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "./protocol/slsp/translate";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class TranslateFeature implements StaticFeature {

@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, Uri, window, WorkspaceFolder } from "vscode";
 import { CancellationTokenSource, LSPErrorCodes, WorkDoneProgress } from "vscode-languageclient";
-import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParams, CTTracesRequest, CTGenerateParams, CTGenerateRequest, CTExecuteParams, CTExecuteRequest, NumberRange } from "./protocol/combinatorialTesting.slsp";
+import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParams, CTTracesRequest, CTGenerateParams, CTGenerateRequest, CTExecuteParams, CTExecuteRequest, NumberRange } from "./protocol/slsp/combinatorialTesting";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
 import * as util from "./Util"

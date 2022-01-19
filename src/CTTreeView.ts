@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from "vscode";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
-import { CTTestCase, CTSymbol, NumberRange, VerdictKind } from "./protocol/combinatorialTesting.slsp";
+import { CTTestCase, CTSymbol, NumberRange, VerdictKind } from "./protocol/slsp/combinatorialTesting";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { ErrorCodes, Location, LSPErrorCodes, Protocol2CodeConverter } from 'vscode-languageclient';

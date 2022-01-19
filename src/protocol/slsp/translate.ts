@@ -35,6 +35,7 @@ export interface TranslateOptions extends WorkDoneProgressOptions {
  * The `slsp/TR/translate` is sent from the client to the server to translate a document/folder.
  */
 export namespace TranslateRequest {
+    export const method = 'slsp/TR/translate';
     export const type = new RequestType<TranslateParams, TranslateResponse | null, void>('slsp/TR/translate');
     export type HandlerSignature = RequestHandler<TranslateParams, TranslateResponse | null, void>;
     export type MiddlewareSignature = (params: TranslateParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<TranslateResponse | null, void>;
