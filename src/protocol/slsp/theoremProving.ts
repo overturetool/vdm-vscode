@@ -2,7 +2,6 @@
 
 import { RequestType, Location, DocumentUri } from "vscode-languageclient";
 
-////////////////////// Theorem Proving (TP) ///////////////////////////////////
 /**
  * Parameters for the lemmas request.
  */
