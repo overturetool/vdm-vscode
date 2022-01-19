@@ -2,10 +2,9 @@
 
 import path = require("path");
 import { ExtensionContext, Uri } from "vscode";
-import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import * as LanguageId from "./LanguageId";
-import { LensRefreshFeature } from "./LensRefreshFeature";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
 import { TranslateFeature } from "./TranslateFeature";
 import * as util from "./Util"
@@ -22,14 +21,13 @@ export class SpecificationLanguageClient extends LanguageClient {
         this.logPath = path.resolve(this._context.logUri.fsPath, `${name}.log`);
         util.ensureDirectoryExistence(this.logPath);
         this.registerFeatures([
-            new ProofObligationGenerationFeature(this, this._context),
+            new ProofObligationGenerationFeature(this),
             new CombinantorialTestingFeature(),
             new TranslateFeature(LanguageId.latex),
             new TranslateFeature(LanguageId.word),
             new TranslateFeature(LanguageId.coverage),
             new TranslateFeature(LanguageId.graphviz),
             new TranslateFeature(LanguageId.isabelle),
-            new LensRefreshFeature(this) // TODO Delete if codeLens.refresh support is added to VS Code
         ]);
     }
 }

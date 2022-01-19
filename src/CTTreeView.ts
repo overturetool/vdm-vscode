@@ -4,15 +4,16 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from "vscode";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
-import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
 import { CTTestCase, CTSymbol, NumberRange, VerdictKind } from "./protocol.slsp";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
-import { ErrorCodes, Location } from 'vscode-languageclient';
+import { ErrorCodes, Location, LSPErrorCodes, Protocol2CodeConverter } from 'vscode-languageclient';
 import * as util from "./Util"
 import { CTHandler } from './CTHandler';
+import { createConverter } from 'vscode-languageclient/lib/common/protocolConverter';
 
 export class CTTreeView {
+    private _p2cConverter: Protocol2CodeConverter = createConverter(undefined, undefined);
     private _testView: vscode.TreeView<TestViewElement>;
     private _resultView: vscode.TreeView<CTResultElement>;
     public currentTraceName: string;
@@ -232,8 +233,14 @@ export class CTTreeView {
 
         // Prompt user to chose a specification for CT. This also changes the client-server connection.
         // Skip if using current client
+        let didSelect: boolean;
         if (!useCurrentClient || this._ctHandler.currentClient == undefined)
-            await this._ctHandler.showAvailableSpecsForCT();
+            didSelect = await this._ctHandler.showAvailableSpecsForCT();
+
+        if (!didSelect || this._ctHandler.currentClient == undefined) {
+            this._isRebuildingTraceOutline = false;
+            return;
+        }
 
         //Change viewname
         this._testView.title = this._ctHandler.currentClientName;
@@ -358,7 +365,7 @@ export class CTTreeView {
                 try {
                     await this.generate(traceViewElement);
                 } catch (error) {
-                    if (error?.code == ErrorCodes.ContentModified) {
+                    if (error?.code == LSPErrorCodes.ContentModified) {
                         // Symbol out-of-sync -> rebuild
                         this.ctRebuildOutline();
                     }
@@ -402,7 +409,7 @@ export class CTTreeView {
 
             this._testProvider.rebuildViewFromElement(traceViewElement.getParent());
         } catch (error) {
-            if (error?.code == ErrorCodes.ContentModified) {
+            if (error?.code == LSPErrorCodes.ContentModified) {
                 // Symbol out-of-sync
                 this.ctRebuildOutline();
             }
@@ -460,7 +467,7 @@ export class CTTreeView {
         let doc = await workspace.openTextDocument(path);
 
         // Show the file
-        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(traceLocation.range), viewColumn: 1 })
+        window.showTextDocument(doc.uri, { selection: this._p2cConverter.asRange(traceLocation.range), viewColumn: 1 })
     }
 
     private onDidExpandElement(viewElement: TestViewElement) {
@@ -552,11 +559,11 @@ export class CTTreeView {
                     resolve();
 
                 } catch (error) {
-                    if (error?.code == ErrorCodes.RequestCancelled) {
+                    if (error?.code == LSPErrorCodes.RequestCancelled) {
                         this._executeCanceled = true;
                         resolve();
                     }
-                    else if (error?.code == ErrorCodes.ContentModified) {
+                    else if (error?.code == LSPErrorCodes.ContentModified) {
                         if (viewElement.type == TreeItemType.Trace) {
                             if (error?.message.includes("not found")) {
                                 // Trace not found -> Symbol out-of-sync

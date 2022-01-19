@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands } from "vscode";
-import { ClientCapabilities, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
+import { ClientCapabilities, DocumentSelector, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
 import { ExperimentalCapabilities } from "./protocol.slsp";
 
 export class TranslateFeature implements StaticFeature {
@@ -11,6 +11,7 @@ export class TranslateFeature implements StaticFeature {
         private readonly language: string) {
     }
 
+    fillInitializeParams?: (params: InitializeParams) => void;
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         // Client supports Translate
         if (!capabilities.experimental)
@@ -31,5 +32,8 @@ export class TranslateFeature implements StaticFeature {
             if (WorkDoneProgressOptions.hasWorkDoneProgress(capabilities?.experimental?.translateProvider))
                 this.supportWorkDone = capabilities?.experimental?.translateProvider.workDoneProgress
         }
+    }
+    dispose(): void {
+        // Nothing to be done
     }
 }

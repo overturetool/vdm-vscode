@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Range } from 'vscode'
-import path = require("path")
+import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview } from 'vscode'
 import { ProofObligation } from "./protocol.slsp"
-import * as protocol2code from 'vscode-languageclient/lib/protocolConverter';
+import { Protocol2CodeConverter } from 'vscode-languageclient';
 import * as util from "./Util"
+import { createConverter } from 'vscode-languageclient/lib/common/protocolConverter';
 
 export class ProofObligationPanel {
+    private _p2cConverter: Protocol2CodeConverter = createConverter(undefined, undefined);
     private readonly _panel: WebviewPanel;
     private _disposables: Disposable[] = [];
     private readonly _extensionUri: Uri;
@@ -86,7 +87,7 @@ export class ProofObligationPanel {
                         let doc = await workspace.openTextDocument(path);
 
                         // Show the file
-                        window.showTextDocument(doc.uri, { selection: protocol2code.createConverter().asRange(po.location.range), viewColumn: 1 })
+                        window.showTextDocument(doc.uri, { selection: this._p2cConverter.asRange(po.location.range), viewColumn: 1 })
                         return;
                     case 'sort':
                         // Sort and post pos to javascript

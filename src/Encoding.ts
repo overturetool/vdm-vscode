@@ -41,12 +41,7 @@ import * as util from "./Util"
 // }
 // *******************************************
 
-let once = false;
 export function checkEncoding(document: TextDocument, logPath: string): void {
-    // Check if done before
-    if (once)
-        return;
-
     const wsFolder = workspace.getWorkspaceFolder(document.uri);
 
     // Get document encoding
@@ -57,20 +52,20 @@ export function checkEncoding(document: TextDocument, logPath: string): void {
     }
 
     // Prompt user with warning, if not UTF-8
+    // TODO Would be better if it checked if the `files.encoding` setting and the discovered encoding match. However, the two does not use the same names for encodings.
     if (encodingDocument.encoding != null && encodingDocument.encoding != 'ascii' && encodingDocument.encoding != 'UTF-8') {
         const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
         if (encodingConfig?.showWarning) {
             const buttons: string[] = [
-                'Open settings UI',
+                'Open setting',
                 'Do not show again'
             ]
-            window.showWarningMessage(`Document encoding is not UTF-8. Please set files.encoding to the correct encoding. Not doing so may cause issues for the VDM extensions`, ...buttons).then(
+            window.showWarningMessage(`Document encoding is not UTF-8. Please set the configuration \'files.encoding\' to the correct encoding. Not doing so may cause issues for the VDM extensions. OBS: You may want to set this per workspace or folder instead of as a user setting.`, ...buttons).then(
                 press => {
-                    once = true;
                     if (press == buttons[0])
-                        commands.executeCommand('workbench.action.openSettings2', 'files.encoding')
+                        commands.executeCommand('workbench.action.openSettings', '@id:files.encoding')
                     if (press == buttons[1])
-                        encodingConfig.update("showWarning", false, ConfigurationTarget.Global)
+                        encodingConfig.update("showWarning", false, ConfigurationTarget.WorkspaceFolder)
                 }
             );
         }

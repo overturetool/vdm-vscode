@@ -10,6 +10,14 @@
             "name": "Launch VDM Debug",
             "noDebug": false,
             "defaultName": null
+        },
+        {
+            "name": "Lens config: Launch DEFAULT`Run",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": true,
+            "defaultName": "DEFAULT",
+            "command": "p Run(e1)"
         }
     ]
 }

@@ -7,13 +7,14 @@ import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, debug, WorkspaceConfiguration
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
-} from 'vscode-languageclient';
+} from 'vscode-languageclient/node';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
+import { ProofObligationGenerationHandler } from './ProofObligationGenerationHandler';
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
@@ -25,62 +26,14 @@ import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 
-globalThis.clients = new Map();
-
-
-let _sortedWorkspaceFolders: string[] | undefined;
-function sortedWorkspaceFolders(): string[] {
-    if (_sortedWorkspaceFolders === void 0) {
-        _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
-            let result = folder.uri.toString();
-            if (result.charAt(result.length - 1) !== '/') {
-                result = result + '/';
-            }
-            return result;
-        }).sort(
-            (a, b) => {
-                return a.length - b.length;
-            }
-        ) : [];
-    }
-    return _sortedWorkspaceFolders;
-}
-workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined);
-
-function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
-    const sorted = sortedWorkspaceFolders();
-    for (const element of sorted) {
-        let uri = folder.uri.toString();
-        if (uri.charAt(uri.length - 1) !== '/') {
-            uri = uri + '/';
-        }
-        if (uri.startsWith(element)) {
-            return workspace.getWorkspaceFolder(Uri.parse(element))!;
-        }
-    }
-    return folder;
-}
-
-function getDialect(document: TextDocument): string {
-    return document.languageId;
-}
-
-function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
-    // Restart the extension if changes has been made to the server settings
-    if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
-        // Ask the user to restart the extension if setting requires a restart
-        window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
-            if (res == "Reload Now")
-                commands.executeCommand("workbench.action.reloadWindow");
-        })
-    }
-}
-
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
     const jarPath_vdmj = path.resolve(jarPath, "vdmj");
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
+
+    let clients: Map<string, SpecificationLanguageClient> = new Map();
+    let _sortedWorkspaceFolders: string[] | undefined;
 
     // Make sure that the VDMJ and LSP jars are present
     if (!util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
@@ -96,48 +49,34 @@ export function activate(context: ExtensionContext) {
     util.ensureDirectoryExistence(extensionLogPath);
 
     // Initialise handlers
-    const ctHandler = new CTHandler(globalThis.clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
-    const translateHandlerLatex = new TranslateHandler(globalThis.clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
-    const translateHandlerWord = new TranslateHandler(globalThis.clients, context, LanguageId.word, "vdm-vscode.translateToWord");
-    const translateHandlerCov = new TranslateHandler(globalThis.clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
-    const translateHandlerGraphviz = new TranslateHandler(globalThis.clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
-    const translateHandlerIsabelle = new TranslateHandler(globalThis.clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
+    const pogHandler = new ProofObligationGenerationHandler(clients, context);
+    const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true)
+    const translateHandlerLatex = new TranslateHandler(clients, context, LanguageId.latex, "vdm-vscode.translateToLatex");
+    const translateHandlerWord = new TranslateHandler(clients, context, LanguageId.word, "vdm-vscode.translateToWord");
+    const translateHandlerCov = new TranslateHandler(clients, context, LanguageId.coverage, "vdm-vscode.translateCov");
+    const translateHandlerGraphviz = new TranslateHandler(clients, context, LanguageId.graphviz, "vdm-vscode.translateGraphviz");
+    const translateHandlerIsabelle = new TranslateHandler(clients, context, LanguageId.isabelle, "vdm-vscode.translateIsabelle");
 
-    const addLibraryHandler = new AddLibraryHandler(globalThis.clients, context);
-    const addRunConfigurationHandler = new AddRunConfigurationHandler(globalThis.clients, context);
-    const addExampleHandler = new AddExampleHandler(globalThis.clients, context);
-    const javaCodeGenHandler = new JavaCodeGenHandler(globalThis.clients, context);
+    const addLibraryHandler = new AddLibraryHandler(clients, context);
+    const addRunConfigurationHandler = new AddRunConfigurationHandler(clients, context);
+    const addExampleHandler = new AddExampleHandler(clients, context);
+    const javaCodeGenHandler = new JavaCodeGenHandler(clients, context);
     const addToClassPathHandler = new AddToClassPathHandler(context);
 
-    commands.registerCommand("vdm-vscode.openServerLog", openServerLog);
-    commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder);
-    workspace.onDidOpenTextDocument(didOpenTextDocument);
+    // Initialise debug handler
+    dapSupport.initDebugConfig(context);
+
+    // Register commands and event handlers
+    context.subscriptions.push(commands.registerCommand("vdm-vscode.openServerLog", openServerLog));
+    context.subscriptions.push(commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder));
+    context.subscriptions.push(workspace.onDidOpenTextDocument(didOpenTextDocument));
     workspace.textDocuments.forEach(didOpenTextDocument);
-    workspace.onDidChangeWorkspaceFolders((event) => {
-        for (const folder of event.removed) {
-            const client = globalThis.clients.get(folder.uri.toString());
-            if (client) {
-                globalThis.clients.delete(folder.uri.toString());
-                client.stop();
-            }
-        }
-    });
-    debug.onDidStartDebugSession(async (session) => {
-        // Launch client if this has not been done
-        if (!globalThis.clients.has(session.workspaceFolder.uri.toString())) {
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(e => stopClients(e.removed)));
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined));
 
-            // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
-            window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`, "Retry", "Close").then(res => {
-                if (res == "Retry")
-                    debug.startDebugging(session.workspaceFolder, session.configuration)
-            })
-
-            let dialect = await util.guessDialect(session.workspaceFolder);
-            if (dialect)
-                // await launchClient(session.workspaceFolder, dialect);
-                launchClient(session.workspaceFolder, dialect);
-        }
-    })
+    // ******************************************************************************
+    // ******************** Function definitions below ******************************
+    // ******************************************************************************
 
     function didOpenTextDocument(document: TextDocument): void {
         // We are only interested in vdm text
@@ -158,22 +97,22 @@ export function activate(context: ExtensionContext) {
         folder = getOuterMostWorkspaceFolder(folder);
 
         // Start client for the folder
-        launchClient(folder, getDialect(document));
+        launchClient(folder, document.languageId);
     }
 
     async function launchClient(wsFolder: WorkspaceFolder, dialect: string) {
         const clientKey = wsFolder.uri.toString();
 
         // Abort if client already exists
-        if (globalThis.clients.has(clientKey)) {
+        if (clients.has(clientKey)) {
             return;
         }
 
         // Add client to list
-        globalThis.clients.set(clientKey, null);
+        clients.set(clientKey, null);
 
         // Add settings watch for workspace folder
-        workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder));
+        context.subscriptions.push(workspace.onDidChangeConfiguration(e => didChangeConfiguration(e, wsFolder)));
 
         // Setup client options
         const clientOptions: LanguageClientOptions = {
@@ -226,7 +165,7 @@ export function activate(context: ExtensionContext) {
         client.onReady().then(() => {
             let port = (client?.initializeResult?.capabilities?.experimental?.dapServer?.port);
             if (port)
-                dapSupport.initDebugConfig(context, wsFolder, port);
+                dapSupport.addPort(wsFolder, port);
             else
                 util.writeToLog(extensionLogPath, "Did not receive a DAP port on start up, debugging is not activated");
         })
@@ -238,13 +177,12 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(disposable);
 
         // Save client
-        globalThis.clients.set(clientKey, client);
+        clients.set(clientKey, client);
     }
 
     function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
         // Get server configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
-        const developmentConfig: WorkspaceConfiguration = serverConfig.get("development")
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
 
         // Setup server arguments
@@ -315,7 +253,7 @@ export function activate(context: ExtensionContext) {
         if (!javaPath) {
             window.showErrorMessage("Java runtime environment not found!")
             util.writeToLog(extensionLogPath, "Java runtime environment not found!");
-            globalThis.clients.delete(wsFolder.uri.toString());
+            clients.delete(wsFolder.uri.toString());
             return;
         }
         let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
@@ -377,12 +315,65 @@ export function activate(context: ExtensionContext) {
         fs.ensureDirSync(context.logUri.fsPath);
         commands.executeCommand("revealFileInOS", context.logUri);
     }
+
+    function stopClients(wsFolders: readonly WorkspaceFolder[]) {
+        for (const folder of wsFolders) {
+            const client = clients.get(folder.uri.toString());
+            if (client) {
+                clients.delete(folder.uri.toString());
+                client.stop();
+            }
+        }
+    }
+
+    function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
+        // Restart the extension if changes has been made to the server settings
+        if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
+            // Ask the user to restart the extension if setting requires a restart
+            window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then(res => {
+                if (res == "Reload Now")
+                    commands.executeCommand("workbench.action.reloadWindow");
+            })
+        }
+    }
+
+    function sortedWorkspaceFolders(): string[] {
+        if (_sortedWorkspaceFolders === void 0) {
+            _sortedWorkspaceFolders = workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => {
+                let result = folder.uri.toString();
+                if (result.charAt(result.length - 1) !== '/') {
+                    result = result + '/';
+                }
+                return result;
+            }).sort(
+                (a, b) => {
+                    return a.length - b.length;
+                }
+            ) : [];
+        }
+        return _sortedWorkspaceFolders;
+    }
+
+    function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
+        const sorted = sortedWorkspaceFolders();
+        for (const element of sorted) {
+            let uri = folder.uri.toString();
+            if (uri.charAt(uri.length - 1) !== '/') {
+                uri = uri + '/';
+            }
+            if (uri.startsWith(element)) {
+                return workspace.getWorkspaceFolder(Uri.parse(element))!;
+            }
+        }
+        return folder;
+    }
 }
 
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
-    for (let client of globalThis.clients.values()) {
-        promises.push(client.stop());
-    }
+
+    // Hide VDM VS Code buttons
+    promises.push(commands.executeCommand('setContext', 'vdm-submenus-show', false));
+
     return Promise.all(promises).then(() => undefined);
 }

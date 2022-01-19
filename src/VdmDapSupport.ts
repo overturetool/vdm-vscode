@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as vscode from "vscode";
-import { WorkspaceFolder } from "vscode";
+import { DebugAdapter, WorkspaceFolder } from "vscode";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean,
@@ -20,7 +20,7 @@ export namespace VdmDapSupport {
     let factory: VdmDebugAdapterDescriptorFactory;
     let sessions: string[] = new Array(); // Array of running sessions
 
-    export function initDebugConfig(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder, port: number) {
+    export function initDebugConfig(context: vscode.ExtensionContext,) {
         if (!initialized) {
             initialized = true;
             // register a configuration provider for 'vdm' debug type
@@ -28,12 +28,15 @@ export namespace VdmDapSupport {
             context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("vdm", provider));
 
             // run the debug adapter as a server inside the extension and communicating via a socket
-            factory = new VdmDebugAdapterDescriptorFactory(folder, port);
+            factory = new VdmDebugAdapterDescriptorFactory();
 
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
-        } else {
-            factory.addPort(folder, port);
         }
+    }
+
+    export function addPort(folder: vscode.WorkspaceFolder, port: number) {
+        if (factory)
+            factory.addPort(folder, port);
     }
 
     export class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -93,13 +96,6 @@ export namespace VdmDapSupport {
     export class VdmDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
         private dapPorts: Map<string, number> = new Map();
 
-        constructor(
-            folder: vscode.WorkspaceFolder,
-            dapPort: number
-        ) {
-            this.dapPorts.set(folder.uri.toString(), dapPort);
-        }
-
         addPort(folder: vscode.WorkspaceFolder, dapPort: number) {
             this.dapPorts.set(folder.uri.toString(), dapPort);
         }
@@ -115,10 +111,16 @@ export namespace VdmDapSupport {
                         vscode.workspace.openTextDocument(res[0])
                 })
 
+                // Ask the user to retry debugging 
+                // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
+                vscode.window.showErrorMessage(`Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`, "Retry", "Close").then(res => {
+                    if (res == "Retry")
+                        vscode.debug.startDebugging(session.workspaceFolder, session.configuration)
+                })
+
                 // Remove sessions from active sessions
-                let elems = sessions.filter(value => value != uri.toString());
-                sessions = elems;
-                throw new Error(`Unable to find server for workspace folder ${session.workspaceFolder.name}`);
+                sessions = sessions.filter(value => value != uri.toString());
+                return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session))
             }
 
             // make VS Code connect to debug server
@@ -135,10 +137,27 @@ export namespace VdmDapSupport {
             stopOnEntry: stopOnEntry,
             // Additional debug type specific properties.
             command: command
-        }           
+        }
 
         // Start debug session with custom debug configurations
         vscode.debug.startDebugging(folder, debugConfiguration)
     }
 
+    // Used to kill debug session silently 
+    // TODO Remove when auto restart is implemented
+    class StoppingDebugAdapter implements DebugAdapter {
+        private _onDidSendMessage: vscode.EventEmitter<vscode.DebugProtocolMessage> = new vscode.EventEmitter<vscode.DebugProtocolMessage>();
+        private _session;
+        constructor(session: vscode.DebugSession) {
+            this.onDidSendMessage = this._onDidSendMessage.event;
+            this._session = session;
+        }
+
+        onDidSendMessage: vscode.Event<vscode.DebugProtocolMessage>;
+        handleMessage(_message: vscode.DebugProtocolMessage): void {
+            vscode.debug.stopDebugging(this._session);
+            return;
+        }
+        dispose() { }
+    }
 }

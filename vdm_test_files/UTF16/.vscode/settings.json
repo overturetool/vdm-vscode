@@ -1,0 +1,4 @@
+{
+	"vdm-vscode.server.development.experimentalServer": false,
+	"files.encoding": "utf16le"
+}
