@@ -8,7 +8,7 @@ import * as fs from "fs-extra";
 const yauzl = require("yauzl");
 
 export class AddLibraryHandler {
-	private readonly dialects = { vdmsl: "VDMSL", vdmpp: "VDMPP", vdmrt: "VDMRT" };
+	private readonly dialects = { vdmsl: "vdmsl", vdmpp: "vdmpp", vdmrt: "vdmrt" };
 
 	constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
 		commands.executeCommand("setContext", "add-lib-show-button", true);
@@ -23,30 +23,74 @@ export class AddLibraryHandler {
 	};
 
 	private async addLibrary(wsFolder: WorkspaceFolder) {
-		window.setStatusBarMessage(`Adding Libraries.`,
+		window.setStatusBarMessage(
+			`Adding Libraries.`,
 			new Promise(async (resolve, reject) =>
-				this.getDialect(wsFolder).then(dialect =>
+				this.getDialect(wsFolder).then((dialect) =>
 					// Gather available libraries and let user select
-					this.getLibJarsForDialect(dialect, wsFolder).then(async libdefs => {
-						const selectedItems = await window.showQuickPick(libdefs.map(libdef => ({ label: libdef.name, description: libdef.description } as QuickPickItem)), {
-							placeHolder: "Choose libraries",
-							canPickMany: true,
-						});
+					this.getLibraryDefinitionsFromJars(dialect, wsFolder).then(async (libdefs) => {
+						const selectedItems = await window.showQuickPick(
+							Array.from(libdefs.values())
+								.reduce((prev, curr) => prev.concat(curr), [])
+								.map((libdef) => ({ label: libdef.name, description: libdef.description } as QuickPickItem)),
+							{
+								placeHolder: libdefs.values().next() == undefined ? "No libraries available.." : "Choose libraries..",
+								canPickMany: true,
+							}
+						);
 						// None selected
-						if (selectedItems === undefined || selectedItems.length == 0) resolve(`Empty selection. Add library completed.`);
+						if (selectedItems === undefined || selectedItems.length == 0) return resolve(`Empty selection. Add library completed.`);
 
 						// Ensure that target folder exists
-						const folderPath = path.resolve(wsFolder.uri.fsPath, "lib");
-						fs.ensureDir(folderPath)
+						const libPathTarget = path.resolve(wsFolder.uri.fsPath, "lib");
+						fs.ensureDir(libPathTarget)
 							.then(() => {
-								const selectedLibDefs = selectedItems.map(selected => libdefs.find(libdef => libdef.name == selected.label));
+								const selectedLibDefs: Map<string, string[]> = new Map();
+
+								libdefs.forEach((value: libdef[], key: string) => {
+									const foundItems: QuickPickItem[] = [];
+									selectedItems.forEach((quickPickItem) => {
+										const selectedLib = value.find((libdef) => libdef.name == quickPickItem.label);
+										if (selectedLib) {
+											const libFileNames: string[] = selectedLib.files.concat(selectedLib.depends);
+											foundItems.push(quickPickItem);
+											if (selectedLibDefs.has(key)) {
+												libFileNames.forEach((fileName) => {
+													const existingFileNames = selectedLibDefs.get(key);
+													if (!existingFileNames.find((existingFileName) => existingFileName == fileName)) {
+														selectedLibDefs.get(key).push(fileName);
+													}
+												});
+											} else {
+												selectedLibDefs.set(key, libFileNames);
+											}
+										}
+									});
+									foundItems.forEach((itemToRemove) =>
+										selectedItems.splice(
+											selectedItems.findIndex((quickPickItem) => quickPickItem.label == itemToRemove.label),
+											1
+										)
+									);
+								});
+
 								// Copy libraries from jars to target folder
-								Promise.all(selectedLibDefs.map((selectedLibDef) => this.extractLibrariesFromJar(selectedLibDef, dialect, folderPath))).then(() => resolve("Added libraries.")).catch(err => {
-									window.showWarningMessage(`Add library failed with error: ${err}`);
-									console.log(`Add library failed with error: ${err}`);
-									reject("Add library failed with error");
-								})
-							}).catch((error) => {
+								const wsEncoding = workspace.getConfiguration("files", wsFolder).get("encoding", "utf8");
+								Promise.all(
+									Array.from(selectedLibDefs.entries()).map((selectedLibDef) =>
+										this.extractLibsFromJarToTarget(dialect, selectedLibDef[0], selectedLibDef[1], libPathTarget, wsEncoding)
+									)
+								)
+									.then(() => {
+										resolve("Added libraries.");
+									})
+									.catch((err) => {
+										window.showWarningMessage(`Add library failed with error: ${err}`);
+										console.log(`Add library failed with error: ${err}`);
+										reject("Add library failed with error");
+									});
+							})
+							.catch((error) => {
 								window.showWarningMessage("Creating directory for library failed");
 								console.log(`Creating directory for library files failed with error: ${error}`);
 								reject("Creating directory for library files failed");
@@ -56,42 +100,6 @@ export class AddLibraryHandler {
 			)
 		);
 	}
-
-	// const folderPath = path.resolve(wsFolder.uri.fsPath, "lib");
-	// fs.ensureDir(folderPath)
-	// 	.then(async () => {
-	// 		try {
-	// 			const wsEncoding = workspace.getConfiguration("files", wsFolder).get("encoding", "utf8");
-	// 			if (!Buffer.isEncoding(wsEncoding)) console.log(`Encoding (files.encoding: ${wsEncoding}) not possible using the default: UTF-8`);
-
-	// 			for (const lib of selectedLibs) {
-	// 				const src = path.resolve(libPath, lib);
-	// 				const dest = path.resolve(folderPath, lib);
-
-	// 				// Copy files to project with UTF-8 encoding
-	// 				if (wsEncoding == "utf8" || !Buffer.isEncoding(wsEncoding)) {
-	// 					// Copy library from resources/lib to here
-	// 					fs.copyFile(src, dest).catch((e) => {
-	// 						window.showInformationMessage(`Add library ${lib} failed`);
-	// 						console.log(`Copy library files failed with error: ${e}`);
-	// 					});
-	// 				} else {
-	// 					// Convert encoding
-	// 					fs.writeFileSync(dest, fs.readFileSync(src, { encoding: "utf8" }), { encoding: wsEncoding });
-	// 				}
-	// 			}
-	// 			resolve(`Add library completed.`);
-	// 		} catch (error) {
-	// 			window.showWarningMessage(`Add library failed with error: ${error}`);
-	// 			console.log(`Add library failed with error: ${error}`);
-	// 			reject();
-	// 		}
-	// 	})
-	// 	.catch((error) => {
-	// 		window.showWarningMessage("Creating directory for library failed");
-	// 		console.log(`Creating directory for library files failed with error: ${error}`);
-	// 		reject();
-	// 	});
 
 	private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
 		return new Promise<string>(async (resolve, reject) => {
@@ -112,77 +120,131 @@ export class AddLibraryHandler {
 					canPickMany: false,
 				});
 				if (!dialect) {
-					window.showInformationMessage(`Add library failed! Unable to determine VDM dialect for workspace`);
-					reject();
+					reject("Add library failed! Unable to determine VDM dialect for workspace");
+				} else {
+					resolve(this.dialects[dialect]);
 				}
-
-				resolve(this.dialects[dialect]);
 			}
 		});
 	}
 
-	private getLibJarsForDialect(dialect: string, wsFolder: WorkspaceFolder): Promise<libdef[]> {
-		return new Promise<libdef[]>(async (resolve, reject) => {
-			const jarPaths: string[] = workspace.getConfiguration('vdm-vscode.server', wsFolder).inspect("classPathAdditions").globalValue as string[];
+	private getLibraryDefinitionsFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, libdef[]>> {
+		return new Promise<Map<string, libdef[]>>(async (resolve, reject) => {
+			//Get library jars
+			const jarPaths: string[] = workspace.getConfiguration("vdm-vscode.server", wsFolder).inspect("classPathAdditions").globalValue as string[];
+			if (!jarPaths) return resolve(new Map());
 
-			Promise.all(jarPaths.map(jarPath => new Promise<libdef[]>(async (resolve, reject) => {
+			// Extract library definitions
+			Promise.all(
+				jarPaths.map(
+					(jarPath) =>
+						new Promise<[string, libdef[]]>(async (resolve, reject) => {
+							yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
+								if (err) reject(err);
+								zipfile.on("error", (err) => {
+									reject(err);
+									zipfile.close();
+								});
+								// Resolve to empty array if we have read the whole zip file without finding any definitions
+								zipfile.on("end", () => {
+									resolve(["", []]);
+									zipfile.close();
+								});
+								zipfile.on("entry", async (entry) => {
+									// If we found the libdefs file then read it else we read the next zip entry
+									if (!/\/$/.test(entry.fileName) && entry.fileName.toLowerCase().includes("libdefs")) {
+										zipfile.openReadStream(entry, async (error, readStream) => {
+											if (error) {
+												reject(error);
+												zipfile.close();
+											}
+											readStream.on("data", (data) => {
+												// Create mapping from dialect to library definitions from the data
+												const jsonData = JSON.parse(data.toString());
+												zipfile.close();
+												if (jsonData.Dialects) {
+													const dialectToLibDefs: [string, libdef[]] = Object.entries<libdef[]>(jsonData.Dialects).find((entry: [string, libdef[]]) =>
+														entry[0].toLowerCase().includes(dialect)
+													);
+													if (dialectToLibDefs) {
+														// Resolve and close the zip as we have at least found the library definitions file.
+														return resolve([jarPath, dialectToLibDefs[1]]);
+													}
+												}
+												return resolve(["", []]);
+											});
+										});
+									} else {
+										zipfile.readEntry();
+									}
+								});
+								zipfile.readEntry();
+							});
+						})
+				)
+			) // When we have looked through all zip files and found all library definitions
+				.then((jarToLibs) => {
+					// Resolve merged library definitions
+					const mapToReturn: Map<string, libdef[]> = new Map();
+					jarToLibs.forEach((jarToLib) => {
+						const existingLib = Array.from(mapToReturn.values())
+							.reduce((prev, curr) => prev.concat(curr), [])
+							.find((existingLibDef) => jarToLib[1].find((newLibDef) => existingLibDef.name == newLibDef.name));
+						if (existingLib) {
+							window.showWarningMessage(`Found library with the name '${existingLib.name}' in multiple jars.. Using library from '${jarToLib[0]}`);
+							console.log(`Found library with the name '${existingLib.name}' in multiple jars.. Using library from '${jarToLib[0]}`);
+						} else if (jarToLib[0]) {
+							mapToReturn.set(jarToLib[0], jarToLib[1]);
+						}
+					});
+					resolve(mapToReturn);
+				})
+				.catch((err) => reject(err));
+		});
+	}
+
+	private extractLibsFromJarToTarget(dialect: string, jarPath: string, libFileNames: string[], targetFolderPath: string, wsEncoding: string): Promise<void> {
+		// Extract library from jar file and write it to the target folder
+		return new Promise<void>(async (resolve, reject) => {
+			if (!jarPath) return reject();
+			if (libFileNames.length < 1) return resolve();
+			try {
+				// Open the jar file
 				yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
 					if (err) reject(err);
 					zipfile.on("error", (err) => {
 						reject(err);
 					});
-					zipfile.on("end", () => {
-						resolve([]);
-					});
-					zipfile.on("entry", (entry) => {
-						if (!/\/$/.test(entry.fileName) && entry.fileName.toLowerCase().includes("libdefs")) {
-							zipfile.openReadStream(entry, (error, readStream) => {
-								readStream.on('data', data => {
-									const libdef: libdef[] = Object.entries(JSON.parse(data.toString()).Dialects).find((entry: [string, libdef[]]) => entry[0].includes(dialect))[1] as libdef[];
-									if (libdef) {
-										libdef.jarPath = jarPath;
-										resolve(libdef);
-									}
-								})
-								if (error) reject(error);
-							});
-						}
-						zipfile.readEntry();
-					});
-					zipfile.readEntry();
-				});
-			}))).then(libdefs => {
-				resolve(libdefs.filter(libdef => libdef.dialect.find(libDialect => libDialect.toLocaleLowerCase().endsWith(dialect.toLocaleLowerCase()))));
-			}).catch(err => reject(err));
-		});
-	}
 
-	private extractLibrariesFromJar(selectedLibDef: libdef, dialect: string, targetFolderPath: string): Promise<void> {
-		return new Promise<void>(async (resolve, reject) => {
-			if (!selectedLibDef.jarPath) reject();
-			const libFiles: string[] = selectedLibDef.files[dialect];
-			try {
-				yauzl.open(selectedLibDef.jarPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
-					if (err) reject(err);
-					zipfile.on("error", (err) => {
-						reject(err);
-					});
+					// Handle entry
 					zipfile.on("entry", (entry) => {
-						if (libFiles.length == 0) {
+						const fileName = path.basename(entry.fileName);
+						// Resolve when we have found all library files
+						if (libFileNames.length < 1) {
+							zipfile.close();
 							resolve();
-						}
-						else if (!/\/$/.test(entry.fileName)) {
-							const libFile: string = libFiles.find(fileName => fileName.includes(path.basename(entry.fileName)));
-							if (libFile) {
+						} else if (!/\/$/.test(entry.fileName)) {
+							// We have found a file and not a folder. See if the file is a library file that we need to extract and move to the target folder
+							const libFileNamesIndex = libFileNames.findIndex((libFileName) => libFileName == fileName || (fileName.includes(libFileName) && fileName.endsWith(dialect)));
+							if (libFileNamesIndex >= 0) {
+								// Create a read stream from the library file and pipe it to a write stream to the target folder.
 								zipfile.openReadStream(entry, (error, readStream) => {
 									if (error) reject(error);
-									const writeStream = fs.createWriteStream(path.join(targetFolderPath, libFile), { flags: "a" });
+									// Check encoding
+									if (!Buffer.isEncoding(wsEncoding)) console.log(`Encoding (files.encoding: ${wsEncoding}) not possible using the default: UTF-8`);
+
+									// Create writestream with needed encoding to the target path
+									const writeStream = fs.createWriteStream(path.join(targetFolderPath, fileName), {
+										encoding: wsEncoding == "utf8" || !Buffer.isEncoding(wsEncoding) ? "utf8" : wsEncoding,
+									});
+
+									// Pipe the readstream into the writestream and handle erros.
 									readStream.pipe(writeStream).on("error", (err) => {
-										window.showInformationMessage(`Add library ${libFile} failed`);
+										window.showInformationMessage(`Add library ${fileName} failed`);
 										reject(`Copy library files failed with error: ${err}`);
 									});
 								});
-								delete libFiles[libFile];
+								libFileNames.splice(libFileNamesIndex, 1);
 							}
 						}
 						zipfile.readEntry();
@@ -197,7 +259,5 @@ export class AddLibraryHandler {
 }
 
 class libdef {
-	constructor(public readonly name: string, public readonly description: string, public readonly depends: string[], public readonly files: {}, public jarPath?: string) {
-
-	}
+	constructor(public readonly name: string, public readonly description: string, public readonly depends: string[], public readonly files: string[]) {}
 }
