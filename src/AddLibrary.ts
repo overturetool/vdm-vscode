@@ -6,6 +6,7 @@ import * as path from "path";
 import * as fs from "fs-extra";
 
 const yauzl = require("yauzl");
+const iconv = require("iconv-lite");
 
 export class AddLibraryHandler {
 	private readonly dialects = { vdmsl: "vdmsl", vdmpp: "vdmpp", vdmrt: "vdmrt" };
@@ -203,7 +204,7 @@ export class AddLibraryHandler {
 		});
 	}
 
-	private extractLibsFromJarToTarget(dialect: string, jarPath: string, libFileNames: string[], targetFolderPath: string, wsEncoding: string): Promise<void> {
+	private extractLibsFromJarToTarget(dialect: string, jarPath: string, libFileNames: string[], targetFolderPath: string, wsEncoding: BufferEncoding): Promise<void> {
 		// Extract library from jar file and write it to the target folder
 		return new Promise<void>(async (resolve, reject) => {
 			if (!jarPath) return reject();
@@ -232,17 +233,21 @@ export class AddLibraryHandler {
 									if (error) reject(error);
 									// Check encoding
 									if (!Buffer.isEncoding(wsEncoding)) console.log(`Encoding (files.encoding: ${wsEncoding}) not possible using the default: UTF-8`);
-
+									const libraryEncoding: BufferEncoding = "utf8";
 									// Create writestream with needed encoding to the target path
 									const writeStream = fs.createWriteStream(path.join(targetFolderPath, fileName), {
-										encoding: wsEncoding == "utf8" || !Buffer.isEncoding(wsEncoding) ? "utf8" : wsEncoding,
+										encoding: wsEncoding == libraryEncoding || !Buffer.isEncoding(wsEncoding) ? libraryEncoding : wsEncoding,
 									});
 
-									// Pipe the readstream into the writestream and handle erros.
-									readStream.pipe(writeStream).on("error", (err) => {
-										window.showInformationMessage(`Add library ${fileName} failed`);
-										reject(`Copy library files failed with error: ${err}`);
-									});
+									// Pipe the readstream into the iconv-lite decoder, then into the encoder (to handle workspaces in encoding formats other than utf8) and then finally to the writestream and handle erros.
+									readStream
+										.pipe(iconv.decodeStream(libraryEncoding))
+										.pipe(iconv.encodeStream(wsEncoding))
+										.pipe(writeStream)
+										.on("error", (err) => {
+											window.showInformationMessage(`Add library ${fileName} failed`);
+											reject(`Copy library files failed with error: ${err}`);
+										});
 								});
 								libFileNames.splice(libFileNamesIndex, 1);
 							}
