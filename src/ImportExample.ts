@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ExtensionContext, Uri, window, workspace } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as util from "./Util"
 import { Dirent, readdirSync } from 'fs';
@@ -74,7 +74,7 @@ export class AddExampleHandler {
                 return;
             }
 
-            let workspaceFoldersToAdd : { uri: Uri, name?: string }[] = []
+            let workspaceFoldersToAdd: { uri: Uri, name?: string }[] = []
             for await (const selectedEx of selectedExs) {
                 // Project save location
                 let projectPath = path.resolve(location[0].fsPath, selectedEx);
@@ -89,11 +89,11 @@ export class AddExampleHandler {
                 }
 
                 // Open workspace if non is open
-                if (!workspace.workspaceFolders){
+                if (!workspace.workspaceFolders) {
                     await commands.executeCommand("vscode.openFolder", projectUri);
                     return;
                 } else {
-                    workspaceFoldersToAdd.push({uri: projectUri, name: selectedEx})
+                    workspaceFoldersToAdd.push({ uri: projectUri, name: selectedEx })
                 }
             }
 

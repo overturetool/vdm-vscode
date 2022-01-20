@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as path from 'path'
-// import * as fs from 'fs'
 import * as fs from 'fs-extra'
 import { commands, DocumentFilter, DocumentSelector, ExtensionContext, RelativePattern, Uri, workspace, WorkspaceFolder } from 'vscode';
 import * as glob from 'glob'

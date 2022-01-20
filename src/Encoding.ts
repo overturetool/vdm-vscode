@@ -3,8 +3,6 @@
 import { TextDocument, workspace, window, ConfigurationTarget, commands } from "vscode";
 import * as jschardet from 'jschardet'
 import * as fs from 'fs-extra';
-import * as util from "./Util"
-
 
 // ************* Not used *****************
 // export function checkEncodingMatch(document: TextDocument, logPath: string): void {
