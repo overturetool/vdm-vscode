@@ -41,13 +41,13 @@ import * as util from "./Util"
 // }
 // *******************************************
 
-export function checkEncoding(document: TextDocument, logPath: string): void {
+export function checkEncoding(document: TextDocument): void {
     const wsFolder = workspace.getWorkspaceFolder(document.uri);
 
     // Get document encoding
     let encodingDocument = jschardet.detect(fs.readFileSync(document.fileName));
     if (!encodingDocument) {
-        util.writeToLog(logPath, `Could not determine document encoding for document: ${document.fileName}`);
+        console.warn(`Could not determine document encoding for document: ${document.fileName}`);
         return;
     }
 

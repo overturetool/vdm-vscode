@@ -127,13 +127,13 @@ export class TranslateFeature implements StaticFeature {
                     }
                     catch (error) {
                         window.showWarningMessage(`Generation of ${language} failed with error: ${error}`);
-                        util.writeToLog(client.logPath, `Generation of ${language} failed with error: ${error}`);
+                        console.error(`Generation of ${language} failed with error: ${error}`);
                         reject();
                     }
                 },
                 (reason) => {
                     window.showWarningMessage("Creating timestamped directory failed");
-                    util.writeToLog(client.logPath, `Creating timestamped directory failed with error: ${reason}`);
+                    console.error(`Creating timestamped directory failed with error: ${reason}`);
                     reject();
                 });
         }));

@@ -27,7 +27,6 @@ import { } from './events/SLSPEvents';
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
-    const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
     const jarPath_vdmj = path.resolve(jarPath, "vdmj");
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
@@ -35,18 +34,27 @@ export function activate(context: ExtensionContext) {
     clients = new Map();
     let _sortedWorkspaceFolders: string[] | undefined;
 
+    // Make sure that there is a java executable
+    const javaPath = util.findJavaExecutable('java');
+    if (!javaPath) {
+        let m = "Java runtime environment not found!";
+        window.showErrorMessage(m);
+        console.error(m);
+        return;
+    }
+
     // Make sure that the VDMJ and LSP jars are present
     if (!util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) ||
         !util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i)
     ) {
+        let m = "Server jars not found!";
+        window.showErrorMessage(m);
+        console.error(m);
         return;
     }
 
     // Show VDM VS Code buttons
     commands.executeCommand('setContext', 'vdm-submenus-show', true);
-
-    // Ensure logging path exists
-    util.ensureDirectoryExistence(extensionLogPath);
 
     // Initialise handlers
     const pogHandler = new ProofObligationGenerationHandler(clients, context);
@@ -81,7 +89,7 @@ export function activate(context: ExtensionContext) {
         }
 
         // Check that the document encoding matches the encoding setting
-        encoding.checkEncoding(document, extensionLogPath)
+        encoding.checkEncoding(document);
 
         const uri = document.uri;
         let folder = workspace.getWorkspaceFolder(uri);
@@ -153,7 +161,6 @@ export function activate(context: ExtensionContext) {
             dialect,
             serverOptions,
             clientOptions,
-            context,
             util.joinUriPath(wsFolder.uri, ".generated"),
         );
 
@@ -163,10 +170,11 @@ export function activate(context: ExtensionContext) {
             if (port)
                 dapSupport.addPort(wsFolder, port);
             else
-                util.writeToLog(extensionLogPath, "Did not receive a DAP port on start up, debugging is not activated");
+                console.warn("Did not receive a DAP port on start up, debugging is not activated");
         })
 
         // Start the and launch the client
+        console.info(`Launching client for the folder ${wsFolder.name} with language ID ${dialect}`,);
         let disposable = client.start();
 
         // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
@@ -204,31 +212,32 @@ export function activate(context: ExtensionContext) {
             const languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
             util.ensureDirectoryExistence(languageServerLoggingPath);
             args.push(`-Dlsp.log.filename=${languageServerLoggingPath}`);
-            args.push(`-Dlsp.log.level=${logLevel}`)
+            args.push(`-Dlsp.log.level=${logLevel}`);
         }
 
         // Set encoding
         const encodingSetting = workspace.getConfiguration('files', wsFolder).get('encoding', 'utf8');
         const javaEncoding = encoding.toJavaName(encodingSetting)
         if (javaEncoding)
-            args.push(`-Dlsp.encoding=${javaEncoding}`)
+            args.push(`-Dlsp.encoding=${javaEncoding}`);
         else
-            util.writeToLog(extensionLogPath, `Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`)
+            console.warn(`Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`);
 
         // Construct class path
         let classPath = "";
 
         // Add user defined paths to class path
         if (serverConfig.classPathAdditions) {
-            serverConfig.classPathAdditions.forEach(p => {
-                let pathToCheck = (p.endsWith(path.sep + '*') ? p.substr(0, p.length - 2) : p)
+            serverConfig.classPathAdditions.forEach((p: string) => {
+                let pathToCheck = (p.endsWith(path.sep + '*') ? p.substring(0, p.length - 2) : p)
                 if (!fs.existsSync(pathToCheck)) {
                     let m = "Invalid path in class path additions: " + p;
-                    window.showWarningMessage(m)
-                    util.writeToLog(extensionLogPath, m);
-                    return;
+                    window.showWarningMessage(m);
+                    console.warn(m);
                 }
-                classPath += p + path.delimiter;
+                else {
+                    classPath += p + path.delimiter;
+                }
             })
         }
 
@@ -245,13 +254,6 @@ export function activate(context: ExtensionContext) {
         ]);
 
         // Start the LSP server
-        let javaPath = util.findJavaExecutable('java');
-        if (!javaPath) {
-            window.showErrorMessage("Java runtime environment not found!")
-            util.writeToLog(extensionLogPath, "Java runtime environment not found!");
-            clients.delete(wsFolder.uri.toString());
-            return;
-        }
         let server = child_process.spawn(javaPath, args, { cwd: wsFolder.uri.fsPath });
 
         // Create output channel for server stdout

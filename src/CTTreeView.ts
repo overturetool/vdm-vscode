@@ -264,7 +264,7 @@ export class CTTreeView {
                     else {
                         await this.loadCTs().catch(reason => {
                             window.showWarningMessage("Failed to load existing CTs from files");
-                            util.writeToLog(this._ctHandler.currentClient.logPath, "Failed to load existing CTs from files: " + reason);
+                            console.error("Failed to load existing CTs from files: " + reason);
                             return Promise.resolve([])
                         }).then(completeCTs => {
                             // Filter loaded trace symbols so they matches servers
@@ -293,7 +293,7 @@ export class CTTreeView {
 
             }
             catch (error) {
-                util.writeToLog(this._ctHandler.currentClient.logPath, "Failed to generate trace outline: " + error);
+                console.error("Failed to generate trace outline: " + error);
                 window.showWarningMessage("Failed to generate trace outline");
             }
             finally {
@@ -357,7 +357,7 @@ export class CTTreeView {
             cancellable: false
         }, (progress, token) => {
             token.onCancellationRequested(() => {
-                util.writeToLog(this._ctHandler.currentClient.logPath, `User canceled the test generation for ${traceViewElement.label}`);
+                console.info(`User canceled the test generation for ${traceViewElement.label}`);
             });
 
             // Make the generate request
@@ -413,7 +413,7 @@ export class CTTreeView {
                 // Symbol out-of-sync
                 this.ctRebuildOutline();
             }
-            util.writeToLog(this._ctHandler.currentClient.logPath, "CT Test Generation failed: " + error);
+            console.error("CT Test Generation failed: " + error);
             window.showWarningMessage("CT Test Generation failed: " + error);
         }
     }
