@@ -6,7 +6,6 @@ import { CancellationTokenSource, LSPErrorCodes, WorkDoneProgress } from "vscode
 import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParams, CTTracesRequest, CTGenerateParams, CTGenerateRequest, CTExecuteParams, CTExecuteRequest, NumberRange } from "./protocol/slsp/combinatorialTesting";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { CTTreeView } from './CTTreeView';
-import * as util from "./Util"
 
 export class CTHandler {
     private _ctTreeView: CTTreeView;
