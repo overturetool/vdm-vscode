@@ -4,6 +4,7 @@ import { commands, ExtensionContext, QuickPickItem, RelativePattern, Uri, window
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as path from "path";
 import * as fs from "fs-extra";
+import { dir } from "console";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -217,8 +218,14 @@ export class AddLibraryHandler {
 	private getLibsFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
 		return new Promise<Map<string, Library[]>>(async (resolve, reject) => {
 			//Get jars from class path
-			const jarPaths: string[] = workspace.getConfiguration("vdm-vscode.server", wsFolder).inspect("classPathAdditions").globalValue as string[];
-			if (!jarPaths) return resolve(new Map());
+			const libsPath = path.resolve(this.context.extensionPath, "resources", "jars", "libs");
+			//const jarPaths: string[] = workspace.getConfiguration("vdm-vscode.server", wsFolder).inspect("classPathAdditions").globalValue as string[];
+			const jarPaths: string[] = fs
+				.readdirSync(libsPath)
+				.filter((fileName) => fileName.endsWith(".jar"))
+				.map((fileName) => path.resolve(libsPath, fileName));
+
+			if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 
 			// Extract libraries
 			Promise.all(
@@ -262,21 +269,41 @@ export class AddLibraryHandler {
 			) // When we have looked through all jar files and found all libraries
 				.then((jarPathToLibs) => {
 					// Merge libraries to single map
-					const mapToReturn: Map<string, Library[]> = new Map();
+					const mergedJarPathToLibs: Map<string, Library[]> = new Map();
 					jarPathToLibs.forEach((jarToLib) => {
-						const existingLib = Array.from(mapToReturn.values())
-							.reduce((prev, curr) => prev.concat(curr), [])
-							.find((existingLib) => jarToLib[1].find((newLib) => existingLib.name == newLib.name));
-						// Watch out for duplicate libraries
-						if (existingLib) {
-							const msg = `Found libraries with the name '${existingLib.name}' in multiple jars.. Using library from '${jarToLib[0]}`;
-							window.showWarningMessage(msg);
-							console.log(msg);
-						} else if (jarToLib[0]) {
-							mapToReturn.set(jarToLib[0], jarToLib[1]);
+						if (jarToLib[0]) {
+							// Watch out for libraries with identical names
+							const jarPathToDuplicateLibs: Map<string, Library[]> = new Map();
+							for (let entry of Array.from(mergedJarPathToLibs.entries())) {
+								const duplicateLib = Array.from(entry[1]).find((existingLib) => jarToLib[1].find((newLib) => existingLib.name == newLib.name));
+								if (duplicateLib) {
+									// Library exists in another jar so no need to extract it from this jar.
+									jarToLib[1].splice(
+										jarToLib[1].findIndex((lib) => lib.name == duplicateLib.name),
+										1
+									);
+
+									if (jarPathToDuplicateLibs.has(entry[0])) {
+										jarPathToDuplicateLibs.get(entry[0]).push(duplicateLib);
+									} else {
+										jarPathToDuplicateLibs.set(entry[0], [duplicateLib]);
+									}
+								}
+							}
+
+							// Inform of libraries with identical names - this is done per jar to avoid generating too many messages.
+							jarPathToDuplicateLibs.forEach((libraries, jarPath) => {
+								const msg = `Libraries '${libraries
+									.map((library) => library.name)
+									.reduce((prev, cur) => prev + ", " + cur)}' are in multiple jars.. Using libraries from '${jarPath}`;
+								window.showWarningMessage(msg);
+								console.log(msg);
+							});
+
+							mergedJarPathToLibs.set(jarToLib[0], jarToLib[1]);
 						}
 					});
-					resolve(mapToReturn);
+					resolve(mergedJarPathToLibs);
 				})
 				.catch((err) => reject(err));
 		});
