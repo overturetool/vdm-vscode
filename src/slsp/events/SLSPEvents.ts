@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Event, Uri, EventEmitter } from "vscode";
-import { ButtonEmitter } from "../ButtonEmitter";
-import * as LanguageId from "../LanguageId";
+import { ButtonEmitter } from "../../ButtonEmitter";
+import * as LanguageId from "../../LanguageId";
 
 
 export namespace SLSPEvents {

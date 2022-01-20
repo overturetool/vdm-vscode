@@ -23,7 +23,7 @@ import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
-import { } from './events/SLSPEvents';
+import { } from './slsp/events/SLSPEvents';
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {

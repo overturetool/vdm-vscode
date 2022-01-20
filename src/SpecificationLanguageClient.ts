@@ -6,7 +6,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-lan
 import { CombinantorialTestingFeature } from "./CombinatorialTestingFeature";
 import * as LanguageId from "./LanguageId";
 import { ProofObligationGenerationFeature } from "./ProofObligationGenerationFeature";
-import { TranslateFeature } from "./TranslateFeature";
+import { TranslateFeature } from "./slsp/features/TranslateFeature";
 import * as util from "./Util"
 
 export class SpecificationLanguageClient extends LanguageClient {

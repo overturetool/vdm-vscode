@@ -3,7 +3,7 @@
 import { window, commands, workspace } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
-import { POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "./protocol/slsp/proofObligationGeneration";
+import { POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "./slsp/protocol/proofObligationGeneration";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
 export class ProofObligationGenerationFeature implements StaticFeature {
