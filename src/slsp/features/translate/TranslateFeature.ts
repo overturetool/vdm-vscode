@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as fs from "fs-extra"
-import * as util from "../../Util"
-import * as LanguageId from "../../LanguageId"
+import * as util from "../../../Util"
+import * as LanguageId from "../../../LanguageId"
 import { DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder, Range, Event } from "vscode";
 import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/translate";
-import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
-import { SLSPEvents } from "../events/SLSPEvents";
+import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../../protocol/translate";
+import { SpecificationLanguageClient } from "../../../SpecificationLanguageClient";
+import { SLSPEvents } from "../../events/SLSPEvents";
 
 export default class TranslateFeature implements StaticFeature {
     private _listener: Disposable;

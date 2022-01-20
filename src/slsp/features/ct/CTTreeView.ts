@@ -4,11 +4,11 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from "vscode";
 import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
-import { CTTestCase, CTSymbol, NumberRange, VerdictKind } from "./slsp/protocol/combinatorialTesting";
+import { CTTestCase, CTSymbol, NumberRange, VerdictKind } from "../../protocol/combinatorialTesting";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
 import { ErrorCodes, Location, LSPErrorCodes, Protocol2CodeConverter } from 'vscode-languageclient';
-import * as util from "./Util"
+import * as util from "../../../Util"
 import { CTHandler } from './CTHandler';
 import { createConverter } from 'vscode-languageclient/lib/common/protocolConverter';
 

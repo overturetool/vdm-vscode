@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { ClientCapabilities, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { CombinatorialTestingClientCapabilities, CombinatorialTestingServerCapabilities } from "./slsp/protocol/combinatorialTesting";
+import { CombinatorialTestingClientCapabilities, CombinatorialTestingServerCapabilities } from "../../protocol/combinatorialTesting";
 
 export class CombinantorialTestingFeature implements StaticFeature {
     public SupportsCT: boolean = false;

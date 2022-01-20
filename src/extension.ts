@@ -13,7 +13,7 @@ import {
 } from 'vscode-languageclient/node';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
-import { CTHandler } from './CTHandler';
+import { CTHandler } from './slsp/features/ct/CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { AddLibraryHandler } from './AddLibrary';
@@ -23,7 +23,7 @@ import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 import { } from './slsp/events/SLSPEvents';
-import { ProofObligationPanel } from './ProofObligationPanel';
+import { ProofObligationPanel } from './slsp/features/pog/ProofObligationPanel';
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
