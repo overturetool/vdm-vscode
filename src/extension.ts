@@ -23,10 +23,9 @@ import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
-import { SLSPClientEventsDispatcher } from './SLSPClientEventsDispatcher'
+import { } from './events/SLSPEvents';
 
 let clients: Map<string, SpecificationLanguageClient>;
-let eventsDispatcher: SLSPClientEventsDispatcher;
 export function activate(context: ExtensionContext) {
     const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
@@ -34,7 +33,6 @@ export function activate(context: ExtensionContext) {
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
 
     clients = new Map();
-    eventsDispatcher = new SLSPClientEventsDispatcher();
     let _sortedWorkspaceFolders: string[] | undefined;
 
     // Make sure that the VDMJ and LSP jars are present
@@ -70,6 +68,7 @@ export function activate(context: ExtensionContext) {
     workspace.textDocuments.forEach(didOpenTextDocument);
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(e => stopClients(e.removed)));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => _sortedWorkspaceFolders = undefined));
+
 
     // ******************************************************************************
     // ******************** Function definitions below ******************************
@@ -156,7 +155,6 @@ export function activate(context: ExtensionContext) {
             clientOptions,
             context,
             util.joinUriPath(wsFolder.uri, ".generated"),
-            eventsDispatcher
         );
 
         // Setup DAP
@@ -379,9 +377,6 @@ export function deactivate(): Thenable<void> | undefined {
             promises.push(client.stop())
         });
     }
-
-    if (eventsDispatcher)
-        promises.push(new Promise(() => eventsDispatcher.dispose()));
 
     return Promise.all(promises).then(() => undefined);
 }

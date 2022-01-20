@@ -7,17 +7,23 @@ import { DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder,
 import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "./protocol/slsp/translate";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { SLSPEvents } from "./events/SLSPEvents";
 
 export class TranslateFeature implements StaticFeature {
     private _listener: Disposable;
+    private _selector: DocumentSelector;
     private _supportWorkDone: boolean = false;
-    private _clientName: string;
 
     constructor(
         private _client: SpecificationLanguageClient,
         private _language: string,
-        private _onDidRequestTranslate: Event<Uri>) {
-        this._clientName = this._client.name;
+        private _onDidRequestTranslate?: Event<Uri>) {
+        if (!this._onDidRequestTranslate) {
+            if (SLSPEvents.translate.onDidRequestTranslate.has(this._language))
+                this._onDidRequestTranslate = SLSPEvents.translate.onDidRequestTranslate.get(this._language);
+            else
+                throw Error(`Translate Feature: No trigger event found for language ${this._language}`);
+        }
     }
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -25,8 +31,9 @@ export class TranslateFeature implements StaticFeature {
         let translateCapabilities = capabilities as TranslateClientCapabilities;
         translateCapabilities.experimental.translateProvider = true;
     }
-    initialize(capabilities: ServerCapabilities): void {
+    initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void {
         let translateCapabilities = (capabilities as TranslateServerCapabilities).experimental.translateProvider;
+        this._selector = documentSelector;
 
         // Not supported
         if (!translateCapabilities || typeof translateCapabilities == "boolean")
@@ -38,7 +45,7 @@ export class TranslateFeature implements StaticFeature {
 
         // Check for feature's language
         if (languages.includes(this._language))
-            this._listener = this._onDidRequestTranslate(event => this.translate(event, this._language));
+            this._listener = this._onDidRequestTranslate(this.callback, this);
 
         // Check if support work done progress
         if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
@@ -51,17 +58,20 @@ export class TranslateFeature implements StaticFeature {
         }
     }
 
-    private translate(uri: Uri, language: string) {
-        if (!util.belongsToClient(uri, this._client))
-            return;
+    private async callback(uri: Uri) {
+        if (util.match(this._selector, uri)) {
+            this.translate(uri, this._language);
+        }
+    }
 
+    private translate(uri: Uri, language: string) {
         let client = this._client;
         let wsFolder = workspace.getWorkspaceFolder(uri);
 
         window.setStatusBarMessage(`Generating ${language}`, new Promise(async (resolve, reject) => {
             // Check timestamp setting
             const translateConfig = workspace.getConfiguration(
-                [this._clientName, 'translate', 'general'].join('.'),
+                [this._client.name, 'translate', 'general'].join('.'),
                 wsFolder.uri
             );
             let saveLocation = util.joinUriPath(client.projectSavedDataUri, language);
@@ -133,7 +143,7 @@ export class TranslateFeature implements StaticFeature {
     private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder, language: string): TranslateParams {
         // Get configurations related to translation
         const config = workspace.getConfiguration(
-            [this._clientName, 'translate', language].join('.'),
+            [this._client.name, 'translate', language].join('.'),
             wsFolder.uri
         );
 

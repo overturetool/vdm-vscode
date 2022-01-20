@@ -3,11 +3,6 @@
 import { commands, Uri, Disposable, window } from 'vscode'
 import { Emitter } from 'vscode-languageclient';
 
-export interface ButtonArgs<I> {
-    uri: Uri,
-    args?: I
-}
-
 export class ButtonEmitter extends Emitter<Uri> {
     private _commandListener: Disposable;
 

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/* Not Used
+
 import { Disposable, Event, Uri } from "vscode";
 import { Emitter } from "vscode-languageclient/node";
 import { ButtonEmitter } from "./ButtonEmitter";
@@ -39,3 +41,5 @@ export class SLSPClientEventsDispatcher implements SLSPClientEvents, Disposable 
         this._disposables.forEach(d => d.dispose());
     }
 }
+
+*/

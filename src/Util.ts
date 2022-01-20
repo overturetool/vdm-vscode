@@ -3,8 +3,8 @@
 import * as path from 'path'
 // import * as fs from 'fs'
 import * as fs from 'fs-extra'
-import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from 'vscode';
-import { LanguageClient } from 'vscode-languageclient/node';
+import { commands, DocumentFilter, DocumentSelector, ExtensionContext, RelativePattern, Uri, workspace, WorkspaceFolder } from 'vscode';
+import * as glob from 'glob'
 
 export function ensureDirectoryExistence(filePath) {
     var dirname = path.dirname(filePath);
@@ -117,6 +117,36 @@ export function joinUriPath(uri: Uri, ...additions: string[]): Uri {
     return Uri.parse(uriString);
 }
 
-export function belongsToClient(uri: Uri, client: LanguageClient) {
-    return uri.toString().startsWith(client.clientOptions?.workspaceFolder?.uri.toString());
+export function match(documentSelector: DocumentSelector, uri: Uri) {
+    let dsArray: ReadonlyArray<DocumentFilter | string> = Array.isArray(documentSelector) ? documentSelector : [documentSelector];
+    let match = 0;
+
+    for (const ds of dsArray.values()) {
+        if (typeof ds != "string") {
+            let df = ds as DocumentFilter;
+            if (df.pattern) {
+                let g = new glob.GlobSync(df.pattern.toString());
+                if (g.found.some(f => f.includes(uri.path.substring(1)))) {
+                    if (df.scheme) {
+                        if (df.scheme == uri.scheme) {
+                            ++match;
+                        }
+                    }
+                    else {
+                        ++match;
+                    }
+                }
+            }
+            else if (df.scheme && df.language === undefined) {
+                if (df.scheme == uri.scheme) {
+                    ++match;
+                }
+            }
+        }
+        else if (ds == '*') {
+            ++match;
+        }
+    }
+
+    return match;
 }
