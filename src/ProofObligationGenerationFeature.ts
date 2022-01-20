@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { window, commands, workspace } from "vscode";
-import { StaticFeature, ClientCapabilities, ServerCapabilities } from "vscode-languageclient";
+import * as util from "./Util"
+import { window, workspace, Uri } from "vscode";
+import { StaticFeature, ClientCapabilities, ServerCapabilities, DocumentSelector, Disposable } from "vscode-languageclient";
 import { ProofObligationPanel } from "./ProofObligationPanel";
-import { POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "./slsp/protocol/proofObligationGeneration";
+import { SLSPEvents } from "./slsp/events/SLSPEvents";
+import { GeneratePOParams, GeneratePORequest, POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "./slsp/protocol/proofObligationGeneration";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 
-export class ProofObligationGenerationFeature implements StaticFeature {
+export default class ProofObligationGenerationFeature implements StaticFeature {
+    private _listeners: Disposable[] = [];
+    private _selector: DocumentSelector;
+    private _lastUri: Uri;
+
     constructor(
         private _client: SpecificationLanguageClient) {
     }
@@ -16,34 +22,63 @@ export class ProofObligationGenerationFeature implements StaticFeature {
         let pogCapabilities = capabilities as ProofObligationGenerationClientCapabilities;
         pogCapabilities.experimental.proofObligationGeneration = true;
     }
-    initialize(capabilities: ServerCapabilities): void {
+    initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void {
         let pogCapabilities = (capabilities as ProofObligationGenerationServerCapabilities);
+        this._selector = documentSelector;
 
-        // If server supports POG
-        if (pogCapabilities?.experimental?.proofObligationProvider) {
-            commands.executeCommand("setContext", "pog-show-button", true);
-            this.registerPOGUpdatedNotificationHandler();
-        }
+        // Not supported
+        if (!pogCapabilities?.experimental?.proofObligationProvider)
+            return;
+
+        this._listeners.push(SLSPEvents.pog.onDidRequestProofObligationGeneration(this.onDidRequestPOG, this));
+        this._listeners.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
     }
     dispose(): void {
-        // Nothing to be done
+        this._listeners.forEach(l => l.dispose());
+        this._listeners = [];
     }
 
-    private registerPOGUpdatedNotificationHandler(): void {
-        this._client.onNotification(POGUpdatedNotification.type, (params) => {
-            let wsFolderUri = this._client.clientOptions.workspaceFolder.uri;
-            // Only perform actions if POG View exists and if active editor is on a file from the clients workspace
-            if (ProofObligationPanel.currentPanel &&
-                (workspace.getWorkspaceFolder(window.activeTextEditor.document.uri).uri.toString() == wsFolderUri.toString())) {
-                // If POG is possible
-                if (params.successful) {
-                    commands.executeCommand("vdm-vscode.updatePOG", wsFolderUri);
-                }
-                else {
-                    // Display warning that POs may be outdated
-                    ProofObligationPanel.displayWarning();
-                }
+    private onDidRequestPOG(uri: Uri, revealPOGView: boolean = true) {
+        this._lastUri = uri; // Store for automatic update
+
+        // Abort if not for this client
+        if (!util.match(this._selector, uri))
+            return;
+
+        window.setStatusBarMessage("Running Proof Obligation Generation", 2000);
+        const workspaceName = this._client.clientOptions.workspaceFolder?.name;
+
+        // Setup message parameters
+        let params: GeneratePOParams = {
+            uri: this._client.code2ProtocolConverter.asUri(uri)
+        };
+
+        // Send request
+        this._client.sendRequest(GeneratePORequest.type, params).then(POs => {
+            // Create new view or show existing POG View
+            ProofObligationPanel.createOrShowPanel(revealPOGView, workspaceName);
+            ProofObligationPanel.currentPanel.displayNewPOS(POs);
+        }).catch(e => {
+            window.showInformationMessage("Proof obligation generation failed. " + e);
+        })
+    }
+
+    private onPOGUpdatedNotification: POGUpdatedNotification.HandlerSignature = (params) => {
+        let wsFolder = this._client.clientOptions.workspaceFolder;
+        // Only perform actions if POG View exists and if active editor is on a file from the clients workspace
+        if (ProofObligationPanel.currentPanel &&
+            util.isSameWorkspaceFolder(workspace.getWorkspaceFolder(window.activeTextEditor.document.uri), wsFolder)) {
+
+            // If POG is possible
+            if (params.successful) {
+                // If last uri was in this workspace folder use that (it might be more specific)
+                let uri = (this._lastUri && util.isSameWorkspaceFolder(workspace.getWorkspaceFolder(this._lastUri), wsFolder)) ? this._lastUri : wsFolder.uri;
+                this.onDidRequestPOG(uri, false);
             }
-        });
+            else {
+                // Display warning that POs may be outdated
+                ProofObligationPanel.displayWarning();
+            }
+        }
     }
 }

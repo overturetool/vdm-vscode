@@ -151,3 +151,11 @@ export function match(documentSelector: DocumentSelector, uri: Uri) {
 
     return match;
 }
+
+export function isSameUri(a: Uri, b: Uri) {
+    return a.toString() == b.toString();
+}
+
+export function isSameWorkspaceFolder(a: WorkspaceFolder, b: WorkspaceFolder) {
+    return isSameUri(a.uri, b.uri);
+}

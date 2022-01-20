@@ -13,7 +13,6 @@ import {
 } from 'vscode-languageclient/node';
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient"
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport"
-import { ProofObligationGenerationHandler } from './ProofObligationGenerationHandler';
 import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
@@ -24,6 +23,7 @@ import { JavaCodeGenHandler } from './JavaCodeGenHandler';
 import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 import { } from './slsp/events/SLSPEvents';
+import { ProofObligationPanel } from './ProofObligationPanel';
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
@@ -56,8 +56,10 @@ export function activate(context: ExtensionContext) {
     // Show VDM VS Code buttons
     commands.executeCommand('setContext', 'vdm-submenus-show', true);
 
+    // Initialise POG panel // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
+    ProofObligationPanel.extensionUri = context.extensionUri;
+
     // Initialise handlers
-    const pogHandler = new ProofObligationGenerationHandler(clients, context);
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);
 
     const addLibraryHandler = new AddLibraryHandler(clients, context);

@@ -215,7 +215,7 @@
         "icon": "$(references)"
       },
       {
-        "command": "vdm-vscode.runPOG",
+        "command": "vdm-vscode.pog.run",
         "title": "Run Proof Obligation Generation",
         "category": "VDM",
         "icon": "$(run)"
@@ -347,8 +347,8 @@
     "menus": {
       "vdm-vscode.vdmsubmenu": [
         {
-          "command": "vdm-vscode.runPOG",
-          "when": "pog-show-button == true",
+          "command": "vdm-vscode.pog.run",
+          "when": "vdm-vscode.pog.run == true",
           "group": "verification@1"
         },
         {
@@ -491,7 +491,7 @@
       ],
       "commandPalette": [
         {
-          "command": "vdm-vscode.runPOG",
+          "command": "vdm-vscode.pog.run",
           "when": "false"
         },
         {

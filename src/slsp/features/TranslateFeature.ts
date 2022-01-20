@@ -9,7 +9,7 @@ import { TranslateClientCapabilities, TranslateParams, TranslateRequest, Transla
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
 import { SLSPEvents } from "../events/SLSPEvents";
 
-export class TranslateFeature implements StaticFeature {
+export default class TranslateFeature implements StaticFeature {
     private _listener: Disposable;
     private _selector: DocumentSelector;
     private _supportWorkDone: boolean = false;
@@ -59,9 +59,11 @@ export class TranslateFeature implements StaticFeature {
     }
 
     private async callback(uri: Uri) {
-        if (util.match(this._selector, uri)) {
-            this.translate(uri, this._language);
-        }
+        // Abort if not for this client
+        if (!util.match(this._selector, uri))
+            return;
+
+        this.translate(uri, this._language);
     }
 
     private translate(uri: Uri, language: string) {

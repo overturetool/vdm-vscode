@@ -10,7 +10,7 @@ export class ProofObligationPanel {
     private _p2cConverter: Protocol2CodeConverter = createConverter(undefined, undefined);
     private readonly _panel: WebviewPanel;
     private _disposables: Disposable[] = [];
-    private readonly _extensionUri: Uri;
+    private static _extensionUri: Uri;
     private _pos: ProofObligation[];
     private _sorting = new Map<string, boolean>(); // Maps a header to a boolean telling if sorting should be done DESCENDING.
     private _currentSortingHeader: string;
@@ -20,7 +20,18 @@ export class ProofObligationPanel {
     public static readonly viewType = 'proofObligationPanel';
     private static lastWorkspace: string;
 
-    public static createOrShowPanel(extensionUri: Uri, moveFocus: boolean, workspace?: string) {
+    public static set extensionUri(uri: Uri) {
+        ProofObligationPanel._extensionUri = uri;
+    }
+
+    public static get extensionUri(): Uri {
+        if (!ProofObligationPanel._extensionUri) {
+            throw Error('Proof obligation panel missing extension uri');
+        }
+        return ProofObligationPanel._extensionUri;
+    }
+
+    public static createOrShowPanel(moveFocus: boolean, workspace?: string) {
         // Define which column the po view should be in
         const column = window.activeTextEditor
             ? ViewColumn.Beside
@@ -56,7 +67,7 @@ export class ProofObligationPanel {
                 enableScripts: true,
 
                 // Restrict the webview to only load content from the extension's `resources` directory.
-                localResourceRoots: [ProofObligationPanel.resourcesUri(extensionUri)],
+                localResourceRoots: [ProofObligationPanel.resourcesUri(ProofObligationPanel.extensionUri)],
 
                 // Retain state when PO view goes into the background
                 retainContextWhenHidden: true
@@ -64,12 +75,11 @@ export class ProofObligationPanel {
         );
 
         this.lastWorkspace = workspace;
-        ProofObligationPanel.currentPanel = new ProofObligationPanel(extensionUri, panel);
+        ProofObligationPanel.currentPanel = new ProofObligationPanel(panel);
     }
 
-    private constructor(extensionUri: Uri, panel: WebviewPanel) {
+    private constructor(panel: WebviewPanel) {
         this._panel = panel;
-        this._extensionUri = extensionUri;
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programatically
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -218,8 +228,8 @@ export class ProofObligationPanel {
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(util.joinUriPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.js'));
-        const styleUri = webview.asWebviewUri(util.joinUriPath(ProofObligationPanel.resourcesUri(this._extensionUri), 'poView.css'));
+        const scriptUri = webview.asWebviewUri(util.joinUriPath(ProofObligationPanel.resourcesUri(ProofObligationPanel.extensionUri), 'poView.js'));
+        const styleUri = webview.asWebviewUri(util.joinUriPath(ProofObligationPanel.resourcesUri(ProofObligationPanel.extensionUri), 'poView.css'));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();
