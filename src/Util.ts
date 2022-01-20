@@ -51,8 +51,10 @@ export function createDirectory(fullUri: Uri, timestamped?: boolean): Promise<Ur
             fullUri = Uri.parse(fullUri + " " + dateString);
         }
 
-        fs.ensureDirSync(fullUri.fsPath);
-        return resolve(fullUri)
+        fs.ensureDir(fullUri.fsPath).then(
+            () => resolve(fullUri),
+            e => reject(e)
+        );
     });
 }
 
