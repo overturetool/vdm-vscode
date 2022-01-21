@@ -31,11 +31,11 @@ jobs:
         vsce package
 
     - name: Read node from package.json
-        uses: culshaw/read-package-node-version-actions@v1
-        id: package-node-version
+      uses: culshaw/read-package-node-version-actions@v1
+      id: package-node-version
 
     - name: Upload VSIX
-        uses: actions/upload-artifact@v2
-        with:
-          path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
-          name: vdm-vscode-${{ steps.get_version.outputs.VERSION }}.vsix
+      uses: actions/upload-artifact@v2
+      with:
+        path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+        name: vdm-vscode-${{ steps.get_version.outputs.VERSION }}.vsix
