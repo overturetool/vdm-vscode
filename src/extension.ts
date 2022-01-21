@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as fs from 'fs-extra';
-import * as path from 'path'
+import * as Fs from 'fs-extra';
+import * as Path from 'path'
 import * as net from 'net';
 import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
@@ -19,7 +19,7 @@ import { CTHandler } from './CTHandler';
 import { VdmjCTFilterHandler } from './VdmjCTFilterHandler';
 import { VdmjCTInterpreterHandler } from './VdmjCTInterpreterHandler';
 import { TranslateHandler } from './TranslateHandler';
-import { AddLibraryHandler } from './AddLibrary';
+import { AddLibraryHandler } from './AddLibraryHandler';
 import { AddRunConfigurationHandler } from './AddRunConfiguration';
 import { AddExampleHandler } from './ImportExample';
 import { JavaCodeGenHandler } from './JavaCodeGenHandler';
@@ -27,10 +27,10 @@ import { AddToClassPathHandler } from './AddToClassPath';
 import * as encoding from './Encoding';
 
 export function activate(context: ExtensionContext) {
-    const extensionLogPath = path.resolve(context.logUri.fsPath, "vdm-vscode.log");
-    const jarPath = path.resolve(context.extensionPath, "resources", "jars");
-    const jarPath_vdmj = path.resolve(jarPath, "vdmj");
-    const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
+    const extensionLogPath = Path.resolve(context.logUri.fsPath, "vdm-vscode.log");
+    const jarPath = Path.resolve(context.extensionPath, "resources", "jars");
+    const jarPath_vdmj = Path.resolve(jarPath, "vdmj");
+    const jarPath_vdmj_hp = Path.resolve(jarPath, "vdmj_hp");
 
     let clients: Map<string, SpecificationLanguageClient> = new Map();
     let _sortedWorkspaceFolders: string[] | undefined;
@@ -180,7 +180,7 @@ export function activate(context: ExtensionContext) {
         clients.set(clientKey, client);
     }
 
-    function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
+    async function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
         // Get server configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
@@ -205,7 +205,7 @@ export function activate(context: ExtensionContext) {
         const logLevel = serverConfig.get("logLevel", "off");
         if (logLevel != "off") {
             // Ensure logging path exists
-            const languageServerLoggingPath = path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
+            const languageServerLoggingPath = Path.resolve(context.logUri.fsPath, wsFolder.name.toString() + '_lang_server.log');
             util.ensureDirectoryExistence(languageServerLoggingPath);
             args.push(`-Dlsp.log.filename=${languageServerLoggingPath}`);
             args.push(`-Dlsp.log.level=${logLevel}`)
@@ -219,26 +219,25 @@ export function activate(context: ExtensionContext) {
         else
             util.writeToLog(extensionLogPath, `Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`)
 
-        // Construct class path
-        let classPath = "";
+        // Construct class path.
+		// Start by adding library paths to class path
+		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)).concat(AddLibraryHandler.getDefaultLibraryJars(context.extensionPath)).reduce((resultingCP, path) => resultingCP + Path.delimiter + path);
 
-        // Add user defined paths to class path
-        if (serverConfig.classPathAdditions) {
-            serverConfig.classPathAdditions.forEach(p => {
-                let pathToCheck = (p.endsWith(path.sep + '*') ? p.substr(0, p.length - 2) : p)
-                if (!fs.existsSync(pathToCheck)) {
-                    let m = "Invalid path in class path additions: " + p;
-                    window.showWarningMessage(m)
-                    util.writeToLog(extensionLogPath, m);
-                    return;
-                }
-                classPath += p + path.delimiter;
-            })
-        }
+		// Add user defined paths
+		(serverConfig.classPathAdditions as string[]).forEach((path) => {
+			const pathToCheck = path.endsWith(Path.sep + "*") ? path.substr(0, path.length - 2) : path;
+			if (!Fs.existsSync(pathToCheck)) {
+				const msg = "Invalid path in class path additions: " + path;
+				window.showWarningMessage(msg);
+				util.writeToLog(extensionLogPath, msg);
+			} else {
+				classPath += Path.delimiter + path;
+			}
+		});
 
-        // Add jars folders to class path
-        // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-        classPath += path.resolve((serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj), "*");
+		// Add vdmj jars folders
+		// Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
+		classPath += Path.delimiter + Path.resolve(serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj, "*");
 
         // Construct java launch arguments
         args.push(...[
@@ -263,9 +262,9 @@ export function activate(context: ExtensionContext) {
         if (stdioConfig.activateStdoutLogging) {
             // Log to file
             if (stdoutLogPath != "") {
-                util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString())
-                server.stdout.addListener("data", chunk => util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
-                server.stderr.addListener("data", chunk => util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
+                util.ensureDirectoryExistence(stdoutLogPath + Path.sep + wsFolder.name.toString())
+                server.stdout.addListener("data", chunk => util.writeToLog(stdoutLogPath + Path.sep + wsFolder.name.toString() + "_stdout.log", chunk));
+                server.stderr.addListener("data", chunk => util.writeToLog(stdoutLogPath + Path.sep + wsFolder.name.toString() + "_stderr.log", chunk));
             }
             // Log to terminal
             else {
@@ -289,10 +288,10 @@ export function activate(context: ExtensionContext) {
     function openServerLog() {
         const logFolder: Uri = context.logUri;
 
-        if (!fs.existsSync(logFolder.fsPath))
+        if (!Fs.existsSync(logFolder.fsPath))
             return window.showErrorMessage("No logs found");
 
-        const logsInFolder: string[] = fs.readdirSync(logFolder.fsPath).filter(x => x.endsWith(".log"));
+        const logsInFolder: string[] = Fs.readdirSync(logFolder.fsPath).filter(x => x.endsWith(".log"));
 
         if (!logsInFolder || logsInFolder.length == 0)
             return window.showErrorMessage("No logs found");
@@ -312,7 +311,7 @@ export function activate(context: ExtensionContext) {
     }
 
     function openServerLogFolder() {
-        fs.ensureDirSync(context.logUri.fsPath);
+        Fs.ensureDirSync(context.logUri.fsPath);
         commands.executeCommand("revealFileInOS", context.logUri);
     }
 
