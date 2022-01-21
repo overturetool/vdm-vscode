@@ -214,12 +214,25 @@ export class AddLibraryHandler {
 		});
 	}
 
-	public static async getLibraryJars(wsFolder: WorkspaceFolder, extensionPath: string): Promise<string[]> {
+	public static getDefaultLibraryJars(extensionPath: string): string[] {
+		const libPath = Path.resolve(extensionPath, "resources", "jars", "libs");
+			if (!Fs.existsSync(libPath)) {
+				const msg = "Invalid path for default libraries: " + libPath;
+				window.showWarningMessage(msg);
+				console.log(msg);
+				return [];
+			} else {
+				return Fs.readdirSync(libPath, { withFileTypes: true })
+				?.filter((dirent) => dirent.name.endsWith(".jar"))
+				?.map((dirent) => Path.resolve(libPath, dirent.name)) ?? [];
+			}
+	}
+
+	public static async getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): Promise<string[]> {
 		const libraryConfig = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
 		const libraryJars = libraryConfig.VdmLibraries as string[];
 		// Get any library jars specified by the user
-		const jarPaths: string[] =
-			libraryJars.length == 0
+		return libraryJars.length == 0
 				? []
 				: (
 						await Promise.all(
@@ -235,30 +248,18 @@ export class AddLibraryHandler {
 							})
 						)
 				  ).reduce((prev, cur) => prev.concat(cur));
-
-		// Include default library jars
-		if (libraryConfig.includeDefaultLibraries) {
-			const libPath = Path.resolve(extensionPath, "resources", "jars", "libs");
-			if (!Fs.existsSync(libPath)) {
-				const msg = "Invalid path for default libraries: " + libPath;
-				window.showWarningMessage(msg);
-				console.log(msg);
-			} else {
-				jarPaths.push(
-					...(Fs.readdirSync(libPath, { withFileTypes: true })
-						?.filter((dirent) => dirent.name.endsWith(".jar"))
-						?.map((dirent) => Path.resolve(libPath, dirent.name)) ?? [])
-				);
-			}
-		}
-
-		return jarPaths;
 	}
 
 	private getLibsFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
 		return new Promise<Map<string, Library[]>>(async (resolve, reject) => {
-			//Get jars from class path
-			const jarPaths: string[] = await AddLibraryHandler.getLibraryJars(wsFolder, this.context.extensionPath);
+			// Get user defined library jars
+			const jarPaths: string[] = await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder);
+
+			// Include default library jars
+			const t = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
+			if(t.includeDefaultLibraries) {
+				jarPaths.push(...AddLibraryHandler.getDefaultLibraryJars(this.context.extensionPath));
+			}
 			if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 
 			// Extract libraries
