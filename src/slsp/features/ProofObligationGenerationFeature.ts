@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as util from "../../../Util"
+import * as util from "../../Util"
 import { window, workspace, Uri } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities, DocumentSelector, Disposable } from "vscode-languageclient";
-import { ProofObligationPanel } from "./ProofObligationPanel";
-import { SLSPEvents } from "../../events/SLSPEvents";
-import { GeneratePOParams, GeneratePORequest, POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "../../protocol/proofObligationGeneration";
-import { SpecificationLanguageClient } from "../../../SpecificationLanguageClient";
+import { ProofObligationPanel } from "../views/ProofObligationPanel";
+import { SLSPEvents } from "../events/SLSPEvents";
+import { GeneratePOParams, GeneratePORequest, POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "../protocol/proofObligationGeneration";
+import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
 
 export default class ProofObligationGenerationFeature implements StaticFeature {
     private _listeners: Disposable[] = [];

@@ -3,10 +3,10 @@
 import path = require("path");
 import { Uri } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
-import { CombinantorialTestingFeature } from "./slsp/features/ct/CombinatorialTestingFeature";
+import { CombinantorialTestingFeature } from "./slsp/features/CombinatorialTestingFeature";
 import * as LanguageId from "./LanguageId";
-import ProofObligationGenerationFeature from "./slsp/features/pog/ProofObligationGenerationFeature";
-import TranslateFeature from "./slsp/features/translate/TranslateFeature";
+import ProofObligationGenerationFeature from "./slsp/features/ProofObligationGenerationFeature";
+import TranslateFeature from "./slsp/features/TranslateFeature";
 import * as util from "./Util"
 
 export class SpecificationLanguageClient extends LanguageClient {

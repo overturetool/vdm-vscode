@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { ClientCapabilities, DocumentSelector, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
-import { CombinatorialTestingClientCapabilities, CombinatorialTestingServerCapabilities } from "../../protocol/combinatorialTesting";
+import { CombinatorialTestingClientCapabilities, CombinatorialTestingServerCapabilities } from "../protocol/combinatorialTesting";
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _selector: DocumentSelector;

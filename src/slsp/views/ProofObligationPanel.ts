@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview } from 'vscode'
-import { ProofObligation } from "../../protocol/proofObligationGeneration"
+import { ProofObligation } from "../protocol/proofObligationGeneration"
 import { Protocol2CodeConverter } from 'vscode-languageclient';
-import * as util from "../../../Util"
+import * as util from "../../Util"
 import { createConverter } from 'vscode-languageclient/lib/common/protocolConverter';
 
 export class ProofObligationPanel {
