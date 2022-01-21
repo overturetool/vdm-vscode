@@ -31,4 +31,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
-        name: vdm-vscode-${{ steps.get_version.outputs.VERSION }}.vsix
+        name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
