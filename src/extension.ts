@@ -220,8 +220,13 @@ export function activate(context: ExtensionContext) {
             util.writeToLog(extensionLogPath, `Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`)
 
         // Construct class path.
-		// Start by adding library paths to class path
-		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)).concat(AddLibraryHandler.getDefaultLibraryJars(context.extensionPath)).reduce((resultingCP, path) => resultingCP + Path.delimiter + path);
+		// Start by adding user defined library paths
+		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)).reduce((resultingCP, path) => resultingCP + Path.delimiter + path);
+
+        // Add default library jar paths
+        if(workspace.getConfiguration("vdm-vscode.libraries", wsFolder).includeDefaultLibraries) {
+            AddLibraryHandler.getDefaultLibraryJars(context.extensionPath).forEach(path => classPath += Path.delimiter + path);
+        }
 
 		// Add user defined paths
 		(serverConfig.classPathAdditions as string[]).forEach((path) => {

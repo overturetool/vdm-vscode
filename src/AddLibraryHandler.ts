@@ -256,8 +256,7 @@ export class AddLibraryHandler {
 			const jarPaths: string[] = await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder);
 
 			// Include default library jars
-			const t = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
-			if(t.includeDefaultLibraries) {
+			if(workspace.getConfiguration("vdm-vscode.libraries", wsFolder).includeDefaultLibraries) {
 				jarPaths.push(...AddLibraryHandler.getDefaultLibraryJars(this.context.extensionPath));
 			}
 			if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
