@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, QuickPickItem, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ExtensionContext, QuickPickItem, RelativePattern, Uri, window, workspace, WorkspaceConfiguration, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
-import * as path from "path";
-import * as fs from "fs-extra";
-import { dir } from "console";
+import * as Path from "path";
+import * as Fs from "fs-extra";
+import * as Util from "./Util";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -49,8 +49,8 @@ export class AddLibraryHandler {
 						if (selectedItems === undefined || selectedItems.length == 0) return resolve(`Empty selection. Add library completed.`);
 
 						// Ensure that target folder exists
-						const libPathTarget = path.resolve(wsFolder.uri.fsPath, "lib");
-						fs.ensureDir(libPathTarget)
+						const libPathTarget = Path.resolve(wsFolder.uri.fsPath, "lib");
+						Fs.ensureDir(libPathTarget)
 							.then(() => {
 								const jarPathTofileNames: Map<string, string[]> = new Map();
 
@@ -197,34 +197,68 @@ export class AddLibraryHandler {
 				console.log(`No client found for the folder: ${wsFolder.name}`);
 
 				// Guess dialect
-				for (const dialect in this.dialects) {
-					const pattern = new RelativePattern(wsFolder.uri.path, "*." + dialect);
-					if ((await workspace.findFiles(pattern, null, 1)).length == 1) resolve(this.dialects[dialect]);
+				for (const dp in this.dialects) {
+					if ((await workspace.findFiles(new RelativePattern(wsFolder.uri.path, "*." + dp), null, 1)).length == 1) return resolve(this.dialects[dp]);
 				}
-
-				const dialect: string = await window.showQuickPick(Object.keys(this.dialects), {
+				// Let user chose
+				const chosenDialect = await window.showQuickPick(Object.keys(this.dialects), {
 					placeHolder: "Choose dialect",
 					canPickMany: false,
 				});
-				if (!dialect) {
+				if (!chosenDialect) {
 					reject("Add library failed! Unable to determine VDM dialect for workspace");
 				} else {
-					resolve(this.dialects[dialect]);
+					resolve(this.dialects[chosenDialect]);
 				}
 			}
 		});
 	}
 
+	public static async getLibraryJars(wsFolder: WorkspaceFolder, extensionPath: string): Promise<string[]> {
+		const libraryConfig = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
+		const libraryJars = libraryConfig.VdmLibraries as string[];
+		// Get any library jars specified by the user
+		const jarPaths: string[] =
+			libraryJars.length == 0
+				? []
+				: (
+						await Promise.all(
+							libraryJars.map((path) => {
+								if (Fs.existsSync(path)) {
+									if (Fs.lstatSync(path).isDirectory()) {
+										return Util.getFilesFromDir(path, "jar");
+									} else {
+										return [path];
+									}
+								}
+								return [];
+							})
+						)
+				  ).reduce((prev, cur) => prev.concat(cur));
+
+		// Include default library jars
+		if (libraryConfig.includeDefaultLibraries) {
+			const libPath = Path.resolve(extensionPath, "resources", "jars", "libs");
+			if (!Fs.existsSync(libPath)) {
+				const msg = "Invalid path for default libraries: " + libPath;
+				window.showWarningMessage(msg);
+				console.log(msg);
+			} else {
+				jarPaths.push(
+					...(Fs.readdirSync(libPath, { withFileTypes: true })
+						?.filter((dirent) => dirent.name.endsWith(".jar"))
+						?.map((dirent) => Path.resolve(libPath, dirent.name)) ?? [])
+				);
+			}
+		}
+
+		return jarPaths;
+	}
+
 	private getLibsFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
 		return new Promise<Map<string, Library[]>>(async (resolve, reject) => {
 			//Get jars from class path
-			const libsPath = path.resolve(this.context.extensionPath, "resources", "jars", "libs");
-			//const jarPaths: string[] = workspace.getConfiguration("vdm-vscode.server", wsFolder).inspect("classPathAdditions").globalValue as string[];
-			const jarPaths: string[] = fs
-				.readdirSync(libsPath)
-				.filter((fileName) => fileName.endsWith(".jar"))
-				.map((fileName) => path.resolve(libsPath, fileName));
-
+			const jarPaths: string[] = await AddLibraryHandler.getLibraryJars(wsFolder, this.context.extensionPath);
 			if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 
 			// Extract libraries
@@ -328,7 +362,7 @@ export class AddLibraryHandler {
 
 					// Handle entry
 					zipfile.on("entry", (entry) => {
-						const fileName = path.basename(entry.fileName);
+						const fileName = Path.basename(entry.fileName);
 						// Resolve when we have found all library files
 						if (libFileNames.length < 1) {
 							zipfile.close();
@@ -343,7 +377,7 @@ export class AddLibraryHandler {
 									// Check encoding
 									if (!Buffer.isEncoding(wsEncoding)) console.log(`Encoding (files.encoding: ${wsEncoding}) not possible using the default: UTF-8`);
 									// Create writestream with needed encoding to the target path
-									const writeStream = fs.createWriteStream(path.join(targetFolderPath, fileName), {
+									const writeStream = Fs.createWriteStream(Path.join(targetFolderPath, fileName), {
 										encoding: wsEncoding == this.libraryEncoding || !Buffer.isEncoding(wsEncoding) ? this.libraryEncoding : wsEncoding,
 									});
 
