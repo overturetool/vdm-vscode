@@ -19,9 +19,6 @@ jobs:
         npm install 
         npm install -g vsce 
         npm install webpack
-        
-    - name: Webpack
-      run: npm run webpack 
       
     - name: Create vsix
       run: vsce package
