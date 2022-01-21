@@ -7,30 +7,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: "contains(github.event.head_commit.message, 'VSCE')"
-    strategy:
-      matrix:
-        node-version: [12.x, 14.x, 16.x]
     
     steps:
     - uses: actions/checkout@v2
-
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+    - uses: actions/setup-node@v2
       with:
-        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
         
     - name: Install dependencies
       run: |
         npm install 
-        npm install vsce 
+        npm install -g vsce 
         npm install webpack
+        
+    - name: Webpack
+      run: npm run webpack 
       
     - name: Create vsix
-      run: | 
-        npm run webpack 
-        vsce package
+      run: vsce package
 
-    - name: Read node from package.json
+    - name: Read version from package.json
       uses: culshaw/read-package-node-version-actions@v1
       id: package-node-version
 
