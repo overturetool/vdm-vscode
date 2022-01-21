@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from "vscode";
-import { CTDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
+import { CTTreeDataProvider, TestViewElement, TreeItemType } from "./CTDataProvider";
 import { CTTestCase, CTSymbol, NumberRange, VerdictKind } from "../../protocol/combinatorialTesting";
 import { CTResultElement, CTResultDataProvider } from './CTResultDataProvider';
 import path = require('path');
@@ -18,7 +18,7 @@ export class CTTreeView {
     private _resultView: vscode.TreeView<CTResultElement>;
     public currentTraceName: string;
     private _combinatorialTests: completeCT[] = [];
-    private _testProvider: CTDataProvider;
+    private _testProvider: CTTreeDataProvider;
     private _resultProvider: CTResultDataProvider;
     private _executeCanceled: boolean = false;
     private _numberOfUpdatedTests: number = 0;
@@ -35,7 +35,7 @@ export class CTTreeView {
         private _canFilter: boolean = false
     ) {
 
-        this._testProvider = new CTDataProvider(this, this._context);
+        this._testProvider = new CTTreeDataProvider(this, this._context);
         this._resultProvider = new CTResultDataProvider();
 
         // Create test view

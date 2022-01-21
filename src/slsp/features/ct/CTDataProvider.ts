@@ -5,7 +5,7 @@ import { CTTreeView } from './CTTreeView';
 import { NumberRange, VerdictKind } from '../../protocol/combinatorialTesting';
 import { Icons } from '../../../Icons'
 
-export class CTDataProvider implements TreeDataProvider<TestViewElement> {
+export class CTTreeDataProvider implements TreeDataProvider<TestViewElement> {
 
     private _onDidChangeTreeData: EventEmitter<TestViewElement | undefined> = new EventEmitter<TestViewElement | undefined>();
     public onDidChangeTreeData: Event<TestViewElement> = this._onDidChangeTreeData.event;
@@ -100,10 +100,9 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             for (let i = 0; i < groups; i++) {
                 let testRange: NumberRange = { start: (1 + i * this.groupSize), end: (this.groupSize >= numberOfTests ? numberOfTests + this.groupSize * i : this.groupSize * (i + 1)) };
                 let results = this._ctView.getTestResults(testRange, element.label);
-                let resultsLength = results.length;
                 let verdict = !results ? null : VerdictKind.Passed;
                 let toShow = !this._filter; // variable used to decide if we want to show the group or not
-                for (let k = 0; k < resultsLength; k++) {
+                for (let k = 0; k < results.length; k++) {
                     if (!toShow && this._verdictKindToShow.includes(results[k].verdict)) // if we find, in a group, a verdict that corresponds to a _verdictKindToShow(verdict that we want to show) then we can have to show this group (if the group contains at least 1 desired verdict then the group is selected)
                         toShow = true;
 
@@ -142,9 +141,8 @@ export class CTDataProvider implements TreeDataProvider<TestViewElement> {
             // Generate all test view elements for the test group
 
             let testsResults = this._ctView.getTestResults(testRange, element.getParent().label);
-            let testsResultsLength = testsResults.length;
             let testsViewElements = [];
-            for (let i = 0; i < testsResultsLength; i++) {
+            for (let i = 0; i < testsResults.length; i++) {
                 if (!this._filter || this._verdictKindToShow.includes(testsResults[i].verdict)) // filter tests and show only the ones whick correspond to the right verdict
                     testsViewElements.push(new TestViewElement(
                         testsResults[i].id + "",

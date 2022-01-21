@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { ClientCapabilities, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
+import { ClientCapabilities, DocumentSelector, InitializeParams, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
 import { CombinatorialTestingClientCapabilities, CombinatorialTestingServerCapabilities } from "../../protocol/combinatorialTesting";
 
 export class CombinantorialTestingFeature implements StaticFeature {
+    private _selector: DocumentSelector;
     public SupportsCT: boolean = false;
     public SupportsCTWorkDoneProgress: boolean = false;
 
@@ -13,8 +14,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
         let ctCapabilities = capabilities as CombinatorialTestingClientCapabilities;
         ctCapabilities.experimental.combinatorialTesting = true;
     }
-    initialize(capabilities: ServerCapabilities): void {
+    initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void {
         let ctCapabilities = (capabilities as CombinatorialTestingServerCapabilities);
+        this._selector = documentSelector;
 
         // If server supports CT
         if (ctCapabilities?.experimental?.combinatorialTestProvider) {

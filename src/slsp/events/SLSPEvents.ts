@@ -12,6 +12,10 @@ export namespace SLSPEvents {
         export const onDidRequestProofObligationGeneration: Event<Uri> = onDidRequestProofObligationGenerationEmitter.event;
     }
 
+    export namespace ct {
+
+    }
+
     export namespace translate {
         const onDidRequestTranslateLatexEmitter: EventEmitter<Uri> = new ButtonEmitter(`vdm-vscode.translate.${LanguageId.latex}`);
         export const onDidRequestTranslateLatex: Event<Uri> = onDidRequestTranslateLatexEmitter.event;
