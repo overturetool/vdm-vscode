@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { CancellationToken, DocumentUri, HandlerResult, RequestHandler, RequestType, URI, WorkDoneProgressOptions, WorkDoneProgressParams } from "vscode-languageclient";
+import {
+    CancellationToken,
+    DocumentUri,
+    HandlerResult,
+    RequestHandler,
+    RequestType,
+    URI,
+    WorkDoneProgressOptions,
+    WorkDoneProgressParams,
+} from "vscode-languageclient";
 
 export interface TranslateClientCapabilities {
     /**
@@ -11,7 +20,7 @@ export interface TranslateClientCapabilities {
          * The client has support for translation.
          */
         translateProvider?: boolean;
-    }
+    };
 }
 export interface TranslateServerCapabilities {
     /**
@@ -22,10 +31,10 @@ export interface TranslateServerCapabilities {
          * Capabilities specific to the `slsp/TR` message.
          */
         translateProvider?: boolean | TranslateOptions;
-    }
+    };
 }
 /**
- * Options for the translate feature. 
+ * Options for the translate feature.
  */
 export interface TranslateOptions extends WorkDoneProgressOptions {
     languageId: string | string[];
@@ -35,10 +44,14 @@ export interface TranslateOptions extends WorkDoneProgressOptions {
  * The `slsp/TR/translate` is sent from the client to the server to translate a document/folder.
  */
 export namespace TranslateRequest {
-    export const method = 'slsp/TR/translate';
-    export const type = new RequestType<TranslateParams, TranslateResponse | null, void>('slsp/TR/translate');
+    export const method = "slsp/TR/translate";
+    export const type = new RequestType<TranslateParams, TranslateResponse | null, void>("slsp/TR/translate");
     export type HandlerSignature = RequestHandler<TranslateParams, TranslateResponse | null, void>;
-    export type MiddlewareSignature = (params: TranslateParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<TranslateResponse | null, void>;
+    export type MiddlewareSignature = (
+        params: TranslateParams,
+        token: CancellationToken,
+        next: HandlerSignature
+    ) => HandlerResult<TranslateResponse | null, void>;
 }
 
 /**
@@ -54,7 +67,7 @@ export interface TranslateParams extends WorkDoneProgressParams {
      */
     languageId: string;
     /**
-     * DocumentUri specifying the location of the resulting 
+     * DocumentUri specifying the location of the resulting
      * translation.
      * This should be an existing empty folder.
      */
@@ -70,8 +83,8 @@ export interface TranslateParams extends WorkDoneProgressParams {
  */
 export interface TranslateResponse {
     /**
-     * URI specifying the "main" file of the resulting translation 
-     * if multiple files are generated, this is the uri to where 
+     * URI specifying the "main" file of the resulting translation
+     * if multiple files are generated, this is the uri to where
      * "main" is.
      */
     uri: DocumentUri;

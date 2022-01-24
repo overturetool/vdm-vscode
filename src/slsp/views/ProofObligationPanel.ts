@@ -1,7 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { WorkspaceFolder, Uri, WebviewPanel, Disposable, window, ViewColumn, workspace, Webview, Location, Event, ExtensionContext, commands, DocumentSelector } from 'vscode'
-import * as util from "../../Util"
+import {
+    WorkspaceFolder,
+    Uri,
+    WebviewPanel,
+    Disposable,
+    window,
+    ViewColumn,
+    workspace,
+    Webview,
+    Location,
+    Event,
+    ExtensionContext,
+    commands,
+    DocumentSelector,
+} from "vscode";
+import * as util from "../../Util";
 
 export interface ProofObligation {
     id: number;
@@ -12,18 +26,18 @@ export interface ProofObligation {
     status?: string;
 }
 
-export interface ProofObligationProvider extends Disposable {
+export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
     provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
 }
 
 interface Message {
-    command: string,
-    data?: any
-};
+    command: string;
+    data?: any;
+}
 
 export class ProofObligationPanel {
-    private static _providers: { selector: DocumentSelector, provider: ProofObligationProvider }[] = [];
+    private static _providers: { selector: DocumentSelector; provider: ProofObligationProvider }[] = [];
 
     private _context: ExtensionContext;
     private _panel: WebviewPanel;
@@ -42,27 +56,26 @@ export class ProofObligationPanel {
     }
 
     public get viewType(): string {
-        return `${this._context.extension.id}.proofObligationPanel`
+        return `${this._context.extension.id}.proofObligationPanel`;
     }
 
     private get _resourcesUri(): Uri {
-        return util.joinUriPath(this._context.extensionUri, 'resources');
+        return util.joinUriPath(this._context.extensionUri, "resources");
     }
 
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
         this._providers.push({ selector: documentSelector, provider: provider });
-        commands.executeCommand('setContext', `vdm-vscode.pog.run`, true);
+        commands.executeCommand("setContext", `vdm-vscode.pog.run`, true);
 
-        let listener = provider.onDidChangeProofObligations(e => commands.executeCommand(`vdm-vscode.pog.update`, e));
+        let listener = provider.onDidChangeProofObligations((e) => commands.executeCommand(`vdm-vscode.pog.update`, e));
 
         return {
             dispose: () => {
                 listener.dispose();
-                this._providers = this._providers.filter(p => (p.selector != documentSelector || p.provider != provider));
-                if (this._providers.length == 0)
-                    commands.executeCommand('setContext', `vdm-vscode.pog.run`, false);
-            }
-        }
+                this._providers = this._providers.filter((p) => p.selector != documentSelector || p.provider != provider);
+                if (this._providers.length == 0) commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+            },
+        };
     }
 
     protected async onRunPog(uri: Uri) {
@@ -76,7 +89,6 @@ export class ProofObligationPanel {
                     console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
                 }
             }
-
         }
 
         let wsFolder = workspace.getWorkspaceFolder(uri);
@@ -94,14 +106,12 @@ export class ProofObligationPanel {
 
             // Switch to active editor is on a file from the clients workspace
             let activeWsFolder = workspace.getWorkspaceFolder(window.activeTextEditor?.document.uri);
-            if (!util.isSameWorkspaceFolder(activeWsFolder, this._lastWsFolder))
-                uri = activeWsFolder.uri;
+            if (!util.isSameWorkspaceFolder(activeWsFolder, this._lastWsFolder)) uri = activeWsFolder.uri;
 
             // If POG is possible
             if (canRun) {
                 this.onRunPog(uri);
-            }
-            else {
+            } else {
                 // Display warning that POs may be outdated
                 this.displayWarning();
             }
@@ -116,26 +126,27 @@ export class ProofObligationPanel {
         if (this._panel) {
             // Check if panel is for another workspace folder
             if (wsFolder && !util.isSameWorkspaceFolder(wsFolder, this._lastWsFolder)) {
-                this._panel.title = 'Proof Obligations' + (wsFolder ? ': ' + wsFolder.name : '');
+                this._panel.title = "Proof Obligations" + (wsFolder ? ": " + wsFolder.name : "");
             }
 
             this._panel.reveal(column, true);
-        }
-        else {
+        } else {
             // Create panel
-            this._panel = this._panel || window.createWebviewPanel(
-                this.viewType,
-                'Proof Obligations' + (wsFolder ? ': ' + wsFolder.name : ''),
-                {
-                    viewColumn: column,
-                    preserveFocus: true
-                },
-                {
-                    enableScripts: true, // Enable javascript in the webview                
-                    localResourceRoots: [this._resourcesUri], // Restrict the webview to only load content from the extension's `resources` directory.
-                    retainContextWhenHidden: true // Retain state when PO view goes into the background
-                },
-            );
+            this._panel =
+                this._panel ||
+                window.createWebviewPanel(
+                    this.viewType,
+                    "Proof Obligations" + (wsFolder ? ": " + wsFolder.name : ""),
+                    {
+                        viewColumn: column,
+                        preserveFocus: true,
+                    },
+                    {
+                        enableScripts: true, // Enable javascript in the webview
+                        localResourceRoots: [this._resourcesUri], // Restrict the webview to only load content from the extension's `resources` directory.
+                        retainContextWhenHidden: true, // Retain state when PO view goes into the background
+                    }
+                );
 
             // Listen for when the panel is disposed
             // This happens when the user closes the panel or when the panel is closed programatically
@@ -146,29 +157,35 @@ export class ProofObligationPanel {
                 async (message: Message) => {
                     console.log(`[Proof Obligation View] Received new message: ${message}`);
                     switch (message.command) {
-                        case 'goToSymbol':
+                        case "goToSymbol":
                             // Find path of po with id
-                            let po = this._pos.find(d => d.id.toString() == message.data);
+                            let po = this._pos.find((d) => d.id.toString() == message.data);
                             let path = Uri.parse(po.location.uri.toString()).path;
 
                             // Open the specification file with the symbol responsible for the po
                             let doc = await workspace.openTextDocument(path);
 
                             // Show the file
-                            window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 })
+                            window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 });
                             break;
-                        case 'sort':
+                        case "sort":
                             // Sort and post pos to javascript
                             this._currentSortingHeader = message.data;
-                            this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, true) });
+                            this._panel.webview.postMessage({
+                                command: "rebuildPOview",
+                                pos: this.sortPOs(this._pos, this._currentSortingHeader, true),
+                            });
                             break;
-                        case 'filterPOs':
+                        case "filterPOs":
                             this.filterByStatus();
                             break;
-                        case 'filterPOsDisable':
+                        case "filterPOsDisable":
                             this._statusFilter = []; // Remove filter
                             this._panel.webview.postMessage({ command: "updateFilterBtn", active: false });
-                            this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
+                            this._panel.webview.postMessage({
+                                command: "rebuildPOview",
+                                pos: this.sortPOs(this._pos, this._currentSortingHeader, false),
+                            });
                             break;
                     }
                 },
@@ -200,8 +217,7 @@ export class ProofObligationPanel {
             return;
         }
 
-        if (!this._currentSortingHeader)
-            this._currentSortingHeader = Object.keys(pos[0])[0];
+        if (!this._currentSortingHeader) this._currentSortingHeader = Object.keys(pos[0])[0];
 
         this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos], this._currentSortingHeader, false) });
     }
@@ -211,32 +227,26 @@ export class ProofObligationPanel {
     }
 
     private filterByStatus() {
-        let items: string[] = this._pos.map(po => po.status).filter(this.onlyUnique); // Create list of available status's
-        window.showQuickPick(items, { title: 'Select which to show', canPickMany: true }).then((selected: string[]) => {
-            if (!selected || selected.length == 0 || selected.length == items.length)
-                return; // Abort
+        let items: string[] = this._pos.map((po) => po.status).filter(this.onlyUnique); // Create list of available status's
+        window.showQuickPick(items, { title: "Select which to show", canPickMany: true }).then((selected: string[]) => {
+            if (!selected || selected.length == 0 || selected.length == items.length) return; // Abort
 
             // Update filter and UI
             this._statusFilter = selected;
             this._panel.webview.postMessage({ command: "updateFilterBtn", active: true });
             this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
-        })
+        });
     }
 
     private sortPOs(pos, sortingHeader, changeSortingDirection) {
-        if (pos.length < 1)
-            return pos;
+        if (pos.length < 1) return pos;
 
         // Add header and sorting state to sorting map
-        if (!this._sorting.has(sortingHeader))
-            this._sorting.set(sortingHeader, false)
-        else if (changeSortingDirection)
-            this._sorting.set(sortingHeader, this._sorting.get(sortingHeader) ? false : true);
-
+        if (!this._sorting.has(sortingHeader)) this._sorting.set(sortingHeader, false);
+        else if (changeSortingDirection) this._sorting.set(sortingHeader, this._sorting.get(sortingHeader) ? false : true);
 
         // Filter proved pos
-        if (this._statusFilter.length != 0)
-            pos = pos.filter(po => this._statusFilter.includes(po.status))
+        if (this._statusFilter.length != 0) pos = pos.filter((po) => this._statusFilter.includes(po.status));
 
         // Check if values are numbers - assumes all values found in the column are of the same type
         let isNum = /^\d+$/.test(pos[0][sortingHeader]);
@@ -244,16 +254,16 @@ export class ProofObligationPanel {
         // Do number sort
         if (isNum) {
             pos.sort(function (a, b) {
-                let aval = a[Object.keys(a).find(k => k == sortingHeader)];
-                let bval = b[Object.keys(b).find(k => k == sortingHeader)];
+                let aval = a[Object.keys(a).find((k) => k == sortingHeader)];
+                let bval = b[Object.keys(b).find((k) => k == sortingHeader)];
                 return aval - bval;
             });
         }
         // Do string sort
         else {
             pos.sort(function (a, b) {
-                let aStringVal = a[Object.keys(a).find(k => k == sortingHeader)];
-                let bStringVal = b[Object.keys(b).find(k => k == sortingHeader)];
+                let aStringVal = a[Object.keys(a).find((k) => k == sortingHeader)];
+                let bStringVal = b[Object.keys(b).find((k) => k == sortingHeader)];
                 let aIdVal = a["id"];
                 let bIdVal = b["id"];
 
@@ -266,29 +276,23 @@ export class ProofObligationPanel {
             });
         }
         // Change sorted direction
-        if (this._sorting.get(sortingHeader))
-            pos.reverse();
+        if (this._sorting.get(sortingHeader)) pos.reverse();
 
         return pos;
     }
 
     public dispose() {
-        commands.executeCommand('setContext', `vdm-vscode.pog.run`, false);
+        commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
 
         // Clean up our resources
         this._panel.dispose();
 
-        while (this._disposables.length) {
-            const x = this._disposables.pop();
-            if (x) {
-                x.dispose();
-            }
-        }
+        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, 'poView.js'));
-        const styleUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, 'poView.css'));
+        const scriptUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, "poView.js"));
+        const styleUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, "poView.css"));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();
@@ -315,11 +319,10 @@ export class ProofObligationPanel {
 }
 
 function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (let i = 0; i < 32; i++) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
 }
-

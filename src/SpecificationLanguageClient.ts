@@ -7,14 +7,14 @@ import { CombinantorialTestingFeature } from "./slsp/features/CombinatorialTesti
 import * as LanguageId from "./LanguageId";
 import ProofObligationGenerationFeature from "./slsp/features/ProofObligationGenerationFeature";
 import TranslateFeature from "./slsp/features/TranslateFeature";
-import * as util from "./Util"
+import * as util from "./Util";
 
 export class SpecificationLanguageClient extends LanguageClient {
     public readonly projectRoot = this.clientOptions.workspaceFolder.uri;
     public readonly projectSavedDataUri = util.joinUriPath(this.projectRoot, ".generated");
     public readonly language: string;
     public readonly name: string;
-    public readonly dataStoragePath: Uri
+    public readonly dataStoragePath: Uri;
 
     constructor(
         name: string,
@@ -22,12 +22,13 @@ export class SpecificationLanguageClient extends LanguageClient {
         serverOptions: ServerOptions,
         clientOptions: LanguageClientOptions,
         dataStoragePath: Uri,
-        forceDebug?: boolean) {
+        forceDebug?: boolean
+    ) {
         super(name, serverOptions, clientOptions, forceDebug);
         this.name = name;
         this.language = language;
         this.dataStoragePath = dataStoragePath;
-    };
+    }
 
     registerBuiltinFeatures() {
         super.registerBuiltinFeatures();

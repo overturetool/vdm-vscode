@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import { commands, ExtensionContext, Uri, window, WorkspaceFolder } from "vscode";
 import { CancellationTokenSource, LSPErrorCodes, WorkDoneProgress } from "vscode-languageclient";
-import { CTTestCase, CTSymbol, CTFilterOption, CTTracesParams, CTTracesRequest, CTGenerateParams, CTGenerateRequest, CTExecuteParams, CTExecuteRequest, NumberRange } from "../protocol/combinatorialTesting";
+import {
+    CTTestCase,
+    CTSymbol,
+    CTFilterOption,
+    CTTracesParams,
+    CTTracesRequest,
+    CTGenerateParams,
+    CTGenerateRequest,
+    CTExecuteParams,
+    CTExecuteRequest,
+    NumberRange,
+} from "../protocol/combinatorialTesting";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
-import { CTTreeView } from '../views/CTTreeView';
+import { CTTreeView } from "../views/CTTreeView";
 
 export class CTHandler {
     private _ctTreeView: CTTreeView;
@@ -20,10 +31,10 @@ export class CTHandler {
         private _context: ExtensionContext,
         private _filterHandler?: CTFilterHandler,
         private _interpreterHandler?: CTInterpreterHandler,
-        private _supportWorkDone = false) {
+        private _supportWorkDone = false
+    ) {
         // Set filter
-        if (this._filterHandler)
-            this.registerCommand("vdm-vscode.ctSetFilter", () => this._filterHandler.setCTFilter());
+        if (this._filterHandler) this.registerCommand("vdm-vscode.ctSetFilter", () => this._filterHandler.setCTFilter());
 
         // Register view
         this._ctTreeView = new CTTreeView(this, this._context, !!this._filterHandler);
@@ -32,7 +43,7 @@ export class CTHandler {
     }
 
     private registerCommand = (command: string, callback: (...args: any[]) => any) => {
-        let disposable = commands.registerCommand(command, callback)
+        let disposable = commands.registerCommand(command, callback);
         this._context.subscriptions.push(disposable);
         return disposable;
     };
@@ -40,7 +51,7 @@ export class CTHandler {
     public async showAvailableSpecsForCT(): Promise<boolean> {
         // Skip if only one client available
         if (this._clients.size == 1) {
-            this.setCurrentClientFromKey(this._clients.keys().next().value)
+            this.setCurrentClientFromKey(this._clients.keys().next().value);
             return true;
         }
 
@@ -50,13 +61,14 @@ export class CTHandler {
         });
         showOptions.push("> Cancel");
 
-        let res = await vscode.window.showQuickPick(showOptions)
+        let res = await vscode.window.showQuickPick(showOptions);
 
-        if (res == undefined || res == "> Cancel") {  // Exit on 'esc' or 'Cancel'
+        if (res == undefined || res == "> Cancel") {
+            // Exit on 'esc' or 'Cancel'
             return false;
         }
 
-        this.setCurrentClientFromKey(Array.from(this._clients.keys()).find(k => Uri.parse(k).fsPath.includes(res)));
+        this.setCurrentClientFromKey(Array.from(this._clients.keys()).find((k) => Uri.parse(k).fsPath.includes(res)));
         return true;
     }
 
@@ -66,20 +78,18 @@ export class CTHandler {
     }
 
     public async requestTraces(uri?: Uri): Promise<CTSymbol[]> {
-        let barMessage = window.setStatusBarMessage('Requesting Combinatorial Test Trace Overview');
+        let barMessage = window.setStatusBarMessage("Requesting Combinatorial Test Trace Overview");
 
         try {
             // Setup message parameters
             let params: CTTracesParams = {};
-            if (uri)
-                params.uri = uri.toString();
+            if (uri) params.uri = uri.toString();
 
             // Send request
             const symbols = await this.currentClient.sendRequest(CTTracesRequest.type, params);
             barMessage.dispose();
             return symbols;
-        }
-        catch (err) {
+        } catch (err) {
             window.showWarningMessage("Combinatorial Test - trace request failed. " + err);
             barMessage.dispose();
             return null;
@@ -94,14 +104,18 @@ export class CTHandler {
             // Send request
             const res = await this.currentClient.sendRequest(CTGenerateRequest.type, params);
             return res.numberOfTests;
-        }
-        catch (err) {
+        } catch (err) {
             console.error("CT - generation request failed: " + err);
             throw err;
         }
     }
 
-    public async requestExecute(name: string, filtered: boolean = false, range?: NumberRange, progress?: vscode.Progress<{ message?: string; increment?: number }>) {
+    public async requestExecute(
+        name: string,
+        filtered: boolean = false,
+        range?: NumberRange,
+        progress?: vscode.Progress<{ message?: string; increment?: number }>
+    ) {
         // Check if already running an execution
         if (this._cancelToken) {
             window.showInformationMessage("Combinatorial Test - execute request failed: An execution is already running");
@@ -118,39 +132,36 @@ export class CTHandler {
             if (filtered) {
                 params.filter = await this._filterHandler.getCTFilter();
             }
-            if (range)
-                params.range = range;
+            if (range) params.range = range;
 
             // Setup partial result handler
             let partialResultToken = this.generateToken();
-            params.partialResultToken = partialResultToken
-            var partialResultHandlerDisposable = this.currentClient.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) => this.handleExecutePartialResult(tests, name));
+            params.partialResultToken = partialResultToken;
+            var partialResultHandlerDisposable = this.currentClient.onProgress(CTExecuteRequest.resultType, partialResultToken, (tests) =>
+                this.handleExecutePartialResult(tests, name)
+            );
 
             // Setup work done  progress handler
             if (this._supportWorkDone && progress != undefined) {
                 this._progress = 0;
                 let workDoneTokenToken = this.generateToken();
                 params.workDoneToken = workDoneTokenToken;
-                var workDoneProgressHandlerDisposable = this.currentClient.onProgress(WorkDoneProgress.type, workDoneTokenToken, (value) => this.handleExecuteWorkDoneProgress(value, progress));
+                var workDoneProgressHandlerDisposable = this.currentClient.onProgress(WorkDoneProgress.type, workDoneTokenToken, (value) =>
+                    this.handleExecuteWorkDoneProgress(value, progress)
+                );
             }
 
             // Send request
             const tests = await this.currentClient.sendRequest(CTExecuteRequest.type, params, this._cancelToken.token);
 
             // If not using progress token, update test results
-            if (tests != null)
-                this._ctTreeView.addNewTestResults(name, tests)
-        }
-        catch (err) {
+            if (tests != null) this._ctTreeView.addNewTestResults(name, tests);
+        } catch (err) {
             if (err?.code == LSPErrorCodes.RequestCancelled) {
-                if (err?.data != null)
-                    this._ctTreeView.addNewTestResults(name, err.data);
-            }
-            else
-                console.error("CT - execute request failed: " + err);
+                if (err?.data != null) this._ctTreeView.addNewTestResults(name, err.data);
+            } else console.error("CT - execute request failed: " + err);
             throw err;
-        }
-        finally {
+        } finally {
             // Clean-up
             this._cancelToken.dispose();
             this._cancelToken = undefined;
@@ -168,16 +179,14 @@ export class CTHandler {
     }
 
     private handleExecutePartialResult(tests: CTTestCase[], trace: string) {
-        if (tests)
-            this._ctTreeView.addNewTestResults(trace, tests);
-        else
-            window.showInformationMessage("CT Received Progress without any tests");
+        if (tests) this._ctTreeView.addNewTestResults(trace, tests);
+        else window.showInformationMessage("CT Received Progress without any tests");
     }
 
     private handleExecuteWorkDoneProgress(value: any, progress: vscode.Progress<{ message?: string; increment?: number }>) {
         if (value?.percentage != undefined) {
-            progress.report({ message: `${value.message} - ${value.percentage}%`, increment: (value.percentage - this._progress) })
-            this._progress = value.percentage
+            progress.report({ message: `${value.message} - ${value.percentage}%`, increment: value.percentage - this._progress });
+            this._progress = value.percentage;
         }
     }
 
@@ -194,4 +203,3 @@ export interface CTFilterHandler {
 export interface CTInterpreterHandler {
     sendToInterpreter(trace: string, test: number, folder?: WorkspaceFolder | undefined): void;
 }
-

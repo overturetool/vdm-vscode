@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { CancellationToken, DocumentUri, HandlerResult, Location, NotificationHandler, NotificationType, RequestHandler, RequestType } from "vscode-languageclient";
+import {
+    CancellationToken,
+    DocumentUri,
+    HandlerResult,
+    Location,
+    NotificationHandler,
+    NotificationType,
+    RequestHandler,
+    RequestType,
+} from "vscode-languageclient";
 
 export interface ProofObligationGenerationClientCapabilities {
     /**
@@ -11,7 +20,7 @@ export interface ProofObligationGenerationClientCapabilities {
          * The client has support for proof obligation generation.
          */
         proofObligationGeneration?: boolean;
-    }
+    };
 }
 export interface ProofObligationGenerationServerCapabilities {
     /**
@@ -22,7 +31,7 @@ export interface ProofObligationGenerationServerCapabilities {
          * Capabilities specific to the `slsp/POG/` messages.
          */
         proofObligationProvider?: boolean;
-    }
+    };
 }
 
 /**
@@ -35,7 +44,7 @@ export interface ProofObligation {
     id: number;
     /**
      * Name of the PO.
-     * Array describe the hieracy of the name, 
+     * Array describe the hieracy of the name,
      * e.g. ["classA", "function1"].
      */
     name: string[];
@@ -48,9 +57,9 @@ export interface ProofObligation {
      */
     location: Location;
     /**
-     * Source code of the PO. 
-     * String array can be used to provide visual formatting 
-     * information, e.g. the PO view can put a "\n\t" between 
+     * Source code of the PO.
+     * String array can be used to provide visual formatting
+     * information, e.g. the PO view can put a "\n\t" between
      * each string in the array.
      */
     source: string | string[];
@@ -64,9 +73,13 @@ export interface ProofObligation {
  * The `slsp/POG/generate` request is sent from the client to the server to fetch the proof obligations for a specification.
  */
 export namespace GeneratePORequest {
-    export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void>('slsp/POG/generate');
+    export const type = new RequestType<GeneratePOParams, ProofObligation[] | null, void>("slsp/POG/generate");
     export type HandlerSignature = RequestHandler<GeneratePOParams, ProofObligation[] | null, void>;
-    export type MiddlewareSignature = (params: GeneratePOParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<ProofObligation[] | null, void>;
+    export type MiddlewareSignature = (
+        params: GeneratePOParams,
+        token: CancellationToken,
+        next: HandlerSignature
+    ) => HandlerResult<ProofObligation[] | null, void>;
 }
 
 /**
@@ -84,7 +97,7 @@ export interface GeneratePOParams {
  * The `slsp/POG/updated` notification is sent from the server when there has been a change in the specification.
  */
 export namespace POGUpdatedNotification {
-    export const type = new NotificationType<POGUpdatedParams>('slsp/POG/updated');
+    export const type = new NotificationType<POGUpdatedParams>("slsp/POG/updated");
     export type HandlerSignature = NotificationHandler<POGUpdatedParams>;
     export type MiddlewareSignature = (params: POGUpdatedParams, next: HandlerSignature) => void;
 }
@@ -94,7 +107,7 @@ export namespace POGUpdatedNotification {
  */
 export interface POGUpdatedParams {
     /**
-     * Describes the state of the specification. 
+     * Describes the state of the specification.
      * True if POG is possible.
      * False otherwise, e.g. the specification is not type-correct.
      */

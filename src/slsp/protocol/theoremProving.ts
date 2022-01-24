@@ -9,14 +9,14 @@ interface TPLemmasParams {
     /**
      * The scope of the project files.
      */
-    projectUri?: DocumentUri
+    projectUri?: DocumentUri;
 }
 
 /**
  * TP/lemmas request and return type.
  */
 export namespace TPLemmasRequest {
-    export const type = new RequestType<TPLemmasParams, Lemma[] | null, void>('slsp/TP/lemmas');
+    export const type = new RequestType<TPLemmasParams, Lemma[] | null, void>("slsp/TP/lemmas");
 }
 
 /**
@@ -26,14 +26,14 @@ interface TPBeginProofParams {
     /**
      * Name of the lemma that is to be proved.
      */
-    name: string
+    name: string;
 }
 
 /**
  * TP/beginProof request and return type.
  */
 export namespace TPBeginProofRequest {
-    export const type = new RequestType<TPBeginProofParams, ProofState | null, void>('slsp/TP/beginProof');
+    export const type = new RequestType<TPBeginProofParams, ProofState | null, void>("slsp/TP/beginProof");
 }
 
 /**
@@ -41,10 +41,10 @@ export namespace TPBeginProofRequest {
  */
 interface TPProveParams {
     /**
-     * Name of the lemma that is to be proved. 
+     * Name of the lemma that is to be proved.
      * If proof in progress that lemma is assumed.
      */
-    name?: string
+    name?: string;
 }
 
 /**
@@ -52,37 +52,36 @@ interface TPProveParams {
  */
 interface TPProveResponse {
     /**
-     * Status of the proof. 
+     * Status of the proof.
      */
-    status: ProofStatus,
+    status: ProofStatus;
     /**
      * Processing time in milliseconds
      */
-    time?: number,
+    time?: number;
     /**
      * Suggested commands to apply
      */
-    command?: string[],
+    command?: string[];
     /**
      * Humans-readable description of:
      * Counter example, proof steps, etc.
      */
-    description?: string
+    description?: string;
 }
-
 
 /**
  * TP/prove request and return type.
  */
 export namespace TPProveRequest {
-    export const type = new RequestType<TPProveParams, TPProveResponse | null, void>('slsp/TP/prove');
+    export const type = new RequestType<TPProveParams, TPProveResponse | null, void>("slsp/TP/prove");
 }
 
 /**
  * TP/getCommands request and return type.
  */
 export namespace TPGetCommandsRequest {
-    export const type = new RequestType<null, TPCommand[] | null, void>('slsp/TP/getCommands');
+    export const type = new RequestType<null, TPCommand[] | null, void>("slsp/TP/getCommands");
 }
 
 /**
@@ -92,7 +91,7 @@ interface TPCommandParams {
     /**
      * The command and arguments identified by a string.
      */
-    command: string
+    command: string;
 }
 
 /**
@@ -100,21 +99,21 @@ interface TPCommandParams {
  */
 interface TPCommandResponse {
     /**
-     * Description of the result of the command, 
+     * Description of the result of the command,
      * e.g. accepted, error, no change.
      */
-    description: string,
+    description: string;
     /**
      * State of the proof after the command.
      */
-    state: ProofState
+    state: ProofState;
 }
 
 /**
  * TP/command request and return type.
  */
 export namespace TPCommandRequest {
-    export const type = new RequestType<TPCommandParams, TPCommandResponse | null, void>('slsp/TP/command');
+    export const type = new RequestType<TPCommandParams, TPCommandResponse | null, void>("slsp/TP/command");
 }
 
 /**
@@ -125,14 +124,14 @@ interface TPUndoParams {
      * Id of the step that must be undone.
      * If empty, undo last step.
      */
-    id?: number
+    id?: number;
 }
 
 /**
  * TP/undo request and return type.
  */
 export namespace TPUndoRequest {
-    export const type = new RequestType<TPUndoParams, ProofState | null, void>('slsp/TP/undo');
+    export const type = new RequestType<TPUndoParams, ProofState | null, void>("slsp/TP/undo");
 }
 
 /**
@@ -147,23 +146,23 @@ interface Lemma {
     /**
      * Unique name of the lemma.
      */
-    name: string,
+    name: string;
     /**
      * Name of the theory that the lemma belongs to.
      */
-    theory: string,
+    theory: string;
     /**
      * Identifies the location of the lemma.
      */
-    location: Location,
+    location: Location;
     /**
      * Theorem, Lemma, corollary etc.
      */
-    kind: string,
+    kind: string;
     /**
      * Status of the proof of the lemma
      */
-    status: ProofStatus
+    status: ProofStatus;
 }
 
 /**
@@ -173,19 +172,19 @@ interface ProofState {
     /**
      * Proof step id.
      */
-    id: number,
+    id: number;
     /**
-     * Status of the proof. 
+     * Status of the proof.
      */
-    status: ProofStatus | string,
+    status: ProofStatus | string;
     /**
      * Subgoals, empty if proved.
      */
-    subgoals: string[],
+    subgoals: string[];
     /**
      * Rules used for this step.
      */
-    rules?: string[]
+    rules?: string[];
 }
 
 /**
@@ -195,9 +194,9 @@ interface TPCommand {
     /**
      * Command name.
      */
-    name: string,
+    name: string;
     /**
      * Description of the command.
      */
-    description: string
+    description: string;
 }

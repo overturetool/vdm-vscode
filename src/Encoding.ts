@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { TextDocument, workspace, window, ConfigurationTarget, commands } from "vscode";
-import * as jschardet from 'jschardet'
-import * as fs from 'fs-extra';
+import * as jschardet from "jschardet";
+import * as fs from "fs-extra";
 
 // ************* Not used *****************
 // export function checkEncodingMatch(document: TextDocument, logPath: string): void {
@@ -51,85 +51,81 @@ export function checkEncoding(document: TextDocument): void {
 
     // Prompt user with warning, if not UTF-8
     // TODO Would be better if it checked if the `files.encoding` setting and the discovered encoding match. However, the two does not use the same names for encodings.
-    if (encodingDocument.encoding != null && encodingDocument.encoding != 'ascii' && encodingDocument.encoding != 'UTF-8') {
-        const encodingConfig = workspace.getConfiguration('vdm-vscode.encoding', wsFolder);
+    if (encodingDocument.encoding != null && encodingDocument.encoding != "ascii" && encodingDocument.encoding != "UTF-8") {
+        const encodingConfig = workspace.getConfiguration("vdm-vscode.encoding", wsFolder);
         if (encodingConfig?.showWarning) {
-            const buttons: string[] = [
-                'Open setting',
-                'Do not show again'
-            ]
-            window.showWarningMessage(`Document encoding is not UTF-8. Please set the configuration \'files.encoding\' to the correct encoding. Not doing so may cause issues for the VDM extensions. OBS: You may want to set this per workspace or folder instead of as a user setting.`, ...buttons).then(
-                press => {
-                    if (press == buttons[0])
-                        commands.executeCommand('workbench.action.openSettings', '@id:files.encoding')
-                    if (press == buttons[1])
-                        encodingConfig.update("showWarning", false, ConfigurationTarget.WorkspaceFolder)
-                }
-            );
+            const buttons: string[] = ["Open setting", "Do not show again"];
+            window
+                .showWarningMessage(
+                    `Document encoding is not UTF-8. Please set the configuration \'files.encoding\' to the correct encoding. Not doing so may cause issues for the VDM extensions. OBS: You may want to set this per workspace or folder instead of as a user setting.`,
+                    ...buttons
+                )
+                .then((press) => {
+                    if (press == buttons[0]) commands.executeCommand("workbench.action.openSettings", "@id:files.encoding");
+                    if (press == buttons[1]) encodingConfig.update("showWarning", false, ConfigurationTarget.WorkspaceFolder);
+                });
         }
     }
 }
 
 export function toJavaName(encoding: string): string {
-    if (!nameMapVSC2Java.has(encoding))
-        return undefined
+    if (!nameMapVSC2Java.has(encoding)) return undefined;
 
     let javaname = nameMapVSC2Java.get(encoding);
-    if (javaname == '')
-        return undefined;
+    if (javaname == "") return undefined;
 
     return javaname;
 }
 
 const nameMapVSC2Java = new Map<string, string>([
-    ['big5hkscs', 'big5hkscs'],
-    ['cp437', 'cp437'],
-    ['cp850', 'cp850'],
-    ['cp852', 'cp852'],
-    ['cp865', 'cp865'],
-    ['cp866', 'cp866'],
-    ['cp950', 'cp950'],
-    ['eucjp', 'eucjp'],
-    ['euckr', 'euckr'],
-    ['gb18030', 'gb18030'],
-    ['gb2312', 'gb2312'],
-    ['gbk', 'gbk'],
-    ['iso88591', 'iso8859-1'],
-    ['iso885910', 'iso8859-10'],
-    ['iso885911', 'iso8859-11'],
-    ['iso885913', 'iso8859-13'],
-    ['iso885914', 'iso8859-14'],
-    ['iso885915', 'iso8859-15'],
-    ['iso885916', 'iso8859-16'],
-    ['iso88592', 'iso8859-2'],
-    ['iso88593', 'iso8859-3'],
-    ['iso88594', 'iso8859-4'],
-    ['iso88595', 'iso8859-5'],
-    ['iso88596', 'iso8859-6'],
-    ['iso88597', 'iso8859-7'],
-    ['iso88598', 'iso8859-8'],
-    ['iso88599', 'iso8859-9'],
-    ['koi8r', 'koi8_r'],
-    ['koi8ru', ''],
-    ['koi8t', ''],
-    ['koi8u', 'koi8_u'],
-    ['macroman', 'macroman'],
-    ['shiftjis', 'shift_jis'],
-    ['utf16be', 'utf-16be'],
-    ['utf16le', 'utf-16le'],
-    ['utf8', 'utf8'],
-    ['utf8bom', ''],
-    ['windows1250', 'windows-1250'],
-    ['windows1251', 'windows-1251'],
-    ['windows1252', 'windows-1252'],
-    ['windows1253', 'windows-1253'],
-    ['windows1254', 'windows-1254'],
-    ['windows1255', 'windows-1255'],
-    ['windows1256', 'windows-1256'],
-    ['windows1257', 'windows-1257'],
-    ['windows1258', 'windows-1258'],
-    ['windows874', 'windows-874'],
-])
+    ["big5hkscs", "big5hkscs"],
+    ["cp437", "cp437"],
+    ["cp850", "cp850"],
+    ["cp852", "cp852"],
+    ["cp865", "cp865"],
+    ["cp866", "cp866"],
+    ["cp950", "cp950"],
+    ["eucjp", "eucjp"],
+    ["euckr", "euckr"],
+    ["gb18030", "gb18030"],
+    ["gb2312", "gb2312"],
+    ["gbk", "gbk"],
+    ["iso88591", "iso8859-1"],
+    ["iso885910", "iso8859-10"],
+    ["iso885911", "iso8859-11"],
+    ["iso885913", "iso8859-13"],
+    ["iso885914", "iso8859-14"],
+    ["iso885915", "iso8859-15"],
+    ["iso885916", "iso8859-16"],
+    ["iso88592", "iso8859-2"],
+    ["iso88593", "iso8859-3"],
+    ["iso88594", "iso8859-4"],
+    ["iso88595", "iso8859-5"],
+    ["iso88596", "iso8859-6"],
+    ["iso88597", "iso8859-7"],
+    ["iso88598", "iso8859-8"],
+    ["iso88599", "iso8859-9"],
+    ["koi8r", "koi8_r"],
+    ["koi8ru", ""],
+    ["koi8t", ""],
+    ["koi8u", "koi8_u"],
+    ["macroman", "macroman"],
+    ["shiftjis", "shift_jis"],
+    ["utf16be", "utf-16be"],
+    ["utf16le", "utf-16le"],
+    ["utf8", "utf8"],
+    ["utf8bom", ""],
+    ["windows1250", "windows-1250"],
+    ["windows1251", "windows-1251"],
+    ["windows1252", "windows-1252"],
+    ["windows1253", "windows-1253"],
+    ["windows1254", "windows-1254"],
+    ["windows1255", "windows-1255"],
+    ["windows1256", "windows-1256"],
+    ["windows1257", "windows-1257"],
+    ["windows1258", "windows-1258"],
+    ["windows874", "windows-874"],
+]);
 
 // const nameMapJSCharDet2VSC = new Map<string, string>([
 //     ['GB2312', 'gb2312'],
