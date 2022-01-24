@@ -627,7 +627,7 @@
 					"scope": "resource",
 					"markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server. A reload is required for changes to take effect. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
 				},
-				"vdm-vscode.libraries.VdmLibraries": {
+				"vdm-vscode.server.libraries.VdmLibraries": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -636,7 +636,7 @@
 					"scope": "resource",
 					"markdownDescription": "List of folder and/or file paths including/pointing to jars from which libraries can be added. A reload is required for changes to take effect. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
 				},
-				"vdm-vscode.libraries.includeDefaultLibraries": {
+				"vdm-vscode.server.libraries.includeDefaultLibraries": {
 					"type": "boolean",
 					"default": true,
 					"scope": "resource",

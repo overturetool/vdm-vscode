@@ -184,17 +184,6 @@ export function activate(context: ExtensionContext) {
         // Get configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
-        const libraryConfig: WorkspaceConfiguration = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
-        // Enable reload prompt for changes to includeDefaultLibraries configuration option
-        workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-            if(event.affectsConfiguration("vdm-vscode.libraries.includeDefaultLibraries", wsFolder) ?? false){
-                window.showInformationMessage( "Configuration changed. Please reload VS Code to enable it", {modal: false, detail: "Source: VDM VSCode (Extension)"}, ...["Reload"]).then((answer) => {
-                    if (answer === "Reload") {
-                        commands.executeCommand("workbench.action.reloadWindow");
-                    }
-                });
-            }
-        });
 
         // Setup server arguments
         let args: string[] = [];
@@ -231,11 +220,11 @@ export function activate(context: ExtensionContext) {
             util.writeToLog(extensionLogPath, `Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`)
 
         // Construct class path.
-		// Start by adding user defined library paths
-		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder))?.reduce((resultingCP, path) => resultingCP + Path.delimiter + path, "") ?? "";
+		// Start by adding user defined library jars paths
+		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder))?.reduce((cp, path) => cp + Path.delimiter + path, "") ?? "";
 
-        // Add default library jar paths
-        if(libraryConfig.includeDefaultLibraries) {
+        // Add default library jars paths
+        if(workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
             AddLibraryHandler.getDefaultLibraryJars(context.extensionPath).forEach(path => classPath += Path.delimiter + path);
         }
 
