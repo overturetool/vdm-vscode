@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as util from "../../Util"
-import { window, workspace, Uri } from "vscode";
+import { window, Uri, EventEmitter } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities, DocumentSelector, Disposable } from "vscode-languageclient";
-import { ProofObligationPanel } from "../views/ProofObligationPanel";
-import { SLSPEvents } from "../events/SLSPEvents";
-import { GeneratePOParams, GeneratePORequest, POGUpdatedNotification, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "../protocol/proofObligationGeneration";
+import { ProofObligationPanel, ProofObligationProvider } from "../views/ProofObligationPanel";
+import { GeneratePOParams, GeneratePORequest, POGUpdatedNotification, ProofObligation, ProofObligationGenerationClientCapabilities, ProofObligationGenerationServerCapabilities } from "../protocol/proofObligationGeneration";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
+import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel"
 
 export default class ProofObligationGenerationFeature implements StaticFeature {
-    private _listeners: Disposable[] = [];
+    private _onDidChangeProofObligations: EventEmitter<boolean>;
+    private _disposables: Disposable[] = [];
     private _selector: DocumentSelector;
-    private _lastUri: Uri;
 
     constructor(
         private _client: SpecificationLanguageClient) {
@@ -30,55 +30,57 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         if (!pogCapabilities?.experimental?.proofObligationProvider)
             return;
 
-        this._listeners.push(SLSPEvents.pog.onDidRequestProofObligationGeneration(this.onDidRequestPOG, this));
-        this._listeners.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
+        this._onDidChangeProofObligations = new EventEmitter<boolean>();
+        this._disposables.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
+        let provider: ProofObligationProvider = {
+            provideProofObligations: (uri: Uri) => this.requestPOG(uri),
+            onDidChangeProofObligations: this._onDidChangeProofObligations.event,
+            dispose: () => this.dispose()
+        };
+        ProofObligationPanel.registerProofObligationProvider(this._selector, provider);
     }
     dispose(): void {
-        this._listeners.forEach(l => l.dispose());
-        this._listeners = [];
+        this._disposables.forEach(l => l.dispose());
+        this._disposables = [];
+
+        if (this._onDidChangeProofObligations)
+            this._onDidChangeProofObligations.dispose();
     }
 
-    private onDidRequestPOG(uri: Uri, revealPOGView: boolean = true) {
-        this._lastUri = uri; // Store for automatic update
+    private requestPOG(uri: Uri): Promise<CodeProofObligation[]> {
+        return new Promise((resolve, reject) => {
+            // Abort if not for this client
+            if (!util.match(this._selector, uri))
+                return reject();
 
-        // Abort if not for this client
-        if (!util.match(this._selector, uri))
-            return;
+            window.setStatusBarMessage("Running Proof Obligation Generation", 2000);
 
-        window.setStatusBarMessage("Running Proof Obligation Generation", 2000);
-        const workspaceName = this._client.clientOptions.workspaceFolder?.name;
+            // Setup message parameters
+            let params: GeneratePOParams = {
+                uri: this._client.code2ProtocolConverter.asUri(uri)
+            };
 
-        // Setup message parameters
-        let params: GeneratePOParams = {
-            uri: this._client.code2ProtocolConverter.asUri(uri)
-        };
-
-        // Send request
-        this._client.sendRequest(GeneratePORequest.type, params).then(POs => {
-            // Create new view or show existing POG View
-            ProofObligationPanel.createOrShowPanel(revealPOGView, workspaceName);
-            ProofObligationPanel.currentPanel.displayNewPOS(POs);
-        }).catch(e => {
-            window.showInformationMessage("Proof obligation generation failed. " + e);
-        })
+            // Send request
+            this._client.sendRequest(GeneratePORequest.type, params).then(POs => {
+                return resolve(POs.map(po => this.asCodeProofObligation(po), this));
+            }).catch(e => {
+                return reject("Proof obligation generation failed. " + e);
+            });
+        });
     }
 
     private onPOGUpdatedNotification: POGUpdatedNotification.HandlerSignature = (params) => {
-        let wsFolder = this._client.clientOptions.workspaceFolder;
-        // Only perform actions if POG View exists and if active editor is on a file from the clients workspace
-        if (ProofObligationPanel.currentPanel &&
-            util.isSameWorkspaceFolder(workspace.getWorkspaceFolder(window.activeTextEditor.document.uri), wsFolder)) {
+        this._onDidChangeProofObligations.fire(params.successful);
+    }
 
-            // If POG is possible
-            if (params.successful) {
-                // If last uri was in this workspace folder use that (it might be more specific)
-                let uri = (this._lastUri && util.isSameWorkspaceFolder(workspace.getWorkspaceFolder(this._lastUri), wsFolder)) ? this._lastUri : wsFolder.uri;
-                this.onDidRequestPOG(uri, false);
-            }
-            else {
-                // Display warning that POs may be outdated
-                ProofObligationPanel.displayWarning();
-            }
+    private asCodeProofObligation(po: ProofObligation): CodeProofObligation {
+        return {
+            id: po.id,
+            name: po.name,
+            type: po.type,
+            location: this._client.protocol2CodeConverter.asLocation(po.location),
+            source: po.source,
+            status: po.status,
         }
     }
 }

@@ -118,6 +118,13 @@ export function joinUriPath(uri: Uri, ...additions: string[]): Uri {
     return Uri.parse(uriString);
 }
 
+/**
+ * Used to determine if a Uri matches with the parameters of a document selector. 
+ * Normally you would use the vscode.languages.match(DocumentSelector, TextDocument) function.
+ * However, this requires a TextDocument, which is not possible to get for folders.
+ * For features like "translate" they can be applied at a folder level, hecnce the need for matching folder URIs.
+ * This match function tries to match as many of the DocumentSelector parameters as possible, but may not work for some edgecases.
+*/
 export function match(documentSelector: DocumentSelector, uri: Uri) {
     let dsArray: ReadonlyArray<DocumentFilter | string> = Array.isArray(documentSelector) ? documentSelector : [documentSelector];
     let match = 0;

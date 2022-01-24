@@ -57,7 +57,7 @@ export function activate(context: ExtensionContext) {
     commands.executeCommand('setContext', 'vdm-submenus-show', true);
 
     // Initialise POG panel // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
-    ProofObligationPanel.extensionUri = context.extensionUri;
+    context.subscriptions.push(new ProofObligationPanel(context));
 
     // Initialise handlers
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);

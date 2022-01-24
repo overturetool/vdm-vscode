@@ -4,13 +4,7 @@ import { Event, Uri, EventEmitter } from "vscode";
 import { ButtonEmitter } from "../../ButtonEmitter";
 import * as LanguageId from "../../LanguageId";
 
-
 export namespace SLSPEvents {
-
-    export namespace pog {
-        const onDidRequestProofObligationGenerationEmitter: EventEmitter<Uri> = new ButtonEmitter(`vdm-vscode.pog.run`);
-        export const onDidRequestProofObligationGeneration: Event<Uri> = onDidRequestProofObligationGenerationEmitter.event;
-    }
 
     export namespace ct {
 

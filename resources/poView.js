@@ -60,7 +60,7 @@ function buildTable(pos, poContainer) {
         mainrow.ondblclick = function () {
             vscode.postMessage({
                 command: 'goToSymbol',
-                text: tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[1].innerText
+                data: tbdy.getElementsByTagName('tr')[mainrow.rowIndex - 1].cells[1].innerText
             });
         }
 
@@ -91,7 +91,7 @@ function buildTable(pos, poContainer) {
         subrow.ondblclick = function () {
             vscode.postMessage({
                 command: 'goToSymbol',
-                text: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 2].cells[1].innerText
+                data: tbdy.getElementsByTagName('tr')[subrow.rowIndex - 2].cells[1].innerText
             });
         }
 
@@ -124,7 +124,7 @@ function buildTable(pos, poContainer) {
 function sortTable(header) {
     vscode.postMessage({
         command: 'sort',
-        text: header
+        data: header
     });
 }
 
