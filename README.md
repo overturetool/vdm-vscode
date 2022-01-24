@@ -109,6 +109,10 @@ This extension contributes the following settings:
 - `vdm-vscode.server.JVMArguments`: Arguments for the JVM that is executing the server (e.g. -Xmx2g).
 - `vdm-vscode.server.classPathAdditions`: Array of folders and/or jar file paths that should be used with the language server.
 
+#### Libraries
+- `vdm-vscode.server.libraries.VdmLibraries`: A list of folder and/or file paths including/pointing to jars from which libraries can be added.
+- `vdm-vscode.server.libraries.includeDefaultLibraries`: Include the default libraries that are packaged with the extension ("on" or "off").
+
 #### Development
 - `vdm-vscode.server.development.experimentalServer`: Use an experimental/external server. If enabled the client will not launch a server but instead connect to one that is running in another process. E.g. executing the VDMJ server in a debugger.
 - `vdm-vscode.server.development.lspPort`: Port used for the LSP/SLSP connection when `experimentalServer` is enabled.
