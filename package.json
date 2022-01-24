@@ -630,7 +630,7 @@
 					"type": "boolean",
 					"default": true,
 					"scope": "resource",
-					"description": "Include the default libraries that are packaged with the extension."
+					"description": "Include the default libraries that are packaged with the extension. A reload is required for changes to take effect."
 				},
 				"vdm-vscode.server.highPrecision": {
 					"type": "boolean",

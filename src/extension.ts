@@ -7,7 +7,7 @@ import * as child_process from 'child_process';
 import * as LanguageId from './LanguageId'
 import * as util from "./Util"
 import {
-    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration
+    ExtensionContext, TextDocument, WorkspaceFolder, Uri, window, workspace, commands, ConfigurationChangeEvent, OutputChannel, WorkspaceConfiguration, ConfigurationScope, InputBoxOptions
 } from 'vscode';
 import {
     LanguageClientOptions, ServerOptions
@@ -181,9 +181,20 @@ export function activate(context: ExtensionContext) {
     }
 
     async function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
-        // Get server configurations
+        // Get configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration('vdm-vscode.server', wsFolder);
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio")
+        const libraryConfig: WorkspaceConfiguration = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
+        // Enable reload prompt for changes to includeDefaultLibraries configuration option
+        workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+            if(event.affectsConfiguration("vdm-vscode.libraries.includeDefaultLibraries", wsFolder) ?? false){
+                window.showInformationMessage( "Configuration changed. Please reload VS Code to enable it", {modal: false, detail: "Source: VDM VSCode (Extension)"}, ...["Reload"]).then((answer) => {
+                    if (answer === "Reload") {
+                        commands.executeCommand("workbench.action.reloadWindow");
+                    }
+                });
+            }
+        });
 
         // Setup server arguments
         let args: string[] = [];
@@ -221,10 +232,10 @@ export function activate(context: ExtensionContext) {
 
         // Construct class path.
 		// Start by adding user defined library paths
-		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)).reduce((resultingCP, path) => resultingCP + Path.delimiter + path);
+		let classPath = (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder))?.reduce((resultingCP, path) => resultingCP + Path.delimiter + path, "") ?? "";
 
         // Add default library jar paths
-        if(workspace.getConfiguration("vdm-vscode.libraries", wsFolder).includeDefaultLibraries) {
+        if(libraryConfig.includeDefaultLibraries) {
             AddLibraryHandler.getDefaultLibraryJars(context.extensionPath).forEach(path => classPath += Path.delimiter + path);
         }
 

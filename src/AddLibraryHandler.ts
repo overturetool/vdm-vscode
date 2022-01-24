@@ -232,10 +232,7 @@ export class AddLibraryHandler {
 		const libraryConfig = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
 		const libraryJars = libraryConfig.VdmLibraries as string[];
 		// Get any library jars specified by the user
-		return libraryJars.length == 0
-				? []
-				: (
-						await Promise.all(
+		return ( await Promise.all(
 							libraryJars.map((path) => {
 								if (Fs.existsSync(path)) {
 									if (Fs.lstatSync(path).isDirectory()) {
@@ -247,7 +244,7 @@ export class AddLibraryHandler {
 								return [];
 							})
 						)
-				  ).reduce((prev, cur) => prev.concat(cur));
+				  )?.reduce((prev, cur) => prev.concat(cur), []) ?? [];
 	}
 
 	private getLibsFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
