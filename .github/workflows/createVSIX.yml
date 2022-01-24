@@ -1,34 +1,34 @@
 name: Create VSIX
 
-on:
-  push
+on: push
 
 jobs:
-  build:
+  Build-VSIX:
     runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, 'VSCE')"
-    
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: |
-        npm install 
-        npm install -g vsce 
-        npm install webpack
-      
-    - name: Create vsix
-      run: vsce package
+      - name: Check out repository code
+        uses: actions/checkout@v2
 
-    - name: Read version from package.json
-      uses: culshaw/read-package-node-version-actions@v1
-      id: package-node-version
+      - name: Setup Node js
+        uses: actions/setup-node@v2
+        with:
+          cache: "npm"
 
-    - name: Upload VSIX
-      uses: actions/upload-artifact@v2
-      with:
-        path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
-        name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+      - name: Install dependencies
+        run: |
+          npm install 
+          npm install -g vsce 
+          npm install webpack
+
+      - name: Create vsix
+        run: vsce package
+
+      - name: Read version from package.json
+        uses: culshaw/read-package-node-version-actions@v1
+        id: package-node-version
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v2
+        with:
+          path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+          name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
