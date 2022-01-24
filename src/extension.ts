@@ -58,6 +58,11 @@ export function activate(context: ExtensionContext) {
 
     // Initialise POG panel // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
+    context.subscriptions.push(new TranslateButton(context, languageId.latex));
+    context.subscriptions.push(new TranslateButton(context, languageId.word));
+    context.subscriptions.push(new TranslateButton(context, languageId.graphviz));
+    context.subscriptions.push(new TranslateButton(context, languageId.coverage));
+    context.subscriptions.push(new TranslateButton(context, languageId.isabelle));
 
     // Initialise handlers
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);

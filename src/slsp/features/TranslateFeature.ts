@@ -1,30 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as fs from "fs-extra"
-import * as util from "../../Util"
-import * as LanguageId from "../../LanguageId"
-import { DecorationOptions, Uri, ViewColumn, window, workspace, WorkspaceFolder, Range, Event } from "vscode";
-import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature, WorkDoneProgressOptions } from "vscode-languageclient";
+import * as util from "../../Util";
+import { Uri } from "vscode";
+import {
+    ClientCapabilities,
+    Disposable,
+    DocumentSelector,
+    ServerCapabilities,
+    StaticFeature,
+    WorkDoneProgressOptions,
+} from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/translate";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
-import { SLSPEvents } from "../events/SLSPEvents";
+import { TranslateButton, TranslateProvider } from "../views/TranslateButton";
 
 export default class TranslateFeature implements StaticFeature {
-    private _listener: Disposable;
+    private _disposables: Disposable[] = [];
     private _selector: DocumentSelector;
     private _supportWorkDone: boolean = false;
 
-    constructor(
-        private _client: SpecificationLanguageClient,
-        private _language: string,
-        private _onDidRequestTranslate?: Event<Uri>) {
-        if (!this._onDidRequestTranslate) {
-            if (SLSPEvents.translate.onDidRequestTranslate.has(this._language))
-                this._onDidRequestTranslate = SLSPEvents.translate.onDidRequestTranslate.get(this._language);
-            else
-                throw Error(`Translate Feature: No trigger event found for language ${this._language}`);
-        }
-    }
+    constructor(private _client: SpecificationLanguageClient, private _language: string) {}
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         capabilities.experimental = capabilities.experimental || {};
@@ -36,168 +31,49 @@ export default class TranslateFeature implements StaticFeature {
         this._selector = documentSelector;
 
         // Not supported
-        if (!translateCapabilities || typeof translateCapabilities == "boolean")
-            return;
+        if (!translateCapabilities || typeof translateCapabilities == "boolean") return;
 
         // Check server supported languages
-        let languageIds = translateCapabilities.languageId
+        let languageIds = translateCapabilities.languageId;
         let languages = typeof languageIds == "string" ? [languageIds] : languageIds;
 
         // Check for feature's language
-        if (languages.includes(this._language))
-            this._listener = this._onDidRequestTranslate(this.callback, this);
+        if (languages.includes(this._language)) {
+            let provider: TranslateProvider = {
+                provideTranslation: (saveUri: Uri, rootUri?: Uri, options?: any) => this.provideTranslation(saveUri, rootUri, options),
+            };
+            this._disposables.push(TranslateButton.registerTranslateProvider(this._selector, provider, this._language));
+        }
 
         // Check if support work done progress
         if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
-            this._supportWorkDone = translateCapabilities.workDoneProgress
+            this._supportWorkDone = translateCapabilities.workDoneProgress;
     }
     dispose(): void {
-        if (this._listener) {
-            this._listener.dispose()
-            this._listener = undefined;
-        }
+        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
-    private async callback(uri: Uri) {
-        // Abort if not for this client
-        if (!util.match(this._selector, uri))
-            return;
+    private provideTranslation(saveUri: Uri, rootUri?: Uri, options?: any): Thenable<Uri> {
+        return new Promise((resolve, reject) => {
+            // Abort if not for this client
+            if (!util.match(this._selector, rootUri)) return reject();
 
-        this.translate(uri, this._language);
-    }
+            // Setup message parameters
+            let params: TranslateParams = {
+                languageId: this._language,
+                saveUri: this._client.code2ProtocolConverter.asUri(saveUri),
+                uri: this._client.code2ProtocolConverter.asUri(rootUri),
+                options: options,
+            };
 
-    private translate(uri: Uri, language: string) {
-        let client = this._client;
-        let wsFolder = workspace.getWorkspaceFolder(uri);
-
-        window.setStatusBarMessage(`Generating ${language}`, new Promise(async (resolve, reject) => {
-            // Check timestamp setting
-            const translateConfig = workspace.getConfiguration(
-                [this._client.name, 'translate', 'general'].join('.'),
-                wsFolder.uri
-            );
-            let saveLocation = util.joinUriPath(client.projectSavedDataUri, language);
-            util.createDirectory(saveLocation, translateConfig?.get("storeAllTranslations")).then(
-                async (saveUri): Promise<void> => {
-                    try {
-                        // Make sure the directory is empty
-                        fs.emptyDirSync(saveUri.fsPath);
-
-                        // Setup message parameters
-                        let params: TranslateParams = {
-                            languageId: language,
-                            saveUri: saveUri.toString()
-                        };
-
-                        // If it not the workspace folder add the uri. 
-                        if (translateConfig?.allowSingleFileTranslation && uri.toString() != wsFolder.uri.toString())
-                            params.uri = uri.toString();
-
-                        // Add options based on configuration settings
-                        params = this.addOptions(params, wsFolder, language);
-
-                        // Send request
-                        const response = await client.sendRequest(TranslateRequest.type, params);
-
-                        // Check if a directory has been returned
-                        if (!util.isDir(Uri.parse(response.uri).fsPath)) {
-                            if (language == LanguageId.coverage) {
-                                // Open the main file in the translation
-                                let doc = await workspace.openTextDocument(Uri.parse(uri.toString()));
-
-                                const decorationType = window.createTextEditorDecorationType({
-                                    backgroundColor: '#0080FF80',
-                                    border: '2px solid black',
-                                })
-
-                                let ranges = getCovtblFileRanges(Uri.parse(response.uri).fsPath)
-
-                                // Show the file
-                                window.showTextDocument(doc.uri)
-                                    .then((editor) => editor.setDecorations(decorationType, ranges));
-                            }
-                            else {
-                                // Open the main file in the translation
-                                let doc = await workspace.openTextDocument(Uri.parse(response.uri));
-
-                                // Show the file
-                                window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: true })
-                            }
-                        }
-
-                        resolve(`Generation of ${language} succeeded.`);
-                    }
-                    catch (error) {
-                        window.showWarningMessage(`Generation of ${language} failed with error: ${error}`);
-                        console.error(`Generation of ${language} failed with error: ${error}`);
-                        reject();
-                    }
+            this._client.sendRequest(TranslateRequest.type, params).then(
+                (response) => {
+                    return resolve(this._client.protocol2CodeConverter.asUri(response.uri));
                 },
-                (reason) => {
-                    window.showWarningMessage("Creating timestamped directory failed");
-                    console.error(`Creating timestamped directory failed with error: ${reason}`);
-                    reject();
-                });
-        }));
-
-    }
-
-    private addOptions(params: TranslateParams, wsFolder: WorkspaceFolder, language: string): TranslateParams {
-        // Get configurations related to translation
-        const config = workspace.getConfiguration(
-            [this._client.name, 'translate', language].join('.'),
-            wsFolder.uri
-        );
-
-        // Add configurations to the command options
-        let once = true;
-        Object.keys(config).forEach(key => {
-            if (typeof config[key] !== 'function') {
-                if (once) { params.options = {}; once = false; } // Initialise options only once
-
-                // Add options object to array
-                params.options[key] = config[key];
-            }
+                (e) => {
+                    return reject(`Translation failed with error: ${e}`);
+                }
+            );
         });
-
-        return params;
     }
-}
-
-function getCovtblFileRanges(fsPath: string): DecorationOptions[] {
-
-    let ranges: DecorationOptions[] = [];
-
-    try {
-        // read contents of the file
-        const data = fs.readFileSync(fsPath, { encoding: 'utf8' });
-
-        // split the contents by new line
-        const lines = data.split(/\r?\n/);
-
-        // iterate over each coverage region
-        lines.forEach((line) => {
-
-            if (line.length > 0) {
-
-                // Lines follow "ln c1-c2+ct"
-                let lnsplit = line.split(" ");
-                let c1split = lnsplit[1].split("-");
-                let c2split = c1split[1].split("=");
-                //
-                let ln = parseInt(lnsplit[0]);
-                let c1 = parseInt(c1split[0]);
-                let c2 = parseInt(c2split[0]);
-
-                let range = new Range(ln - 1, c1 - 1, ln - 1, c2);
-
-                ranges.push({ range });
-            }
-        });
-
-    } catch (err) {
-        console.error(err);
-    }
-
-    return ranges
 }

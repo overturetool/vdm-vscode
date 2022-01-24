@@ -57,6 +57,18 @@ export function createDirectory(fullUri: Uri, timestamped?: boolean): Promise<Ur
     });
 }
 
+export function createDirectorySync(fullUri: Uri, timestamped?: boolean): Uri {
+    if (timestamped) {
+        //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
+        var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, ".");
+        fullUri = Uri.parse(fullUri + " " + dateString);
+    }
+
+    fs.ensureDirSync(fullUri.fsPath);
+
+    return fullUri;
+}
+
 export function writeToLog(path: string, msg: string) {
     let logStream = fs.createWriteStream(path, { flags: 'a' });
     let timeStamp = `[${new Date(Date.now()).toLocaleString()}] `
