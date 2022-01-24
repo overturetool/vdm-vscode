@@ -161,6 +161,16 @@
 				"category": "VDM"
 			},
 			{
+				"command": "vdm-vscode.addLibraryJarFolders",
+				"title": "Add folder(s) containing library jars",
+				"category": "VDM"
+			},
+			{
+				"command": "vdm-vscode.addLibraryJars",
+				"title": "Add library jar",
+				"category": "VDM"
+			},
+			{
 				"command": "vdm-vscode.addRunConfiguration",
 				"title": "Add VDM Run Configuration",
 				"category": "VDM",
@@ -624,7 +634,7 @@
 					},
 					"default": [],
 					"scope": "resource",
-					"markdownDescription": "List of folder and/or file paths including/pointing to jars from which libraries can be added. A reload is required for changes to take effect. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
+					"markdownDescription": "List of folder and/or file paths including/pointing to jars from which libraries can be added. A reload is required for changes to take effect. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
 				},
 				"vdm-vscode.libraries.includeDefaultLibraries": {
 					"type": "boolean",

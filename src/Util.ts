@@ -3,7 +3,7 @@
 import * as Path from "path";
 // import * as fs from 'fs'
 import * as Fs from "fs-extra";
-import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceConfiguration, WorkspaceFolder } from "vscode";
 
 export function ensureDirectoryExistence(filePath) {
 	var dirname = Path.dirname(filePath);
@@ -87,6 +87,67 @@ export function findJavaExecutable(binname: string) {
 
 	// Else return the binary name directly (this will likely always fail downstream)
 	return null;
+}
+
+export async function addToSettingsArray(folders: boolean, settingName: string, configurationIdentifier: string, configurationSettingElement: string) {
+	window.setStatusBarMessage(`Adding to ${settingName}`, new Promise(async (resolve, reject) => {
+		// Determine scope
+		const wsFolders = workspace.workspaceFolders;
+		let defaultScopes = ["User", "Workspace"];
+		let scopes = defaultScopes;
+		if (wsFolders.length > 1)
+			wsFolders.forEach(f => scopes.push(f.name))
+		let scopeName: string = await window.showQuickPick(scopes, {
+			placeHolder: 'Choose scope',
+			canPickMany: false,
+		});
+		if (scopeName === undefined) return reject(`Empty selection. Aborting.`)
+		let scope = scopes.findIndex(x => x == scopeName)
+
+		// Get location(s) to add
+		const workspaceFolder = (scope < 2 ? undefined : wsFolders[scope - 2])
+		const location = await window.showOpenDialog({
+			defaultUri: workspaceFolder && workspaceFolder.uri,
+			canSelectFiles: !folders,
+			canSelectFolders: folders,
+			canSelectMany: true,
+			openLabel: "Add",
+			title: `Add to ${settingName}...`
+		});
+
+		// None selected
+		if (!location || !location.length) {
+			return reject("No location(s) selected");
+		}
+
+		// Get current class path additions
+		const configuration = workspace.getConfiguration(configurationIdentifier, workspaceFolder);
+		const cpa = configuration.inspect(configurationSettingElement);
+		if(!cpa) return reject("Cannot find configuration element");
+
+		let currentSettingElementValue;
+		if (scope == 0) // User
+			currentSettingElementValue = cpa.globalValue;
+		else if (scope == 1) // Workspace
+			currentSettingElementValue = cpa.workspaceValue;
+		else
+			currentSettingElementValue = cpa.workspaceFolderValue;
+
+		// Make sure a class path array exists
+		if (!currentSettingElementValue)
+			currentSettingElementValue = [];
+
+		// Add selected locations
+		location.forEach(l => {
+			if (!currentSettingElementValue.includes(l.fsPath))
+				currentSettingElementValue.push(l.fsPath);
+		})
+
+		// Save to configurations file
+		configuration.update(configurationSettingElement, currentSettingElementValue, (scope < 2 ? scope + 1 : 3));
+
+		resolve(`Add to ${settingName} completed`);
+	}));
 }
 
 export async function getFilesFromDir(dir: string, fileType: string): Promise<string[]> {

@@ -20,6 +20,8 @@ export class AddLibraryHandler {
 		commands.executeCommand("setContext", "add-lib-show-button", true);
 		this.context = context;
 		this.registerCommand((inputUri: Uri) => this.addLibrary(workspace.getWorkspaceFolder(inputUri)));
+		Util.registerCommand(context, "vdm-vscode.addLibraryJarFolders", () => Util.addToSettingsArray(true, "VDM libraries", "vdm-vscode.libraries", "VdmLibraries"));
+        Util.registerCommand(context, "vdm-vscode.addLibraryJars", () => Util.addToSettingsArray(false, "VDM libraries", "vdm-vscode.libraries", "VdmLibraries"));
 	}
 
 	private registerCommand = (callback: (...args: any[]) => any) => {
@@ -232,8 +234,7 @@ export class AddLibraryHandler {
 		const libraryConfig = workspace.getConfiguration("vdm-vscode.libraries", wsFolder);
 		const libraryJars = libraryConfig.VdmLibraries as string[];
 		// Get any library jars specified by the user
-		return ( await Promise.all(
-							libraryJars.map((path) => {
+		return (await Promise.all(libraryJars.map((path) => {
 								if (Fs.existsSync(path)) {
 									if (Fs.lstatSync(path).isDirectory()) {
 										return Util.getFilesFromDir(path, "jar");
@@ -242,9 +243,7 @@ export class AddLibraryHandler {
 									}
 								}
 								return [];
-							})
-						)
-				  )?.reduce((prev, cur) => prev.concat(cur), []) ?? [];
+							})))?.reduce((prev, cur) => prev.concat(cur), []) ?? [];
 	}
 
 	private getLibsFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
