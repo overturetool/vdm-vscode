@@ -21,7 +21,7 @@ export interface TranslateProvider {
     provideTranslation(saveUri: Uri, rootUri?: Uri, options?: any): Thenable<Uri>;
 }
 
-export class TranslateButton {
+export class TranslateButton implements Disposable {
     private static _providers: Map<string, { selector: DocumentSelector; provider: TranslateProvider }[]> = new Map();
 
     private _context: ExtensionContext;

@@ -12,8 +12,8 @@ import { CombinatorialTestingClientCapabilities, CombinatorialTestingServerCapab
 
 export class CombinantorialTestingFeature implements StaticFeature {
     private _selector: DocumentSelector;
-    public SupportsCT: boolean = false;
-    public SupportsCTWorkDoneProgress: boolean = false;
+    public supportsCT: boolean = false;
+    public supportsCTWorkDoneProgress: boolean = false;
 
     fillInitializeParams?: (params: InitializeParams) => void;
     fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -27,11 +27,11 @@ export class CombinantorialTestingFeature implements StaticFeature {
 
         // If server supports CT
         if (ctCapabilities?.experimental?.combinatorialTestProvider) {
-            this.SupportsCT = true;
+            this.supportsCT = true;
 
             // Check if support work done progress
             if (WorkDoneProgressOptions.hasWorkDoneProgress(ctCapabilities?.experimental?.combinatorialTestProvider))
-                this.SupportsCTWorkDoneProgress = ctCapabilities?.experimental?.combinatorialTestProvider.workDoneProgress;
+                this.supportsCTWorkDoneProgress = ctCapabilities?.experimental?.combinatorialTestProvider.workDoneProgress;
         }
     }
     dispose(): void {

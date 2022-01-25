@@ -36,7 +36,7 @@ interface Message {
     data?: any;
 }
 
-export class ProofObligationPanel {
+export class ProofObligationPanel implements Disposable {
     private static _providers: { selector: DocumentSelector; provider: ProofObligationProvider }[] = [];
 
     private _context: ExtensionContext;
