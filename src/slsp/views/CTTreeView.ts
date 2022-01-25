@@ -9,7 +9,7 @@ import { CTResultElement, CTResultDataProvider } from "./CTResultDataProvider";
 import path = require("path");
 import { ErrorCodes, Location, LSPErrorCodes, Protocol2CodeConverter } from "vscode-languageclient";
 import * as util from "../../Util";
-import { CTHandler } from "../features/CTHandler";
+import { CTHandler } from "./CTHandler";
 import { createConverter } from "vscode-languageclient/lib/common/protocolConverter";
 
 export class CTTreeView {

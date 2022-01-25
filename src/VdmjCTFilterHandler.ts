@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { CTFilterHandler } from "./slsp/features/CTHandler";
+import { CTFilterHandler } from "./slsp/views/CTHandler";
 import { CTFilterOption } from "./slsp/protocol/combinatorialTesting";
 import * as vscode from "vscode";
 

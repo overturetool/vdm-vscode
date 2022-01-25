@@ -16,7 +16,7 @@ import {
     NumberRange,
 } from "../protocol/combinatorialTesting";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
-import { CTTreeView } from "../views/CTTreeView";
+import { CTTreeView } from "./CTTreeView";
 
 export class CTHandler {
     private _ctTreeView: CTTreeView;

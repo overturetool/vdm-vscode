@@ -21,7 +21,7 @@ import {
 import { LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
-import { CTHandler } from "./slsp/features/CTHandler";
+import { CTHandler } from "./slsp/views/CTHandler";
 import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./VdmjCTInterpreterHandler";
 import { AddLibraryHandler } from "./AddLibrary";
