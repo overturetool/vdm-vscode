@@ -32,6 +32,7 @@ import { AddToClassPathHandler } from "./AddToClassPath";
 import * as encoding from "./Encoding";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
 import { TranslateButton } from "./slsp/views/TranslateButton";
+import { CoverageButtons } from "./slsp/views/CoverageButtons";
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
@@ -64,11 +65,11 @@ export function activate(context: ExtensionContext) {
 
     // Initialise POG panel // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
-    context.subscriptions.push(new TranslateButton(context, languageId.latex));
-    context.subscriptions.push(new TranslateButton(context, languageId.word));
-    context.subscriptions.push(new TranslateButton(context, languageId.graphviz));
-    context.subscriptions.push(new TranslateButton(context, languageId.coverage));
-    context.subscriptions.push(new TranslateButton(context, languageId.isabelle));
+    context.subscriptions.push(new TranslateButton(languageId.latex));
+    context.subscriptions.push(new TranslateButton(languageId.word));
+    context.subscriptions.push(new TranslateButton(languageId.graphviz));
+    context.subscriptions.push(new TranslateButton(languageId.isabelle));
+    context.subscriptions.push(new CoverageButtons());
 
     // Initialise handlers
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);

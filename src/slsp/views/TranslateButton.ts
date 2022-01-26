@@ -1,56 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as fs from "fs-extra";
+import * as Fs from "fs-extra";
 import * as util from "../../Util";
-import * as LanguageId from "../../LanguageId";
-import {
-    DecorationOptions,
-    Uri,
-    ViewColumn,
-    window,
-    workspace,
-    WorkspaceFolder,
-    Range,
-    commands,
-    ExtensionContext,
-    WorkspaceConfiguration,
-} from "vscode";
-import { Disposable, DocumentSelector } from "vscode-languageclient";
 
-export interface TranslateProvider {
-    provideTranslation(saveUri: Uri, rootUri?: Uri, options?: any): Thenable<Uri>;
-}
+import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, WorkspaceConfiguration } from "vscode";
+import { Disposable } from "vscode-languageclient";
+import { TranslateProviderManager } from "../../TranslateProviderManager";
 
 export class TranslateButton {
-    private static _providers: Map<string, { selector: DocumentSelector; provider: TranslateProvider }[]> = new Map();
+    protected _commandDisposable: Disposable;
 
-    private _context: ExtensionContext;
-    private _commandDisposable: Disposable;
-    private _language: string;
-
-    constructor(context: ExtensionContext, language: string) {
-        this._context = context;
-        this._language = language;
-        this._commandDisposable = commands.registerCommand(`vdm-vscode.translate.${this._language}`, this.onTranslate, this);
+    constructor(private _language: string) {
+        this._commandDisposable = commands.registerCommand(`vdm-vscode.translate.${this._language}`, this.translate, this);
     }
 
-    public static registerTranslateProvider(documentSelector: DocumentSelector, provider: TranslateProvider, language: string): Disposable {
-        let providers = this._providers.get(language) || [];
-        providers.push({ selector: documentSelector, provider: provider });
-        this._providers.set(language, providers);
-
-        commands.executeCommand("setContext", `vdm-vscode.translate.${language}`, true);
-
-        return {
-            dispose: () => {
-                let langProviders = this._providers.get(language).filter((p) => p.selector != documentSelector || p.provider != provider);
-                this._providers.set(language, langProviders);
-                if (langProviders.length == 0) commands.executeCommand("setContext", `vdm-vscode.translate.${language}`, false);
-            },
-        };
-    }
-
-    protected async onTranslate(uri: Uri) {
+    protected async translate(uri: Uri): Promise<void> {
         const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
         if (!wsFolder) throw Error(`Cannot find workspace folder for Uri: ${uri.toString()}`);
 
@@ -64,42 +28,23 @@ export class TranslateButton {
             uri = wsFolder.uri;
         }
 
-        // Get options
-        const options = this.getOptions(translateConfig);
-
-        for await (const p of TranslateButton._providers.get(this._language)) {
+        for await (const p of TranslateProviderManager.getProviders(this._language)) {
             if (util.match(p.selector, uri)) {
                 try {
                     // Get save location for the translation
                     const saveUri = this.createSaveLocation(wsFolder, timestamped);
 
-                    // Perform translations
-                    const mainFileUri = await p.provider.provideTranslation(saveUri, uri, options);
-
-                    // TODO move to function and move coverage stuff somewhere else
-                    // Check if a directory has been returned
-                    if (!util.isDir(mainFileUri.fsPath)) {
-                        if (this._language == LanguageId.coverage) {
+                    // Perform translation and handle result
+                    p.provider.doTranslation(saveUri, uri, this.getOptions(translateConfig)).then(async (mainFileUri) => {
+                        // Check if a file has been returned
+                        if (!util.isDir(uri.fsPath)) {
                             // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(Uri.parse(uri.toString()));
-
-                            const decorationType = window.createTextEditorDecorationType({
-                                backgroundColor: "#0080FF80",
-                                border: "2px solid black",
-                            });
-
-                            let ranges = getCovtblFileRanges(mainFileUri.fsPath);
-
-                            // Show the file
-                            window.showTextDocument(doc.uri).then((editor) => editor.setDecorations(decorationType, ranges));
-                        } else {
-                            // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(mainFileUri);
+                            let doc = await workspace.openTextDocument(uri);
 
                             // Show the file
                             window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: true });
                         }
-                    }
+                    });
                 } catch (e) {
                     let message = `[Translate] Provider failed with message: ${e}`;
                     window.showWarningMessage(message);
@@ -111,11 +56,11 @@ export class TranslateButton {
 
     protected createSaveLocation(wsFolder: WorkspaceFolder, timestamped: boolean = false): Uri {
         // Create save location in "...<worksapcefolder>/.generate/<language>"
-        let saveLocation = Uri.joinPath(wsFolder.uri, ".generated", this._language);
+        let saveLocation = Uri.joinPath(wsFolder.uri, ".generated", this._language, this._language);
         saveLocation = util.createDirectorySync(saveLocation, timestamped);
 
         // Make sure the directory is empty
-        fs.emptyDirSync(saveLocation.fsPath);
+        Fs.emptyDirSync(saveLocation.fsPath);
 
         return saveLocation;
     }
@@ -140,39 +85,4 @@ export class TranslateButton {
         // Clean up our resources
         this._commandDisposable.dispose();
     }
-}
-
-// TODO move somewhere else
-function getCovtblFileRanges(fsPath: string): DecorationOptions[] {
-    let ranges: DecorationOptions[] = [];
-
-    try {
-        // read contents of the file
-        const data = fs.readFileSync(fsPath, { encoding: "utf8" });
-
-        // split the contents by new line
-        const lines = data.split(/\r?\n/);
-
-        // iterate over each coverage region
-        lines.forEach((line) => {
-            if (line.length > 0) {
-                // Lines follow "ln c1-c2+ct"
-                let lnsplit = line.split(" ");
-                let c1split = lnsplit[1].split("-");
-                let c2split = c1split[1].split("=");
-                //
-                let ln = parseInt(lnsplit[0]);
-                let c1 = parseInt(c1split[0]);
-                let c2 = parseInt(c2split[0]);
-
-                let range = new Range(ln - 1, c1 - 1, ln - 1, c2);
-
-                ranges.push({ range });
-            }
-        });
-    } catch (err) {
-        console.error(err);
-    }
-
-    return ranges;
 }

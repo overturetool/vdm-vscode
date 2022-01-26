@@ -12,7 +12,7 @@ import {
 } from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/translate";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
-import { TranslateButton, TranslateProvider } from "../views/TranslateButton";
+import { TranslateProvider, TranslateProviderManager } from "../../TranslateProviderManager";
 
 export default class TranslateFeature implements StaticFeature {
     private _disposables: Disposable[] = [];
@@ -37,12 +37,12 @@ export default class TranslateFeature implements StaticFeature {
         let languageIds = translateCapabilities.languageId;
         let languages = typeof languageIds == "string" ? [languageIds] : languageIds;
 
-        // Check for feature's language
+        // Check for feature's language //TODO: Inform that the server does not provide translation for the language although it was expected?
         if (languages.includes(this._language)) {
-            let provider: TranslateProvider = {
-                provideTranslation: (saveUri: Uri, rootUri?: Uri, options?: any) => this.provideTranslation(saveUri, rootUri, options),
+            const provider: TranslateProvider = {
+                doTranslation: (saveUri: Uri, rootUri?: Uri, options?: any) => this.provideTranslation(saveUri, rootUri, options),
             };
-            this._disposables.push(TranslateButton.registerTranslateProvider(this._selector, provider, this._language));
+            this._disposables.push(TranslateProviderManager.registerTranslateProvider(this._selector, provider, this._language));
         }
 
         // Check if support work done progress
