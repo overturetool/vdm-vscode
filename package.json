@@ -216,13 +216,13 @@
             },
             {
                 "command": "vdm-vscode.display.coverage.show",
-                "title": "Overlay Coverage",
+                "title": "Enable Coverage Overlay",
                 "category": "VDM",
                 "icon": "$(references)"
             },
             {
                 "command": "vdm-vscode.display.coverage.hide",
-                "title": "Hide Coverage",
+                "title": "Disable Coverage Overlay",
                 "category": "VDM",
                 "icon": "$(references)"
             },

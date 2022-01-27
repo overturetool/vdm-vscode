@@ -10,14 +10,19 @@ import { TranslateProviderManager } from "../../TranslateProviderManager";
 export class TranslateButton {
     protected _commandDisposable: Disposable;
 
-    constructor(private _language: string) {
-        this._commandDisposable = commands.registerCommand(`vdm-vscode.translate.${this._language}`, this.translate, this);
+    constructor(protected _language: string) {
+        this._commandDisposable = commands.registerCommand(
+            `vdm-vscode.translate.${this._language}`,
+            (uri) => {
+                const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
+                if (!wsFolder) throw Error(`Cannot find workspace folder for Uri: ${uri.toString()}`);
+                this.translate(uri, wsFolder);
+            },
+            this
+        );
     }
 
-    protected async translate(uri: Uri): Promise<void> {
-        const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
-        if (!wsFolder) throw Error(`Cannot find workspace folder for Uri: ${uri.toString()}`);
-
+    protected async translate(uri: Uri, wsFolder: WorkspaceFolder): Promise<void> {
         // Check timestamp setting
         const translateConfig = workspace.getConfiguration(["vdm-vscode", "translate", "general"].join("."), wsFolder);
         const timestamped = translateConfig?.get("storeAllTranslations", false);
@@ -32,21 +37,21 @@ export class TranslateButton {
             if (util.match(p.selector, uri)) {
                 try {
                     // Get save location for the translation
-                    const saveUri = this.createSaveLocation(wsFolder, timestamped);
+                    const saveUri = this.createSaveDir(timestamped, Uri.joinPath(wsFolder.uri, ".generated", this._language));
 
                     // Perform translation and handle result
                     p.provider.doTranslation(saveUri, uri, this.getOptions(translateConfig)).then(async (mainFileUri) => {
                         // Check if a file has been returned
-                        if (!util.isDir(uri.fsPath)) {
+                        if (!util.isDir(mainFileUri.fsPath)) {
                             // Open the main file in the translation
-                            let doc = await workspace.openTextDocument(uri);
+                            const doc = await workspace.openTextDocument(mainFileUri);
 
                             // Show the file
                             window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: true });
                         }
                     });
                 } catch (e) {
-                    let message = `[Translate] Provider failed with message: ${e}`;
+                    const message = `${this._language} translate provider failed with message: ${e}`;
                     window.showWarningMessage(message);
                     console.warn(message);
                 }
@@ -54,10 +59,9 @@ export class TranslateButton {
         }
     }
 
-    protected createSaveLocation(wsFolder: WorkspaceFolder, timestamped: boolean = false): Uri {
+    protected createSaveDir(timestamped: boolean = false, location: Uri): Uri {
         // Create save location in "...<worksapcefolder>/.generate/<language>"
-        let saveLocation = Uri.joinPath(wsFolder.uri, ".generated", this._language, this._language);
-        saveLocation = util.createDirectorySync(saveLocation, timestamped);
+        const saveLocation = util.createDirectorySync(location, timestamped);
 
         // Make sure the directory is empty
         Fs.emptyDirSync(saveLocation.fsPath);

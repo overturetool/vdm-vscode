@@ -32,7 +32,8 @@ import { AddToClassPathHandler } from "./AddToClassPath";
 import * as encoding from "./Encoding";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
 import { TranslateButton } from "./slsp/views/TranslateButton";
-import { CoverageButtons } from "./slsp/views/CoverageButtons";
+import { GenerateCoverageButton } from "./slsp/views/GenerateCoverageButton";
+import { CoverageOverlay } from "./slsp/views/CoverageOverlay";
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
@@ -69,7 +70,9 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(languageId.word));
     context.subscriptions.push(new TranslateButton(languageId.graphviz));
     context.subscriptions.push(new TranslateButton(languageId.isabelle));
-    context.subscriptions.push(new CoverageButtons());
+    const GenCovBut = new GenerateCoverageButton();
+    context.subscriptions.push(GenCovBut);
+    context.subscriptions.push(new CoverageOverlay(GenCovBut.eventEmitter));
 
     // Initialise handlers
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);
