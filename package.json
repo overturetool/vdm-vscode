@@ -216,7 +216,7 @@
             },
             {
                 "command": "vdm-vscode.display.coverage.show",
-                "title": "Display Coverage",
+                "title": "Overlay Coverage",
                 "category": "VDM",
                 "icon": "$(references)"
             },
@@ -665,11 +665,11 @@
                     "scope": "resource",
                     "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
                 },
-                "vdm-vscode.coverage.DisplayLatestCoverage": {
+                "vdm-vscode.coverage.OverlayLatestCoverage": {
                     "type": "boolean",
                     "default": true,
                     "scope": "resource",
-                    "description": "Enabled: The coverage displayed is the latest generated coverage. Disabled: Choose which coverage should be displayed."
+                    "description": "Enabled: The latest generated coverage is utilised for overlaying. Disabled: Choose which coverage should be used for overlaying."
                 },
                 "vdm-vscode.javaCodeGen.disableCloning": {
                     "type": "boolean",
