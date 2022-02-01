@@ -134,7 +134,7 @@ export class CoverageOverlay {
     }
 
     private handleNewCoverageGenerated(coverage: GeneratedCoverage) {
-        //If the user wants to use a specific coverage folder then do nothing.
+        // If the user wants to use a specific coverage folder then do nothing.
         if (!workspace.getConfiguration("vdm-vscode.coverage", coverage.wsFolder).get("OverlayLatestCoverage")) return;
 
         // The uri is the latest coverage folder. Set it for the workspace folder.
