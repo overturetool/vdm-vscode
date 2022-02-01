@@ -221,78 +221,6 @@
         "icon": "$(run)"
       },
       {
-        "command": "vdm-vscode.goToTrace",
-        "title": "Go to trace",
-        "category": "VDM",
-        "icon": "$(go-to-file)"
-      },
-      {
-        "command": "vdm-vscode.ctSetFilter",
-        "title": "Set Filter Options",
-        "category": "VDM",
-        "icon": "$(gear)"
-      },
-      {
-        "command": "vdm-vscode.ctRebuildOutline",
-        "title": "Rebuild Trace Outline",
-        "category": "VDM",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "vdm-vscode.ctFullExecute",
-        "title": "Execute All Tests",
-        "category": "VDM",
-        "icon": "$(run-all)"
-      },
-      {
-        "command": "vdm-vscode.ctExecute",
-        "title": "Full Evaluation",
-        "category": "VDM",
-        "icon": "$(run)"
-      },
-      {
-        "command": "vdm-vscode.ctFilteredExecute",
-        "title": "Filtered Evaluation",
-        "category": "VDM",
-        "icon": {
-          "light": "/resources/icons/light/runFiltered.svg",
-          "dark": "/resources/icons/dark/runFiltered.svg"
-        }
-      },
-      {
-        "command": "vdm-vscode.ctGenerate",
-        "title": "Generate Tests",
-        "category": "VDM",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "vdm-vscode.ctEnableTreeFilter",
-        "title": "Filter test results",
-        "category": "VDM",
-        "icon": "$(filter)"
-      },
-      {
-        "command": "vdm-vscode.ctDisableTreeFilter",
-        "title": "Disable filtering of tests",
-        "category": "VDM",
-        "icon": {
-          "light": "/resources/icons/light/disableFilter.svg",
-          "dark": "/resources/icons/dark/disableFilter.svg"
-        }
-      },
-      {
-        "command": "vdm-vscode.ctSendToInterpreter",
-        "title": "Send test to interpreter",
-        "category": "VDM",
-        "icon": "$(debug-alt)"
-      },
-      {
-        "command": "vdm-vscode.ctCancel",
-        "title": "Cancel Combinatorial Test Request",
-        "category": "VDM",
-        "icon": "$(debug-stop)"
-      },
-      {
         "command": "vdm-vscode.openServerLog",
         "title": "Open Server Log",
         "category": "VDM"
@@ -301,6 +229,78 @@
         "command": "vdm-vscode.openServerLogFolder",
         "title": "Open Server Log Folder",
         "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.ct.goToTrace",
+        "title": "Go to trace",
+        "category": "VDM",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "vdm-vscode.ct.setFilter",
+        "title": "Set Filter Options",
+        "category": "VDM",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "vdm-vscode.ct.rebuildOutline",
+        "title": "Rebuild Trace Outline",
+        "category": "VDM",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "vdm-vscode.ct.fullExecute",
+        "title": "Execute All Tests",
+        "category": "VDM",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "vdm-vscode.ct.execute",
+        "title": "Full Evaluation",
+        "category": "VDM",
+        "icon": "$(run)"
+      },
+      {
+        "command": "vdm-vscode.ct.filteredExecute",
+        "title": "Filtered Evaluation",
+        "category": "VDM",
+        "icon": {
+          "light": "/resources/icons/light/runFiltered.svg",
+          "dark": "/resources/icons/dark/runFiltered.svg"
+        }
+      },
+      {
+        "command": "vdm-vscode.ct.generate",
+        "title": "Generate Tests",
+        "category": "VDM",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "vdm-vscode.ct.enableTreeFilter",
+        "title": "Filter test results",
+        "category": "VDM",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "vdm-vscode.ct.disableTreeFilter",
+        "title": "Disable filtering of tests",
+        "category": "VDM",
+        "icon": {
+          "light": "/resources/icons/light/disableFilter.svg",
+          "dark": "/resources/icons/dark/disableFilter.svg"
+        }
+      },
+      {
+        "command": "vdm-vscode.ct.sendToInterpreter",
+        "title": "Send test to interpreter",
+        "category": "VDM",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "vdm-vscode.ct.cancel",
+        "title": "Cancel Combinatorial Test Request",
+        "category": "VDM",
+        "icon": "$(debug-stop)"
       }
     ],
     "viewsContainers": {
@@ -309,21 +309,21 @@
           "id": "combinatorialTesting",
           "title": "Combinatorial Testing",
           "icon": "resources/icons/ctView.svg",
-          "when": "vdm-ct-show-view == true"
+          "when": "vdm-vscode.ct.show == true"
         }
       ]
     },
     "views": {
       "combinatorialTesting": [
         {
-          "id": "vdm-ctView",
+          "id": "vdm-vscode.ct.testView",
           "name": "Tests",
-          "when": "vdm-ct-show-view == true"
+          "when": "vdm-vscode.ct.show == true"
         },
         {
-          "id": "vdm-ctResultView",
+          "id": "vdm-vscode.ct.resultView",
           "name": "Test Sequence Results",
-          "when": "vdm-ct-show-view == true"
+          "when": "vdm-vscode.ct.show == true"
         }
       ]
     },
@@ -334,8 +334,8 @@
         "when": "workspaceFolderCount == 0"
       },
       {
-        "view": "vdm-ctView",
-        "contents": "[Generate test outline](command:vdm-vscode.ctRebuildOutline)"
+        "view": "vdm-vscode.ct.testView",
+        "contents": "[Generate test outline](command:vdm-vscode.ct.rebuildOutline)"
       }
     ],
     "submenus": [
@@ -394,80 +394,85 @@
       ],
       "view/title": [
         {
-          "command": "vdm-vscode.ctFullExecute",
-          "when": "view =~ /vdm-ctView/ && vdm-ct-show-run-buttons == true",
+          "command": "vdm-vscode.ct.fullExecute",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-run-buttons == true",
           "group": "navigation@0"
         },
         {
-          "command": "vdm-vscode.ctCancel",
-          "when": "view =~ /vdm-ctView/ && vdm-ct-show-cancel-button == true",
+          "command": "vdm-vscode.ct.cancel",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-cancel-button == true",
           "group": "navigation@1"
         },
         {
-          "command": "vdm-vscode.ctSetFilter",
-          "when": "view =~ /vdm-ctView/ && vdm-ct-show-set-execute-filter-button == true",
+          "command": "vdm-vscode.ct.setFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-set-execute-filter-button == true",
           "group": "navigation@2"
         },
         {
-          "command": "vdm-vscode.ctEnableTreeFilter",
-          "when": "view =~ /vdm-ctView/ && vdm-ct-show-enable-filter-button == true",
+          "command": "vdm-vscode.ct.enableTreeFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-enable-filter-button == true",
           "group": "navigation@3"
         },
         {
-          "command": "vdm-vscode.ctDisableTreeFilter",
-          "when": "view =~ /vdm-ctView/ && vdm-ct-show-disable-filter-button == true",
+          "command": "vdm-vscode.ct.disableTreeFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-disable-filter-button == true",
           "group": "navigation@3"
         },
         {
-          "command": "vdm-vscode.ctRebuildOutline",
-          "when": "view =~ /vdm-ctView/",
+          "command": "vdm-vscode.ct.rebuildOutline",
+          "when": "view =~ /vdm-vscode.ct.testView/",
           "group": "navigation@4"
         }
       ],
       "view/item/context": [
         {
-          "command": "vdm-vscode.ctExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
-          "group": "vdm-ctView@0"
+          "command": "vdm-vscode.ct.execute",
+          "when": "viewItem == trace && vdm-vscode.ct.show-run-buttons == true || viewItem == testgroup && vdm-vscode.ct.show-run-buttons == true",
+          "group": "vdm-vscode.ct.testView@0"
         },
         {
-          "command": "vdm-vscode.ctFilteredExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
-          "group": "vdm-ctView@1"
+          "command": "vdm-vscode.ct.filteredExecute",
+          "when": "viewItem == trace && vdm-vscode.ct.show-run-buttons == true && vdm-vscode.ct.show-set-execute-filter-button",
+          "group": "vdm-vscode.ct.testView@1"
         },
         {
-          "command": "vdm-vscode.ctGenerate",
+          "command": "vdm-vscode.ct.generate",
           "when": "viewItem == trace",
-          "group": "vdm-ctView@2"
+          "group": "vdm-vscode.ct.testView@2"
         },
         {
-          "command": "vdm-vscode.ctSendToInterpreter",
-          "when": "viewItem == test && vdm-ct-show-run-buttons == true",
-          "group": "vdm-ctView@0"
+          "command": "vdm-vscode.ct.goToTrace",
+          "when": "viewItem == trace",
+          "group": "vdm-vscode.ct.testView@3"
         },
         {
-          "command": "vdm-vscode.ctExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+          "command": "vdm-vscode.ct.sendToInterpreter",
+          "when": "viewItem == test && vdm-vscode.ct.show-run-buttons == true && vdm-vscode.ct.show-interpret-button",
+          "group": "vdm-vscode.ct.testView@0"
+        },
+        {
+          "command": "vdm-vscode.ct.execute",
+          "when": "viewItem == trace && vdm-vscode.ct.show-run-buttons || viewItem == testgroup && vdm-vscode.ct.show-run-buttons",
           "group": "inline@0"
         },
         {
-          "command": "vdm-vscode.ctFilteredExecute",
-          "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
+          "command": "vdm-vscode.ct.filteredExecute",
+          "when": "viewItem == trace && vdm-vscode.ct.show-run-buttons && vdm-vscode.ct.show-set-execute-filter-button",
           "group": "inline@1"
         },
         {
-          "command": "vdm-vscode.ctGenerate",
+          "command": "vdm-vscode.ct.generate",
           "when": "viewItem == trace",
           "group": "inline@2"
         },
         {
-          "command": "vdm-vscode.goToTrace",
+          "command": "vdm-vscode.ct.goToTrace",
           "when": "viewItem == trace",
           "group": "inline@3"
         },
         {
-          "command": "vdm-vscode.ctSendToInterpreter",
-          "when": "viewItem == test && vdm-ct-show-run-buttons == true",
+          "command": "vdm-vscode.ct.sendToInterpreter",
+          "when": "viewItem == test && vdm-vscode.ct.show-run-buttons && vdm-vscode.ct.show-interpret-button",
           "group": "inline@0"
         }
       ],
@@ -495,43 +500,43 @@
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctSetFilter",
+          "command": "vdm-vscode.ct.setFilter",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctRebuildOutline",
+          "command": "vdm-vscode.ct.rebuildOutline",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctFullExecute",
+          "command": "vdm-vscode.ct.fullExecute",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctExecute",
+          "command": "vdm-vscode.ct.execute",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctFilteredExecute",
+          "command": "vdm-vscode.ct.filteredExecute",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctGenerate",
+          "command": "vdm-vscode.ct.generate",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctEnableTreeFilter",
+          "command": "vdm-vscode.ct.enableTreeFilter",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctDisableTreeFilter",
+          "command": "vdm-vscode.ct.disableTreeFilter",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ctSendToInterpreter",
+          "command": "vdm-vscode.ct.sendToInterpreter",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.goToTrace",
+          "command": "vdm-vscode.ct.goToTrace",
           "when": "false"
         },
         {

@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch buffersPP Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "Buffers",
+	    "command": "print new Buffers().getBuffers()"
+	}
+    ]
+}

@@ -33,7 +33,7 @@ export class SpecificationLanguageClient extends LanguageClient {
     registerBuiltinFeatures() {
         super.registerBuiltinFeatures();
         this.registerFeature(new ProofObligationGenerationFeature(this));
-        this.registerFeature(new CombinantorialTestingFeature());
+        this.registerFeature(new CombinantorialTestingFeature(this));
         this.registerFeature(new TranslateFeature(this, LanguageId.latex));
         this.registerFeature(new TranslateFeature(this, LanguageId.word));
         this.registerFeature(new TranslateFeature(this, LanguageId.coverage));

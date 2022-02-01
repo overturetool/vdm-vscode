@@ -21,7 +21,6 @@ import {
 import { LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
-import { CTHandler } from "./slsp/views/CTHandler";
 import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./VdmjCTInterpreterHandler";
 import { AddLibraryHandler } from "./AddLibrary";
@@ -32,6 +31,7 @@ import { AddToClassPathHandler } from "./AddToClassPath";
 import * as encoding from "./Encoding";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
 import { TranslateButton } from "./slsp/views/TranslateButton";
+import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
@@ -62,8 +62,9 @@ export function activate(context: ExtensionContext) {
     // Show VDM VS Code buttons
     commands.executeCommand("setContext", "vdm-submenus-show", true);
 
-    // Initialise POG panel // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
+    // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
+    context.subscriptions.push(new CombinatorialTestingView(context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
     context.subscriptions.push(new TranslateButton(context, languageId.latex));
     context.subscriptions.push(new TranslateButton(context, languageId.word));
     context.subscriptions.push(new TranslateButton(context, languageId.graphviz));
@@ -71,8 +72,6 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(context, languageId.isabelle));
 
     // Initialise handlers
-    const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);
-
     const addLibraryHandler = new AddLibraryHandler(clients, context);
     const addRunConfigurationHandler = new AddRunConfigurationHandler(clients, context);
     const addExampleHandler = new AddExampleHandler(clients, context);

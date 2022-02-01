@@ -13,3 +13,7 @@ export class Icons {
         };
     }
 }
+
+export namespace Icons {
+    export type IconPath = string | Uri | { light: string | Uri; dark: string | Uri } | ThemeIcon;
+}

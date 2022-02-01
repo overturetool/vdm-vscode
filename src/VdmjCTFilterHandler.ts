@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { CTFilterHandler } from "./slsp/views/CTHandler";
+import { CTFilterHandler } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { CTFilterOption } from "./slsp/protocol/combinatorialTesting";
 import * as vscode from "vscode";
 
@@ -34,11 +34,11 @@ export class VdmjCTFilterHandler implements CTFilterHandler {
         this.resetFilters();
     }
 
-    setCTFilter() {
+    setFilter() {
         this.showFilterOptions();
     }
 
-    getCTFilter(): CTFilterOption[] {
+    getFilter(): CTFilterOption[] {
         // Wait for setup to be over
         while (this._inSetup) {}
 
