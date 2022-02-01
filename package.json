@@ -219,8 +219,8 @@
                 "title": "Enable Coverage Overlay",
                 "category": "VDM",
                 "icon": {
-                    "light": "/resources/icons/light/tag-light.svg",
-                    "dark": "/resources/icons/dark/tag-dark.svg"
+                    "light": "/resources/icons/light/coverage_overlay_light.svg",
+                    "dark": "/resources/icons/dark/coverage_overlay_dark.svg"
                 }
             },
             {
@@ -228,8 +228,8 @@
                 "title": "Disable Coverage Overlay",
                 "category": "VDM",
                 "icon": {
-                    "light": "/resources/icons/light/tag-light.svg",
-                    "dark": "/resources/icons/dark/tag-dark.svg"
+                    "light": "/resources/icons/coverage_overlay_enabled.svg",
+                    "dark": "/resources/icons/coverage_overlay_enabled.svg"
                 }
             },
             {
@@ -364,16 +364,6 @@
         ],
         "menus": {
             "vdm-vscode.vdmsubmenu": [
-                {
-                    "command": "vdm-vscode.display.coverage.show",
-                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.display.coverage.show",
-                    "group": "display@1"
-                },
-                {
-                    "command": "vdm-vscode.display.coverage.hide",
-                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.display.coverage.show == false",
-                    "group": "display@2"
-                },
                 {
                     "command": "vdm-vscode.pog.run",
                     "when": "vdm-vscode.pog.run == true",
@@ -514,12 +504,12 @@
                 {
                     "command": "vdm-vscode.display.coverage.show",
                     "when": "vdm-vscode.translate.coverage == true && vdm-vscode.display.coverage.show",
-                    "group": "navigation@1"
+                    "group": "navigation"
                 },
                 {
                     "command": "vdm-vscode.display.coverage.hide",
                     "when": "vdm-vscode.translate.coverage == true && vdm-vscode.display.coverage.show == false",
-                    "group": "navigation@1"
+                    "group": "navigation"
                 }
             ],
             "editor/context": [
