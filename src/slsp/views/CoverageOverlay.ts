@@ -10,19 +10,19 @@ import {
     workspace,
     WorkspaceFolder,
 } from "vscode";
-import { TranslateProviderManager } from "../../TranslateProviderManager";
 import * as Fs from "fs-extra";
-import * as Util from "../../Util";
 import * as Path from "path";
 import * as LanguageId from "../../LanguageId";
 import { GenerateCoverageButton, GeneratedCoverage } from "./GenerateCoverageButton";
 
 export class CoverageOverlay {
+    private _visibleEditorsChangedDisposable: Disposable;
     private _disposables: Disposable[] = [];
-    private _currentWs: WorkspaceFolder;
     private _displayCoverage: boolean = false;
-    // Keep track of decorations applied to the document in focus. Needed to be able to clear the decorations while the document is in focus.
-    private _documentUriToDecoratorTypes: UriToDecorations;
+    private _visibleEditors: TextEditor[] = [];
+    // Keep track of decorations applied to the documents in visible editors.
+    // Needed to keep track of visible documents and to be able to clear the decorations from the document if it is visible.
+    private _visibleEditorToDecoratorTypes: Map<TextEditor, TextEditorDecorationType[]> = new Map();
     // Keep track of the coverage folder chosen for the workspace folder, i.e. the latest folder or a user specified one.
     private _wsFolderToCoverageFolder: Map<WorkspaceFolder, string> = new Map();
     // This map is a tree-like structure: Workspace folders -> Coverage folders -> Document URIs -> Decorations with ranges.
@@ -38,31 +38,37 @@ export class CoverageOverlay {
         );
         commands.executeCommand("setContext", "vdm-vscode.display.coverage.show", true);
 
-        // When the user switches to a document it needs to be decorated if show coverage is enabled
-        workspace.onDidOpenTextDocument(() => {
-            // Remove stored decorations from the previous document.
-            this._documentUriToDecoratorTypes = undefined;
-            const textEditor: TextEditor = window.activeTextEditor;
-            this._currentWs = workspace.getWorkspaceFolder(textEditor.document.uri);
-            if (this._displayCoverage) {
-                this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(textEditor.document.uri)).then((coverageFolder) => {
-                    if (coverageFolder) this.overlayCoverage(textEditor, coverageFolder);
-                });
-            }
-        });
-
         // Register the display coverage button and its action
         this._disposables.push(
             commands.registerCommand(
                 "vdm-vscode.display.coverage.show",
                 async () => {
-                    const textEditor = window.activeTextEditor;
-                    this._currentWs = workspace.getWorkspaceFolder(textEditor.document.uri);
-                    this.getCoverageFolderForWorkspace(this._currentWs).then((coverageFolder) => {
-                        if (coverageFolder) this.overlayCoverage(textEditor, coverageFolder);
+                    this._displayCoverage = true;
+
+                    // When the user switches to a document it needs to be decorated if show coverage is enabled
+                    this._visibleEditorsChangedDisposable = window.onDidChangeVisibleTextEditors((visibleEditors: TextEditor[]) => {
+                        // Filter for new visible editors
+                        const newVisibleEditors: TextEditor[] = visibleEditors.filter(
+                            (visibleEditor) => !this._visibleEditors.find((currentVisibleEditors) => currentVisibleEditors == visibleEditor)
+                        );
+
+                        // Set visible editors to current visible editors
+                        this._visibleEditors = visibleEditors;
+
+                        // Decorate newly visible editors
+                        newVisibleEditors.forEach((editor) =>
+                            this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(editor.document.uri))
+                                .then((coverageFolder) => this.overlayCoverage(editor, coverageFolder))
+                                .catch((err) => console.log(err))
+                        );
                     });
 
-                    this._displayCoverage = true;
+                    // Decorate all visible editors when the user enables coverage overlay
+                    window.visibleTextEditors.forEach((editor) =>
+                        this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(editor.document.uri))
+                            .then((coverageFolder) => this.overlayCoverage(editor, coverageFolder))
+                            .catch((err) => console.log(err))
+                    );
                     // Hide this button. This also displays the "hide coverage" button.
                     commands.executeCommand("setContext", "vdm-vscode.display.coverage.show", false);
                 },
@@ -75,13 +81,19 @@ export class CoverageOverlay {
             commands.registerCommand(
                 "vdm-vscode.display.coverage.hide",
                 () => {
-                    // Remove any coverage decorations that have been applied to the document in focus.
-                    this._documentUriToDecoratorTypes?.decorations.forEach((deco) => window.activeTextEditor.setDecorations(deco, []));
+                    this._displayCoverage = false;
+
+                    // Remove any coverage decorations that have been applied to visible documents.
+                    this._visibleEditorToDecoratorTypes.forEach((decorations, textEditor) =>
+                        decorations.forEach((decoration) => textEditor.setDecorations(decoration, []))
+                    );
 
                     // Clear coverage folders for workspace folders
                     this._wsFolderToCoverageFolder = new Map();
 
-                    this._displayCoverage = false;
+                    // Dispose subscription
+                    this._visibleEditorsChangedDisposable.dispose();
+
                     // Show the "display corage" button. This also hides this button.
                     commands.executeCommand("setContext", "vdm-vscode.display.coverage.show", true);
                 },
@@ -90,62 +102,41 @@ export class CoverageOverlay {
         );
 
         // Register for configuration changes to handle relevant changes on the fly, e.g. without the user having to disable and enable the coverage overlay.
-        const t = workspace.onDidChangeConfiguration((event) => {
+        workspace.onDidChangeConfiguration((event) => {
             // Find the workspace folders affected by the configuration change
             Array.from(this._wsFolderToCoverageFolder.keys()).forEach((wsFolder) => {
                 if (event.affectsConfiguration("vdm-vscode.coverage.OverlayLatestCoverage", wsFolder)) {
+                    // Remove coverage folders for workspace folders
                     this._wsFolderToCoverageFolder.delete(wsFolder);
+
+                    // Remove any coverage decorations that have been applied to visible documents.
+                    this._visibleEditorToDecoratorTypes.forEach((decorations, textEditor) =>
+                        decorations.forEach((decoration) => textEditor.setDecorations(decoration, []))
+                    );
+
+                    // Overlay coverage again - this prompt the user to input coverage folder or uses the latest.
+                    window.visibleTextEditors.forEach((editor) =>
+                        this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(editor.document.uri))
+                            .then((coverageFolder) => this.overlayCoverage(editor, coverageFolder))
+                            .catch((err) => console.log(err))
+                    );
                 }
             });
         });
     }
 
-    public handleNewCoverageGenerated(coverage: GeneratedCoverage) {
-        //If the user wants to use a specific coverage folder then do nothing after "translating".
+    private handleNewCoverageGenerated(coverage: GeneratedCoverage) {
+        //If the user wants to use a specific coverage folder then do nothing.
         if (!workspace.getConfiguration("vdm-vscode.coverage", coverage.wsFolder).get("OverlayLatestCoverage")) return;
 
-        // The saveUri is the latest coverage folder. Set it for the workspace folder.
+        // The uri is the latest coverage folder. Set it for the workspace folder.
         this._wsFolderToCoverageFolder.set(coverage.wsFolder, coverage.uri.fsPath);
 
         // Only display coverage if display coverage is true.
         if (this._displayCoverage) {
-            this.overlayCoverage(window.activeTextEditor, coverage.uri.fsPath);
+            window.visibleTextEditors.forEach((editor) => this.overlayCoverage(editor, coverage.uri.fsPath));
         }
     }
-
-    // protected async translate(uri: Uri): Promise<void> {
-    //     const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
-    //     if (!wsFolder) throw Error(`Cannot find workspace folder for Uri: ${uri.toString()}`);
-
-    //     for await (const p of TranslateProviderManager.getProviders(LanguageId.coverage)) {
-    //         if (Util.match(p.selector, wsFolder.uri)) {
-    //             try {
-    //                 // Get save location for coverage files
-    //                 const saveUri = this.createSaveLocation(wsFolder, true);
-
-    //                 // Perform translation to generate coverage files
-    //                 p.provider
-    //                     .doTranslation(saveUri, wsFolder.uri, { storeAllTranslations: "true", allowSingleFileTranslation: "false" })
-    //                     .then(() => {
-    //                         // If the user wants to use a specific coverage folder then do nothing after "translating".
-    //                         if (!workspace.getConfiguration("vdm-vscode.coverage", wsFolder).get("OverlayLatestCoverage")) return;
-
-    //                         // The saveUri is the latest coverage folder. Set it for the workspace folder.
-    //                         this._wsFolderToCoverageFolder.set(wsFolder, saveUri.fsPath);
-
-    //                         // Only display coverage if display coverage is true.
-    //                         if (this._displayCoverage) {
-    //                             this.overlayCoverage(window.activeTextEditor, saveUri.fsPath);
-    //                         }
-    //                     });
-    //             } catch (e) {
-    //                 const message = `${LanguageId.coverage} translate provider failed with message: ${e}`;
-    //                 window.showWarningMessage(message);
-    //                 console.warn(message);
-    //             }
-    //         }
-    //     }
-    // }
 
     private getCoverageFolders(wsFolder: WorkspaceFolder): string[] {
         const folderPath = Uri.joinPath(wsFolder.uri, ".generated", LanguageId.coverage).fsPath;
@@ -163,57 +154,61 @@ export class CoverageOverlay {
     }
 
     private async getCoverageFolderForWorkspace(wsFolder: WorkspaceFolder): Promise<string> {
-        // First check if there is alrady defined a coverage folder for this workspace folder, e.g. the latest coverage folder or a user specified folder.
-        const savedCoverageFolder: string = this._wsFolderToCoverageFolder.get(wsFolder);
-        if (savedCoverageFolder) {
-            return savedCoverageFolder;
-        }
-        let coverageFolder: string;
-        if (!workspace.getConfiguration("vdm-vscode.coverage", wsFolder).get("OverlayLatestCoverage")) {
-            // If there is no saved folder and the user wants to choose, then prompt the user
-            const coverageFolders = this.getCoverageFolders(wsFolder);
+        return new Promise<string>(async (resolve, reject) => {
+            // First check if there is alrady defined a coverage folder for this workspace folder, e.g. the latest coverage folder or a user specified folder.
+            const savedCoverageFolder: string = this._wsFolderToCoverageFolder.get(wsFolder);
+            if (savedCoverageFolder) {
+                return resolve(savedCoverageFolder);
+            }
 
-            const selectedFolder: string = await window.showQuickPick(
-                coverageFolders.map((folderPath) => Path.basename(folderPath)),
-                {
-                    placeHolder: "Choose coverage folder..",
-                    canPickMany: false,
-                }
-            );
+            let coverageFolder: string;
+            if (!workspace.getConfiguration("vdm-vscode.coverage", wsFolder).get("OverlayLatestCoverage")) {
+                // If there is no saved folder and the user wants to choose, then prompt the user
+                const coverageFolders = this.getCoverageFolders(wsFolder);
 
-            coverageFolder = coverageFolders.find((folderPath) => Path.basename(folderPath) == selectedFolder);
-        } else {
-            // If not then search through coverage folders to find the one that was latest created.
-            const coverageFolders = this.getCoverageFolders(wsFolder);
-            coverageFolder =
-                coverageFolders.length > 0
-                    ? coverageFolders.reduce((prev: string, cur: string) =>
-                          Fs.statSync(prev).birthtime > Fs.statSync(cur).birthtime ? prev : cur
-                      )
-                    : "";
-        }
+                const selectedFolder: string = await window.showQuickPick(
+                    coverageFolders.map((folderPath) => Path.basename(folderPath)),
+                    {
+                        placeHolder: "Choose coverage folder..",
+                        canPickMany: false,
+                    }
+                );
 
-        if (coverageFolder) {
-            // Set the coverage folder for this workspace folder and return the coverage folder
-            this._wsFolderToCoverageFolder.set(wsFolder, coverageFolder);
-            return coverageFolder;
-        }
+                coverageFolder = coverageFolders.find((folderPath) => Path.basename(folderPath) == selectedFolder);
+            } else {
+                // If not then search through coverage folders to find the one that was latest created.
+                const coverageFolders = this.getCoverageFolders(wsFolder);
+                coverageFolder =
+                    coverageFolders.length > 0
+                        ? coverageFolders.reduce((prev: string, cur: string) =>
+                              Fs.statSync(prev).birthtime > Fs.statSync(cur).birthtime ? prev : cur
+                          )
+                        : "";
+            }
 
-        // No coverage folders can be located
-        window.showInformationMessage(`Cannot find any coverage folder for the workspace folder '${wsFolder.name}'.`);
-        return "";
+            if (coverageFolder) {
+                // Set the coverage folder for this workspace folder and return the coverage folder
+                this._wsFolderToCoverageFolder.set(wsFolder, coverageFolder);
+                return resolve(coverageFolder);
+            }
+
+            // No coverage folders can be located
+            const msg = `Cannot find any coverage folder for the workspace folder '${wsFolder.name}'.`;
+            window.showInformationMessage(msg);
+            reject(msg);
+        });
     }
 
-    private async overlayCoverage(textEditor: TextEditor, coverageFolder: string): Promise<void> {
+    private overlayCoverage(textEditor: TextEditor, coverageFolder: string) {
         if (!textEditor) return;
 
         const coverageDecorations = this.getCoverageDecorationsForDocument(textEditor.document, coverageFolder);
 
         // Any existing decoration on the document needs to be cleared first.
-        this._documentUriToDecoratorTypes?.decorations.forEach((deco) => textEditor.setDecorations(deco, []));
+        this._visibleEditorToDecoratorTypes.get(textEditor)?.forEach((decoration) => textEditor.setDecorations(decoration, []));
 
         // Keep a handle to the decorations as the decoration objects are used to remove decorations from the document.
-        this._documentUriToDecoratorTypes = { uri: textEditor.document.uri, decorations: Array.from(coverageDecorations.keys()) };
+        this._visibleEditorToDecoratorTypes.set(textEditor, Array.from(coverageDecorations.keys()));
 
         // Set the new decorations
         coverageDecorations.forEach((ranges, decoType) => textEditor.setDecorations(decoType, ranges));
@@ -221,50 +216,85 @@ export class CoverageOverlay {
 
     private getCoverageDecorationsForDocument(document: TextDocument, coverageFolder: string): Map<TextEditorDecorationType, Range[]> {
         const wsFolder = workspace.getWorkspaceFolder(document.uri);
-        let decorationToRange: Map<TextEditorDecorationType, Range[]> = this._wsFolderToCoverageFoldersToDocumentsToDecorationWithRanges
-            .get(wsFolder)
-            ?.get(coverageFolder)
-            ?.get(document.uri);
 
-        // Check if the decorations for this document for the chosen coverage folder have already been calculated.
-        if (!decorationToRange) {
-            // Locate the coverage folder
-            const fileName = Fs.readdirSync(coverageFolder, { withFileTypes: true })?.find((dirent) => {
-                const dotSplit = dirent.name.split(".");
-                const sepSplit = document.fileName.split(Path.sep);
-                return dirent.isFile() && sepSplit[sepSplit.length - 1] == `${dotSplit[0]}.${dotSplit[1]}`;
-            })?.name;
+        // If there is no existing decorations then generate them and put them in the "tree"
+        const existingWorkspace = this._wsFolderToCoverageFoldersToDocumentsToDecorationWithRanges.get(wsFolder);
+        if (existingWorkspace) {
+            const existingCoverageFolder = existingWorkspace.get(coverageFolder);
 
-            // Calculate decorations
-            if (fileName) {
-                decorationToRange = this.getRangeDecorationFromLineCoverage(
-                    this.getCoverageFromCovtblFile(Path.resolve(coverageFolder, fileName))
-                );
-            } else {
-                window.showWarningMessage(`Cannot find coverage file for ${document.fileName}.`);
-                return new Map();
-            }
+            if (existingCoverageFolder) {
+                const existingDecorations = existingCoverageFolder.get(document.uri);
 
-            // Keep the calculated decorations in memory. So find the depth at which a key is missing and build the tree from there.
-            const existingWorkspace = this._wsFolderToCoverageFoldersToDocumentsToDecorationWithRanges.get(wsFolder);
-
-            if (existingWorkspace) {
-                const existingCoverageFolder = existingWorkspace.get(coverageFolder);
-
-                if (existingCoverageFolder) {
-                    existingCoverageFolder.set(document.uri, decorationToRange);
-                } else {
-                    existingWorkspace.set(coverageFolder, new Map([[document.uri, decorationToRange]]));
+                if (!existingDecorations) {
+                    existingCoverageFolder.set(document.uri, this.generateCoverageDecorationsForDocument(document, coverageFolder));
                 }
             } else {
-                this._wsFolderToCoverageFoldersToDocumentsToDecorationWithRanges.set(
-                    wsFolder,
-                    new Map([[coverageFolder, new Map([[document.uri, decorationToRange]])]])
+                existingWorkspace.set(
+                    coverageFolder,
+                    new Map([[document.uri, this.generateCoverageDecorationsForDocument(document, coverageFolder)]])
                 );
             }
+        } else {
+            this._wsFolderToCoverageFoldersToDocumentsToDecorationWithRanges.set(
+                wsFolder,
+                new Map([
+                    [coverageFolder, new Map([[document.uri, this.generateCoverageDecorationsForDocument(document, coverageFolder)]])],
+                ])
+            );
         }
 
-        return decorationToRange;
+        return this._wsFolderToCoverageFoldersToDocumentsToDecorationWithRanges.get(wsFolder).get(coverageFolder).get(document.uri);
+    }
+
+    private generateCoverageDecorationsForDocument(document: TextDocument, coverageFolder: string): Map<TextEditorDecorationType, Range[]> {
+        // Locate the coverage folder
+        const fileName = Fs.readdirSync(coverageFolder, { withFileTypes: true })?.find((dirent) => {
+            const dotSplit = dirent.name.split(".");
+            const sepSplit = document.fileName.split(Path.sep);
+            return dirent.isFile() && sepSplit[sepSplit.length - 1] == `${dotSplit[0]}.${dotSplit[1]}`;
+        })?.name;
+
+        // Calculate decorations
+        if (fileName) {
+            return this.getDecorationsWithRangesFromLineCoverage(this.getCoverageFromCovtblFile(Path.resolve(coverageFolder, fileName)));
+        } else {
+            window.showWarningMessage(`Cannot find coverage file for ${document.fileName}.`);
+            return new Map();
+        }
+    }
+
+    private getCoverageFromCovtblFile(fsPath: string): CoverageRange[] {
+        const coverageRanges: CoverageRange[] = [];
+
+        try {
+            // Read contents of the file, split by new line and then iterate over each coverage region
+            Fs.readFileSync(fsPath, { encoding: "utf8" })
+                .split(/\r?\n/)
+                .forEach((line) => {
+                    if (line.length > 0) {
+                        // Lines follow "ln c1-c2+ct"
+                        const lnsplit = line.split(" ");
+                        const c1split = lnsplit[1].split("-");
+                        const c2split = c1split[1].split("=");
+
+                        const ln = Math.abs(parseInt(lnsplit[0]));
+                        const c1 = parseInt(c1split[0]);
+                        const c2 = parseInt(c2split[0]);
+                        const hits = parseInt(c2split[1]);
+
+                        coverageRanges.push({ range: new Range(ln - 1, c1 - 1, ln - 1, c2), hits: hits });
+                    }
+                });
+        } catch (err) {
+            console.error(err);
+        }
+
+        return coverageRanges;
+    }
+
+    dispose(): void {
+        // Clean up our resources
+        this._disposables.forEach((disposable) => disposable.dispose());
     }
 
     // Lots of the logic is from https://stackoverflow.com/questions/46928277/trying-to-convert-integer-range-to-rgb-color/46929811
@@ -303,7 +333,7 @@ export class CoverageOverlay {
         return ((m - mMin) / (mMax - mMin)) * (rMax - rMin) + rMin;
     }
 
-    private getRangeDecorationFromLineCoverage(coverageRanges: CoverageRange[]): Map<TextEditorDecorationType, Range[]> {
+    private getDecorationsWithRangesFromLineCoverage(coverageRanges: CoverageRange[]): Map<TextEditorDecorationType, Range[]> {
         // Get all hits to later find min and max
         const hits: number[] = coverageRanges.map((coverageRange) => coverageRange.hits);
 
@@ -365,47 +395,7 @@ export class CoverageOverlay {
 
         return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
     }
-
-    private getCoverageFromCovtblFile(fsPath: string): CoverageRange[] {
-        const coverageRanges: CoverageRange[] = [];
-
-        try {
-            // Read contents of the file, split by new line and then iterate over each coverage region
-            Fs.readFileSync(fsPath, { encoding: "utf8" })
-                .split(/\r?\n/)
-                .forEach((line) => {
-                    if (line.length > 0) {
-                        // Lines follow "ln c1-c2+ct"
-                        const lnsplit = line.split(" ");
-                        const c1split = lnsplit[1].split("-");
-                        const c2split = c1split[1].split("=");
-
-                        const ln = Math.abs(parseInt(lnsplit[0]));
-                        const c1 = parseInt(c1split[0]);
-                        const c2 = parseInt(c2split[0]);
-                        const hits = parseInt(c2split[1]);
-
-                        coverageRanges.push({ range: new Range(ln - 1, c1 - 1, ln - 1, c2), hits: hits });
-                    }
-                });
-        } catch (err) {
-            console.error(err);
-        }
-
-        return coverageRanges;
-    }
-
-    dispose(): void {
-        // Clean up our resources
-        this._disposables.forEach((disposable) => disposable.dispose());
-    }
 }
-
-type UriToDecorations = {
-    uri: Uri;
-    decorations: TextEditorDecorationType[];
-};
-
 type CoverageRange = {
     range: Range;
     hits: number;
