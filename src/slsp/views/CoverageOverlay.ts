@@ -20,9 +20,9 @@ export class CoverageOverlay {
     private _disposables: Disposable[] = [];
     private _displayCoverage: boolean = false;
     private _visibleEditors: TextEditor[] = [];
-    // Keep track of decorations applied to the documents in visible editors.
-    // Needed to keep track of visible documents and to be able to clear the decorations from the document if it is visible.
-    private _visibleEditorToDecoratorTypes: Map<TextEditor, TextEditorDecorationType[]> = new Map();
+    // Keep track of editors with decorations.
+    // Needed to be able to clear the decorations from the document if it is visible.
+    private _textEditorToDecoratorTypes: Map<TextEditor, TextEditorDecorationType[]> = new Map();
     // Keep track of the coverage folder chosen for the workspace folder, i.e. the latest folder or a user specified one.
     private _wsFolderToCoverageFolder: Map<WorkspaceFolder, string> = new Map();
     // This map is a tree-like structure: Workspace folders -> Coverage folders -> Document URIs -> Decorations with ranges.
@@ -38,7 +38,7 @@ export class CoverageOverlay {
         );
         commands.executeCommand("setContext", "vdm-vscode.display.coverage.show", true);
 
-        // Register the display coverage button and its action
+        // Register the show coverage overlay button and its action
         this._disposables.push(
             commands.registerCommand(
                 "vdm-vscode.display.coverage.show",
@@ -64,11 +64,14 @@ export class CoverageOverlay {
                     });
 
                     // Decorate all visible editors when the user enables coverage overlay
-                    window.visibleTextEditors.forEach((editor) =>
-                        this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(editor.document.uri))
-                            .then((coverageFolder) => this.overlayCoverage(editor, coverageFolder))
-                            .catch((err) => console.log(err))
-                    );
+                    // If the user has enabled choosing a coverage folder then await the input befor decorating
+                    for (const textEditor of window.visibleTextEditors) {
+                        await this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(textEditor.document.uri))
+                            .then((folder) => this.overlayCoverage(textEditor, folder))
+                            .catch((err) => console.log(err));
+                        //if (coverageFolder) this.overlayCoverage(textEditor, coverageFolder);
+                    }
+
                     // Hide this button. This also displays the "hide coverage" button.
                     commands.executeCommand("setContext", "vdm-vscode.display.coverage.show", false);
                 },
@@ -76,7 +79,7 @@ export class CoverageOverlay {
             )
         );
 
-        // Register the hide coverage button and its action
+        // Register the hide coverage overlay button and its action
         this._disposables.push(
             commands.registerCommand(
                 "vdm-vscode.display.coverage.hide",
@@ -84,7 +87,7 @@ export class CoverageOverlay {
                     this._displayCoverage = false;
 
                     // Remove any coverage decorations that have been applied to visible documents.
-                    this._visibleEditorToDecoratorTypes.forEach((decorations, textEditor) =>
+                    this._textEditorToDecoratorTypes.forEach((decorations, textEditor) =>
                         decorations.forEach((decoration) => textEditor.setDecorations(decoration, []))
                     );
 
@@ -101,27 +104,32 @@ export class CoverageOverlay {
             )
         );
 
-        // Register for configuration changes to handle relevant changes on the fly, e.g. without the user having to disable and enable the coverage overlay.
-        workspace.onDidChangeConfiguration((event) => {
-            // Find the workspace folders affected by the configuration change
-            Array.from(this._wsFolderToCoverageFolder.keys()).forEach((wsFolder) => {
+        // Register for configuration changes to handle relevant changes on the fly, i.e. without the user having to disable and enable the coverage overlay.
+        workspace.onDidChangeConfiguration(async (event) => {
+            // Find the workspace folder(s) affected by the configuration change
+            for (const wsFolder of Array.from(this._wsFolderToCoverageFolder.keys())) {
                 if (event.affectsConfiguration("vdm-vscode.coverage.OverlayLatestCoverage", wsFolder)) {
-                    // Remove coverage folders for workspace folders
+                    // Remove workspace folder and associated coverage folder
                     this._wsFolderToCoverageFolder.delete(wsFolder);
 
-                    // Remove any coverage decorations that have been applied to visible documents.
-                    this._visibleEditorToDecoratorTypes.forEach((decorations, textEditor) =>
-                        decorations.forEach((decoration) => textEditor.setDecorations(decoration, []))
-                    );
+                    // Remove any coverage decorations that have been applied to visible documents for the workspace.
+                    this._textEditorToDecoratorTypes.forEach((decorations, textEditor) => {
+                        if (workspace.getWorkspaceFolder(textEditor.document.uri) == wsFolder)
+                            decorations.forEach((decoration) => textEditor.setDecorations(decoration, []));
+                    });
 
-                    // Overlay coverage again - this prompt the user to input coverage folder or uses the latest.
-                    window.visibleTextEditors.forEach((editor) =>
-                        this.getCoverageFolderForWorkspace(workspace.getWorkspaceFolder(editor.document.uri))
-                            .then((coverageFolder) => this.overlayCoverage(editor, coverageFolder))
-                            .catch((err) => console.log(err))
-                    );
+                    // Overlay coverage foreach visible text editor for the workspace.
+                    // If the user has enabled choosing a coverage folder then await the input befor decorating
+                    for (const textEditor of window.visibleTextEditors) {
+                        if (workspace.getWorkspaceFolder(textEditor.document.uri) == wsFolder) {
+                            const coverageFolder = await this.getCoverageFolderForWorkspace(
+                                workspace.getWorkspaceFolder(textEditor.document.uri)
+                            );
+                            if (coverageFolder) this.overlayCoverage(textEditor, coverageFolder);
+                        }
+                    }
                 }
-            });
+            }
         });
     }
 
@@ -134,7 +142,9 @@ export class CoverageOverlay {
 
         // Only display coverage if display coverage is true.
         if (this._displayCoverage) {
-            window.visibleTextEditors.forEach((editor) => this.overlayCoverage(editor, coverage.uri.fsPath));
+            window.visibleTextEditors
+                .filter((textEditor) => workspace.getWorkspaceFolder(textEditor.document.uri) == coverage.wsFolder)
+                .forEach((textEditor) => this.overlayCoverage(textEditor, coverage.uri.fsPath));
         }
     }
 
@@ -149,7 +159,6 @@ export class CoverageOverlay {
             }
         }
 
-        window.showWarningMessage(`Cannot locate any coverage files.`);
         return [];
     }
 
@@ -157,45 +166,51 @@ export class CoverageOverlay {
         return new Promise<string>(async (resolve, reject) => {
             // First check if there is alrady defined a coverage folder for this workspace folder, e.g. the latest coverage folder or a user specified folder.
             const savedCoverageFolder: string = this._wsFolderToCoverageFolder.get(wsFolder);
-            if (savedCoverageFolder) {
+            if (savedCoverageFolder && Fs.existsSync(savedCoverageFolder)) {
                 return resolve(savedCoverageFolder);
             }
 
             let coverageFolder: string;
-            if (!workspace.getConfiguration("vdm-vscode.coverage", wsFolder).get("OverlayLatestCoverage")) {
-                // If there is no saved folder and the user wants to choose, then prompt the user
-                const coverageFolders = this.getCoverageFolders(wsFolder);
+            const coverageFolders = this.getCoverageFolders(wsFolder);
+            if (coverageFolders.length > 0) {
+                if (!workspace.getConfiguration("vdm-vscode.coverage", wsFolder).get("OverlayLatestCoverage")) {
+                    // If there is no saved folder and the user wants to choose, then prompt the user
 
-                const selectedFolder: string = await window.showQuickPick(
-                    coverageFolders.map((folderPath) => Path.basename(folderPath)),
-                    {
-                        placeHolder: "Choose coverage folder..",
-                        canPickMany: false,
+                    if (coverageFolders.length > 0) {
+                        const selectedFolder: string = await window.showQuickPick(
+                            coverageFolders.map((folderPath) => Path.basename(folderPath)),
+                            {
+                                placeHolder: `Choose coverage source for ${wsFolder.name}`,
+                                canPickMany: false,
+                            }
+                        );
+
+                        coverageFolder = coverageFolders.find((folderPath) => Path.basename(folderPath) == selectedFolder);
                     }
-                );
+                } else {
+                    // If not then search through coverage folders to find the one that was latest created.
+                    coverageFolder =
+                        coverageFolders.length > 0
+                            ? coverageFolders.reduce((prev: string, cur: string) =>
+                                  Fs.statSync(prev).birthtime > Fs.statSync(cur).birthtime ? prev : cur
+                              )
+                            : "";
+                }
 
-                coverageFolder = coverageFolders.find((folderPath) => Path.basename(folderPath) == selectedFolder);
-            } else {
-                // If not then search through coverage folders to find the one that was latest created.
-                const coverageFolders = this.getCoverageFolders(wsFolder);
-                coverageFolder =
-                    coverageFolders.length > 0
-                        ? coverageFolders.reduce((prev: string, cur: string) =>
-                              Fs.statSync(prev).birthtime > Fs.statSync(cur).birthtime ? prev : cur
-                          )
-                        : "";
+                if (coverageFolder) {
+                    // Set the coverage folder for this workspace folder and return the coverage folder
+                    this._wsFolderToCoverageFolder.set(wsFolder, coverageFolder);
+                    return resolve(coverageFolder);
+                }
             }
 
-            if (coverageFolder) {
-                // Set the coverage folder for this workspace folder and return the coverage folder
-                this._wsFolderToCoverageFolder.set(wsFolder, coverageFolder);
-                return resolve(coverageFolder);
-            }
-
-            // No coverage folders can be located
-            const msg = `Cannot find any coverage folder for the workspace folder '${wsFolder.name}'.`;
-            window.showInformationMessage(msg);
-            reject(msg);
+            // No coverage folders can be located. Inform the user and suggest to generate the coverage
+            const msg = `Cannot find any coverage source for the workspace folder '${wsFolder.name}'.`;
+            const btnName = "Generate coverage";
+            window.showInformationMessage(msg, ...[btnName]).then((ans) => {
+                if (ans == btnName) commands.executeCommand(`vdm-vscode.translate.${LanguageId.coverage}`, wsFolder.uri);
+            });
+            return reject(msg);
         });
     }
 
@@ -205,10 +220,10 @@ export class CoverageOverlay {
         const coverageDecorations = this.getCoverageDecorationsForDocument(textEditor.document, coverageFolder);
 
         // Any existing decoration on the document needs to be cleared first.
-        this._visibleEditorToDecoratorTypes.get(textEditor)?.forEach((decoration) => textEditor.setDecorations(decoration, []));
+        this._textEditorToDecoratorTypes.get(textEditor)?.forEach((decoration) => textEditor.setDecorations(decoration, []));
 
         // Keep a handle to the decorations as the decoration objects are used to remove decorations from the document.
-        this._visibleEditorToDecoratorTypes.set(textEditor, Array.from(coverageDecorations.keys()));
+        this._textEditorToDecoratorTypes.set(textEditor, Array.from(coverageDecorations.keys()));
 
         // Set the new decorations
         coverageDecorations.forEach((ranges, decoType) => textEditor.setDecorations(decoType, ranges));
@@ -258,7 +273,7 @@ export class CoverageOverlay {
         if (fileName) {
             return this.getDecorationsWithRangesFromLineCoverage(this.getCoverageFromCovtblFile(Path.resolve(coverageFolder, fileName)));
         } else {
-            window.showWarningMessage(`Cannot find coverage file for ${document.fileName}.`);
+            window.showWarningMessage(`Cannot locate coverage file for document '${document.fileName}'.`);
             return new Map();
         }
     }
