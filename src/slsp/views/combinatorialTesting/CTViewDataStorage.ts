@@ -326,6 +326,11 @@ export class CTViewDataStorage {
         }
         return verdict;
     }
+
+    public reset() {
+        this._currentWsFolder = undefined;
+        this._traceGroups = [];
+    }
 }
 
 export namespace CTViewDataStorage {

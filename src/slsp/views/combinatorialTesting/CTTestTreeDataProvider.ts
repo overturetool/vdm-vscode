@@ -96,8 +96,14 @@ export class CTTestTreeDataProvider implements TreeDataProvider<CTTreeItem> {
     setCollapsed(element: CTTreeItem): any {
         element.collapsibleState = TreeItemCollapsibleState.Collapsed;
     }
+
     setExpanded(element: CTTreeItem): any {
         element.collapsibleState = TreeItemCollapsibleState.Expanded;
+    }
+
+    reset() {
+        this._dataStorage.reset();
+        this.rebuildViewFromElement();
     }
 
     private verdictToIconPath(verdict: VerdictKind): Icons.IconPath {
