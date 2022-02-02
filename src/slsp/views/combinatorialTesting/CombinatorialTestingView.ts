@@ -25,7 +25,7 @@ enum state {
     executingTestTrace,
 }
 
-export interface CTFilterHandler {
+export interface CTExecuteFilterHandler {
     setFilter(): void;
     getFilter(): CTFilterOption[];
 }
@@ -61,7 +61,11 @@ export class CombinatorialTestingView implements Disposable {
         commands.executeCommand("setContext", "vdm-vscode.ct.idle-state", newState == state.idle);
     }
 
-    constructor(context: ExtensionContext, private _filterHandler?: CTFilterHandler, private _interpreterHandler?: CTInterpreterHandler) {
+    constructor(
+        context: ExtensionContext,
+        private _filterHandler?: CTExecuteFilterHandler,
+        private _interpreterHandler?: CTInterpreterHandler
+    ) {
         this.state = state.idle;
 
         // Create data provider
@@ -112,19 +116,14 @@ export class CombinatorialTestingView implements Disposable {
         let canInterpret = this._interpreterHandler != undefined;
 
         ///// Show options /////
-        if (canFilter) {
-            commands.executeCommand("setContext", "vdm-vscode.ct.show-execute-filter-button", true);
-            commands.executeCommand("setContext", "vdm-vscode.ct.show-set-execute-filter-button", true);
-        }
-        if (canInterpret) {
-            commands.executeCommand("setContext", "vdm-vscode.ct.show-interpret-button", true);
-        }
+        commands.executeCommand("setContext", "vdm-vscode.ct.show-execute-filter-button", canFilter);
+        commands.executeCommand("setContext", "vdm-vscode.ct.show-interpret-button", canInterpret);
         this.showCancelButton(false);
         this.showTreeFilterButton(true);
 
         ///// Command registration /////
         if (canFilter) {
-            this.registerCommand("vdm-vscode.ct.setFilter", () => this._filterHandler.setFilter());
+            this.registerCommand("vdm-vscode.ct.setExecuteFilter", () => this._filterHandler.setFilter());
             this.registerCommand("vdm-vscode.ct.filteredExecute", (e) => this.execute(e, true));
         }
         if (canInterpret) {
@@ -134,8 +133,8 @@ export class CombinatorialTestingView implements Disposable {
         this.registerCommand("vdm-vscode.ct.generate", (e) => this.generateTests(e));
         this.registerCommand("vdm-vscode.ct.fullExecute", () => this.fullExecute());
         this.registerCommand("vdm-vscode.ct.execute", (e) => this.execute(e));
-        this.registerCommand("vdm-vscode.ct.enableTreeFilter", () => this.treeVerdictFilter(true));
-        this.registerCommand("vdm-vscode.ct.disableTreeFilter", () => this.treeVerdictFilter(false));
+        this.registerCommand("vdm-vscode.ct.enableVerdictFilter", () => this.treeVerdictFilter(true));
+        this.registerCommand("vdm-vscode.ct.disableVerdictFilter", () => this.treeVerdictFilter(false));
         this.registerCommand("vdm-vscode.ct.goToTrace", (e) => this.goToTrace(e));
         this.registerCommand("vdm-vscode.ct.cancel", () => this._cancelToken?.cancel());
         this.registerCommand("vdm-vscode.ct.selectWorkspaceFolder", () => this.selectWorkspaceFolder());
@@ -147,7 +146,7 @@ export class CombinatorialTestingView implements Disposable {
     }
 
     private showTreeFilterButton(show: boolean) {
-        commands.executeCommand("setContext", "vdm-vscode.ct.show-enable-filter-button", show);
+        commands.executeCommand("setContext", "vdm-vscode.ct.show-verdict-filter-button", show);
     }
 
     private async rebuildOutline(): Promise<void> {

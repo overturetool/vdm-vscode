@@ -237,8 +237,8 @@
         "icon": "$(go-to-file)"
       },
       {
-        "command": "vdm-vscode.ct.setFilter",
-        "title": "Set Filter Options",
+        "command": "vdm-vscode.ct.setExecuteFilter",
+        "title": "Set Execute Filter Options",
         "category": "VDM",
         "icon": "$(gear)"
       },
@@ -281,13 +281,13 @@
         "enablement": "vdm-vscode.ct.idle-state"
       },
       {
-        "command": "vdm-vscode.ct.enableTreeFilter",
+        "command": "vdm-vscode.ct.enableVerdictFilter",
         "title": "Filter test results",
         "category": "VDM",
         "icon": "$(filter)"
       },
       {
-        "command": "vdm-vscode.ct.disableTreeFilter",
+        "command": "vdm-vscode.ct.disableVerdictFilter",
         "title": "Disable filtering of tests",
         "category": "VDM",
         "icon": {
@@ -424,18 +424,18 @@
           "group": "navigation@1"
         },
         {
-          "command": "vdm-vscode.ct.setFilter",
-          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-set-execute-filter-button == true",
+          "command": "vdm-vscode.ct.setExecuteFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-execute-filter-button == true",
           "group": "navigation@2"
         },
         {
-          "command": "vdm-vscode.ct.enableTreeFilter",
-          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-enable-filter-button == true",
+          "command": "vdm-vscode.ct.enableVerdictFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-verdict-filter-button == true",
           "group": "navigation@3"
         },
         {
-          "command": "vdm-vscode.ct.disableTreeFilter",
-          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-enable-filter-button == false",
+          "command": "vdm-vscode.ct.disableVerdictFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-verdict-filter-button == false",
           "group": "navigation@3"
         },
         {
@@ -462,7 +462,7 @@
         },
         {
           "command": "vdm-vscode.ct.filteredExecute",
-          "when": "viewItem == trace && vdm-vscode.ct.show-set-execute-filter-button",
+          "when": "viewItem == trace && vdm-vscode.ct.show-execute-filter-button",
           "group": "vdm-vscode.ct.testView@1"
         },
         {
@@ -487,7 +487,7 @@
         },
         {
           "command": "vdm-vscode.ct.filteredExecute",
-          "when": "viewItem == trace && vdm-vscode.ct.show-set-execute-filter-button",
+          "when": "viewItem == trace && vdm-vscode.ct.show-execute-filter-button",
           "group": "inline@1"
         },
         {
@@ -530,7 +530,7 @@
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ct.setFilter",
+          "command": "vdm-vscode.ct.setExecuteFilter",
           "when": "false"
         },
         {
@@ -554,11 +554,11 @@
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ct.enableTreeFilter",
+          "command": "vdm-vscode.ct.enableVerdictFilter",
           "when": "false"
         },
         {
-          "command": "vdm-vscode.ct.disableTreeFilter",
+          "command": "vdm-vscode.ct.disableVerdictFilter",
           "when": "false"
         },
         {

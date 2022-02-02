@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { CTFilterHandler } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
+import { CTExecuteFilterHandler } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { CTFilterOption } from "./slsp/protocol/combinatorialTesting";
 import * as vscode from "vscode";
 
-export class VdmjCTFilterHandler implements CTFilterHandler {
+export class VdmjCTFilterHandler implements CTExecuteFilterHandler {
     private _traceReductionTypes = new Map<string, string>([
         ["NONE", "None"],
         ["RANDOM", "Random"],
