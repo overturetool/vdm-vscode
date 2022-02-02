@@ -742,6 +742,14 @@
           "scope": "resource",
           "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
         },
+        "vdm-vscode.combinatorialTesting.groupSize": {
+          "type": "number",
+          "default": 300,
+          "scope": "application",
+          "description": "Determine the maximum group size for tests in the combinatorial testing view",
+          "minimum": 10,
+          "maximum": 1000
+        },
         "vdm-vscode.trace.server": {
           "type": "string",
           "enum": [

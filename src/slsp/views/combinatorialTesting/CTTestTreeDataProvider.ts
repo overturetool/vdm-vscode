@@ -6,20 +6,29 @@ import { Icons } from "../../../Icons";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TraceGroupItem, TraceItem } from "./CTTreeItems";
 
-export class CTTestTreeDataProvider implements TreeDataProvider<CTTreeItem> {
+const defaultGroupSize = 300;
+
+export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeItem> {
+    // Event to signal that the root has changed, so the view should be updated
     private _onDidChangeTreeData: EventEmitter<CTTreeItem | undefined> = new EventEmitter<CTTreeItem | undefined>();
     public onDidChangeTreeData: Event<CTTreeItem> = this._onDidChangeTreeData.event;
 
-    private _onTreeUpdated: EventEmitter<undefined> = new EventEmitter<undefined>();
-    public onTreeUpdated: Event<undefined> = this._onTreeUpdated.event;
-
-    public readonly groupSize: number = 300;
+    // Variable used to determine the size of the groups that the test cases are divided into.
+    private _groupSize: number;
+    public get groupSize(): number {
+        return this._groupSize;
+    }
+    public set groupSize(value: number) {
+        this._groupSize = value > 0 ? value : defaultGroupSize;
+        this.rebuildViewFromElement();
+    }
     private _roots: CTTreeItem[];
     private _filter: boolean = false;
     private _icons: Icons;
     private _verdictKindToShow: VerdictKind[]; // variable used to store the filter settings
-    constructor(private _dataStorage: CTViewDataStorage, private _context: ExtensionContext) {
+    constructor(private _dataStorage: CTViewDataStorage, private _context: ExtensionContext, groupSize: number = defaultGroupSize) {
         this._icons = new Icons(this._context);
+        this.groupSize = groupSize;
     }
 
     rebuildViewFromElement(viewElement?: CTTreeItem) {
@@ -37,7 +46,7 @@ export class CTTestTreeDataProvider implements TreeDataProvider<CTTreeItem> {
     }
 
     getTreeItem(element: CTTreeItem): TreeItem {
-        return element;
+        return element as TreeItem;
     }
 
     getChildren(element?: CTTreeItem): Thenable<CTTreeItem[]> {
@@ -72,6 +81,7 @@ export class CTTestTreeDataProvider implements TreeDataProvider<CTTreeItem> {
                 traceData,
                 (tests) => this._dataStorage.getVerdict(tests),
                 (v) => this.verdictToIconPath(v),
+                this.groupSize,
                 {
                     enabled: this._filter,
                     showGroup: (tests) => tests.find((test) => this.showVerdict(test.verdict), this) !== undefined,

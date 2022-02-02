@@ -109,7 +109,6 @@ export namespace TraceGroupItem {
 
 export class TraceItem extends CTVerdictTreeItem {
     public readonly contextValue = CTTreeItemTypes.Trace;
-    public readonly groupSize: number = 300;
     private _numberOfTests: number;
 
     constructor(
@@ -135,6 +134,7 @@ export class TraceItem extends CTVerdictTreeItem {
         trace: Types.Trace,
         groupVerdict: (tests: Types.TestCase[]) => VerdictKind,
         getIcon: (verdict: VerdictKind) => Icons.IconPath,
+        groupSize: number,
         filter?: { enabled: boolean; showGroup: (tests: Types.TestCase[]) => boolean }
     ) {
         // Set verdict
@@ -144,14 +144,14 @@ export class TraceItem extends CTVerdictTreeItem {
         let tests: Types.TestCase[] = trace.testCases;
         let testGroups: TestGroupItem[] = [];
         this._numberOfTests = tests.length;
-        let numGroups = Math.ceil(this._numberOfTests / this.groupSize);
+        let numGroups = Math.ceil(this._numberOfTests / groupSize);
 
         // Generate all test group view elements for the trace
         let remainingTests = this._numberOfTests;
         for (let i = 0; i < numGroups; i++) {
             let range: NumberRange = {
-                start: 1 + i * this.groupSize,
-                end: this.groupSize >= remainingTests ? remainingTests + this.groupSize * i : this.groupSize * (i + 1),
+                start: 1 + i * groupSize,
+                end: groupSize >= remainingTests ? remainingTests + groupSize * i : groupSize * (i + 1),
             };
             let groupTests = Types.Trace.getTestCases(tests, range);
 
@@ -172,7 +172,7 @@ export class TraceItem extends CTVerdictTreeItem {
                 );
             }
 
-            remainingTests -= this.groupSize;
+            remainingTests -= groupSize;
         }
 
         this.setChildren(testGroups);

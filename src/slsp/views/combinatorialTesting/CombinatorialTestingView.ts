@@ -9,8 +9,9 @@ import {
     WorkspaceFolder,
     ProgressLocation,
     CancellationTokenSource,
+    workspace,
 } from "vscode";
-import { CTTestTreeDataProvider } from "./CTTestTreeDataProvider";
+import CTTestTreeDataProvider from "./CTTestTreeDataProvider";
 import { CTResultTreeDataProvider } from "./CTResultTreeDataProvider";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TestItem, TraceItem } from "./CTTreeItems";
@@ -72,7 +73,8 @@ export class CombinatorialTestingView implements Disposable {
         this._dataStorage = new CTViewDataStorage();
 
         // Create test view
-        this._testProvider = new CTTestTreeDataProvider(this._dataStorage, context);
+        let groupSize = workspace.getConfiguration("vdm-vscode.combinatorialTesting").get("groupSize", 300);
+        this._testProvider = new CTTestTreeDataProvider(this._dataStorage, context, groupSize);
         this._testView = window.createTreeView("vdm-vscode.ct.testView", {
             treeDataProvider: this._testProvider,
             showCollapseAll: true,
@@ -139,6 +141,20 @@ export class CombinatorialTestingView implements Disposable {
         this.registerCommand("vdm-vscode.ct.cancel", () => this._cancelToken?.cancel());
         this.registerCommand("vdm-vscode.ct.selectWorkspaceFolder", () => this.selectWorkspaceFolder());
         this.registerCommand("vdm-vscode.ct.clearView", () => this.clearView());
+
+        ///// Configuration change handler /////
+        workspace.onDidChangeConfiguration(
+            (e) => {
+                if (e.affectsConfiguration("vdm-vscode.combinatorialTesting")) {
+                    this._testProvider.groupSize = workspace
+                        .getConfiguration("vdm-vscode.combinatorialTesting")
+                        .get("groupSize", this._testProvider.groupSize);
+                    this._testProvider.rebuildViewFromElement();
+                }
+            },
+            this,
+            this._disposables
+        );
     }
 
     private showCancelButton(show: boolean) {
