@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Event, EventEmitter, ExtensionContext, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
+import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { VerdictKind } from "../../protocol/combinatorialTesting";
-import { Icons } from "../../../Icons";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TraceGroupItem, TraceItem } from "./CTTreeItems";
 
@@ -19,39 +18,43 @@ export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeIt
         return this._groupSize;
     }
     public set groupSize(value: number) {
+        let oldSize = this.groupSize;
         this._groupSize = value > 0 ? value : defaultGroupSize;
-        this.rebuildViewFromElement();
+        if (oldSize != this.groupSize) this.rebuildViewFromElement();
     }
     private _roots: CTTreeItem[];
     private _filter: boolean = false;
-    private _icons: Icons;
     private _verdictKindToShow: VerdictKind[]; // variable used to store the filter settings
-    constructor(private _dataStorage: CTViewDataStorage, private _context: ExtensionContext, groupSize: number = defaultGroupSize) {
-        this._icons = new Icons(this._context);
+    constructor(private _dataStorage: CTViewDataStorage, groupSize: number = defaultGroupSize) {
         this.groupSize = groupSize;
     }
 
+    // Trigger view update ercursively from a specific tree item
     rebuildViewFromElement(viewElement?: CTTreeItem) {
         this._onDidChangeTreeData.fire(viewElement);
     }
 
-    filterTree(enable: boolean, toShow?: VerdictKind[]): any {
+    // Enable and disable the verdict filter
+    filterByVerdict(enable: boolean, toShow?: VerdictKind[]): any {
         this._filter = enable;
-        this._verdictKindToShow = toShow; // # store the filter settings with the added variable _verdictKindToShow
+        this._verdictKindToShow = toShow;
         this.rebuildViewFromElement();
     }
 
+    // Returns the roots
     getRoots(): CTTreeItem[] {
         return this._roots;
     }
 
-    getTreeItem(element: CTTreeItem): TreeItem {
-        return element as TreeItem;
+    // Return the item as TreeItem type
+    getTreeItem(item: CTTreeItem): TreeItem {
+        return item as TreeItem;
     }
 
-    getChildren(element?: CTTreeItem): Thenable<CTTreeItem[]> {
+    // Supplies the tree items to the view.
+    getChildren(item?: CTTreeItem): Thenable<CTTreeItem[]> {
         // Handle root query
-        if (!element) {
+        if (!item) {
             // Build trace group items
             let groupNames = this._dataStorage.getTraceGroupNames();
             this._roots = groupNames.map((groupName) => {
@@ -66,35 +69,32 @@ export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeIt
             return Promise.resolve(this._roots);
         }
 
-        if (TraceGroupItem.is(element)) {
-            let traceGroup = element as TraceGroupItem;
+        // Trace group
+        if (TraceGroupItem.is(item)) {
+            let traceGroup = item as TraceGroupItem;
             let traces = this._dataStorage.getTraces(traceGroup.name);
-            traceGroup.update(traces, (v) => this.verdictToIconPath(v));
+            traceGroup.update(traces);
 
             return Promise.resolve(traceGroup.getChildren());
         }
 
-        if (TraceItem.is(element)) {
-            let trace = element as TraceItem;
+        // Trace
+        if (TraceItem.is(item)) {
+            let trace = item as TraceItem;
             let traceData = this._dataStorage.getTrace(trace.name);
-            trace.update(
-                traceData,
-                (tests) => this._dataStorage.getVerdict(tests),
-                (v) => this.verdictToIconPath(v),
-                this.groupSize,
-                {
-                    enabled: this._filter,
-                    showGroup: (tests) => tests.find((test) => this.showVerdict(test.verdict), this) !== undefined,
-                }
-            );
+            trace.update(traceData, this.groupSize, {
+                enabled: this._filter,
+                showGroup: (tests) => tests.find((test) => this.showVerdict(test.verdict), this) !== undefined,
+            });
             return Promise.resolve(trace.getChildren());
         }
 
-        if (TestGroupItem.is(element)) {
-            let testGroup = element as TestGroupItem;
+        // Test group
+        if (TestGroupItem.is(item)) {
+            let testGroup = item as TestGroupItem;
             let tests = this._dataStorage.getTestCases(testGroup.getParent().name, testGroup.range);
             let filteredTests = this._filter ? tests.filter((test) => this.showVerdict(test.verdict)) : tests;
-            testGroup.update(filteredTests, (v) => this.verdictToIconPath(v));
+            testGroup.update(filteredTests);
 
             return Promise.resolve(testGroup.getChildren());
         }
@@ -103,29 +103,18 @@ export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeIt
         return Promise.resolve([]);
     }
 
-    setCollapsed(element: CTTreeItem): any {
-        element.collapsibleState = TreeItemCollapsibleState.Collapsed;
+    setCollapsed(item: CTTreeItem): any {
+        item.collapsibleState = TreeItemCollapsibleState.Collapsed;
     }
 
-    setExpanded(element: CTTreeItem): any {
-        element.collapsibleState = TreeItemCollapsibleState.Expanded;
+    setExpanded(item: CTTreeItem): any {
+        item.collapsibleState = TreeItemCollapsibleState.Expanded;
     }
 
+    // Reset/clear the test view
     reset() {
         this._dataStorage.reset();
         this.rebuildViewFromElement();
-    }
-
-    private verdictToIconPath(verdict: VerdictKind): Icons.IconPath {
-        return verdict == VerdictKind.Passed
-            ? this._icons.getIcon("passed.svg")
-            : verdict == VerdictKind.Failed
-            ? this._icons.getIcon("failed.svg")
-            : verdict == VerdictKind.Inconclusive
-            ? this._icons.getIcon("inconclusive.svg")
-            : verdict == VerdictKind.Filtered
-            ? this._icons.getIcon("filtered.svg")
-            : null;
     }
 
     private showVerdict(verdict: VerdictKind): boolean {

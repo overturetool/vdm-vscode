@@ -12,7 +12,7 @@ import {
     workspace,
 } from "vscode";
 import CTTestTreeDataProvider from "./CTTestTreeDataProvider";
-import { CTResultTreeDataProvider } from "./CTResultTreeDataProvider";
+import CTResultTreeDataProvider from "./CTResultTreeDataProvider";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TestItem, TraceItem } from "./CTTreeItems";
 import * as Types from "./CTDataTypes";
@@ -72,9 +72,17 @@ export class CombinatorialTestingView implements Disposable {
         // Create data provider
         this._dataStorage = new CTViewDataStorage();
 
+        // Create results view
+        this._resultProvider = new CTResultTreeDataProvider(this._dataStorage);
+        this._resultView = window.createTreeView("vdm-vscode.ct.resultView", {
+            treeDataProvider: this._resultProvider,
+            showCollapseAll: true,
+            canSelectMany: false,
+        });
+
         // Create test view
         let groupSize = workspace.getConfiguration("vdm-vscode.combinatorialTesting").get("groupSize", 300);
-        this._testProvider = new CTTestTreeDataProvider(this._dataStorage, context, groupSize);
+        this._testProvider = new CTTestTreeDataProvider(this._dataStorage, groupSize);
         this._testView = window.createTreeView("vdm-vscode.ct.testView", {
             treeDataProvider: this._testProvider,
             showCollapseAll: true,
@@ -91,14 +99,6 @@ export class CombinatorialTestingView implements Disposable {
                 }
             })
         );
-
-        // Create results view
-        this._resultProvider = new CTResultTreeDataProvider(this._dataStorage);
-        this._resultView = window.createTreeView("vdm-vscode.ct.resultView", {
-            treeDataProvider: this._resultProvider,
-            showCollapseAll: true,
-            canSelectMany: false,
-        });
 
         // Set button behavior
         this.setButtonsAndContext();
@@ -190,6 +190,7 @@ export class CombinatorialTestingView implements Disposable {
             },
             async (progress, token) => {
                 try {
+                    // Update data storage
                     let traceGroups = await this._dataStorage.updateTraceGroups(this._currentWsFolder);
 
                     // Inform user if no traces were found
@@ -203,7 +204,7 @@ export class CombinatorialTestingView implements Disposable {
                     this._resultProvider.reset();
                 } catch (error) {
                     console.error("[CT View] Failed to generate trace outline: " + error);
-                    window.showWarningMessage("Failed to generate trace outline");
+                    window.showWarningMessage("Failed to generate trace outline: " + error);
                 } finally {
                     this.state = state.idle;
                 }
@@ -226,10 +227,11 @@ export class CombinatorialTestingView implements Disposable {
         // Setup generate process
         let generateFunc = async () => {
             try {
-                // Make the generate request
-                let trace = await this._dataStorage.updateTrace(traceItem.name);
-                this._testProvider.rebuildViewFromElement(traceItem.getParent());
+                // Update the data storage and the view
+                await this._dataStorage.updateTrace(traceItem.name);
+                this._testProvider.rebuildViewFromElement();
             } catch (e) {
+                // If out of sync, try to recover
                 if (Types.OutOfSyncError.is(e)) {
                     this.state = state.idle;
                     this.rebuildOutline();
@@ -299,6 +301,7 @@ export class CombinatorialTestingView implements Disposable {
 
                         // Missing info about the trace?
                         if (!traceItem.numberOfTests) {
+                            // Generate the tests for the trace
                             this.state = state.idle;
                             await this.generateTests(traceItem, true);
                             this.state = state.executingTestTrace;
@@ -318,7 +321,7 @@ export class CombinatorialTestingView implements Disposable {
                         this._uiUpdateIntervalMS
                     );
 
-                    // Update the tests
+                    // Update the data storage
                     await this._dataStorage.updateTests(
                         this._currentlyExecutingTrace.name,
                         range,
@@ -331,7 +334,11 @@ export class CombinatorialTestingView implements Disposable {
                     this._testProvider.rebuildViewFromElement(
                         this.state == state.executingTestTrace ? null : this._currentlyExecutingTrace
                     );
+
+                    // Reset state
+                    this.state = state.idle;
                 } catch (e) {
+                    // If out of sync, try to recover
                     if (Types.OutOfSyncError.is(e)) {
                         let err = e as Types.OutOfSyncError;
                         let traceItem = this.state == state.executingTestTrace ? treeItem : treeItem.getParent();
@@ -362,18 +369,18 @@ export class CombinatorialTestingView implements Disposable {
                     this._cancelToken = undefined;
                     this.showCancelButton(false);
                 }
-                this.state = state.idle;
             }
         );
     }
 
     private async fullExecute() {
+        // Manage state
         if (this.state != state.idle) return console.info(`[CT View] Full Execute not possible while in state ${state[this.state]}`);
 
         // Make sure we are up-to-date
         await this.rebuildOutline();
 
-        // Run Execute on all traces of all symbols
+        // Run Execute on all traces of all trace groups
         for await (const group of await this._testProvider.getChildren()) {
             for await (const trace of await this._testProvider.getChildren(group)) {
                 await this.generateTests(trace, true);
@@ -384,29 +391,35 @@ export class CombinatorialTestingView implements Disposable {
     }
 
     private async sendToInterpreter(treeItem: CTTreeItem) {
+        // Validate input type
         if (!TestItem.is(treeItem)) return;
         let testItem = treeItem as TestItem;
 
+        // Use the handler to send to interpreter
         this._interpreterHandler.sendToInterpreter(testItem.trace.name, testItem.idNumber, this._currentWsFolder);
     }
 
     private async treeVerdictFilter(enable: boolean) {
-        let filtering = ["Passed", "Failed", "Inconclusive", "Filtered"]; // each type of filters that the user can choose
-        let conversion: VerdictKind[] = [];
-        // prompt user for which type of CT they want to display (only if enable == true)
+        let filterItems = ["Passed", "Failed", "Inconclusive", "Filtered"]; // each type of filters that the user can choose
+        let choices: VerdictKind[] = [];
+
+        // Prompt user for which type of CT they want to display (only if enable == true)
         if (enable) {
-            let selectedFilters = await window.showQuickPick(filtering, {
-                placeHolder: "Choose result types to show",
+            let selectedFilters = await window.showQuickPick(filterItems, {
+                placeHolder: "Choose result verdicts to show",
                 canPickMany: true,
             });
+
             // If non are selected, abort filtering
             if (selectedFilters === undefined || selectedFilters.length == 0) return;
+
             // If all are selected remove filtering
-            if (selectedFilters.length == filtering.length) enable = false;
-            // transform the selectedFilters(string []) in conversion(VerdictKind[]) to be able to use it in the function filterTree below
-            for (let i = 0; i <= filtering.length; i++) {
-                if (selectedFilters.includes(filtering[i])) {
-                    conversion.push(i + 1);
+            if (selectedFilters.length == filterItems.length) enable = false;
+
+            // Transform the the selection to be able to use it in the function filterTree below
+            for (let i = 0; i < filterItems.length; i++) {
+                if (selectedFilters.includes(filterItems[i])) {
+                    choices.push(i + 1);
                 }
             }
         }
@@ -415,10 +428,11 @@ export class CombinatorialTestingView implements Disposable {
         this.showTreeFilterButton(!enable);
 
         // Set in testProvider
-        this._testProvider.filterTree(enable, conversion);
+        this._testProvider.filterByVerdict(enable, choices);
     }
 
     private goToTrace(treeItem: CTTreeItem) {
+        // Validate input type
         if (!TraceItem.is(treeItem)) return;
         let traceItem = treeItem as TraceItem;
 
@@ -430,11 +444,13 @@ export class CombinatorialTestingView implements Disposable {
     }
 
     private async selectWorkspaceFolder(): Promise<WorkspaceFolder> {
+        // Manage state
         if (this.state != state.idle) {
             console.info(`[CT View] Select workspace not possible while in state ${state[this.state]}`);
             return;
         }
 
+        // Select workspace folder, if more than one available have the user pick.
         let wsFolder: WorkspaceFolder;
         let wsFolders = this._dataStorage.workspaceFolders;
         if (wsFolders.length == 0) window.showInformationMessage("No workspace folders available");
@@ -446,17 +462,22 @@ export class CombinatorialTestingView implements Disposable {
             );
             if (fName) wsFolder = wsFolders.find((f) => f.name == fName);
         }
+
+        // If the workspace folder has changed, rebuild the outline
         if (wsFolder && this._currentWsFolder != wsFolder) {
             this._currentWsFolder = wsFolder;
             if (this.state == state.idle) this.rebuildOutline();
         }
 
+        // Return the selected workspace folder
         return wsFolder;
     }
 
     private clearView() {
+        // Only allowed while idle
         if (this.state != state.idle) return console.info(`[CT View] Clear view not possible while in state ${state[this.state]}`);
 
+        // Reset control variables and views
         this._currentWsFolder = undefined;
         this._testView.title = "Tests";
         this._testProvider.reset();

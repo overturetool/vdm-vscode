@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { MarkdownString, ThemeIcon, TreeItem, TreeItemCollapsibleState, TreeItemLabel, Uri } from "vscode";
+import { MarkdownString, TreeItem, TreeItemCollapsibleState, TreeItemLabel } from "vscode";
 import { Icons } from "../../../Icons";
 import { NumberRange, VerdictKind } from "../../protocol/combinatorialTesting";
 import * as Types from "./CTDataTypes";
 
+// Enum of the differet contextValue
 enum CTTreeItemTypes {
     TraceGroup = "tracegroup",
     Trace = "trace",
@@ -14,7 +15,8 @@ enum CTTreeItemTypes {
     TestResult = "testresult",
 }
 
-export abstract class CTTreeItem extends TreeItem {
+// Base class for the TreeItems in the CT View
+export class CTTreeItem extends TreeItem {
     protected readonly _parent: CTTreeItem;
     protected _children: CTTreeItem[];
 
@@ -44,31 +46,27 @@ export abstract class CTTreeItem extends TreeItem {
     }
 }
 
+// Base class for the TreeItems in the CT View that can have a verdict
 export class CTVerdictTreeItem extends CTTreeItem {
     protected _verdict: VerdictKind;
-    public iconPath?: string | Uri | ThemeIcon | { light: string | Uri; dark: string | Uri };
+    public iconPath?: Icons.IconPath;
 
-    constructor(
-        label: string | TreeItemLabel,
-        collapsibleState: TreeItemCollapsibleState,
-        parent: CTTreeItem,
-        verdict?: VerdictKind,
-        icon?: Icons.IconPath
-    ) {
+    constructor(label: string | TreeItemLabel, collapsibleState: TreeItemCollapsibleState, parent: CTTreeItem, verdict?: VerdictKind) {
         super(label, collapsibleState, parent);
-        this.setVerdict(verdict, icon);
+        this.setVerdict(verdict);
     }
 
     get verdict() {
         return this._verdict;
     }
 
-    setVerdict(verdict: VerdictKind, icon: Icons.IconPath) {
+    setVerdict(verdict: VerdictKind) {
         this._verdict = verdict;
-        this.iconPath = icon;
+        this.iconPath = Icons.verdictToIconPath(verdict);
     }
 }
 
+// Trace Group tree item
 export class TraceGroupItem extends CTTreeItem {
     public readonly contextValue: CTTreeItemTypes = CTTreeItemTypes.TraceGroup;
 
@@ -77,26 +75,21 @@ export class TraceGroupItem extends CTTreeItem {
         this._children = [];
     }
 
-    update(traces: Types.Trace[], icon: (verdict: VerdictKind) => Icons.IconPath) {
+    update(traces: Types.Trace[]) {
         let oldTraces = this.getChildren();
 
+        // Create trace tree items based on the traces data
         this.setChildren(
             traces.map((trace) => {
-                let traceViewElement = new TraceItem(
-                    trace.name,
-                    TreeItemCollapsibleState.Collapsed,
-                    this,
-                    trace.verdict,
-                    icon(trace.verdict)
-                );
+                let oldTrace = oldTraces.find((t) => t.label == trace.name);
 
-                let oldTraceIndex = oldTraces.findIndex((t) => t.label == trace.name);
-                if (oldTraceIndex != -1) {
-                    traceViewElement.setChildren(oldTraces[oldTraceIndex].getChildren());
-                    traceViewElement.collapsibleState = oldTraces[oldTraceIndex].collapsibleState;
+                // If the old traces contain the trace assign the old children to the new trace item.
+                if (oldTrace) {
+                    (oldTrace as TraceItem).setVerdict(trace.verdict);
+                    return oldTrace;
+                } else {
+                    return new TraceItem(trace.name, TreeItemCollapsibleState.Collapsed, this, trace.verdict);
                 }
-
-                return traceViewElement;
             })
         );
     }
@@ -107,18 +100,13 @@ export namespace TraceGroupItem {
     }
 }
 
+// Trace tree item
 export class TraceItem extends CTVerdictTreeItem {
     public readonly contextValue = CTTreeItemTypes.Trace;
     private _numberOfTests: number;
 
-    constructor(
-        label: string | TreeItemLabel,
-        collapsibleState: TreeItemCollapsibleState,
-        parent: TraceGroupItem,
-        verdict?: VerdictKind,
-        icon?: Icons.IconPath
-    ) {
-        super(label, collapsibleState, parent, verdict, icon);
+    constructor(label: string | TreeItemLabel, collapsibleState: TreeItemCollapsibleState, parent: TraceGroupItem, verdict?: VerdictKind) {
+        super(label, collapsibleState, parent, verdict);
         this._children = [];
     }
 
@@ -130,15 +118,10 @@ export class TraceItem extends CTVerdictTreeItem {
         return this._parent as TraceGroupItem;
     }
 
-    update(
-        trace: Types.Trace,
-        groupVerdict: (tests: Types.TestCase[]) => VerdictKind,
-        getIcon: (verdict: VerdictKind) => Icons.IconPath,
-        groupSize: number,
-        filter?: { enabled: boolean; showGroup: (tests: Types.TestCase[]) => boolean }
-    ) {
+    // Update trace and trace groups
+    update(trace: Types.Trace, groupSize: number, filter?: { enabled: boolean; showGroup: (tests: Types.TestCase[]) => boolean }) {
         // Set verdict
-        this.setVerdict(trace.verdict, getIcon(trace.verdict));
+        this.setVerdict(trace.verdict);
 
         // Build view from traces
         let tests: Types.TestCase[] = trace.testCases;
@@ -146,35 +129,37 @@ export class TraceItem extends CTVerdictTreeItem {
         this._numberOfTests = tests.length;
         let numGroups = Math.ceil(this._numberOfTests / groupSize);
 
-        // Generate all test group view elements for the trace
+        // Generate all test group tree items for the trace
         let remainingTests = this._numberOfTests;
         for (let i = 0; i < numGroups; i++) {
             let range: NumberRange = {
                 start: 1 + i * groupSize,
                 end: groupSize >= remainingTests ? remainingTests + groupSize * i : groupSize * (i + 1),
             };
-            let groupTests = Types.Trace.getTestCases(tests, range);
+            let groupTests = Types.util.getTestCases(tests, range);
 
             // Determine verdict
-            let verdict = groupVerdict(groupTests);
+            let verdict = Types.util.determineVerdict(groupTests);
 
-            // Filter if needed
+            // Determine if the test group should be added to the trace or filtered away
             if (!filter || !filter.enabled || filter.showGroup(groupTests)) {
                 testGroups.push(
+                    // Create test group where the collapsible state is the same as it was for the old group on this index. If no old group it should be collapsed.
                     new TestGroupItem(
                         "test group",
                         i < this.getChildren().length ? this.getChildren()[i].collapsibleState : TreeItemCollapsibleState.Collapsed,
                         this,
                         range,
-                        verdict,
-                        getIcon(verdict)
+                        verdict
                     )
                 );
             }
 
+            // Update remaining tests counter
             remainingTests -= groupSize;
         }
 
+        // Assign the new test groups
         this.setChildren(testGroups);
     }
 }
@@ -184,6 +169,7 @@ export namespace TraceItem {
     }
 }
 
+// Test Group tree item
 export class TestGroupItem extends CTVerdictTreeItem {
     public readonly contextValue = CTTreeItemTypes.TestGroup;
     public readonly range: NumberRange;
@@ -194,14 +180,11 @@ export class TestGroupItem extends CTVerdictTreeItem {
         collapsibleState: TreeItemCollapsibleState,
         parent: TraceItem,
         range: NumberRange,
-        verdict?: VerdictKind,
-        icon?: Icons.IconPath
+        verdict?: VerdictKind
     ) {
-        super(label, collapsibleState, parent);
+        super(label, collapsibleState, parent, verdict);
         this._children = [];
         this.description = range.start + "-" + range.end;
-        this._verdict = verdict;
-        this.iconPath = icon;
         this.range = range;
     }
 
@@ -209,13 +192,9 @@ export class TestGroupItem extends CTVerdictTreeItem {
         return this._parent as TraceItem;
     }
 
-    update(tests: Types.TestCase[], getIcon: (verdict: VerdictKind) => Icons.IconPath) {
-        let testItems = [];
-        tests.forEach((test) => {
-            testItems.push(new TestItem(test.id.toString(), this, test.verdict, getIcon(test.verdict)));
-        });
-
-        this.setChildren(testItems);
+    // Update the tests in the test group, by converting the tests to TestItems
+    update(tests: Types.TestCase[]) {
+        this.setChildren(tests.map((test) => new TestItem(test.id.toString(), this, test.verdict)));
     }
 }
 export namespace TestGroupItem {
@@ -224,18 +203,21 @@ export namespace TestGroupItem {
     }
 }
 
+// Test tree item
 export class TestItem extends CTVerdictTreeItem {
     public readonly contextValue = CTTreeItemTypes.Test;
     public readonly idNumber: number;
 
-    constructor(label: string | TreeItemLabel, parent: TestGroupItem, verdict?: VerdictKind, icon?: Icons.IconPath) {
-        super(label, TreeItemCollapsibleState.None, parent, verdict, icon);
+    constructor(label: string | TreeItemLabel, parent: TestGroupItem, verdict?: VerdictKind) {
+        super(label, TreeItemCollapsibleState.None, parent, verdict);
         this.description = verdict ? VerdictKind[verdict] : "n/a";
         this.idNumber = Number(label);
     }
 
-    public get trace() {
-        return this.getParent().getParent();
+    // Get the trace item that the test belongs to
+    public get trace(): TraceItem {
+        let parent = this.getParent();
+        return TraceItem.is(parent) ? parent : parent.getParent();
     }
 
     getParent(): TestGroupItem {
@@ -248,6 +230,7 @@ export namespace TestItem {
     }
 }
 
+// Test Expression tree item
 export class TestExpressionItem extends CTTreeItem {
     public readonly contextValue = CTTreeItemTypes.TestExpression;
     public readonly tooltip: string | MarkdownString = "Test case";
@@ -263,12 +246,17 @@ export namespace TestExpressionItem {
     }
 }
 
+// Test Result tree item
 export class TestResultItem extends CTTreeItem {
     public readonly contextValue = CTTreeItemTypes.TestResult;
     public readonly tooltip: string | MarkdownString = "Result";
 
     constructor(label: string | TreeItemLabel) {
         super(label, TreeItemCollapsibleState.None);
+    }
+
+    getParent(): TestExpressionItem {
+        return this._parent as TestExpressionItem;
     }
 }
 export namespace TestResultItem {

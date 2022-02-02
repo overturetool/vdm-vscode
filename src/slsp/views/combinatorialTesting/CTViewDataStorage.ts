@@ -3,7 +3,7 @@
 import * as fs from "fs-extra";
 import * as util from "../../../Util";
 import { CancellationToken, Disposable, Event, Progress, Uri, WorkspaceFolder } from "vscode";
-import { VerdictKind, CTFilterOption, NumberRange } from "../../protocol/combinatorialTesting";
+import { CTFilterOption, NumberRange } from "../../protocol/combinatorialTesting";
 import * as Types from "./CTDataTypes";
 
 export interface CombinatorialTestProvider {
@@ -29,7 +29,7 @@ export class CTViewDataStorage {
     }
 
     public get workspaceFolders(): WorkspaceFolder[] {
-        return CTViewDataStorage.getProvideableWorkspaceFolders();
+        return CTViewDataStorage.getProvidableWorkspaceFolders();
     }
 
     private saveCTs(): Promise<void> {
@@ -39,7 +39,7 @@ export class CTViewDataStorage {
                 let saveUri = Uri.joinPath(this.storageLocation, `${group.name}.json`);
 
                 // Ensure that path exists
-                fs.ensureFile(saveUri.fsPath) //util.ensureDirectoryExistence(savePath);
+                fs.ensureFile(saveUri.fsPath)
                     .then(() => {
                         // Convert data into JSON
                         let json = JSON.stringify(group);
@@ -64,37 +64,48 @@ export class CTViewDataStorage {
         return new Promise(async (resolve, reject) => {
             let traceGroups: Types.TraceGroup[] = [];
 
+            // Acces the save directory
             fs.access(this.storageLocation.fsPath, fs.constants.F_OK | fs.constants.R_OK)
                 .then(() => {
+                    // Read the save directory
                     fs.readdir(this.storageLocation.fsPath, { withFileTypes: true })
                         .then((entries) => {
                             // Go through files in the folder and read content
                             entries.forEach((entry: fs.Dirent) => {
+                                // Make sure the file is a save file
                                 if (entry.isFile && entry.name.includes(".json")) {
+                                    // Get the location of the file
                                     let fileUri = Uri.joinPath(this.storageLocation, entry.name);
                                     try {
-                                        // let ctFile = fs.readFileSync(savePath + path.sep + entry.name).toString();
-                                        let ctFile = fs.readFileSync(fileUri.fsPath).toString();
-                                        traceGroups.push(JSON.parse(ctFile));
+                                        // Read the file and add it to the storage
+                                        let fileContent = fs.readFileSync(fileUri.fsPath).toString();
+                                        traceGroups.push(JSON.parse(fileContent));
                                     } catch (e) {
+                                        // Error while reading the file
                                         console.warn(`[${this._name}] Could not read file: ${e}`);
                                         return reject(e);
                                     }
                                 }
                             });
+
+                            // All files has been read, return loaded data
                             console.log(`[${this._name}] Save data loaded`);
                             return resolve(traceGroups);
                         })
                         .catch((e) => {
+                            // Error while reading the directory
                             console.warn(`[${this._name}] Could not read save directory: ${e}`);
                             return reject(e);
                         });
                 })
                 .catch((e) => {
+                    // Error while accessing the save directory
                     if (e.code === "ENOENT") {
+                        // The save directory does not exist
                         console.log(`[${this._name}] No saved data found`);
                         return resolve(traceGroups);
                     } else {
+                        // Unkown error
                         console.warn(`[${this._name}] Could not access save directory: ${e}`);
                         return reject(e);
                     }
@@ -102,15 +113,19 @@ export class CTViewDataStorage {
         });
     }
 
+    // Reset a trace to a specific length
     private resetTraceToLength(length: number, trace: Types.Trace): Types.Trace {
         let shortest = length < trace.testCases.length ? length : trace.testCases.length;
 
+        // Shorten trace test storage if needed
         for (let i = trace.testCases.length; i > length; --i) trace.testCases.pop();
+
+        // Extend trace test storage if needed
         for (let i = trace.testCases.length; i < length; ++i) trace.testCases.push({ id: i + 1, verdict: null, sequence: [] });
 
-        // Reset verdict and results on e test.
-        for (let i = 1; i <= shortest; ++i) {
-            let testCase = trace.testCases[i - 1];
+        // Reset verdict and results on each test
+        for (let i = 0; i < shortest; ++i) {
+            let testCase = trace.testCases[i];
             testCase.verdict = null;
             testCase.sequence = [];
         }
@@ -118,25 +133,30 @@ export class CTViewDataStorage {
         return trace;
     }
 
+    // Stores an array of tests
     private storeTests(traceName: string, tests: Types.TestCase[]) {
         let existingTestCases: Types.TestCase[] = this.getTrace(traceName).testCases;
 
         if (this._usingPartialResult) {
+            // Add each test to the existing tests
             tests.forEach((test) => {
                 try {
+                    // Tests start at id=1, thus e.g. test 12 is stored at index 11
                     existingTestCases[test.id - 1] = test;
                 } catch (e) {
-                    console.warn(`[${this._name}] storeTest could not find index: ${test.id - 1}`);
+                    // Warn if a storage location does not exist for the test
+                    return console.warn(`[${this._name}] storeTest could not find index: ${test.id - 1}`);
                 }
             });
         } else {
+            // Overwrite all the tests of the trace with the incomming
             existingTestCases = tests;
         }
     }
 
     public async updateTraceGroups(wsFolder: WorkspaceFolder): Promise<Types.TraceGroup[]> {
-        // Changed workspace?
         if (!util.isSameWorkspaceFolder(this._currentWsFolder, wsFolder)) {
+            // Workspace has changed, load data for the workspace
             this._currentWsFolder = wsFolder;
             this._traceGroups = await this.loadCTs();
         }
@@ -155,34 +175,34 @@ export class CTViewDataStorage {
         this._traceGroups = traceGroupInfo.map((providedGroupInfo) => {
             let localGroup = this._traceGroups.find((ct) => ct.name == providedGroupInfo.name);
 
-            // Map TraceGroupInfo to TraceGroup type and return
+            // Map TraceGroupInfo to TraceGroup type
             if (!localGroup) {
-                return {
+                localGroup = {
                     name: providedGroupInfo.name,
                     traces: providedGroupInfo.traces.map((trace) => {
                         return { name: trace.name, location: trace.location, verdict: trace.verdict, testCases: [] };
                     }),
                 };
+            } else {
+                // Update all traces with information from provider
+                localGroup.traces = providedGroupInfo.traces.map((trace) => {
+                    let localTrace = localGroup.traces.find((t) => t.name == trace.name);
+
+                    // Map TraceInfo to Trace type
+                    if (!localTrace) {
+                        localTrace = {
+                            name: trace.name,
+                            location: trace.location,
+                            verdict: trace.verdict,
+                            testCases: [],
+                        };
+                    } else {
+                        // Update local trace location as it might have been changed
+                        localTrace.location = trace.location;
+                    }
+                    return localTrace;
+                });
             }
-
-            // Update all traces with information from provider
-            localGroup.traces = providedGroupInfo.traces.map((trace) => {
-                let localTrace = localGroup.traces.find((t) => t.name == trace.name);
-                // Map TraceInfo to Trace type and return
-                if (!localTrace)
-                    return {
-                        name: trace.name,
-                        location: trace.location,
-                        verdict: trace.verdict,
-                        testCases: [],
-                    };
-
-                // Update local trace location as it can be changed
-                localTrace.location = trace.location;
-
-                return localTrace;
-            });
-
             return localGroup;
         });
 
@@ -230,13 +250,17 @@ export class CTViewDataStorage {
             if (!provider) return reject(`Could not find provider for workspace ${this._currentWsFolder}`);
 
             // Use partial result?
-            let disposable: Disposable;
+            let eventHandler: Disposable;
             if (provider.onDidGetPartialResult != undefined) {
                 this._usingPartialResult = true;
-                disposable = provider.onDidGetPartialResult((tests) => {
+
+                // When partial results arrive store them in the data storage
+                eventHandler = provider.onDidGetPartialResult((tests) => {
                     this.storeTests(traceName, tests);
                 }, this);
             }
+
+            // Get the execution results from the provider
             try {
                 const res = await provider.provideExecutionResults(
                     traceName,
@@ -249,33 +273,41 @@ export class CTViewDataStorage {
                     progress
                 );
 
-                // Did use partial result?
-                if (res == null) {
-                    this._usingPartialResult = false;
-                } else {
+                // Clear partial result control variable
+                this._usingPartialResult = false;
+
+                // Store tests if any arrived (happens if partial result is not used)
+                if (res) {
                     this.storeTests(traceName, res);
                 }
 
                 // Set verdict for trace
                 let trace = this.getTrace(traceName);
                 if (trace) {
-                    if (trace.testCases.some((tc) => tc.verdict == VerdictKind.Failed)) trace.verdict = VerdictKind.Failed;
-                    else if (trace.testCases.every((tc) => tc.verdict != null)) trace.verdict = VerdictKind.Passed;
-                    else trace.verdict = null;
+                    trace.verdict = Types.util.determineVerdict(trace.testCases);
                 }
 
                 // Save and return
                 this.saveCTs();
                 return resolve(this.getTestCases(traceName, range));
             } catch (e) {
+                // Error during update of tests
                 console.info(`[${this._name}] Update tests failed: ${e}`);
                 return reject(e);
             } finally {
-                disposable?.dispose();
+                // Remove event handler if one has been assigned
+                eventHandler?.dispose();
             }
         });
     }
 
+    // Reset the storage
+    public reset() {
+        this._currentWsFolder = undefined;
+        this._traceGroups = [];
+    }
+
+    ///// Functions for getting data from the storage /////
     public getTraceGroupNames(): string[] {
         return this._traceGroups.map((ct) => ct.name);
     }
@@ -299,37 +331,14 @@ export class CTViewDataStorage {
     public getTestCases(traceName: string, testIdRange?: NumberRange): Types.TestCase[] {
         let trace: Types.Trace = this.getTrace(traceName);
         if (testIdRange) {
-            return Types.Trace.getTestCases(trace.testCases, testIdRange);
+            return Types.util.getTestCases(trace.testCases, testIdRange);
         } else {
             return trace.testCases;
         }
     }
 
-    public getTestResults(testId: number, trace: string): Types.TestResult[] {
-        return []
-            .concat(...this._traceGroups.map((g) => g.traces))
-            .find((t) => t.name == trace)
-            .testCases.find((testCase) => testCase.id == testId).sequence;
-    }
-
-    public getVerdict(tests: Types.TestCase[]): VerdictKind {
-        let verdict = tests ? VerdictKind.Passed : null;
-        for (let k = 0; k < tests.length; k++) {
-            if (tests[k].verdict == null) {
-                verdict = null;
-                break;
-            }
-            if (tests[k].verdict == VerdictKind.Failed) {
-                verdict = VerdictKind.Failed;
-                break;
-            }
-        }
-        return verdict;
-    }
-
-    public reset() {
-        this._currentWsFolder = undefined;
-        this._traceGroups = [];
+    public getTestResults(traceName: string, id: number): Types.TestResult[] {
+        return this.getTestCase(traceName, id).sequence;
     }
 }
 
@@ -355,7 +364,7 @@ export namespace CTViewDataStorage {
         return testProviders.get(wsFolder);
     }
 
-    export function getProvideableWorkspaceFolders(): WorkspaceFolder[] {
+    export function getProvidableWorkspaceFolders(): WorkspaceFolder[] {
         let wsFolders: WorkspaceFolder[] = [];
         for (const wsFolder of testProviders.keys()) {
             wsFolders.push(wsFolder);
