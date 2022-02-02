@@ -215,7 +215,7 @@
                 "icon": "$(references)"
             },
             {
-                "command": "vdm-vscode.display.coverage.show",
+                "command": "vdm-vscode.coverage.show",
                 "title": "Enable Coverage Overlay",
                 "category": "VDM",
                 "icon": {
@@ -224,7 +224,7 @@
                 }
             },
             {
-                "command": "vdm-vscode.display.coverage.hide",
+                "command": "vdm-vscode.coverage.hide",
                 "title": "Disable Coverage Overlay",
                 "category": "VDM",
                 "icon": {
@@ -502,13 +502,13 @@
             ],
             "editor/title": [
                 {
-                    "command": "vdm-vscode.display.coverage.show",
-                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.display.coverage.show",
+                    "command": "vdm-vscode.coverage.show",
+                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverage.show",
                     "group": "navigation"
                 },
                 {
-                    "command": "vdm-vscode.display.coverage.hide",
-                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.display.coverage.show == false",
+                    "command": "vdm-vscode.coverage.hide",
+                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverage.show == false",
                     "group": "navigation"
                 }
             ],
@@ -521,11 +521,11 @@
             ],
             "commandPalette": [
                 {
-                    "command": "vdm-vscode.display.coverage.show",
+                    "command": "vdm-vscode.coverage.show",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.display.coverage.hide",
+                    "command": "vdm-vscode.coverage.hide",
                     "when": "false"
                 },
                 {
@@ -678,6 +678,12 @@
                     "default": true,
                     "scope": "resource",
                     "description": "Enabled: The latest generated coverage is utilised for overlaying. Disabled: Choose which coverage should be used for overlaying."
+                },
+                "vdm-vscode.coverage.UseHeatmapColouring": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Enabled: The number of hits (larger than zero) corresponds to a brighter green. Disabled: All sections with any number (hits larger than zero) are colored the same green."
                 },
                 "vdm-vscode.javaCodeGen.disableCloning": {
                     "type": "boolean",

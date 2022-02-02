@@ -40,6 +40,7 @@ export function activate(context: ExtensionContext) {
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
     const jarPath_vdmj = path.resolve(jarPath, "vdmj");
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
+    const languageIds = ["vdmpp", "vdmsl", "vdmrt"];
 
     clients = new Map();
     let _sortedWorkspaceFolders: string[] | undefined;
@@ -72,7 +73,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(languageId.isabelle));
     const GenCovBut = new GenerateCoverageButton();
     context.subscriptions.push(GenCovBut);
-    context.subscriptions.push(new CoverageOverlay(GenCovBut.eventEmitter));
+    context.subscriptions.push(new CoverageOverlay(GenCovBut.eventEmitter, languageIds));
 
     // Initialise handlers
     const ctHandler = new CTHandler(clients, context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler(), true);
@@ -100,7 +101,7 @@ export function activate(context: ExtensionContext) {
 
     function didOpenTextDocument(document: TextDocument): void {
         // We are only interested in vdm text
-        if (document.languageId !== "vdmsl" && document.languageId !== "vdmpp" && document.languageId !== "vdmrt") {
+        if (!languageIds.find((languageId) => languageId == document.languageId)) {
             return;
         }
 
