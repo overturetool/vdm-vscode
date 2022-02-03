@@ -19,6 +19,8 @@ export class CoverageOverlay {
     private _visibleEditorsChangedDisposable: Disposable;
     private _disposables: Disposable[] = [];
     private _displayCoverage: boolean = false;
+
+    // Keep track of visible editors
     private _visibleEditors: TextEditor[] = [];
     // Keep track of the coverage folder chosen for the workspace folder, i.e. the latest folder or a user specified one.
     private _wsFolderToCoverageFolder: Map<WorkspaceFolder, Uri> = new Map();
@@ -38,7 +40,7 @@ export class CoverageOverlay {
                 "vdm-vscode.coverage.show",
                 async () => {
                     this._displayCoverage = true;
-
+                    // Only look at visible editors with language id of interest
                     window.visibleTextEditors
                         .filter((visibleEditor) =>
                             this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
@@ -46,27 +48,28 @@ export class CoverageOverlay {
                         .forEach((visibleTextEditor) => this._visibleEditors.push(visibleTextEditor));
 
                     // Decorate all visible editors when the user enables coverage overlay
-                    this.overlayCoverageOnEditors(this._visibleEditors);
+                    this.overlayCoverageOnTextEditors(this._visibleEditors);
 
                     // Hide this button. This also displays the "hide coverage" button.
                     commands.executeCommand("setContext", "vdm-vscode.coverage.show", false);
 
                     // When the user switches to a document it needs to be decorated if show coverage is enabled
                     this._visibleEditorsChangedDisposable = window.onDidChangeVisibleTextEditors((visibleEditors: TextEditor[]) => {
+                        // Only handle visible text editors with language id of interest
                         const visibleEditorsOfInterest: TextEditor[] = visibleEditors.filter((visibleEditor) =>
                             this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
                         );
 
-                        // Filter for new visible editors with visible documents that has a relevant file extension
+                        // Find new visible text editors.
                         const newVisibleEditors: TextEditor[] = visibleEditorsOfInterest.filter(
                             (visibleEditor) => !this._visibleEditors.find((currentVisibleEditors) => currentVisibleEditors == visibleEditor)
                         );
 
-                        // Set visible editors to currently visible editors
+                        // Set visible text editors to currently visible text editors
                         this._visibleEditors = visibleEditorsOfInterest;
 
-                        // Decorate new visible editors
-                        this.overlayCoverageOnEditors(newVisibleEditors);
+                        // Decorate new visible text editors
+                        this.overlayCoverageOnTextEditors(newVisibleEditors);
                     });
                 },
                 this
@@ -80,21 +83,18 @@ export class CoverageOverlay {
                 () => {
                     this._displayCoverage = false;
 
-                    // Remove coverage decorations for visible documents.
-                    this._visibleEditors.forEach((textEditor) => {
-                        for (const entry of this._coverageFolderToDocumentsToDecorationWithRanges) {
-                            const decorations = entry[1].get(textEditor.document.uri);
-                            if (decorations) {
-                                Array.from(decorations.keys()).forEach((decoration) => textEditor.setDecorations(decoration, []));
-                                break;
-                            }
-                        }
-                    });
+                    // Remove coverage decorations from visible documents foreach workspace.
+                    this._wsFolderToCoverageFolder.forEach((covFold, wsFolder) =>
+                        this.removeCoverageFromTextEditors(
+                            this._visibleEditors.filter((editor) => workspace.getWorkspaceFolder(editor.document.uri) == wsFolder),
+                            covFold.fsPath
+                        )
+                    );
 
                     // Clear coverage folders for workspace folders
                     this._wsFolderToCoverageFolder = new Map();
 
-                    // Clear visible editors
+                    // Clear visible text editors
                     this._visibleEditors = [];
 
                     // Dispose subscription as we no longer want to react to changes to visible editors
@@ -110,48 +110,52 @@ export class CoverageOverlay {
         // Register for configuration changes to handle relevant changes on the fly, i.e. without the user having to disable and enable the coverage overlay.
         workspace.onDidChangeConfiguration(async (event) => {
             // Find the workspace folder(s) affected by the configuration change
-            Array.from(this._wsFolderToCoverageFolder.keys())
-                .filter((wsFolder) => event.affectsConfiguration("vdm-vscode.coverage", wsFolder))
-                .forEach(async (wsFolder) => {
-                    // Remove association betweeen workspace folder and coverage folder
-                    this._wsFolderToCoverageFolder.delete(wsFolder);
+            for (const wsFolder of Array.from(this._wsFolderToCoverageFolder.keys()).filter((wsFolder) =>
+                event.affectsConfiguration("vdm-vscode.coverage", wsFolder)
+            )) {
+                // Remove coverage decorations from visible documents for the affected workspace folder
+                this.removeCoverageFromTextEditors(
+                    this._visibleEditors.filter((editor) => workspace.getWorkspaceFolder(editor.document.uri) == wsFolder),
+                    this._wsFolderToCoverageFolder.get(wsFolder).fsPath
+                );
 
-                    // Remove coverage decorations from visible documents for the affected workspace folder
-                    this._visibleEditors
-                        .filter((editor) => workspace.getWorkspaceFolder(editor.document.uri) == wsFolder)
-                        .forEach((textEditor) => {
-                            for (const entry of this._coverageFolderToDocumentsToDecorationWithRanges) {
-                                const decorations = entry[1].get(textEditor.document.uri);
-                                if (decorations) {
-                                    Array.from(decorations.keys()).forEach((decoration) => textEditor.setDecorations(decoration, []));
-                                    break;
-                                }
-                            }
-                        });
+                // Remove association betweeen workspace folder and coverage folder
+                this._wsFolderToCoverageFolder.delete(wsFolder);
 
-                    // Remove all coverage decorations for the workspace
-                    Array.from(this._coverageFolderToDocumentsToDecorationWithRanges)
-                        .filter((coverageFolderToDocuments) => {
-                            const relative = Path.relative(wsFolder.uri.fsPath, coverageFolderToDocuments[0]);
-                            return relative && !relative.startsWith("..") && !Path.isAbsolute(relative);
-                        })
-                        .forEach((coverageFolderToDocuments) =>
-                            this._coverageFolderToDocumentsToDecorationWithRanges.delete(coverageFolderToDocuments[0])
-                        );
-
-                    // Overlay coverage decorations for visible documents for the workspace.
-                    this.overlayCoverageOnEditors(
-                        window.visibleTextEditors.filter(
-                            (visibleEditor) =>
-                                workspace.getWorkspaceFolder(visibleEditor.document.uri) == wsFolder &&
-                                this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
-                        )
+                // Remove all coverage decorations for the workspace
+                Array.from(this._coverageFolderToDocumentsToDecorationWithRanges)
+                    .filter((coverageFolderToDocuments) => {
+                        const relative = Path.relative(wsFolder.uri.fsPath, coverageFolderToDocuments[0]);
+                        return relative && !relative.startsWith("..") && !Path.isAbsolute(relative);
+                    })
+                    .forEach((coverageFolderToDocuments) =>
+                        this._coverageFolderToDocumentsToDecorationWithRanges.delete(coverageFolderToDocuments[0])
                     );
-                });
+
+                // Overlay coverage decorations for visible documents for the workspace.
+                await this.overlayCoverageOnTextEditors(
+                    window.visibleTextEditors.filter(
+                        (visibleEditor) =>
+                            workspace.getWorkspaceFolder(visibleEditor.document.uri) == wsFolder &&
+                            this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
+                    )
+                );
+            }
         });
     }
 
-    private async overlayCoverageOnEditors(textEditors: ReadonlyArray<TextEditor>) {
+    private removeCoverageFromTextEditors(textEditors: ReadonlyArray<TextEditor>, coverageFolder: string) {
+        // Remove coverage decorations for visible documents.
+        textEditors.forEach((textEditor) =>
+            this._coverageFolderToDocumentsToDecorationWithRanges
+                .get(coverageFolder)
+                .forEach((decorationToRanges) =>
+                    Array.from(decorationToRanges.keys()).forEach((decoration) => textEditor.setDecorations(decoration, []))
+                )
+        );
+    }
+
+    private async overlayCoverageOnTextEditors(textEditors: ReadonlyArray<TextEditor>) {
         // Overlay coverage foreach text editor.
         for (const textEditor of textEditors) {
             // If the user has enabled choosing a coverage folder then await the input befor decorating
@@ -199,31 +203,30 @@ export class CoverageOverlay {
         // If the user wants to use a specific coverage folder then do nothing.
         if (!workspace.getConfiguration("vdm-vscode.coverage", generatedCoverage.wsFolder).get("OverlayLatestCoverage")) return;
 
-        // The uri is the latest coverage folder. Set it for the workspace folder.
-        this._wsFolderToCoverageFolder.set(generatedCoverage.wsFolder, generatedCoverage.uri);
-
-        // Only display coverage if display coverage is true.
+        // Only udpate coverage if _displayCoverage is true.
         if (this._displayCoverage) {
-            this.overlayCoverageOnEditors(
-                window.visibleTextEditors.filter(
-                    (textEditor) => workspace.getWorkspaceFolder(textEditor.document.uri) == generatedCoverage.wsFolder
-                )
+            // Get visible text editors for the workspace with language id of interest
+            const textEditors: TextEditor[] = window.visibleTextEditors.filter(
+                (visibleEditor) =>
+                    workspace.getWorkspaceFolder(visibleEditor.document.uri) == generatedCoverage.wsFolder &&
+                    this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
             );
-        }
-    }
 
-    private getCoverageFolders(wsFolder: WorkspaceFolder): Uri[] {
-        const folderPath = Uri.joinPath(wsFolder.uri, ".generated", LanguageId.coverage).fsPath;
-        if (Fs.existsSync(folderPath)) {
-            const coverageFolders = Fs.readdirSync(folderPath, { withFileTypes: true })
-                ?.filter((dirent) => dirent.isDirectory())
-                ?.map((dirent) => Path.resolve(folderPath, dirent.name));
-            if (coverageFolders.length > 0) {
-                return coverageFolders.map((path) => Uri.parse(path));
+            // Remove coverage decorations from text editors
+            const selectedCoverageFolder: Uri = this._wsFolderToCoverageFolder.get(generatedCoverage.wsFolder);
+            if (selectedCoverageFolder) {
+                this.removeCoverageFromTextEditors(textEditors, selectedCoverageFolder.fsPath);
             }
-        }
 
-        return [];
+            // The uri is the latest coverage folder. Set it for the workspace folder.
+            this._wsFolderToCoverageFolder.set(generatedCoverage.wsFolder, generatedCoverage.uri);
+
+            // Overlay coverage decorations on text editors - this will be calculated from the newly generated coverage
+            this.overlayCoverageOnTextEditors(textEditors);
+        } else {
+            // The uri is the latest coverage folder. Set it for the workspace folder.
+            this._wsFolderToCoverageFolder.set(generatedCoverage.wsFolder, generatedCoverage.uri);
+        }
     }
 
     private async getCoverageFolderForWorkspace(wsFolder: WorkspaceFolder): Promise<Uri> {
@@ -234,8 +237,16 @@ export class CoverageOverlay {
                 return resolve(savedCoverageFolder);
             }
 
+            // Get coverage folders
+            const folderPath = Uri.joinPath(wsFolder.uri, ".generated", LanguageId.coverage).fsPath;
+            const coverageFolders: Uri[] = Fs.existsSync(folderPath)
+                ? Fs.readdirSync(folderPath, { withFileTypes: true })
+                      ?.filter((dirent) => dirent.isDirectory())
+                      ?.map((dirent) => Uri.parse(Path.resolve(folderPath, dirent.name))) ?? []
+                : [];
+
+            // Either choose the latest coverage folder or let the user decide.
             let coverageFolder: Uri;
-            const coverageFolders: Uri[] = this.getCoverageFolders(wsFolder);
             if (coverageFolders.length > 0) {
                 if (!workspace.getConfiguration("vdm-vscode.coverage", wsFolder).get("OverlayLatestCoverage")) {
                     // If there is no saved folder and the user wants to choose, then prompt the user
@@ -251,7 +262,7 @@ export class CoverageOverlay {
 
                         coverageFolder = coverageFolders.find((folderUri) => Path.basename(folderUri.fsPath) == selectedFolder);
                     }
-                } else if (coverageFolders.length > 0) {
+                } else {
                     // Search through coverage folders to find the one that was latest created.
                     coverageFolder = coverageFolders.reduce((prev: Uri, cur: Uri) =>
                         Fs.statSync(prev.fsPath).birthtime > Fs.statSync(cur.fsPath).birthtime ? prev : cur
@@ -272,7 +283,7 @@ export class CoverageOverlay {
     }
 
     private generateCoverageDecorationsForDocument(document: TextDocument, coverageFolder: Uri): Map<TextEditorDecorationType, Range[]> {
-        // Locate the coverage folder
+        // Locate the coverage file for the document
         const fileName = Fs.readdirSync(coverageFolder.fsPath, { withFileTypes: true })?.find((dirent) => {
             const dotSplit = dirent.name.split(".");
             const sepSplit = document.fileName.split(Path.sep);
@@ -327,11 +338,6 @@ export class CoverageOverlay {
         return coverageRanges;
     }
 
-    dispose(): void {
-        // Clean up our resources
-        this._disposables.forEach((disposable) => disposable.dispose());
-    }
-
     // Lots of the logic is from https://stackoverflow.com/questions/46928277/trying-to-convert-integer-range-to-rgb-color/46929811
     private hitRateToHeatMapRgba(minHits: number, maxHits: number, hits: number): string {
         // Compute a "heat map" color with a green hue corresponding to the number of hits
@@ -378,7 +384,8 @@ export class CoverageOverlay {
         const rgbaToRanges: Map<string, Range[]> = new Map();
         // Calculate the rgba value for a given hitrate and add the corresponding character range to the map.
         coverageRanges.forEach((coverageRange) => {
-            // If hits == 0 then red, if heatMapColouring then the number of hits corresponds to slightly different greens. If not heatMapColouring or there's only two values then just use the same green.
+            // If hits == 0 then red, if heatMapColouring then the number of hits corresponds to slightly different greens.
+            // Else if not heatMapColouring or there's only two values then just use the same green.
             const rgbaVal =
                 coverageRange.hits == 0
                     ? "rgba(255, 56, 56, 0.3)"
@@ -438,6 +445,11 @@ export class CoverageOverlay {
         }
 
         return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+
+    dispose(): void {
+        // Clean up our resources
+        this._disposables.forEach((disposable) => disposable.dispose());
     }
 }
 type CoverageRange = {
