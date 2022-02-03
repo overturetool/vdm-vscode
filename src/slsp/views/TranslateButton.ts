@@ -15,35 +15,10 @@ import {
     ExtensionContext,
     WorkspaceConfiguration,
 } from "vscode";
-import { Disposable, DocumentSelector } from "vscode-languageclient";
-
-export interface TranslateProvider {
-    provideTranslation(saveUri: Uri, rootUri?: Uri, options?: any): Thenable<Uri>;
-}
-
-export class TranslateButton implements Disposable {
-    private static _providers: Map<string, { selector: DocumentSelector; provider: TranslateProvider }[]> = new Map();
-
-    private _context: ExtensionContext;
-    private _commandDisposable: Disposable;
-    private _language: string;
-
-    constructor(context: ExtensionContext, language: string) {
-        this._context = context;
-        this._language = language;
-        this._commandDisposable = commands.registerCommand(`vdm-vscode.translate.${this._language}`, this.onTranslate, this);
-    }
-
-    public static registerTranslateProvider(documentSelector: DocumentSelector, provider: TranslateProvider, language: string): Disposable {
-        let providers = this._providers.get(language) || [];
-        providers.push({ selector: documentSelector, provider: provider });
-        this._providers.set(language, providers);
-
-import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, WorkspaceConfiguration } from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "../../TranslateProviderManager";
 
-export class TranslateButton {
+export class TranslateButton implements Disposable {
     protected _commandDisposable: Disposable;
 
     constructor(protected _language: string) {
