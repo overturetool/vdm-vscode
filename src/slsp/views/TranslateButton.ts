@@ -2,19 +2,7 @@
 
 import * as Fs from "fs-extra";
 import * as util from "../../Util";
-import * as LanguageId from "../../LanguageId";
-import {
-    DecorationOptions,
-    Uri,
-    ViewColumn,
-    window,
-    workspace,
-    WorkspaceFolder,
-    Range,
-    commands,
-    ExtensionContext,
-    WorkspaceConfiguration,
-} from "vscode";
+import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, WorkspaceConfiguration } from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "../../TranslateProviderManager";
 

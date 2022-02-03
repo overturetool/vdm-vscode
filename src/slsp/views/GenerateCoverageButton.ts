@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { TranslateButton } from "./TranslateButton";
 import * as LanguageId from "../../LanguageId";
 import { Uri, window, WorkspaceFolder } from "vscode";

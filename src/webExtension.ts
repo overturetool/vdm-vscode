@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { ExtensionContext } from "vscode";
 
 // This class is the target of "entry" in webpack.config.js. and "browser" in package.json. This builds and exposes parts of the extension as a web extension.

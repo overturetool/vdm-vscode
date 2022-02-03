@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import path = require("path");
 import { Uri } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { CombinantorialTestingFeature } from "./slsp/features/CombinatorialTestingFeature";
