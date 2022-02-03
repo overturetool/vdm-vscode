@@ -35,6 +35,7 @@
         "multi-root ready"
     ],
     "main": "./dist/extension",
+    "browser": "./dist/webExtension.js",
     "icon": "resources/icons/Overture.png",
     "homepage": "https://github.com/jonaskrask/vdm-vscode/blob/master/README.md",
     "repository": {
@@ -239,78 +240,6 @@
                 "icon": "$(run)"
             },
             {
-                "command": "vdm-vscode.goToTrace",
-                "title": "Go to trace",
-                "category": "VDM",
-                "icon": "$(go-to-file)"
-            },
-            {
-                "command": "vdm-vscode.ctSetFilter",
-                "title": "Set Filter Options",
-                "category": "VDM",
-                "icon": "$(gear)"
-            },
-            {
-                "command": "vdm-vscode.ctRebuildOutline",
-                "title": "Rebuild Trace Outline",
-                "category": "VDM",
-                "icon": "$(refresh)"
-            },
-            {
-                "command": "vdm-vscode.ctFullExecute",
-                "title": "Execute All Tests",
-                "category": "VDM",
-                "icon": "$(run-all)"
-            },
-            {
-                "command": "vdm-vscode.ctExecute",
-                "title": "Full Evaluation",
-                "category": "VDM",
-                "icon": "$(run)"
-            },
-            {
-                "command": "vdm-vscode.ctFilteredExecute",
-                "title": "Filtered Evaluation",
-                "category": "VDM",
-                "icon": {
-                    "light": "/resources/icons/light/runFiltered.svg",
-                    "dark": "/resources/icons/dark/runFiltered.svg"
-                }
-            },
-            {
-                "command": "vdm-vscode.ctGenerate",
-                "title": "Generate Tests",
-                "category": "VDM",
-                "icon": "$(refresh)"
-            },
-            {
-                "command": "vdm-vscode.ctEnableTreeFilter",
-                "title": "Filter test results",
-                "category": "VDM",
-                "icon": "$(filter)"
-            },
-            {
-                "command": "vdm-vscode.ctDisableTreeFilter",
-                "title": "Disable filtering of tests",
-                "category": "VDM",
-                "icon": {
-                    "light": "/resources/icons/light/disableFilter.svg",
-                    "dark": "/resources/icons/dark/disableFilter.svg"
-                }
-            },
-            {
-                "command": "vdm-vscode.ctSendToInterpreter",
-                "title": "Send test to interpreter",
-                "category": "VDM",
-                "icon": "$(debug-alt)"
-            },
-            {
-                "command": "vdm-vscode.ctCancel",
-                "title": "Cancel Combinatorial Test Request",
-                "category": "VDM",
-                "icon": "$(debug-stop)"
-            },
-            {
                 "command": "vdm-vscode.openServerLog",
                 "title": "Open Server Log",
                 "category": "VDM"
@@ -319,6 +248,98 @@
                 "command": "vdm-vscode.openServerLogFolder",
                 "title": "Open Server Log Folder",
                 "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.ct.goToTrace",
+                "title": "Go to trace",
+                "category": "VDM",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "vdm-vscode.ct.setExecuteFilter",
+                "title": "Set Execute Filter Options",
+                "category": "VDM",
+                "icon": "$(gear)"
+            },
+            {
+                "command": "vdm-vscode.ct.rebuildOutline",
+                "title": "Rebuild Trace Outline",
+                "category": "VDM",
+                "icon": "$(refresh)",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.fullExecute",
+                "title": "Execute All Tests",
+                "category": "VDM",
+                "icon": "$(run-all)",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.execute",
+                "title": "Full Evaluation",
+                "category": "VDM",
+                "icon": "$(run)",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.filteredExecute",
+                "title": "Filtered Evaluation",
+                "category": "VDM",
+                "icon": {
+                    "light": "/resources/icons/light/runFiltered.svg",
+                    "dark": "/resources/icons/dark/runFiltered.svg"
+                },
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.generate",
+                "title": "Generate Tests",
+                "category": "VDM",
+                "icon": "$(refresh)",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.enableVerdictFilter",
+                "title": "Filter test results",
+                "category": "VDM",
+                "icon": "$(filter)"
+            },
+            {
+                "command": "vdm-vscode.ct.disableVerdictFilter",
+                "title": "Disable filtering of tests",
+                "category": "VDM",
+                "icon": {
+                    "light": "/resources/icons/light/disableFilter.svg",
+                    "dark": "/resources/icons/dark/disableFilter.svg"
+                }
+            },
+            {
+                "command": "vdm-vscode.ct.sendToInterpreter",
+                "title": "Send test to interpreter",
+                "category": "VDM",
+                "icon": "$(debug-alt)",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.cancel",
+                "title": "Cancel Combinatorial Test Request",
+                "category": "VDM",
+                "icon": "$(debug-stop)"
+            },
+            {
+                "command": "vdm-vscode.ct.selectWorkspaceFolder",
+                "title": "Change active workspace folder",
+                "category": "VDM",
+                "icon": "$(root-folder)",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.ct.clearView",
+                "title": "Clear Combinatorial Testing View",
+                "category": "VDM",
+                "icon": "$(clear-all)",
+                "enablement": "vdm-vscode.ct.idle-state"
             }
         ],
         "viewsContainers": {
@@ -327,21 +348,21 @@
                     "id": "combinatorialTesting",
                     "title": "Combinatorial Testing",
                     "icon": "resources/icons/ctView.svg",
-                    "when": "vdm-ct-show-view == true"
+                    "when": "vdm-vscode.ct.show == true"
                 }
             ]
         },
         "views": {
             "combinatorialTesting": [
                 {
-                    "id": "vdm-ctView",
+                    "id": "vdm-vscode.ct.testView",
                     "name": "Tests",
-                    "when": "vdm-ct-show-view == true"
+                    "when": "vdm-vscode.ct.show == true"
                 },
                 {
-                    "id": "vdm-ctResultView",
+                    "id": "vdm-vscode.ct.resultView",
                     "name": "Test Sequence Results",
-                    "when": "vdm-ct-show-view == true"
+                    "when": "vdm-vscode.ct.show == true"
                 }
             ]
         },
@@ -352,8 +373,8 @@
                 "when": "workspaceFolderCount == 0"
             },
             {
-                "view": "vdm-ctView",
-                "contents": "[Generate test outline](command:vdm-vscode.ctRebuildOutline)"
+                "view": "vdm-vscode.ct.testView",
+                "contents": "[Generate test outline](command:vdm-vscode.ct.selectWorkspaceFolder)"
             }
         ],
         "submenus": [
@@ -387,17 +408,17 @@
                 {
                     "command": "vdm-vscode.translate.coverage",
                     "when": "vdm-vscode.translate.coverage == true",
-                    "group": "generate@4"
+                    "group": "generate@1"
                 },
                 {
                     "command": "vdm-vscode.javaCodeGen",
                     "when": "jcg-show-button == true",
-                    "group": "generate@5"
+                    "group": "generate@2"
                 },
                 {
                     "command": "vdm-vscode.translate.graphviz",
                     "when": "vdm-vscode.translate.graphviz == true",
-                    "group": "generate@6"
+                    "group": "generate@3"
                 },
                 {
                     "command": "vdm-vscode.addLibrary",
@@ -412,80 +433,95 @@
             ],
             "view/title": [
                 {
-                    "command": "vdm-vscode.ctFullExecute",
-                    "when": "view =~ /vdm-ctView/ && vdm-ct-show-run-buttons == true",
+                    "command": "vdm-vscode.ct.fullExecute",
+                    "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-cancel-button == false",
                     "group": "navigation@0"
                 },
                 {
-                    "command": "vdm-vscode.ctCancel",
-                    "when": "view =~ /vdm-ctView/ && vdm-ct-show-cancel-button == true",
+                    "command": "vdm-vscode.ct.cancel",
+                    "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-cancel-button == true",
                     "group": "navigation@1"
                 },
                 {
-                    "command": "vdm-vscode.ctSetFilter",
-                    "when": "view =~ /vdm-ctView/ && vdm-ct-show-set-execute-filter-button == true",
+                    "command": "vdm-vscode.ct.setExecuteFilter",
+                    "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-execute-filter-button == true",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "vdm-vscode.ctEnableTreeFilter",
-                    "when": "view =~ /vdm-ctView/ && vdm-ct-show-enable-filter-button == true",
+                    "command": "vdm-vscode.ct.enableVerdictFilter",
+                    "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-verdict-filter-button == true",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "vdm-vscode.ctDisableTreeFilter",
-                    "when": "view =~ /vdm-ctView/ && vdm-ct-show-disable-filter-button == true",
+                    "command": "vdm-vscode.ct.disableVerdictFilter",
+                    "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-verdict-filter-button == false",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "vdm-vscode.ctRebuildOutline",
-                    "when": "view =~ /vdm-ctView/",
+                    "command": "vdm-vscode.ct.rebuildOutline",
+                    "when": "view =~ /vdm-vscode.ct.testView/",
                     "group": "navigation@4"
+                },
+                {
+                    "command": "vdm-vscode.ct.selectWorkspaceFolder",
+                    "when": "view =~ /vdm-vscode.ct.testView/",
+                    "group": "navigation@5"
+                },
+                {
+                    "command": "vdm-vscode.ct.clearView",
+                    "when": "view =~ /vdm-vscode.ct.testView/",
+                    "group": "navigation@6"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "vdm-vscode.ctExecute",
-                    "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
-                    "group": "vdm-ctView@0"
+                    "command": "vdm-vscode.ct.execute",
+                    "when": "viewItem == trace || viewItem == testgroup",
+                    "group": "vdm-vscode.ct.testView@0"
                 },
                 {
-                    "command": "vdm-vscode.ctFilteredExecute",
-                    "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
-                    "group": "vdm-ctView@1"
+                    "command": "vdm-vscode.ct.filteredExecute",
+                    "when": "viewItem == trace && vdm-vscode.ct.show-execute-filter-button",
+                    "group": "vdm-vscode.ct.testView@1"
                 },
                 {
-                    "command": "vdm-vscode.ctGenerate",
+                    "command": "vdm-vscode.ct.generate",
                     "when": "viewItem == trace",
-                    "group": "vdm-ctView@2"
+                    "group": "vdm-vscode.ct.testView@2"
                 },
                 {
-                    "command": "vdm-vscode.ctSendToInterpreter",
-                    "when": "viewItem == test && vdm-ct-show-run-buttons == true",
-                    "group": "vdm-ctView@0"
+                    "command": "vdm-vscode.ct.goToTrace",
+                    "when": "viewItem == trace",
+                    "group": "vdm-vscode.ct.testView@3"
                 },
                 {
-                    "command": "vdm-vscode.ctExecute",
-                    "when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
+                    "command": "vdm-vscode.ct.sendToInterpreter",
+                    "when": "viewItem == test && vdm-vscode.ct.show-interpret-button",
+                    "group": "vdm-vscode.ct.testView@0"
+                },
+                {
+                    "command": "vdm-vscode.ct.execute",
+                    "when": "viewItem == trace || viewItem == testgroup",
                     "group": "inline@0"
                 },
                 {
-                    "command": "vdm-vscode.ctFilteredExecute",
-                    "when": "viewItem == trace && vdm-ct-show-run-buttons == true",
+                    "command": "vdm-vscode.ct.filteredExecute",
+                    "when": "viewItem == trace && vdm-vscode.ct.show-execute-filter-button",
                     "group": "inline@1"
                 },
                 {
-                    "command": "vdm-vscode.ctGenerate",
+                    "command": "vdm-vscode.ct.generate",
                     "when": "viewItem == trace",
                     "group": "inline@2"
                 },
                 {
-                    "command": "vdm-vscode.goToTrace",
+                    "command": "vdm-vscode.ct.goToTrace",
                     "when": "viewItem == trace",
                     "group": "inline@3"
                 },
                 {
-                    "command": "vdm-vscode.ctSendToInterpreter",
-                    "when": "viewItem == test && vdm-ct-show-run-buttons == true",
+                    "command": "vdm-vscode.ct.sendToInterpreter",
+                    "when": "viewItem == test && vdm-vscode.ct.show-interpret-button",
                     "group": "inline@0"
                 }
             ],
@@ -533,43 +569,43 @@
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctSetFilter",
+                    "command": "vdm-vscode.ct.setExecuteFilter",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctRebuildOutline",
+                    "command": "vdm-vscode.ct.rebuildOutline",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctFullExecute",
+                    "command": "vdm-vscode.ct.fullExecute",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctExecute",
+                    "command": "vdm-vscode.ct.execute",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctFilteredExecute",
+                    "command": "vdm-vscode.ct.filteredExecute",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctGenerate",
+                    "command": "vdm-vscode.ct.generate",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctEnableTreeFilter",
+                    "command": "vdm-vscode.ct.enableVerdictFilter",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctDisableTreeFilter",
+                    "command": "vdm-vscode.ct.disableVerdictFilter",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.ctSendToInterpreter",
+                    "command": "vdm-vscode.ct.sendToInterpreter",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.goToTrace",
+                    "command": "vdm-vscode.ct.goToTrace",
                     "when": "false"
                 },
                 {
@@ -757,6 +793,14 @@
                     "scope": "resource",
                     "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
                 },
+                "vdm-vscode.combinatorialTesting.groupSize": {
+                    "type": "number",
+                    "default": 300,
+                    "scope": "application",
+                    "description": "Determine the maximum group size for tests in the combinatorial testing view",
+                    "minimum": 10,
+                    "maximum": 1000
+                },
                 "vdm-vscode.trace.server": {
                     "type": "string",
                     "enum": [
@@ -943,13 +987,15 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run package",
-        "webpack": "webpack --mode development",
-        "webpack-dev": "webpack --mode development --watch",
-        "package": "webpack --mode production",
+        "vscode:prepublish": "npm run package && npm run package-web",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "package-dev": "webpack --mode development",
         "compile": "tsc -p ./",
         "test-compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
+        "watch": "tsc -watch -p ./",
+        "package-web": "webpack --mode production --devtool hidden-source-map",
+        "package-web-dev": "webpack --mode development",
+        "compile-web": "tsc -p ./"
     },
     "devDependencies": {
         "@types/fs-extra": "^9.0.13",

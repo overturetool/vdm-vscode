@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { WorkspaceFolder } from "vscode";
-import { CTInterpreterHandler } from "./slsp/features/CTHandler";
+import { CTInterpreterHandler } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
 
 export class VdmjCTInterpreterHandler implements CTInterpreterHandler {

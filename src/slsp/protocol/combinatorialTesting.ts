@@ -3,6 +3,7 @@
 import {
     CancellationToken,
     HandlerResult,
+    integer,
     Location,
     PartialResultParams,
     ProgressType,
@@ -112,7 +113,7 @@ export enum VerdictKind {
  * The `slsp/CT/generate` request is sent from the client to the server to generate the tests of a test trace.
  */
 export namespace CTGenerateRequest {
-    export const type = new RequestType<CTGenerateParams, CTGenerateResult | null, void>("slsp/CT/generate");
+    export const type = new RequestType<CTGenerateParams, CTGenerateResult | null, { code: integer; message: string }>("slsp/CT/generate");
     export type HandlerSignature = RequestHandler<CTGenerateParams, CTGenerateResult[] | null, void>;
     export type MiddlewareSignature = (
         params: CTGenerateParams,
