@@ -216,6 +216,24 @@
                 "icon": "$(references)"
             },
             {
+                "command": "vdm-vscode.coverage.show",
+                "title": "Enable Coverage Overlay",
+                "category": "VDM",
+                "icon": {
+                    "light": "/resources/icons/light/coverage_overlay_light.svg",
+                    "dark": "/resources/icons/dark/coverage_overlay_dark.svg"
+                }
+            },
+            {
+                "command": "vdm-vscode.coverage.hide",
+                "title": "Disable Coverage Overlay",
+                "category": "VDM",
+                "icon": {
+                    "light": "/resources/icons/coverage_overlay_enabled.svg",
+                    "dark": "/resources/icons/coverage_overlay_enabled.svg"
+                }
+            },
+            {
                 "command": "vdm-vscode.pog.run",
                 "title": "Run Proof Obligation Generation",
                 "category": "VDM",
@@ -390,17 +408,17 @@
                 {
                     "command": "vdm-vscode.translate.coverage",
                     "when": "vdm-vscode.translate.coverage == true",
-                    "group": "translate@4"
+                    "group": "generate@1"
                 },
                 {
                     "command": "vdm-vscode.javaCodeGen",
                     "when": "jcg-show-button == true",
-                    "group": "translate@5"
+                    "group": "generate@2"
                 },
                 {
                     "command": "vdm-vscode.translate.graphviz",
                     "when": "vdm-vscode.translate.graphviz == true",
-                    "group": "translate@6"
+                    "group": "generate@3"
                 },
                 {
                     "command": "vdm-vscode.addLibrary",
@@ -518,6 +536,18 @@
                     "group": "vdm@1"
                 }
             ],
+            "editor/title": [
+                {
+                    "command": "vdm-vscode.coverage.show",
+                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverage.show",
+                    "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.coverage.hide",
+                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverage.show == false",
+                    "group": "navigation"
+                }
+            ],
             "editor/context": [
                 {
                     "submenu": "vdm-vscode.vdmsubmenu",
@@ -526,6 +556,14 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "vdm-vscode.coverage.show",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.coverage.hide",
+                    "when": "false"
+                },
                 {
                     "command": "vdm-vscode.pog.run",
                     "when": "false"
@@ -670,6 +708,18 @@
                     "default": "",
                     "scope": "resource",
                     "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
+                },
+                "vdm-vscode.coverage.OverlayLatestCoverage": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Enabled: The latest generated coverage is utilised for overlaying. Disabled: Choose which coverage should be used for overlaying."
+                },
+                "vdm-vscode.coverage.UseHeatmapColouring": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Enabled: The number of hits (larger than zero) corresponds to a brighter green. Disabled: All sections with any number (hits larger than zero) are colored the same green."
                 },
                 "vdm-vscode.javaCodeGen.disableCloning": {
                     "type": "boolean",
