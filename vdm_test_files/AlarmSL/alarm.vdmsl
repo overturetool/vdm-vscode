@@ -8,7 +8,7 @@ types
             QualificationOK(schedule(peri),a.quali);
 	     
   Schedule = map Period to set of Expert
-  in sch ==
+  inv sch ==
    forall exs in set rng sch &
           exs <> {} and
           forall ex1, ex2 in set exs &
