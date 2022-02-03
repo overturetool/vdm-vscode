@@ -1,899 +1,941 @@
 {
-	"name": "vdm-vscode",
-	"version": "1.3.2",
-	"publisher": "jonaskrask",
-	"engines": {
-		"vscode": "^1.63.0"
-	},
-	"displayName": "VDM VSCode",
-	"description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
-	"contributors": [
-		"Jonas K. Rask",
-		"Frederik P. Madsen",
-		"Nick Battle",
-		"Hugo D. Macedo",
-		"Tom Montout",
-		"Futa Hirakoba"
-	],
-	"license": "GPL-3.0-or-later",
-	"categories": [
-		"Programming Languages",
-		"Debuggers",
-		"Linters",
-		"Snippets"
-	],
-	"keywords": [
-		"Vienna Development Method",
-		"vdm",
-		"VDM",
-		"vdmsl",
-		"VDM-SL",
-		"vdmpp",
-		"VDM++",
-		"vdmrt",
-		"VDM-RT",
-		"multi-root ready"
-	],
-	"main": "./dist/extension",
-	"browser": "./dist/webExtension.js",
-	"icon": "resources/icons/Overture.png",
-	"homepage": "https://github.com/jonaskrask/vdm-vscode/blob/master/README.md",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/jonaskrask/vdm-vscode"
-	},
-	"bugs": {
-		"type": "git",
-		"url": "https://github.com/jonaskrask/vdm-vscode/issues"
-	},
-	"activationEvents": [
-		"onLanguage:vdmsl",
-		"onLanguage:vdmpp",
-		"onLanguage:vdmrt",
-		"workspaceContains:*.vdmsl",
-		"workspaceContains:*.vdmpp",
-		"workspaceContains:*.vdmrt",
-		"onCommand:vdm-vscode.importExample",
-		"onCommand:vdm-vscode.addFoldersToClassPath",
-		"onCommand:vdm-vscode.addFilesToClassPath",
-		"onCommand:vdm-vscode.openServerLog",
-		"onCommand:vdm-vscode.openServerLogFolder"
-	],
-	"contributes": {
-		"languages": [
-			{
-				"id": "vdmsl",
-				"aliases": [
-					"VDM-SL",
-					"vdmsl"
-				],
-				"extensions": [
-					"vdmsl",
-					".vdmsl"
-				],
-				"configuration": "./language-configuration.json"
-			},
-			{
-				"id": "vdmpp",
-				"aliases": [
-					"VDM++",
-					"VDM-PP",
-					"vdmpp"
-				],
-				"extensions": [
-					"vdmpp",
-					".vdmpp"
-				],
-				"configuration": "./language-configuration.json"
-			},
-			{
-				"id": "vdmrt",
-				"aliases": [
-					"VDM-RT",
-					"vdmrt"
-				],
-				"extensions": [
-					"vdmrt",
-					".vdmrt"
-				],
-				"configuration": "./language-configuration.json"
-			}
-		],
-		"grammars": [
-			{
-				"language": "vdmsl",
-				"scopeName": "source.vdmsl",
-				"path": "./syntaxes/vdmsl.tmLanguage.json"
-			},
-			{
-				"language": "vdmpp",
-				"scopeName": "source.vdmpp",
-				"path": "./syntaxes/vdmpp.tmLanguage.json"
-			},
-			{
-				"language": "vdmrt",
-				"scopeName": "source.vdmrt",
-				"path": "./syntaxes/vdmrt.tmLanguage.json"
-			},
-			{
-				"scopeName": "source.vdm",
-				"path": "./syntaxes/vdm.tmLanguage.json"
-			},
-			{
-				"scopeName": "source.vdm.type",
-				"path": "./syntaxes/vdm.type.tmLanguage.json"
-			},
-			{
-				"scopeName": "source.vdm.number",
-				"path": "./syntaxes/vdm.number.tmLanguage.json"
-			},
-			{
-				"scopeName": "source.vdm.operators",
-				"path": "./syntaxes/vdm.operators.tmLanguage.json"
-			},
-			{
-				"scopeName": "source.vdm.statements",
-				"path": "./syntaxes/vdm.statements.tmLanguage.json"
-			}
-		],
-		"snippets": [
-			{
-				"language": "vdmsl",
-				"path": "./resources/snippets/vdmslSnippets.json"
-			},
-			{
-				"language": "vdmpp",
-				"path": "./resources/snippets/vdmppSnippets.json"
-			},
-			{
-				"language": "vdmrt",
-				"path": "./resources/snippets/vdmrtSnippets.json"
-			}
-		],
-		"commands": [
-			{
-				"command": "vdm-vscode.addFoldersToClassPath",
-				"title": "Add folders to Class Path",
-				"category": "VDM"
-			},
-			{
-				"command": "vdm-vscode.addFilesToClassPath",
-				"title": "Add files to Class Path",
-				"category": "VDM"
-			},
-			{
-				"command": "vdm-vscode.addRunConfiguration",
-				"title": "Add VDM Run Configuration",
-				"category": "VDM",
-				"icon": "$(library)"
-			},
-			{
-				"command": "vdm-vscode.addLibrary",
-				"title": "Add VDM Library",
-				"category": "VDM",
-				"icon": "$(library)"
-			},
-			{
-				"command": "vdm-vscode.javaCodeGen",
-				"title": "Generate Java Code",
-				"category": "VDM",
-				"icon": "$(codegen)"
-			},
-			{
-				"command": "vdm-vscode.importExample",
-				"title": "Import VDM Example",
-				"category": "VDM",
-				"icon": "$(example)"
-			},
-			{
-				"command": "vdm-vscode.translateToLatex",
-				"title": "Translate to LaTeX",
-				"category": "VDM",
-				"icon": "$(references)"
-			},
-			{
-				"command": "vdm-vscode.translateToWord",
-				"title": "Translate to Word",
-				"category": "VDM",
-				"icon": "$(references)"
-			},
-			{
-				"command": "vdm-vscode.translateCov",
-				"title": "Generate Coverage",
-				"category": "VDM",
-				"icon": "$(references)"
-			},
-			{
-				"command": "vdm-vscode.translateGraphviz",
-				"title": "Generate Dependency Graph",
-				"category": "VDM",
-				"icon": "$(references)"
-			},
-			{
-				"command": "vdm-vscode.translateIsabelle",
-				"title": "Translate to Isabelle",
-				"category": "VDM",
-				"icon": "$(references)"
-			},
-			{
-				"command": "vdm-vscode.runPOG",
-				"title": "Run Proof Obligation Generation",
-				"category": "VDM",
-				"icon": "$(run)"
-			},
-			{
-				"command": "vdm-vscode.goToTrace",
-				"title": "Go to trace",
-				"category": "VDM",
-				"icon": "$(go-to-file)"
-			},
-			{
-				"command": "vdm-vscode.ctSetFilter",
-				"title": "Set Filter Options",
-				"category": "VDM",
-				"icon": "$(gear)"
-			},
-			{
-				"command": "vdm-vscode.ctRebuildOutline",
-				"title": "Rebuild Trace Outline",
-				"category": "VDM",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "vdm-vscode.ctFullExecute",
-				"title": "Execute All Tests",
-				"category": "VDM",
-				"icon": "$(run-all)"
-			},
-			{
-				"command": "vdm-vscode.ctExecute",
-				"title": "Full Evaluation",
-				"category": "VDM",
-				"icon": "$(run)"
-			},
-			{
-				"command": "vdm-vscode.ctFilteredExecute",
-				"title": "Filtered Evaluation",
-				"category": "VDM",
-				"icon": {
-					"light": "/resources/icons/light/runFiltered.svg",
-					"dark": "/resources/icons/dark/runFiltered.svg"
-				}
-			},
-			{
-				"command": "vdm-vscode.ctGenerate",
-				"title": "Generate Tests",
-				"category": "VDM",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "vdm-vscode.ctEnableTreeFilter",
-				"title": "Filter test results",
-				"category": "VDM",
-				"icon": "$(filter)"
-			},
-			{
-				"command": "vdm-vscode.ctDisableTreeFilter",
-				"title": "Disable filtering of tests",
-				"category": "VDM",
-				"icon": {
-					"light": "/resources/icons/light/disableFilter.svg",
-					"dark": "/resources/icons/dark/disableFilter.svg"
-				}
-			},
-			{
-				"command": "vdm-vscode.ctSendToInterpreter",
-				"title": "Send test to interpreter",
-				"category": "VDM",
-				"icon": "$(debug-alt)"
-			},
-			{
-				"command": "vdm-vscode.ctCancel",
-				"title": "Cancel Combinatorial Test Request",
-				"category": "VDM",
-				"icon": "$(debug-stop)"
-			},
-			{
-				"command": "vdm-vscode.openServerLog",
-				"title": "Open Server Log",
-				"category": "VDM"
-			},
-			{
-				"command": "vdm-vscode.openServerLogFolder",
-				"title": "Open Server Log Folder",
-				"category": "VDM"
-			}
-		],
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "combinatorialTesting",
-					"title": "Combinatorial Testing",
-					"icon": "resources/icons/ctView.svg",
-					"when": "vdm-ct-show-view == true"
-				}
-			]
-		},
-		"views": {
-			"combinatorialTesting": [
-				{
-					"id": "vdm-ctView",
-					"name": "Tests",
-					"when": "vdm-ct-show-view == true"
-				},
-				{
-					"id": "vdm-ctResultView",
-					"name": "Test Sequence Results",
-					"when": "vdm-ct-show-view == true"
-				}
-			]
-		},
-		"viewsWelcome": [
-			{
-				"view": "explorer",
-				"contents": "You can also import a VDM example by clicking the button below.\n[Import VDM example](command:vdm-vscode.importExample)",
-				"when": "workspaceFolderCount == 0"
-			},
-			{
-				"view": "vdm-ctView",
-				"contents": "[Generate test outline](command:vdm-vscode.ctRebuildOutline)"
-			}
-		],
-		"submenus": [
-			{
-				"id": "vdm-vscode.vdmsubmenu",
-				"label": "VDM"
-			}
-		],
-		"menus": {
-			"vdm-vscode.vdmsubmenu": [
-				{
-					"command": "vdm-vscode.runPOG",
-					"when": "pog-show-button == true",
-					"group": "verification@1"
-				},
-				{
-					"command": "vdm-vscode.translateToLatex",
-					"when": "tr-latex-show-button == true",
-					"group": "translate@1"
-				},
-				{
-					"command": "vdm-vscode.translateToWord",
-					"when": "tr-word-show-button == true",
-					"group": "translate@2"
-				},
-				{
-					"command": "vdm-vscode.translateIsabelle",
-					"when": "tr-isabelle-show-button == true",
-					"group": "translate@3"
-				},
-				{
-					"command": "vdm-vscode.translateCov",
-					"when": "tr-coverage-show-button == true",
-					"group": "translate@4"
-				},
-				{
-					"command": "vdm-vscode.javaCodeGen",
-					"when": "jcg-show-button == true",
-					"group": "translate@5"
-				},
-				{
-					"command": "vdm-vscode.translateGraphviz",
-					"when": "tr-graphviz-show-button == true",
-					"group": "translate@6"
-				},
-				{
-					"command": "vdm-vscode.addLibrary",
-					"when": "add-lib-show-button == true",
-					"group": "workspace@1"
-				},
-				{
-					"command": "vdm-vscode.addRunConfiguration",
-					"when": "add-runconf-show-button == true",
-					"group": "workspace@2"
-				}
-			],
-			"view/title": [
-				{
-					"command": "vdm-vscode.ctFullExecute",
-					"when": "view =~ /vdm-ctView/ && vdm-ct-show-run-buttons == true",
-					"group": "navigation@0"
-				},
-				{
-					"command": "vdm-vscode.ctCancel",
-					"when": "view =~ /vdm-ctView/ && vdm-ct-show-cancel-button == true",
-					"group": "navigation@1"
-				},
-				{
-					"command": "vdm-vscode.ctSetFilter",
-					"when": "view =~ /vdm-ctView/ && vdm-ct-show-set-execute-filter-button == true",
-					"group": "navigation@2"
-				},
-				{
-					"command": "vdm-vscode.ctEnableTreeFilter",
-					"when": "view =~ /vdm-ctView/ && vdm-ct-show-enable-filter-button == true",
-					"group": "navigation@3"
-				},
-				{
-					"command": "vdm-vscode.ctDisableTreeFilter",
-					"when": "view =~ /vdm-ctView/ && vdm-ct-show-disable-filter-button == true",
-					"group": "navigation@3"
-				},
-				{
-					"command": "vdm-vscode.ctRebuildOutline",
-					"when": "view =~ /vdm-ctView/",
-					"group": "navigation@4"
-				}
-			],
-			"view/item/context": [
-				{
-					"command": "vdm-vscode.ctExecute",
-					"when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
-					"group": "vdm-ctView@0"
-				},
-				{
-					"command": "vdm-vscode.ctFilteredExecute",
-					"when": "viewItem == trace && vdm-ct-show-run-buttons == true",
-					"group": "vdm-ctView@1"
-				},
-				{
-					"command": "vdm-vscode.ctGenerate",
-					"when": "viewItem == trace",
-					"group": "vdm-ctView@2"
-				},
-				{
-					"command": "vdm-vscode.ctSendToInterpreter",
-					"when": "viewItem == test && vdm-ct-show-run-buttons == true",
-					"group": "vdm-ctView@0"
-				},
-				{
-					"command": "vdm-vscode.ctExecute",
-					"when": "viewItem == trace && vdm-ct-show-run-buttons == true || viewItem == testgroup && vdm-ct-show-run-buttons == true",
-					"group": "inline@0"
-				},
-				{
-					"command": "vdm-vscode.ctFilteredExecute",
-					"when": "viewItem == trace && vdm-ct-show-run-buttons == true",
-					"group": "inline@1"
-				},
-				{
-					"command": "vdm-vscode.ctGenerate",
-					"when": "viewItem == trace",
-					"group": "inline@2"
-				},
-				{
-					"command": "vdm-vscode.goToTrace",
-					"when": "viewItem == trace",
-					"group": "inline@3"
-				},
-				{
-					"command": "vdm-vscode.ctSendToInterpreter",
-					"when": "viewItem == test && vdm-ct-show-run-buttons == true",
-					"group": "inline@0"
-				}
-			],
-			"explorer/context": [
-				{
-					"command": "vdm-vscode.importExample",
-					"group": "vdm@0"
-				},
-				{
-					"submenu": "vdm-vscode.vdmsubmenu",
-					"when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
-					"group": "vdm@1"
-				}
-			],
-			"editor/context": [
-				{
-					"submenu": "vdm-vscode.vdmsubmenu",
-					"when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
-					"group": "vdm@1"
-				}
-			],
-			"commandPalette": [
-				{
-					"command": "vdm-vscode.runPOG",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctSetFilter",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctRebuildOutline",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctFullExecute",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctExecute",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctFilteredExecute",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctGenerate",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctEnableTreeFilter",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctDisableTreeFilter",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.ctSendToInterpreter",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.goToTrace",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.translateToLatex",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.translateToWord",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.translateCov",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.translateGraphviz",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.translateIsabelle",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.addLibrary",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.addRunConfiguration",
-					"when": "false"
-				},
-				{
-					"command": "vdm-vscode.javaCodeGen",
-					"when": "false"
-				}
-			]
-		},
-		"configuration": {
-			"title": "VDM VSCode",
-			"properties": {
-				"vdm-vscode.server.development.experimentalServer": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
-				},
-				"vdm-vscode.server.development.lspPort": {
-					"title": "LSP Port",
-					"type": "integer",
-					"default": 8000,
-					"scope": "resource",
-					"markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
-				},
-				"vdm-vscode.server.logLevel": {
-					"type": "string",
-					"enum": [
-						"off",
-						"severe",
-						"warning",
-						"info",
-						"config",
-						"fine",
-						"finer",
-						"finest",
-						"all"
-					],
-					"default": "off",
-					"scope": "resource",
-					"markdownDescription": "Enables logging of the VDMJ server to a file [in this folder](command:vdm-vscode.openServerLogFolder). This log can be used to diagnose Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
-				},
-				"vdm-vscode.server.JVMArguments": {
-					"title": "JVM Arguments",
-					"type": "string",
-					"default": "",
-					"scope": "resource",
-					"description": "JVM arguments used when launching the server."
-				},
-				"vdm-vscode.server.classPathAdditions": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": [],
-					"scope": "resource",
-					"markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server.  [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
-				},
-				"vdm-vscode.server.highPrecision": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Use high precision variant of VDMJ."
-				},
-				"vdm-vscode.server.stdio.activateStdoutLogging": {
-					"type": "boolean",
-					"default": true,
-					"scope": "resource",
-					"description": "Activate logging of stdout/stderr to terminal window. NOTE: This may cause performance slowdown if specifications have many annotations."
-				},
-				"vdm-vscode.server.stdio.stdioLogPath": {
-					"type": "string",
-					"default": "",
-					"scope": "resource",
-					"markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
-				},
-				"vdm-vscode.javaCodeGen.disableCloning": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Disable cloning (may lead to code being generated that does not preserve the semantics of the input specification)"
-				},
-				"vdm-vscode.javaCodeGen.sequencesAsStrings": {
-					"type": "boolean",
-					"default": true,
-					"scope": "resource",
-					"description": "Generate character sequences as strings"
-				},
-				"vdm-vscode.javaCodeGen.concurrencyMechanisms": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Generate concurrency mechanisms"
-				},
-				"vdm-vscode.javaCodeGen.vdmLocationInformation": {
-					"type": "boolean",
-					"default": true,
-					"scope": "resource",
-					"description": "Generate VDM location information for code generated constructs"
-				},
-				"vdm-vscode.javaCodeGen.outputPackage": {
-					"type": "string",
-					"default": "",
-					"scope": "resource",
-					"description": "Choose output package e.g : my.code"
-				},
-				"vdm-vscode.javaCodeGen.skipClassesModules": {
-					"type": "string",
-					"default": "",
-					"scope": "resource",
-					"description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
-				},
-				"vdm-vscode.translate.latex.modelOnly": {
-					"type": "boolean",
-					"default": true,
-					"scope": "resource",
-					"description": "Only model part will be included in the Latex translation, i.e., everything enclosed within '\\begin{vdm_al}' and '\\end{vdm_al}'"
-				},
-				"vdm-vscode.translate.latex.markCoverage": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Mark coverage in the Latex translation"
-				},
-				"vdm-vscode.translate.latex.insertCoverageTables": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Insert coverage tables in the Latex translation"
-				},
-				"vdm-vscode.translate.general.storeAllTranslations": {
-					"type": "boolean",
-					"default": false,
-					"scope": "resource",
-					"description": "Stores each translation in a timestamped folder instead of overwriting the previouse content"
-				},
-				"vdm-vscode.translate.general.allowSingleFileTranslation": {
-					"type": "boolean",
-					"default": true,
-					"scope": "resource",
-					"description": "If enabled, translates only the selected file. If disabled, translate is always applied to the whole project"
-				},
-				"vdm-vscode.encoding.showWarning": {
-					"type": "boolean",
-					"default": true,
-					"scope": "resource",
-					"markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
-				},
-				"vdm-vscode.trace.server": {
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
-					"scope": "window"
-				}
-			}
-		},
-		"debuggers": [
-			{
-				"type": "vdm",
-				"label": "VDM (SL, PP or RT)",
-				"configurationAttributes": {
-					"launch": {
-						"required": [],
-						"properties": {
-							"noDebug": {
-								"type": "boolean",
-								"description": "Don't run debug mode.",
-								"default": false
-							},
-							"defaultName": {
-								"type": [
-									"string",
-									"null"
-								],
-								"description": "Name of the default module or class.",
-								"default": ""
-							},
-							"trace": {
-								"type": "boolean",
-								"description": "Enable logging of the Debug Adapter Protocol.",
-								"default": true
-							},
-							"command": {
-								"type": "string",
-								"description": "Run single execution of command and terminate.",
-								"default": ""
-							},
-							"remoteControl": {
-								"type": "string",
-								"description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
-								"default": ""
-							},
-							"dynamicTypeChecks": {
-								"type": "boolean",
-								"description": "Type check values during interpretation of a VDM model.",
-								"default": true
-							},
-							"invariantsChecks": {
-								"type": "boolean",
-								"description": "Check both state and type invariants.",
-								"default": true
-							},
-							"preConditionChecks": {
-								"type": "boolean",
-								"description": "Check pre-conditions for all functions and operations during interpretation of a VDM model.",
-								"default": true
-							},
-							"postConditionChecks": {
-								"type": "boolean",
-								"description": "Check post-conditions for all functions and operations during interpretation of a VDM model.",
-								"default": true
-							},
-							"measureChecks": {
-								"type": "boolean",
-								"description": "Check recursive functions, for which a function has been defined.",
-								"default": true
-							}
-						}
-					}
-				},
-				"initialConfigurations": [
-					{
-						"name": "VDM: Console",
-						"type": "vdm",
-						"request": "launch",
-						"noDebug": false,
-						"dynamicTypeChecks": true,
-						"invariantsChecks": true,
-						"preConditionChecks": true,
-						"postConditionChecks": true,
-						"measureChecks": true,
-						"defaultName": null
-					}
-				],
-				"configurationSnippets": [
-					{
-						"label": "VDM: Console",
-						"description": "Initialise interpreter for a VDM project.",
-						"body": {
-							"name": "Debug Console",
-							"type": "vdm",
-							"request": "launch",
-							"noDebug": false,
-							"dynamicTypeChecks": true,
-							"invariantsChecks": true,
-							"preConditionChecks": true,
-							"postConditionChecks": true,
-							"measureChecks": true,
-							"defaultName": null
-						}
-					},
-					{
-						"label": "VDM: Entry Point (VDM-SL)",
-						"description": "Launch a VDM project from the specified entry point.",
-						"body": {
-							"name": "Entry Point: ${1:Function/Operation}",
-							"type": "vdm",
-							"request": "launch",
-							"noDebug": false,
-							"dynamicTypeChecks": true,
-							"invariantsChecks": true,
-							"preConditionChecks": true,
-							"postConditionChecks": true,
-							"measureChecks": true,
-							"defaultName": "DEFAULT",
-							"command": "print ${1:Function/Operation}(${2:arguments})"
-						}
-					},
-					{
-						"label": "VDM: Entry Point (VDM++/-RT)",
-						"description": "Launch a VDM project from the specified entry point.",
-						"body": {
-							"name": "Entry Point: ${1:Class}`${3:Function/Operation}",
-							"type": "vdm",
-							"request": "launch",
-							"noDebug": false,
-							"dynamicTypeChecks": true,
-							"invariantsChecks": true,
-							"preConditionChecks": true,
-							"postConditionChecks": true,
-							"measureChecks": true,
-							"defaultName": "${1:Class}",
-							"command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
-						}
-					},
-					{
-						"label": "VDM: Remote Control (VDM-SL/++/-RT)",
-						"description": "Launch VDM project using remote control.",
-						"body": {
-							"name": "Remote Control",
-							"type": "vdm",
-							"request": "launch",
-							"noDebug": false,
-							"dynamicTypeChecks": true,
-							"invariantsChecks": true,
-							"preConditionChecks": true,
-							"postConditionChecks": true,
-							"measureChecks": true,
-							"defaultName": null,
-							"remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
-						}
-					},
-					{
-						"label": "VDM: Test Runner",
-						"description": "Run VDM tests using the VDMUnit frameworks TestRunner class.",
-						"body": {
-							"name": "Test Runner",
-							"type": "vdm",
-							"request": "launch",
-							"noDebug": true,
-							"command": "p new TestRunner().run()"
-						}
-					}
-				]
-			}
-		],
-		"breakpoints": [
-			{
-				"language": "vdmsl"
-			},
-			{
-				"language": "vdmpp"
-			},
-			{
-				"language": "vdmrt"
-			}
-		]
-	},
-	"scripts": {
+  "name": "vdm-vscode",
+  "version": "1.3.2",
+  "publisher": "jonaskrask",
+  "engines": {
+    "vscode": "^1.63.0"
+  },
+  "displayName": "VDM VSCode",
+  "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
+  "contributors": [
+    "Jonas K. Rask",
+    "Frederik P. Madsen",
+    "Nick Battle",
+    "Hugo D. Macedo",
+    "Tom Montout",
+    "Futa Hirakoba"
+  ],
+  "license": "GPL-3.0-or-later",
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "Vienna Development Method",
+    "vdm",
+    "VDM",
+    "vdmsl",
+    "VDM-SL",
+    "vdmpp",
+    "VDM++",
+    "vdmrt",
+    "VDM-RT",
+    "multi-root ready"
+  ],
+  "main": "./dist/extension",
+  "icon": "resources/icons/Overture.png",
+  "homepage": "https://github.com/jonaskrask/vdm-vscode/blob/master/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonaskrask/vdm-vscode"
+  },
+  "bugs": {
+    "type": "git",
+    "url": "https://github.com/jonaskrask/vdm-vscode/issues"
+  },
+  "activationEvents": [
+    "onLanguage:vdmsl",
+    "onLanguage:vdmpp",
+    "onLanguage:vdmrt",
+    "workspaceContains:*.vdmsl",
+    "workspaceContains:*.vdmpp",
+    "workspaceContains:*.vdmrt",
+    "onCommand:vdm-vscode.importExample",
+    "onCommand:vdm-vscode.addFoldersToClassPath",
+    "onCommand:vdm-vscode.addFilesToClassPath",
+    "onCommand:vdm-vscode.openServerLog",
+    "onCommand:vdm-vscode.openServerLogFolder"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "vdmsl",
+        "aliases": [
+          "VDM-SL",
+          "vdmsl"
+        ],
+        "extensions": [
+          "vdmsl",
+          ".vdmsl"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "vdmpp",
+        "aliases": [
+          "VDM++",
+          "VDM-PP",
+          "vdmpp"
+        ],
+        "extensions": [
+          "vdmpp",
+          ".vdmpp"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "vdmrt",
+        "aliases": [
+          "VDM-RT",
+          "vdmrt"
+        ],
+        "extensions": [
+          "vdmrt",
+          ".vdmrt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vdmsl",
+        "scopeName": "source.vdmsl",
+        "path": "./syntaxes/vdmsl.tmLanguage.json"
+      },
+      {
+        "language": "vdmpp",
+        "scopeName": "source.vdmpp",
+        "path": "./syntaxes/vdmpp.tmLanguage.json"
+      },
+      {
+        "language": "vdmrt",
+        "scopeName": "source.vdmrt",
+        "path": "./syntaxes/vdmrt.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm",
+        "path": "./syntaxes/vdm.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.type",
+        "path": "./syntaxes/vdm.type.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.number",
+        "path": "./syntaxes/vdm.number.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.operators",
+        "path": "./syntaxes/vdm.operators.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.vdm.statements",
+        "path": "./syntaxes/vdm.statements.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "vdmsl",
+        "path": "./resources/snippets/vdmslSnippets.json"
+      },
+      {
+        "language": "vdmpp",
+        "path": "./resources/snippets/vdmppSnippets.json"
+      },
+      {
+        "language": "vdmrt",
+        "path": "./resources/snippets/vdmrtSnippets.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "vdm-vscode.addFoldersToClassPath",
+        "title": "Add folders to Class Path",
+        "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.addFilesToClassPath",
+        "title": "Add files to Class Path",
+        "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.addRunConfiguration",
+        "title": "Add VDM Run Configuration",
+        "category": "VDM",
+        "icon": "$(library)"
+      },
+      {
+        "command": "vdm-vscode.addLibrary",
+        "title": "Add VDM Library",
+        "category": "VDM",
+        "icon": "$(library)"
+      },
+      {
+        "command": "vdm-vscode.javaCodeGen",
+        "title": "Generate Java Code",
+        "category": "VDM",
+        "icon": "$(codegen)"
+      },
+      {
+        "command": "vdm-vscode.importExample",
+        "title": "Import VDM Example",
+        "category": "VDM",
+        "icon": "$(example)"
+      },
+      {
+        "command": "vdm-vscode.translate.latex",
+        "title": "Translate to LaTeX",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vdm-vscode.translate.word",
+        "title": "Translate to Word",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vdm-vscode.translate.coverage",
+        "title": "Generate Coverage",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vdm-vscode.translate.graphviz",
+        "title": "Generate Dependency Graph",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vdm-vscode.translate.isabelle",
+        "title": "Translate to Isabelle",
+        "category": "VDM",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vdm-vscode.pog.run",
+        "title": "Run Proof Obligation Generation",
+        "category": "VDM",
+        "icon": "$(run)"
+      },
+      {
+        "command": "vdm-vscode.openServerLog",
+        "title": "Open Server Log",
+        "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.openServerLogFolder",
+        "title": "Open Server Log Folder",
+        "category": "VDM"
+      },
+      {
+        "command": "vdm-vscode.ct.goToTrace",
+        "title": "Go to trace",
+        "category": "VDM",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "vdm-vscode.ct.setExecuteFilter",
+        "title": "Set Execute Filter Options",
+        "category": "VDM",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "vdm-vscode.ct.rebuildOutline",
+        "title": "Rebuild Trace Outline",
+        "category": "VDM",
+        "icon": "$(refresh)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.fullExecute",
+        "title": "Execute All Tests",
+        "category": "VDM",
+        "icon": "$(run-all)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.execute",
+        "title": "Full Evaluation",
+        "category": "VDM",
+        "icon": "$(run)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.filteredExecute",
+        "title": "Filtered Evaluation",
+        "category": "VDM",
+        "icon": {
+          "light": "/resources/icons/light/runFiltered.svg",
+          "dark": "/resources/icons/dark/runFiltered.svg"
+        },
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.generate",
+        "title": "Generate Tests",
+        "category": "VDM",
+        "icon": "$(refresh)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.enableVerdictFilter",
+        "title": "Filter test results",
+        "category": "VDM",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "vdm-vscode.ct.disableVerdictFilter",
+        "title": "Disable filtering of tests",
+        "category": "VDM",
+        "icon": {
+          "light": "/resources/icons/light/disableFilter.svg",
+          "dark": "/resources/icons/dark/disableFilter.svg"
+        }
+      },
+      {
+        "command": "vdm-vscode.ct.sendToInterpreter",
+        "title": "Send test to interpreter",
+        "category": "VDM",
+        "icon": "$(debug-alt)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.cancel",
+        "title": "Cancel Combinatorial Test Request",
+        "category": "VDM",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "vdm-vscode.ct.selectWorkspaceFolder",
+        "title": "Change active workspace folder",
+        "category": "VDM",
+        "icon": "$(root-folder)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      },
+      {
+        "command": "vdm-vscode.ct.clearView",
+        "title": "Clear Combinatorial Testing View",
+        "category": "VDM",
+        "icon": "$(clear-all)",
+        "enablement": "vdm-vscode.ct.idle-state"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "combinatorialTesting",
+          "title": "Combinatorial Testing",
+          "icon": "resources/icons/ctView.svg",
+          "when": "vdm-vscode.ct.show == true"
+        }
+      ]
+    },
+    "views": {
+      "combinatorialTesting": [
+        {
+          "id": "vdm-vscode.ct.testView",
+          "name": "Tests",
+          "when": "vdm-vscode.ct.show == true"
+        },
+        {
+          "id": "vdm-vscode.ct.resultView",
+          "name": "Test Sequence Results",
+          "when": "vdm-vscode.ct.show == true"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "explorer",
+        "contents": "You can also import a VDM example by clicking the button below.\n[Import VDM example](command:vdm-vscode.importExample)",
+        "when": "workspaceFolderCount == 0"
+      },
+      {
+        "view": "vdm-vscode.ct.testView",
+        "contents": "[Generate test outline](command:vdm-vscode.ct.selectWorkspaceFolder)"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "vdm-vscode.vdmsubmenu",
+        "label": "VDM"
+      }
+    ],
+    "menus": {
+      "vdm-vscode.vdmsubmenu": [
+        {
+          "command": "vdm-vscode.pog.run",
+          "when": "vdm-vscode.pog.run == true",
+          "group": "verification@1"
+        },
+        {
+          "command": "vdm-vscode.translate.latex",
+          "when": "vdm-vscode.translate.latex == true",
+          "group": "translate@1"
+        },
+        {
+          "command": "vdm-vscode.translate.word",
+          "when": "vdm-vscode.translate.word == true",
+          "group": "translate@2"
+        },
+        {
+          "command": "vdm-vscode.translate.isabelle",
+          "when": "vdm-vscode.translate.isabelle == true",
+          "group": "translate@3"
+        },
+        {
+          "command": "vdm-vscode.translate.coverage",
+          "when": "vdm-vscode.translate.coverage == true",
+          "group": "translate@4"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "jcg-show-button == true",
+          "group": "translate@5"
+        },
+        {
+          "command": "vdm-vscode.translate.graphviz",
+          "when": "vdm-vscode.translate.graphviz == true",
+          "group": "translate@6"
+        },
+        {
+          "command": "vdm-vscode.addLibrary",
+          "when": "add-lib-show-button == true",
+          "group": "workspace@1"
+        },
+        {
+          "command": "vdm-vscode.addRunConfiguration",
+          "when": "add-runconf-show-button == true",
+          "group": "workspace@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vdm-vscode.ct.fullExecute",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-cancel-button == false",
+          "group": "navigation@0"
+        },
+        {
+          "command": "vdm-vscode.ct.cancel",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-cancel-button == true",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vdm-vscode.ct.setExecuteFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-execute-filter-button == true",
+          "group": "navigation@2"
+        },
+        {
+          "command": "vdm-vscode.ct.enableVerdictFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-verdict-filter-button == true",
+          "group": "navigation@3"
+        },
+        {
+          "command": "vdm-vscode.ct.disableVerdictFilter",
+          "when": "view =~ /vdm-vscode.ct.testView/ && vdm-vscode.ct.show-verdict-filter-button == false",
+          "group": "navigation@3"
+        },
+        {
+          "command": "vdm-vscode.ct.rebuildOutline",
+          "when": "view =~ /vdm-vscode.ct.testView/",
+          "group": "navigation@4"
+        },
+        {
+          "command": "vdm-vscode.ct.selectWorkspaceFolder",
+          "when": "view =~ /vdm-vscode.ct.testView/",
+          "group": "navigation@5"
+        },
+        {
+          "command": "vdm-vscode.ct.clearView",
+          "when": "view =~ /vdm-vscode.ct.testView/",
+          "group": "navigation@6"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "vdm-vscode.ct.execute",
+          "when": "viewItem == trace || viewItem == testgroup",
+          "group": "vdm-vscode.ct.testView@0"
+        },
+        {
+          "command": "vdm-vscode.ct.filteredExecute",
+          "when": "viewItem == trace && vdm-vscode.ct.show-execute-filter-button",
+          "group": "vdm-vscode.ct.testView@1"
+        },
+        {
+          "command": "vdm-vscode.ct.generate",
+          "when": "viewItem == trace",
+          "group": "vdm-vscode.ct.testView@2"
+        },
+        {
+          "command": "vdm-vscode.ct.goToTrace",
+          "when": "viewItem == trace",
+          "group": "vdm-vscode.ct.testView@3"
+        },
+        {
+          "command": "vdm-vscode.ct.sendToInterpreter",
+          "when": "viewItem == test && vdm-vscode.ct.show-interpret-button",
+          "group": "vdm-vscode.ct.testView@0"
+        },
+        {
+          "command": "vdm-vscode.ct.execute",
+          "when": "viewItem == trace || viewItem == testgroup",
+          "group": "inline@0"
+        },
+        {
+          "command": "vdm-vscode.ct.filteredExecute",
+          "when": "viewItem == trace && vdm-vscode.ct.show-execute-filter-button",
+          "group": "inline@1"
+        },
+        {
+          "command": "vdm-vscode.ct.generate",
+          "when": "viewItem == trace",
+          "group": "inline@2"
+        },
+        {
+          "command": "vdm-vscode.ct.goToTrace",
+          "when": "viewItem == trace",
+          "group": "inline@3"
+        },
+        {
+          "command": "vdm-vscode.ct.sendToInterpreter",
+          "when": "viewItem == test && vdm-vscode.ct.show-interpret-button",
+          "group": "inline@0"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "vdm-vscode.importExample",
+          "group": "vdm@0"
+        },
+        {
+          "submenu": "vdm-vscode.vdmsubmenu",
+          "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+          "group": "vdm@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "vdm-vscode.vdmsubmenu",
+          "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+          "group": "vdm@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "vdm-vscode.pog.run",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.setExecuteFilter",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.rebuildOutline",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.fullExecute",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.execute",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.filteredExecute",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.generate",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.enableVerdictFilter",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.disableVerdictFilter",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.sendToInterpreter",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.ct.goToTrace",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translate.latex",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translate.word",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translate.coverage",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translate.graphviz",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.translate.isabelle",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.addLibrary",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.addRunConfiguration",
+          "when": "false"
+        },
+        {
+          "command": "vdm-vscode.javaCodeGen",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "VDM VSCode",
+      "properties": {
+        "vdm-vscode.server.development.experimentalServer": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
+        },
+        "vdm-vscode.server.development.lspPort": {
+          "title": "LSP Port",
+          "type": "integer",
+          "default": 8000,
+          "scope": "resource",
+          "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
+        },
+        "vdm-vscode.server.logLevel": {
+          "type": "string",
+          "enum": [
+            "off",
+            "severe",
+            "warning",
+            "info",
+            "config",
+            "fine",
+            "finer",
+            "finest",
+            "all"
+          ],
+          "default": "off",
+          "scope": "resource",
+          "markdownDescription": "Enables logging of the VDMJ server to a file [in this folder](command:vdm-vscode.openServerLogFolder). This log can be used to diagnose Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
+        },
+        "vdm-vscode.server.JVMArguments": {
+          "title": "JVM Arguments",
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "JVM arguments used when launching the server."
+        },
+        "vdm-vscode.server.classPathAdditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server.  [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
+        },
+        "vdm-vscode.server.highPrecision": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Use high precision variant of VDMJ."
+        },
+        "vdm-vscode.server.stdio.activateStdoutLogging": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Activate logging of stdout/stderr to terminal window. NOTE: This may cause performance slowdown if specifications have many annotations."
+        },
+        "vdm-vscode.server.stdio.stdioLogPath": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
+        },
+        "vdm-vscode.javaCodeGen.disableCloning": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Disable cloning (may lead to code being generated that does not preserve the semantics of the input specification)"
+        },
+        "vdm-vscode.javaCodeGen.sequencesAsStrings": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Generate character sequences as strings"
+        },
+        "vdm-vscode.javaCodeGen.concurrencyMechanisms": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Generate concurrency mechanisms"
+        },
+        "vdm-vscode.javaCodeGen.vdmLocationInformation": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Generate VDM location information for code generated constructs"
+        },
+        "vdm-vscode.javaCodeGen.outputPackage": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Choose output package e.g : my.code"
+        },
+        "vdm-vscode.javaCodeGen.skipClassesModules": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
+        },
+        "vdm-vscode.translate.latex.modelOnly": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Only model part will be included in the Latex translation, i.e., everything enclosed within '\\begin{vdm_al}' and '\\end{vdm_al}'"
+        },
+        "vdm-vscode.translate.latex.markCoverage": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Mark coverage in the Latex translation"
+        },
+        "vdm-vscode.translate.latex.insertCoverageTables": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Insert coverage tables in the Latex translation"
+        },
+        "vdm-vscode.translate.general.storeAllTranslations": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Stores each translation in a timestamped folder instead of overwriting the previouse content"
+        },
+        "vdm-vscode.translate.general.allowSingleFileTranslation": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "If enabled, translates only the selected file. If disabled, translate is always applied to the whole project"
+        },
+        "vdm-vscode.encoding.showWarning": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
+        },
+        "vdm-vscode.combinatorialTesting.groupSize": {
+          "type": "number",
+          "default": 300,
+          "scope": "application",
+          "description": "Determine the maximum group size for tests in the combinatorial testing view",
+          "minimum": 10,
+          "maximum": 1000
+        },
+        "vdm-vscode.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
+          "scope": "window"
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "vdm",
+        "label": "VDM (SL, PP or RT)",
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "noDebug": {
+                "type": "boolean",
+                "description": "Don't run debug mode.",
+                "default": false
+              },
+              "defaultName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Name of the default module or class.",
+                "default": ""
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              },
+              "command": {
+                "type": "string",
+                "description": "Run single execution of command and terminate.",
+                "default": ""
+              },
+              "remoteControl": {
+                "type": "string",
+                "description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
+                "default": ""
+              },
+              "dynamicTypeChecks": {
+                "type": "boolean",
+                "description": "Type check values during interpretation of a VDM model.",
+                "default": true
+              },
+              "invariantsChecks": {
+                "type": "boolean",
+                "description": "Check both state and type invariants.",
+                "default": true
+              },
+              "preConditionChecks": {
+                "type": "boolean",
+                "description": "Check pre-conditions for all functions and operations during interpretation of a VDM model.",
+                "default": true
+              },
+              "postConditionChecks": {
+                "type": "boolean",
+                "description": "Check post-conditions for all functions and operations during interpretation of a VDM model.",
+                "default": true
+              },
+              "measureChecks": {
+                "type": "boolean",
+                "description": "Check recursive functions, for which a function has been defined.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "name": "VDM: Console",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "dynamicTypeChecks": true,
+            "invariantsChecks": true,
+            "preConditionChecks": true,
+            "postConditionChecks": true,
+            "measureChecks": true,
+            "defaultName": null
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "VDM: Console",
+            "description": "Initialise interpreter for a VDM project.",
+            "body": {
+              "name": "Debug Console",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": false,
+              "dynamicTypeChecks": true,
+              "invariantsChecks": true,
+              "preConditionChecks": true,
+              "postConditionChecks": true,
+              "measureChecks": true,
+              "defaultName": null
+            }
+          },
+          {
+            "label": "VDM: Entry Point (VDM-SL)",
+            "description": "Launch a VDM project from the specified entry point.",
+            "body": {
+              "name": "Entry Point: ${1:Function/Operation}",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": false,
+              "dynamicTypeChecks": true,
+              "invariantsChecks": true,
+              "preConditionChecks": true,
+              "postConditionChecks": true,
+              "measureChecks": true,
+              "defaultName": "DEFAULT",
+              "command": "print ${1:Function/Operation}(${2:arguments})"
+            }
+          },
+          {
+            "label": "VDM: Entry Point (VDM++/-RT)",
+            "description": "Launch a VDM project from the specified entry point.",
+            "body": {
+              "name": "Entry Point: ${1:Class}`${3:Function/Operation}",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": false,
+              "dynamicTypeChecks": true,
+              "invariantsChecks": true,
+              "preConditionChecks": true,
+              "postConditionChecks": true,
+              "measureChecks": true,
+              "defaultName": "${1:Class}",
+              "command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
+            }
+          },
+          {
+            "label": "VDM: Remote Control (VDM-SL/++/-RT)",
+            "description": "Launch VDM project using remote control.",
+            "body": {
+              "name": "Remote Control",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": false,
+              "dynamicTypeChecks": true,
+              "invariantsChecks": true,
+              "preConditionChecks": true,
+              "postConditionChecks": true,
+              "measureChecks": true,
+              "defaultName": null,
+              "remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
+            }
+          },
+          {
+            "label": "VDM: Test Runner",
+            "description": "Run VDM tests using the VDMUnit frameworks TestRunner class.",
+            "body": {
+              "name": "Test Runner",
+              "type": "vdm",
+              "request": "launch",
+              "noDebug": true,
+              "command": "p new TestRunner().run()"
+            }
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "vdmsl"
+      },
+      {
+        "language": "vdmpp"
+      },
+      {
+        "language": "vdmrt"
+      }
+    ]
+  },
+  "scripts": {
 		"vscode:prepublish": "npm run package && npm run package-web",
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"package-dev": "webpack --mode development",
@@ -904,23 +946,24 @@
 		"package-web-dev": "webpack --mode development",
 		"compile-web": "tsc -p ./"
 	},
-	"devDependencies": {
-		"@types/fs-extra": "^9.0.13",
-		"@types/mocha": "^9.0.0",
-		"@types/node": "^17.0.8",
-		"@types/vscode": "^1.63.1",
-		"mocha": "^9.1.3",
-		"ts-loader": "^9.2.6",
-		"typescript": "^4.5.4",
-		"vscode-test": "^1.6.1",
-		"webpack": "^5.66.0",
-		"webpack-cli": "^4.9.1"
-	},
-	"dependencies": {
-		"compile": "0.0.2",
-		"fs-extra": "^10.0.0",
-		"jschardet": "^3.0.0",
-		"run": "^1.4.0",
-		"vscode-languageclient": "^7.0.0"
-	}
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "@types/glob": "^7.2.0",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^17.0.8",
+    "@types/vscode": "^1.63.1",
+    "mocha": "^9.1.3",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.5.4",
+    "vscode-test": "^1.6.1",
+    "webpack": "^5.66.0",
+    "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "compile": "0.0.2",
+    "fs-extra": "^10.0.0",
+    "jschardet": "^3.0.0",
+    "run": "^1.4.0",
+    "vscode-languageclient": "^7.0.0"
+  }
 }
