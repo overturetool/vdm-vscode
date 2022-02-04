@@ -307,8 +307,8 @@ export class ProofObligationPanel implements Disposable {
             <link href="${styleUri}" rel="stylesheet">
         </head>
         <body>
-            <button id="expandPOsBtn">Expand all proof obligations</button>
-            <button id="filterPOsBtn">Filter by status</button>
+            <button class="button" id="expandPOsBtn">Expand all proof obligations</button>
+            <button class="button" id="filterPOsBtn">Filter by status</button>
             <br>
             <p id="posInvalid"><b>Warning:</b> Proof obligations are no longer guaranteed to be valid!</p>
             <div id="poContainer"></div>
