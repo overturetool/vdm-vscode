@@ -35,10 +35,15 @@
 -   `vdm-vscode.server.stdio.activateStdoutLogging`: Activate logging of stdout/stderr to terminal window.
 -   `vdm-vscode.server.stdio.stdioLogPath`: File path for directory that should be used to store stdout/stderr logs. If empty, terminal logging is used instead of file logging.
 
-#### Coverage
+### Coverage
 
 -   `vdm-vscode.coverage.OverlayLatestCoverage`: If enabled then the latest generated coverage report is utilised for overlaying. Otherwise the user is prompted for which coverage report should be used for overlaying.
 -   `vdm-vscode.coverage.UseHeatmapColouring`: If enabled then the number of hits (larger than zero) for a given code section corresponds to a brighter green. Otherwise all sections with any number of hits (larger than zero) are colored the same green.
+
+### Libraries
+
+-   `vdm-vscode.server.libraries.VDM-Libraries`: A list containing library jar paths. Adding a folder path will load all library jars in the folder.
+-   `vdm-vscode.server.libraries.includeDefaultLibraries`: Include the default libraries that are packaged with the extension.
 
 ### Miscellaneous
 

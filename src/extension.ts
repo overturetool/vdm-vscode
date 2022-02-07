@@ -23,7 +23,7 @@ import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
 import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./VdmjCTInterpreterHandler";
-import { AddLibraryHandler } from "./AddLibrary";
+import { AddLibraryHandler } from "./AddLibraryHandler";
 import { AddRunConfigurationHandler } from "./AddRunConfiguration";
 import { AddExampleHandler } from "./ImportExample";
 import { JavaCodeGenHandler } from "./JavaCodeGenHandler";
@@ -196,7 +196,7 @@ export function activate(context: ExtensionContext) {
         clients.set(clientKey, client);
     }
 
-    function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
+    async function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
         // Get server configurations
         const serverConfig: WorkspaceConfiguration = workspace.getConfiguration("vdm-vscode.server", wsFolder);
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio");
@@ -234,26 +234,30 @@ export function activate(context: ExtensionContext) {
         else
             console.warn(`Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`);
 
-        // Construct class path
-        let classPath = "";
+        // Construct class path.
+        // Start by adding user defined library jars paths
+        let classPath = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)?.reduce((cp, cp2) => cp + path.delimiter + cp2, "") ?? "";
 
-        // Add user defined paths to class path
-        if (serverConfig.classPathAdditions) {
-            serverConfig.classPathAdditions.forEach((p: string) => {
-                let pathToCheck = p.endsWith(path.sep + "*") ? p.substring(0, p.length - 2) : p;
-                if (!fs.existsSync(pathToCheck)) {
-                    let m = "Invalid path in class path additions: " + p;
-                    window.showWarningMessage(m);
-                    console.warn(m);
-                } else {
-                    classPath += p + path.delimiter;
-                }
-            });
+        // Add default library jars paths
+        if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
+            AddLibraryHandler.getIncludedLibraryJars(context.extensionPath, wsFolder).forEach((cp) => (classPath += path.delimiter + cp));
         }
 
-        // Add jars folders to class path
+        // Add user defined paths
+        (serverConfig.classPathAdditions as string[]).forEach((cp) => {
+            const pathToCheck = cp.endsWith(path.sep + "*") ? cp.substr(0, cp.length - 2) : cp;
+            if (!fs.existsSync(pathToCheck)) {
+                const msg = "Invalid path in class path additions: " + cp;
+                window.showWarningMessage(msg);
+                console.warn(msg);
+            } else {
+                classPath += path.delimiter + cp;
+            }
+        });
+
+        // Add vdmj jars folders
         // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-        classPath += path.resolve(serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj, "*");
+        classPath += path.delimiter + path.resolve(serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj, "*");
 
         // Construct java launch arguments
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);
