@@ -162,6 +162,16 @@
                 "category": "VDM"
             },
             {
+                "command": "vdm-vscode.addLibraryJarFolders",
+                "title": "Add folder(s) containing library jars",
+                "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.addLibraryJars",
+                "title": "Add library jar",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.addRunConfiguration",
                 "title": "Add VDM Run Configuration",
                 "category": "VDM",
@@ -689,7 +699,22 @@
                     },
                     "default": [],
                     "scope": "resource",
-                    "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server.  [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
+                    "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
+                },
+                "vdm-vscode.server.libraries.VDM-Libraries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "scope": "resource",
+                    "markdownDescription": "A list containing library jar paths. Adding a folder path will load all library jars in the folder. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
+                },
+                "vdm-vscode.server.libraries.includeDefaultLibraries": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Include the default libraries that are packaged with the extension."
                 },
                 "vdm-vscode.server.highPrecision": {
                     "type": "boolean",
@@ -1013,8 +1038,10 @@
     "dependencies": {
         "compile": "0.0.2",
         "fs-extra": "^10.0.0",
+        "iconv-lite": "^0.6.3",
         "jschardet": "^3.0.0",
         "run": "^1.4.0",
-        "vscode-languageclient": "^7.0.0"
+        "vscode-languageclient": "^7.0.0",
+        "yauzl": "^2.10.0"
     }
 }
