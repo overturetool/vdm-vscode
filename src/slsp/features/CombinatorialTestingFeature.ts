@@ -13,7 +13,7 @@ import {
     WorkDoneProgress,
     WorkDoneProgressOptions,
 } from "vscode-languageclient";
-import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import * as protocol from "../protocol/CombinatorialTesting";
 import { CombinatorialTestProvider, CTViewDataStorage } from "../views/combinatorialTesting/CTViewDataStorage";
 import * as code from "../views/combinatorialTesting/CTDataTypes";

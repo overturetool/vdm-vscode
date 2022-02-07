@@ -19,7 +19,7 @@ export interface CombinatorialTestProvider {
 }
 
 export class CTViewDataStorage {
-    private readonly _name: string = "CT Data Provider";
+    private readonly _name: string = "CT Data Storage";
     private _traceGroups: Types.TraceGroup[] = [];
     private _currentWsFolder: WorkspaceFolder;
     private _usingPartialResult: boolean = false;

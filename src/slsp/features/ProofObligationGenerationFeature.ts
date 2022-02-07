@@ -12,7 +12,7 @@ import {
     ProofObligationGenerationClientCapabilities,
     ProofObligationGenerationServerCapabilities,
 } from "../protocol/ProofObligationGeneration";
-import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
 
 export default class ProofObligationGenerationFeature implements StaticFeature {

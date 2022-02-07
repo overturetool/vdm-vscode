@@ -19,10 +19,10 @@ import {
     WorkspaceConfiguration,
 } from "vscode";
 import { LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
-import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
-import { VdmjCTFilterHandler } from "./VdmjCTFilterHandler";
-import { VdmjCTInterpreterHandler } from "./VdmjCTInterpreterHandler";
+import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
+import { VdmjCTInterpreterHandler } from "./vdmj/VdmjCTInterpreterHandler";
 import { AddLibraryHandler } from "./AddLibraryHandler";
 import { AddRunConfigurationHandler } from "./AddRunConfiguration";
 import { AddExampleHandler } from "./ImportExample";

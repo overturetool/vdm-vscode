@@ -2,11 +2,11 @@
 
 import { Uri } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
-import { CombinantorialTestingFeature } from "./slsp/features/CombinatorialTestingFeature";
-import * as LanguageId from "./slsp/protocol/LanguageId";
-import ProofObligationGenerationFeature from "./slsp/features/ProofObligationGenerationFeature";
-import TranslateFeature from "./slsp/features/TranslateFeature";
-import * as util from "./Util";
+import { CombinantorialTestingFeature } from "./features/CombinatorialTestingFeature";
+import * as LanguageId from "./protocol/LanguageId";
+import ProofObligationGenerationFeature from "./features/ProofObligationGenerationFeature";
+import TranslateFeature from "./features/TranslateFeature";
+import * as util from "../Util";
 
 export class SpecificationLanguageClient extends LanguageClient {
     public readonly projectRoot = this.clientOptions.workspaceFolder.uri;

@@ -11,7 +11,7 @@ import {
     WorkDoneProgressOptions,
 } from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/Translate";
-import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { TranslateProvider, TranslateProviderManager } from "../views/translate/TranslateProviderManager";
 
 export default class TranslateFeature implements StaticFeature {

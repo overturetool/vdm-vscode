@@ -13,7 +13,7 @@ import {
     workspace,
     WorkspaceFolder,
 } from "vscode";
-import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import { VdmDebugConfiguration } from "./VdmDapSupport";
 
 interface VdmArgument {

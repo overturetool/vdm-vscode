@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, ExtensionContext, Uri, window, workspace } from "vscode";
-import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as util from "./Util";
 import { Dirent, readdirSync } from "fs";
 import { copySync } from "fs-extra";
