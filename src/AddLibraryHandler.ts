@@ -272,8 +272,16 @@ export class AddLibraryHandler {
         });
     }
 
-    public static getDefaultLibraryJars(extensionPath: string): string[] {
-        const libPath = Path.resolve(extensionPath, "resources", "jars", "libs");
+    public static getIncludedLibraryJars(extensionPath: string, wsFolder: WorkspaceFolder): string[] {
+        // Get the standard or high precision path of the included library jars
+        const libPath: string = Path.resolve(
+            extensionPath,
+            "resources",
+            "jars",
+            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : "vdmj" ?? "vdmj",
+            "libs"
+        );
+
         if (!Fs.existsSync(libPath)) {
             const msg = "Invalid path for default libraries: " + libPath;
             window.showWarningMessage(msg);
@@ -317,7 +325,7 @@ export class AddLibraryHandler {
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-                jarPaths.push(...AddLibraryHandler.getDefaultLibraryJars(this.context.extensionPath));
+                jarPaths.push(...AddLibraryHandler.getIncludedLibraryJars(this.context.extensionPath, wsFolder));
             }
             if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 
