@@ -16,7 +16,7 @@ import CTResultTreeDataProvider from "./CTResultTreeDataProvider";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TestItem, TraceItem } from "./CTTreeItems";
 import * as Types from "./CTDataTypes";
-import { CTFilterOption, NumberRange, VerdictKind } from "../../protocol/combinatorialTesting";
+import { CTFilterOption, NumberRange, VerdictKind } from "../../protocol/CombinatorialTesting";
 
 enum state {
     idle,

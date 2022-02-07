@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { TranslateButton } from "./TranslateButton";
-import * as LanguageId from "../../LanguageId";
+import * as LanguageId from "../../protocol/LanguageId";
 import { Uri, window, WorkspaceFolder } from "vscode";
-import * as Util from "../../Util";
-import { TranslateProviderManager } from "../../TranslateProviderManager";
+import * as Util from "../../../Util";
+import { TranslateProviderManager } from "./TranslateProviderManager";
 
 const events = require("events");
 

@@ -2,7 +2,7 @@
 
 import { MarkdownString, TreeItem, TreeItemCollapsibleState, TreeItemLabel } from "vscode";
 import { Icons } from "../../../Icons";
-import { NumberRange, VerdictKind } from "../../protocol/combinatorialTesting";
+import { NumberRange, VerdictKind } from "../../protocol/CombinatorialTesting";
 import * as Types from "./CTDataTypes";
 
 // Enum of the differet contextValue

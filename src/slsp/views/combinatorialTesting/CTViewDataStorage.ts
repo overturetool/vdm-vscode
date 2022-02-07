@@ -3,7 +3,7 @@
 import * as fs from "fs-extra";
 import * as util from "../../../Util";
 import { CancellationToken, Disposable, Event, Progress, Uri, WorkspaceFolder } from "vscode";
-import { CTFilterOption, NumberRange } from "../../protocol/combinatorialTesting";
+import { CTFilterOption, NumberRange } from "../../protocol/CombinatorialTesting";
 import * as Types from "./CTDataTypes";
 
 export interface CombinatorialTestProvider {

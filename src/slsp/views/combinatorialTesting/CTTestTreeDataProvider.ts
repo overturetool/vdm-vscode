@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
-import { VerdictKind } from "../../protocol/combinatorialTesting";
+import { VerdictKind } from "../../protocol/CombinatorialTesting";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TraceGroupItem, TraceItem } from "./CTTreeItems";
 

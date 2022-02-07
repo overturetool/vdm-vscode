@@ -10,9 +10,9 @@ import {
     StaticFeature,
     WorkDoneProgressOptions,
 } from "vscode-languageclient";
-import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/translate";
+import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/Translate";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
-import { TranslateProvider, TranslateProviderManager } from "../../TranslateProviderManager";
+import { TranslateProvider, TranslateProviderManager } from "../views/translate/TranslateProviderManager";
 
 export default class TranslateFeature implements StaticFeature {
     private _disposables: Disposable[] = [];

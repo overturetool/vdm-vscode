@@ -14,7 +14,7 @@ import {
 } from "vscode";
 import * as Fs from "fs-extra";
 import * as Path from "path";
-import * as LanguageId from "../../LanguageId";
+import * as LanguageId from "../../protocol/LanguageId";
 import { GenerateCoverageButton, GeneratedCoverage } from "./GenerateCoverageButton";
 
 export class CoverageOverlay {

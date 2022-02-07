@@ -5,7 +5,7 @@ import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
 import * as util from "./Util";
-import * as languageId from "./LanguageId";
+import * as languageId from "./slsp/protocol/LanguageId";
 import {
     ExtensionContext,
     TextDocument,
@@ -30,9 +30,9 @@ import { JavaCodeGenHandler } from "./JavaCodeGenHandler";
 import { AddToClassPathHandler } from "./AddToClassPath";
 import * as encoding from "./Encoding";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
-import { TranslateButton } from "./slsp/views/TranslateButton";
-import { GenerateCoverageButton } from "./slsp/views/GenerateCoverageButton";
-import { CoverageOverlay } from "./slsp/views/CoverageOverlay";
+import { TranslateButton } from "./slsp/views/translate/TranslateButton";
+import { GenerateCoverageButton } from "./slsp/views/translate/GenerateCoverageButton";
+import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 
 let clients: Map<string, SpecificationLanguageClient>;
@@ -240,7 +240,7 @@ export function activate(context: ExtensionContext) {
         // Start by adding user defined library jars paths
         let classPath = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)?.reduce((cp, cp2) => cp + path.delimiter + cp2, "") ?? "";
 
-            AddLibraryHandler.getIncludedLibraryJars(context.extensionPath, wsFolder).forEach((cp) => (classPath += path.delimiter + cp));
+        AddLibraryHandler.getIncludedLibraryJars(context.extensionPath, wsFolder).forEach((cp) => (classPath += path.delimiter + cp));
         // Add default library jars paths
         if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
             AddLibraryHandler.getIncludedLibraryJars(context.extensionPath, wsFolder).forEach((cp) => (classPath += path.delimiter + cp));

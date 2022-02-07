@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Location } from "vscode";
-import { NumberRange, VerdictKind } from "../../protocol/combinatorialTesting";
+import { NumberRange, VerdictKind } from "../../protocol/CombinatorialTesting";
 
 /**
  * The type interfaces in this file describes how the Combinatorial Tests are stored internally in the view.

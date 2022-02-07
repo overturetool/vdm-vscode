@@ -11,7 +11,7 @@ import {
     ProofObligation,
     ProofObligationGenerationClientCapabilities,
     ProofObligationGenerationServerCapabilities,
-} from "../protocol/proofObligationGeneration";
+} from "../protocol/ProofObligationGeneration";
 import { SpecificationLanguageClient } from "../../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
 
