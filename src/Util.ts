@@ -148,6 +148,14 @@ export async function addToSettingsArray(
     );
 }
 
+export function getFilesFromDir(dir: string, fileType: string): string[] {
+    const files = Fs.readdirSync(dir, { withFileTypes: true }).map((dirent) => {
+        const filePath: string = Path.resolve(dir, dirent.name);
+        return dirent.isDirectory() ? getFilesFromDir(filePath, fileType) : filePath.endsWith(fileType) ? filePath : [];
+    });
+    return Array.prototype.concat(...files);
+}
+
 // MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
 export function findJavaExecutable(binname: string) {
     if (process.platform === "win32") binname = binname + ".exe";

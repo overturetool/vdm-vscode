@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import path = require("path");
 import { ExtensionContext } from "vscode";
 import * as Util from "./Util";
 

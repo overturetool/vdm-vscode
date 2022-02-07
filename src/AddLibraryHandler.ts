@@ -1,17 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import {
-    commands,
-    ExtensionContext,
-    ProgressLocation,
-    QuickPickItem,
-    RelativePattern,
-    Uri,
-    window,
-    workspace,
-    WorkspaceConfiguration,
-    WorkspaceFolder,
-} from "vscode";
+import { commands, ExtensionContext, QuickPickItem, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
@@ -296,32 +285,19 @@ export class AddLibraryHandler {
         }
     }
 
-    public static async getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): Promise<string[]> {
-        const libraryConfig = workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder);
-        const libraryJars = libraryConfig.get("VDM-Libraries") as string[];
+    public static getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): string[] {
         // Get any library jars specified by the user
         return (
-            (
-                await Promise.all(
-                    libraryJars.map((path) => {
-                        if (Fs.existsSync(path)) {
-                            if (Fs.lstatSync(path).isDirectory()) {
-                                return Util.getFilesFromDir(path, "jar");
-                            } else {
-                                return [path];
-                            }
-                        }
-                        return [];
-                    })
-                )
-            )?.reduce((prev, cur) => prev.concat(cur), []) ?? []
+            (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder)?.get("VDM-Libraries") as string[])
+                .map((path) => (Fs.existsSync(path) ? (Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDir(path, "jar") : [path]) : []))
+                ?.reduce((prev, cur) => prev.concat(cur), []) ?? []
         );
     }
 
     private getLibrariesFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
         return new Promise<Map<string, Library[]>>(async (resolve, reject) => {
             // Get user defined library jars
-            const jarPaths: string[] = await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder);
+            const jarPaths: string[] = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder);
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {

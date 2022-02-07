@@ -236,8 +236,7 @@ export function activate(context: ExtensionContext) {
 
         // Construct class path.
         // Start by adding user defined library jars paths
-        let classPath =
-            (await AddLibraryHandler.getUserDefinedLibraryJars(wsFolder))?.reduce((cp, cp2) => cp + path.delimiter + cp2, "") ?? "";
+        let classPath = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)?.reduce((cp, cp2) => cp + path.delimiter + cp2, "") ?? "";
 
         // Add default library jars paths
         if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
@@ -250,7 +249,7 @@ export function activate(context: ExtensionContext) {
             if (!fs.existsSync(pathToCheck)) {
                 const msg = "Invalid path in class path additions: " + cp;
                 window.showWarningMessage(msg);
-                util.writeToLog(extensionLogPath, msg);
+                console.warn(msg);
             } else {
                 classPath += path.delimiter + cp;
             }
