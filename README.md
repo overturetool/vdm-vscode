@@ -6,137 +6,81 @@
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
 
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
-The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle). 
+The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle).
 
 <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/GUI.png" width="800">
 
-If you are used to the Overture Tool IDE and would like to keep that syntax highlighting we suggest that you use the color theme [Eclipse Classic Light](https://marketplace.visualstudio.com/items?itemName=LorenzoBilli.eclipse-classic-light) or another eclipse color theme.
+\*If you are used to the Overture Tool IDE and would like to keep that syntax highlighting we suggest that you use the color theme [Eclipse Classic Light](https://marketplace.visualstudio.com/items?itemName=LorenzoBilli.eclipse-classic-light) or another eclipse color theme.
 
 ## Installation
+
 In Visual Studio Code just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
 
 ### Requirements
-- [Visual Studio Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
-- [Java ≥ v. 11](https://adoptopenjdk.net/)
+
+-   [Visual Studio Code ≥ v. 1.49.0](https://code.visualstudio.com/download)
+-   [Java ≥ v. 11](https://adoptopenjdk.net/)
+
+## Web extension
+
+For now only the following limited feature set is available in the web version of the extension:
+
+-   Syntax Highlighting
+-   Snippets
+
+Thus, most feature contributions relates to the desktop version of the extension.
 
 ## Features
-- Syntax Highlighting
-- Syntax- and type-checking
-- Smart navigation
-- Debugging
-- Proof Obligation Generation
-- Combinatiorial Testing
-- Translation to LaTeX and Word
-- Java code generation
-- Dependency graph generation
-- Coverage report
-- Import of project examples
-- Import of VDM libraries
+
+-   Syntax Highlighting
+-   Syntax- and type-checking
+-   Smart navigation
+-   Debugging
+-   Proof Obligation Generation
+-   Combinatiorial Testing
+-   Translation to LaTeX and Word
+-   Java code generation
+-   Dependency graph generation
+-   Coverage report
+-   Import of project examples
+-   Import of VDM libraries
+-   Snippets
 
 ### Future Work
-- Improve syntax highlighting
-- Improve debugging execution
-- Show all workspace folders in the Combinatorial Testing view
+
+-   Improve syntax highlighting
+-   Improve debugging execution
+-   Show all workspace folders in the Combinatorial Testing view
 
 ## Usage
-Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(.vdmsl, .vdmpp or .vdmrt) in from the explorer window. This will automatically start language server in the background.
-The following displays snippets of the feature functionalities provided by the extension and their use:
 
-- **Syntax highlighting**: VDM keywords are automatically highlighted.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/syntax_highlighting.png" width="700">
+Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(.vdmsl, .vdmpp or .vdmrt) from the explorer window. This will automatically start the language server in the background.
 
-- **Syntax- and type-checking**: Syntax- and type-errors and warnings are highligthed in the editor and detailed in the terminal or by hovering on the highlighted section.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/syntax_checking.gif" width="700">
-
-- **Smart navigation**: Mutiple actions exists for navigating to the definition of a given identifier in a specification: Ctrl + click, the right-click context menu or pressing F12 while hovering on the identifier.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/smart_navigation.gif" width="700">
-
-- **Debugging**: A debugging session can be initiated using the standard VS Code debug interface. This launches the VDMJ interpreter enabling commands to be issued through the terminal. For a list of the available commands type `help`.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/debugging.gif" width="700">
-
-- **Proof Obligation Generation**: Proof obligation generation can be performed for a specification by accessing the editor context menu (right-clicking in the editor window). Alternatively the explorer contex menu can be used by right-clicking a VDM file in the explorer window.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/POG.gif" width="700">
-
-- **Combinatiorial Testing**: Combinatorial testing can be performed for a given specification by accessing the "Combinatorial Testing" menu in the activity bar.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/CT.gif" width="700">
-
-- **Translation to LaTeX and Word**: A specification can be translated to LaTex or Word formats by accessing the editor context menu by right-clicking in the editor.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/translation.gif" width="700">
-
-- **Java code generation**: From a specification you can generate Java code by accessing the editor context menu by right-clicking in the editor.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/java_code_generation.gif" width="700">
-
-- **Dependency graph generation**: A dependency graph of the specification can be generated by accessing the editor context menu by right-clicking in the editor. This will generate a graphviz file (.dot) which can be displayed graphically elsewhere, e.g. by installing a graphviz extension such as [vscode-graphviz](https://marketplace.visualstudio.com/items?itemName=joaompinto.vscode-graphviz) or [graphviz-interactive-preview](https://marketplace.visualstudio.com/items?itemName=tintinweb.graphviz-interactive-preview).
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/dependency_graph_generation.gif" width="700">
-
-- **Coverage report**: An execution coverage report can be generated by accessing the editor context menu by right-clicking in the editor.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/coverage_report.gif" width="700">
-
-- **Import of project examples**: VDM-SL, VDM++, and VDM-RT project examples can be imported by accessing the explorer context menu by right-clicking in the explorer.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/import_project_examples.gif" width="700">
-
-- **Import of VDM libraries**: VDM libraries can be added to a project by accessing the explorer context menu by right-clicking in the explorer.
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/import_VDM_libraries.gif" width="700">
-
-- **Remote Control**: You can use remote control option by adding a new configuration and selecting "VDM Debug: Remote Control (VDM-SL/++/RT).
-<br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/remote_control.gif" width="700">
+[Click here](USAGE.md) for an overview of how to use the features of the extension.
 
 ## Settings
-This extension contributes the following settings:
-- `vdm-vscode.encoding.showWarning`: If enabled, shows a warning if document encoding is not UTF-8.
-- `vdm-vscode.trace.server`: Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project.
 
-### Translation
-- `vdm-vscode.translate.general.storeAllTranslations`: If enabled stores each translation in a timestamped folder instead of overwriting the previouse content.
-- `vdm-vscode.translate.general.allowSingleFileTranslation`: If enabled, translates only the selected file. If disabled, translate is always applied to the whole project.
-
-#### Translate to LaTeX
-- `vdm-vscode.translate.latex.modelOnly`: Only model part will be included in the Latex translation, i.e., everything enclosed within '\begin{vdm_al}' and '\end{vdm_al}'.
-- `vdm-vscode.translate.latex.markCoverage`: Mark coverage in the Latex translation.
-- `vdm-vscode.translate.latex.insertCoverageTables`: Insert coverage tables in the Latex translation.
-
-### Java Code Generation
-- `vdm-vscode.javaCodeGen.disableCloning`: Disable cloning (may lead to code being generated that does not preserve the semantics of the input specification).
-- `vdm-vscode.javaCodeGen.sequencesAsStrings`: Generate character sequences as strings.
-- `vdm-vscode.javaCodeGen.concurrencyMechanisms`: Generate concurrency mechanisms.
-- `vdm-vscode.javaCodeGen.vdmLocationInformation`: Generate VDM location information for code generated constructs.
-- `vdm-vscode.javaCodeGen.outputPackage`: Choose output package e.g : my.code.
-- `vdm-vscode.javaCodeGen.skipClassesModules`: Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env.
-
-### Server
-- `vdm-vscode.server.highPrecision`: Use high precision server that use more memory for variables ("on" or "off").
-- `vdm-vscode.server.logLevel`: Log server actions at different levels.
-- `vdm-vscode.server.JVMArguments`: Arguments for the JVM that is executing the server (e.g. -Xmx2g).
-- `vdm-vscode.server.classPathAdditions`: Array of folders and/or jar file paths that should be used with the language server.
-
-#### Libraries
-- `vdm-vscode.server.libraries.VdmLibraries`: A list of folder and/or file paths including/pointing to jars from which libraries can be added.
-- `vdm-vscode.server.libraries.includeDefaultLibraries`: Include the default libraries that are packaged with the extension ("on" or "off").
-
-#### Development
-- `vdm-vscode.server.development.experimentalServer`: Use an experimental/external server. If enabled the client will not launch a server but instead connect to one that is running in another process. E.g. executing the VDMJ server in a debugger.
-- `vdm-vscode.server.development.lspPort`: Port used for the LSP/SLSP connection when `experimentalServer` is enabled.
-
-#### Standart I/O
-- `vdm-vscode.server.stdio.activateStdoutLogging`: Activate logging of stdout/stderr to terminal window.
-- `vdm-vscode.server.stdio.stdioLogPath`: File path for directory that should be used to store stdout/stderr logs. If empty, terminal logging is used instead of file logging.
+This extension contributes a number of settings. [Click here](SETTINGS.md) for a detailed overview.
 
 ## Publications
-Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen, 
+
+Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen,
 [Visual Studio Code VDM Support](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support),
 The 18th Overture Workshop, December 2020 [[PDF](https://www.researchgate.net/publication/346680627_Visual_Studio_Code_VDM_Support)]
 
-Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen, 
+Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen,
 [The Specification Language Server Protocol: A Proposal for Standardised LSP Extensions](https://www.researchgate.net/publication/353220633_The_Specification_Language_Server_Protocol_A_Proposal_for_Standardised_LSP_Extensions),
 The 6th Workshop on Formal Integrated Development Environment, May 2021 [[PDF](https://cister-labs.pt/f-ide2021/images/preprints/F-IDE_2021_paper_3.pdf)]
 
-
 ## Change Log
+
 See change log [here](CHANGELOG.md).
 
 ## Issues
+
 Submit an [issue](https://github.com/jonaskrask/vdm-vscode/issues) if you find a bug or have a suggestion for improving the extension.
 
 ## Contributing
+
 Contributions are very welcome. To do so either open an issue or feature request or fork the [repo](https://github.com/jonaskrask/vdm-vscode) and submit a pull request.
 For further information see [here](CONTRIBUTING.md).
