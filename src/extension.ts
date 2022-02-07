@@ -50,7 +50,7 @@ export function activate(context: ExtensionContext) {
     if (!javaPath) {
         let m = "Java runtime environment not found!";
         window.showErrorMessage(m);
-        console.error(m);
+        console.error("[Extension] " + m);
         return;
     }
 
@@ -58,7 +58,7 @@ export function activate(context: ExtensionContext) {
     if (!util.recursivePathSearch(jarPath_vdmj, /vdmj.*jar/i) || !util.recursivePathSearch(jarPath_vdmj, /lsp.*jar/i)) {
         let m = "Server jars not found!";
         window.showErrorMessage(m);
-        console.error(m);
+        console.error("[Extension] " + m);
         return;
     }
 
@@ -91,7 +91,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder));
     context.subscriptions.push(workspace.onDidOpenTextDocument(didOpenTextDocument));
     workspace.textDocuments.forEach(didOpenTextDocument);
-    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => stopClients(e.removed)));
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => (_sortedWorkspaceFolders = undefined)));
 
     // ******************************************************************************
@@ -182,11 +182,11 @@ export function activate(context: ExtensionContext) {
         client.onReady().then(() => {
             let port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
             if (port) dapSupport.addPort(wsFolder, port);
-            else console.warn("Did not receive a DAP port on start up, debugging is not activated");
+            else console.warn("[Extension] Did not receive a DAP port on start up, debugging is not activated");
         });
 
         // Start the and launch the client
-        console.info(`Launching client for the folder ${wsFolder.name} with language ID ${dialect}`);
+        console.info(`[Extension] Launching client for the folder ${wsFolder.name} with language ID ${dialect}`);
         let disposable = client.start();
 
         // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
@@ -232,7 +232,9 @@ export function activate(context: ExtensionContext) {
         const javaEncoding = encoding.toJavaName(encodingSetting);
         if (javaEncoding) args.push(`-Dlsp.encoding=${javaEncoding}`);
         else
-            console.warn(`Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`);
+            console.warn(
+                `[Extension] Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`
+            );
 
         // Construct class path
         let classPath = "";
@@ -244,7 +246,7 @@ export function activate(context: ExtensionContext) {
                 if (!fs.existsSync(pathToCheck)) {
                     let m = "Invalid path in class path additions: " + p;
                     window.showWarningMessage(m);
-                    console.warn(m);
+                    console.warn("[Extension] " + m);
                 } else {
                     classPath += p + path.delimiter;
                 }
@@ -325,7 +327,12 @@ export function activate(context: ExtensionContext) {
             const client = clients.get(folder.uri.toString());
             if (client) {
                 clients.delete(folder.uri.toString());
-                client.stop();
+                client
+                    .stop()
+                    .then(() => {
+                        console.info(`[Extension] Client closed for the workspace folder ${folder.name}`);
+                    })
+                    .catch((e) => `[Extension] Client close failed with error: ${e}`);
             }
         }
     }
