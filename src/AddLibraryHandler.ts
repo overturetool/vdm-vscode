@@ -105,7 +105,7 @@ export class AddLibraryHandler {
 
                                                     // Inform of libraries being added as part of a dependency
                                                     window.showInformationMessage(
-                                                        `Including '${Array.from(jarPathsToDependLibraries.values())
+                                                        `Additionally including '${Array.from(jarPathsToDependLibraries.values())
                                                             .reduce((prev, cur) => prev.concat(cur))
                                                             .map((lib) => lib.name)
                                                             .reduce((prev, cur) => prev + ", " + cur)}'` +

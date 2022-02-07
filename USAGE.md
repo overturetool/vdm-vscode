@@ -57,7 +57,7 @@ VDM-SL, VDM++, and VDM-RT project examples can be imported by accessing the expl
 
 ## Import of VDM libraries
 
-VDM libraries can be added to a project by accessing the explorer context menu by right-clicking in the explorer.
+VDM libraries can be added to a project by accessing the context menu by right-clicking in the explorer or the editor. Libraries to choose from can be configured in the settings.
 <br><br> <img src="https://github.com/jonaskrask/vdm-vscode/raw/master/screenshots/import_VDM_libraries.gif" width="700">
 
 ## Remote Control
