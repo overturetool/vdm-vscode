@@ -1,6 +1,7 @@
 .git
 .vs
 .vscode
+documentation
 drawio
 node_modules
 out
