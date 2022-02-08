@@ -204,7 +204,7 @@ export class ProofObligationPanel implements Disposable {
         this._lastUri = undefined;
     }
 
-    public displayWarning() {
+    private displayWarning() {
         // Post display warming message to javascript
         this._panel.webview.postMessage({ command: "posInvalid" });
     }
