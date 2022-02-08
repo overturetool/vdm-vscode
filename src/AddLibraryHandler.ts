@@ -5,6 +5,7 @@ import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient"
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./Util";
+import { Disposable } from "vscode-languageclient";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -29,7 +30,7 @@ export class AddLibraryHandler {
     }
 
     private registerCommand = (callback: (...args: any[]) => any) => {
-        let disposable = commands.registerCommand("vdm-vscode.addLibrary", callback);
+        let disposable: Disposable = commands.registerCommand("vdm-vscode.addLibrary", callback);
         this.context.subscriptions.push(disposable);
         return disposable;
     };
@@ -67,7 +68,7 @@ export class AddLibraryHandler {
                             return resolve(`Empty selection. Add library completed.`);
 
                         // Ensure that target folder exists
-                        const libPathTarget = Path.resolve(wsFolder.uri.fsPath, "lib");
+                        const libPathTarget: string = Path.resolve(wsFolder.uri.fsPath, "lib");
                         Fs.ensureDir(libPathTarget)
                             .then(() => {
                                 const jarPathTofileNames: Map<string, string[]> = new Map();
@@ -77,7 +78,7 @@ export class AddLibraryHandler {
                                     const resolvedItems: QuickPickItem[] = [];
                                     selectedItems.forEach((quickPickItem) => {
                                         // Only act if the selected library name corresponds to library from this jar.
-                                        const selectedLib = libs.find((lib) => lib.name == quickPickItem.label);
+                                        const selectedLib: Library = libs.find((lib) => lib.name == quickPickItem.label);
                                         // Resolve dependencies
                                         if (selectedLib) {
                                             const unresolvedDependencies: string[] = [];
@@ -236,7 +237,7 @@ export class AddLibraryHandler {
 
     private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
         return new Promise<string>(async (resolve, reject) => {
-            const client = this.clients.get(wsFolder.uri.toString());
+            const client: SpecificationLanguageClient = this.clients.get(wsFolder.uri.toString());
             if (client) {
                 resolve(this.dialects[client.language]);
             } else {
@@ -248,7 +249,7 @@ export class AddLibraryHandler {
                         return resolve(this.dialects[dp]);
                 }
                 // Let user chose
-                const chosenDialect = await window.showQuickPick(Object.keys(this.dialects), {
+                const chosenDialect: string = await window.showQuickPick(Object.keys(this.dialects), {
                     placeHolder: "Choose dialect",
                     canPickMany: false,
                 });
@@ -261,8 +262,7 @@ export class AddLibraryHandler {
         });
     }
 
-    public static getIncludedLibraryJars(extensionPath: string, wsFolder: WorkspaceFolder): string[] {
-        // Get the standard or high precision path of the included library jars
+    public static getIncludedLibrariesFolderPath(extensionPath: string, wsFolder: WorkspaceFolder): string {
         const libPath: string = Path.resolve(
             extensionPath,
             "resources",
@@ -272,17 +272,24 @@ export class AddLibraryHandler {
         );
 
         if (!Fs.existsSync(libPath)) {
-            const msg = "Invalid path for default libraries: " + libPath;
+            const msg: string = "Invalid path for default libraries: " + libPath;
             window.showWarningMessage(msg);
             console.log(msg);
-            return [];
-        } else {
-            return (
-                Fs.readdirSync(libPath, { withFileTypes: true })
-                    ?.filter((dirent) => dirent.name.endsWith(".jar"))
-                    ?.map((dirent) => Path.resolve(libPath, dirent.name)) ?? []
-            );
+            return "";
         }
+
+        return libPath;
+    }
+
+    public static getIncludedLibraryJars(extensionPath: string, wsFolder: WorkspaceFolder): string[] {
+        // Get the standard or high precision path of the included library jars
+        const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(extensionPath, wsFolder);
+
+        return libPath
+            ? Fs.readdirSync(libPath, { withFileTypes: true })
+                  ?.filter((dirent) => dirent.name.endsWith(".jar"))
+                  ?.map((dirent) => Path.resolve(libPath, dirent.name)) ?? []
+            : [];
     }
 
     public static getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): string[] {
@@ -359,18 +366,18 @@ export class AddLibraryHandler {
                 .then((jarPathToLibs) => {
                     // Collect entries to single map
                     const jarPathsToLibs: Map<string, Library[]> = new Map();
-                    jarPathToLibs.forEach((jarToLib) => {
-                        if (jarToLib[0] && jarToLib[1].length > 0) {
+                    jarPathToLibs.forEach((jarToLibs) => {
+                        if (jarToLibs[0] && jarToLibs[1].length > 0) {
                             // Watch out for libraries with identical names
                             const jarPathToDuplicateLibs: Map<string, Library[]> = new Map();
                             for (let entry of Array.from(jarPathsToLibs.entries())) {
                                 const duplicateLib = Array.from(entry[1]).find((existingLib) =>
-                                    jarToLib[1].find((newLib) => existingLib.name == newLib.name)
+                                    jarToLibs[1].find((newLib) => existingLib.name == newLib.name)
                                 );
                                 if (duplicateLib) {
                                     // Library exists in another jar so no need to extract it from this jar.
-                                    jarToLib[1].splice(
-                                        jarToLib[1].findIndex((lib) => lib.name == duplicateLib.name),
+                                    jarToLibs[1].splice(
+                                        jarToLibs[1].findIndex((lib) => lib.name == duplicateLib.name),
                                         1
                                     );
 
@@ -391,7 +398,7 @@ export class AddLibraryHandler {
                                 console.log(msg);
                             });
 
-                            jarPathsToLibs.set(jarToLib[0], jarToLib[1]);
+                            jarPathsToLibs.set(jarToLibs[0], jarToLibs[1]);
                         }
                     });
                     resolve(jarPathsToLibs);
@@ -419,14 +426,14 @@ export class AddLibraryHandler {
 
                     // Handle entry
                     zipfile.on("entry", (entry) => {
-                        const fileName = Path.basename(entry.fileName);
+                        const fileName: string = Path.basename(entry.fileName);
                         // Resolve when we have found all library files
                         if (libFileNames.length < 1) {
                             zipfile.close();
                             resolve();
                         } else if (!/\/$/.test(entry.fileName)) {
                             // We have found a file and not a folder. See if the file is for a library that we need to extract and copy it to the target folder
-                            const libFileNamesIndex = libFileNames.findIndex((libFileName) => libFileName == fileName);
+                            const libFileNamesIndex: number = libFileNames.findIndex((libFileName) => libFileName == fileName);
                             if (libFileNamesIndex >= 0) {
                                 // Create a read stream from the file and pipe it to a write stream to the target folder.
                                 zipfile.openReadStream(entry, (error, readStream) => {
@@ -435,7 +442,7 @@ export class AddLibraryHandler {
                                     if (!Buffer.isEncoding(wsEncoding))
                                         console.log(`Encoding (files.encoding: ${wsEncoding}) not possible using the default: UTF-8`);
                                     // Create writestream with needed encoding to the target path
-                                    const writeStream = Fs.createWriteStream(Path.join(targetFolderPath, fileName), {
+                                    const writeStream: Fs.WriteStream = Fs.createWriteStream(Path.join(targetFolderPath, fileName), {
                                         encoding:
                                             wsEncoding == this.libraryEncoding || !Buffer.isEncoding(wsEncoding)
                                                 ? this.libraryEncoding

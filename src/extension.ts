@@ -237,30 +237,33 @@ export function activate(context: ExtensionContext) {
             );
 
         // Construct class path.
-        // Start by adding user defined library jars paths
-        let classPath = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder)?.reduce((cp, cp2) => cp + path.delimiter + cp2, "") ?? "";
+        let classPath: string = "";
+        // Start by adding user defined library jar paths
+        AddLibraryHandler.getUserDefinedLibraryJars(wsFolder).forEach((libPath) => (classPath += libPath + path.delimiter));
 
-        AddLibraryHandler.getIncludedLibraryJars(context.extensionPath, wsFolder).forEach((cp) => (classPath += path.delimiter + cp));
-        // Add default library jars paths
+        // Add default library jars folder path
         if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-            AddLibraryHandler.getIncludedLibraryJars(context.extensionPath, wsFolder).forEach((cp) => (classPath += path.delimiter + cp));
+            const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(context.extensionPath, wsFolder);
+            if (libPath) {
+                classPath += path.resolve(libPath, "*") + path.delimiter;
+            }
         }
 
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {
-            const pathToCheck = cp.endsWith(path.sep + "*") ? cp.substr(0, cp.length - 2) : cp;
+            const pathToCheck: string = cp.endsWith(path.sep + "*") ? cp.substr(0, cp.length - 2) : cp;
             if (!fs.existsSync(pathToCheck)) {
-                const msg = "Invalid path in class path additions: " + cp;
+                const msg: string = "Invalid path in class path additions: " + cp;
                 window.showWarningMessage(msg);
                 console.warn("[Extension] " + msg);
             } else {
-                classPath += path.delimiter + cp;
+                classPath += cp + path.delimiter;
             }
         });
 
         // Add vdmj jars folders
         // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-        classPath += path.delimiter + path.resolve(serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj, "*");
+        classPath += path.resolve(serverConfig?.highPrecision === true ? jarPath_vdmj_hp : jarPath_vdmj, "*") + path.delimiter;
 
         // Construct java launch arguments
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);
