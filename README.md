@@ -56,11 +56,11 @@ Thus, most feature contributions relates to the desktop version of the extension
 
 Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(.vdmsl, .vdmpp or .vdmrt) from the explorer window. This will automatically start the language server in the background.
 
-[Click here](USAGE.md) for an overview of how to use the features of the extension.
+[Click here](https://github.com/jonaskrask/vdm-vscode/wiki/Usage-GIFs) for an overview of how to use the features of the extension.
 
 ## Settings
 
-This extension contributes a number of settings. [Click here](SETTINGS.md) for a detailed overview.
+This extension contributes a number of settings. [Click here](https://github.com/jonaskrask/vdm-vscode/wiki/Settings) for a detailed overview.
 
 ## Publications
 
