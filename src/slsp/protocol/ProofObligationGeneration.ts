@@ -43,15 +43,15 @@ export interface ProofObligation {
      */
     id: number;
     /**
+     * Type of the PO.
+     */
+    kind: string;
+    /**
      * Name of the PO.
      * Array describe the hieracy of the name,
      * e.g. ["classA", "function1"].
      */
     name: string[];
-    /**
-     * Type of the PO.
-     */
-    type: string;
     /**
      * Location where the PO applies.
      */

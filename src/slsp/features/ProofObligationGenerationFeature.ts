@@ -80,8 +80,8 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
     private asCodeProofObligation(po: ProofObligation): CodeProofObligation {
         return {
             id: po.id,
+            kind: po.kind,
             name: po.name,
-            type: po.type,
             location: this._client.protocol2CodeConverter.asLocation(po.location),
             source: po.source,
             status: po.status,

@@ -19,8 +19,8 @@ import * as util from "../../Util";
 
 export interface ProofObligation {
     id: number;
+    kind: string;
     name: string[];
-    type: string;
     location: Location;
     source: string | string[];
     status?: string;
