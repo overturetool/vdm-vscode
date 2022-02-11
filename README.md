@@ -12,6 +12,10 @@ The extension utilises a [language server powered by VDMJ](https://github.com/ni
 
 \*If you are used to the Overture Tool IDE and would like to keep that syntax highlighting we suggest that you use the color theme [Eclipse Classic Light](https://marketplace.visualstudio.com/items?itemName=LorenzoBilli.eclipse-classic-light) or another eclipse color theme.
 
+## Wiki
+Check out the [wiki](https://github.com/jonaskrask/vdm-vscode/wiki) for the extension for information about how to get started, learning how to use the features, see developer notes and much more!
+Find the wiki at: [https://github.com/jonaskrask/vdm-vscode/wiki](https://github.com/jonaskrask/vdm-vscode/wiki)
+
 ## Installation
 
 In Visual Studio Code just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
