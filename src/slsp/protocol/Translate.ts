@@ -59,7 +59,7 @@ export namespace TranslateRequest {
  */
 export interface TranslateParams extends WorkDoneProgressParams {
     /**
-     * DocumentUri specifying the root of the project to translate.
+     * Uri specifying the root of the project to translate.
      */
     uri?: URI;
     /**
@@ -67,7 +67,7 @@ export interface TranslateParams extends WorkDoneProgressParams {
      */
     languageId: string;
     /**
-     * DocumentUri specifying the location of the resulting
+     * Uri specifying the location of the resulting
      * translation.
      * This should be an existing empty folder.
      */

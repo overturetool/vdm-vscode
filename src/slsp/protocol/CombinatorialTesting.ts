@@ -10,6 +10,7 @@ import {
     ProtocolRequestType,
     RequestHandler,
     RequestType,
+    URI,
     WorkDoneProgressOptions,
     WorkDoneProgressParams,
 } from "vscode-languageclient";
@@ -63,7 +64,7 @@ export interface CTTracesParams {
     /**
      * An optional uri to the file/folder for which Traces should be found.
      */
-    uri?: string;
+    uri?: URI;
 }
 
 /**
