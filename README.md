@@ -76,6 +76,8 @@ Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Lars
 [The Specification Language Server Protocol: A Proposal for Standardised LSP Extensions](https://www.researchgate.net/publication/353220633_The_Specification_Language_Server_Protocol_A_Proposal_for_Standardised_LSP_Extensions),
 The 6th Workshop on Formal Integrated Development Environment, May 2021 [[PDF](https://cister-labs.pt/f-ide2021/images/preprints/F-IDE_2021_paper_3.pdf)]
 
+Jonas K. Rask and Frederik P. Madsen, [Decoupling of Core Analysis Support for Specification Languages from User Interfaces in Integrated Development Environments](http://dx.doi.org/10.13140/RG.2.2.21889.99686), Master's Thesis, Department of Engineering, Aarhus University, January 2021 [[PDF](http://dx.doi.org/10.13140/RG.2.2.21889.99686)]
+
 ## Change Log
 
 See change log [here](CHANGELOG.md).
