@@ -58,7 +58,7 @@ Thus, most feature contributions relates to the desktop version of the extension
 
 ## Usage
 
-Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(.vdmsl, .vdmpp or .vdmrt) from the explorer window. This will automatically start the language server in the background.
+Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(`.vdmsl`, `.vdmpp` or `.vdmrt`) from the explorer window. This will automatically start the language server in the background.
 
 [Click here](https://github.com/jonaskrask/vdm-vscode/wiki/Usage-GIFs) for an overview of how to use the features of the extension.
 
@@ -75,6 +75,8 @@ The 18th Overture Workshop, December 2020 [[PDF](https://www.researchgate.net/pu
 Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Larsen,
 [The Specification Language Server Protocol: A Proposal for Standardised LSP Extensions](https://www.researchgate.net/publication/353220633_The_Specification_Language_Server_Protocol_A_Proposal_for_Standardised_LSP_Extensions),
 The 6th Workshop on Formal Integrated Development Environment, May 2021 [[PDF](https://cister-labs.pt/f-ide2021/images/preprints/F-IDE_2021_paper_3.pdf)]
+
+Jonas K. Rask and Frederik P. Madsen, [Decoupling of Core Analysis Support for Specification Languages from User Interfaces in Integrated Development Environments](http://dx.doi.org/10.13140/RG.2.2.21889.99686), Master's Thesis, Department of Engineering, Aarhus University, January 2021 [[PDF](http://dx.doi.org/10.13140/RG.2.2.21889.99686)]
 
 ## Change Log
 
