@@ -1929,7 +1929,7 @@ signal {\sf stop}.
 
 Given an area for a train driving on a fixed route. If 
 the area satisfies the $NoDerail$ predicate, then the area is
-``linear".
+``linear''.
 Further, if we assume that the train does not reverse, then the area
 corresponds to DSB's notion of a plied train route with no
 safety overlap.
