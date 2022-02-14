@@ -29,12 +29,9 @@ end
 operations
 
 CheckIn(g:Guest,r:Room)
-
 ext wr desk   : Desk
     wr guests : map Guest to set of Card
-
 pre r in set dom desk.prev
-
 post exists new_k:Key &
 	new_k not in set desk~.issued            and 
  	let new_c = mk_Card(desk~.prev(r),new_k)
@@ -47,14 +44,11 @@ post exists new_k:Key &
 
 
 Enter(r:Room,g:Guest)
-
 ext wr locks  : map Room to Key
     rd guests : map Guest to set of Card
-
 pre r in set dom locks  and 
     g in set dom guests and
     exists c in set guests(g) & c.fst=locks(r) or c.snd=locks(r) 
-
 post exists c in set guests(g) & 
 	c.fst = locks(r) and locks = locks~ ++ {r |-> c.snd} or
 	c.snd = locks(r) and locks = locks~;
