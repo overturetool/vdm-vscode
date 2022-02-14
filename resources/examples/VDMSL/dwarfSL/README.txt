@@ -14,4 +14,3 @@ executable specification.
 
 
 Language Version: vdm10
-Entry point     : DEFAULT`SeqTest()
