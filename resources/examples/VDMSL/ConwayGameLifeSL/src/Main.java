@@ -1,11 +1,10 @@
 
 
 
-import org.overture.interpreter.values.IntegerValue;
-
+import com.fujitsu.vdmj.values.IntegerValue;
 import gui.Graphics;
 
-//import org.overturetool.vdmj.runtime.ValueException;
+//import org.overturePtool.vdmj.runtime.ValueException;
 //import org.overturetool.vdmj.values.IntegerValue;
 
 

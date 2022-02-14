@@ -1,0 +1,6 @@
+{
+    "vdm-vscode.server.libraries.VDM-Libraries": [
+        "c:\\Users\\au543131\\Documents\\Github\\vdm-vscode\\resources\\examples\\VDMSL\\ConwayGameLifeSL\\lib\\gui.jar",
+        "c:\\Users\\au543131\\Documents\\Github\\vdm-vscode\\resources\\examples\\VDMSL\\ConwayGameLifeSL\\lib\\gui_remote.jar"
+    ]
+}

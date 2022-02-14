@@ -117,7 +117,7 @@ functions
 	periodNP: Population * nat1 -> bool
 	periodNP(pop, n) ==
 		{ a | a in set {1, ..., n} & periodN(pop, a) } = {n};
-
+ 
 	disappearNP: Population * nat1 -> bool
 	disappearNP(pop, n) ==
 		{ a | a in set {1, ..., n} & disappearN(pop, a) } = {n};
@@ -171,9 +171,10 @@ functions
 		periodNP(TOAD,	2),
 		periodNP(BEACON, 2),
 		periodNP(PULSAR, 3),
-		gliderNP(GLIDER, 4, 1),
-		disappearNP(DIEHARD, 130)
-	];
+		gliderNP(GLIDER, 4, 1)
+		-- disappearNP(DIEHARD, 130)	-- This takes a few minutes!
+	]
+	post elems RESULT = {true};
 	          
              
 end Conway

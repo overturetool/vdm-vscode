@@ -1,10 +1,11 @@
 package gui;
+
 import java.awt.Point;
 import java.io.Serializable;
 
-import org.overture.interpreter.runtime.ValueException;
-import org.overture.interpreter.values.IntegerValue;
-import org.overture.interpreter.values.Value;
+import com.fujitsu.vdmj.runtime.ValueException;
+import com.fujitsu.vdmj.values.IntegerValue;
+import com.fujitsu.vdmj.values.Value;
 
 
 public class Graphics implements Serializable  {

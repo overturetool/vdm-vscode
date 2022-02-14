@@ -1,18 +1,14 @@
 package gui;
 
-
-
 import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-
-import javax.swing.JPanel;
-
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.ComponentEvent;
+import javax.swing.JPanel;
 
 
 class View extends JPanel implements Observer {
