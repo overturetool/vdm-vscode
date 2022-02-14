@@ -1,7 +1,5 @@
 Author: Paul Mukherjee
 
-
-
 This specification describes the safety requirements involved in adding and 
 removing explosives at an explosives storage site. The specification is based 
 on United Kingdom Ministry of Defence regulations concerning safe storage of 
@@ -14,9 +12,7 @@ Details of the specification may be found in:
    Requirements for Storing Explosives", Formal Aspects of Computing, 
    5(4):299-336, 1993. 
 This example is primarily specified using the implicit style in VDM so it
-does not have a main debug functionality.
-
-
+does not have a main debug functionality. 
+Thus, it may not be executed with the debugger.
 
 Language Version: vdm10
-Entry point     : DEFAULT`sum({3,4,5})
