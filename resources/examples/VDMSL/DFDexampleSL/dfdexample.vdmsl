@@ -14,7 +14,7 @@ The top-level function, which transforms a hierarchy of data flow
 diagrams (an $HDFD$), also takes as arguments the mini-specifications supplied by the
 user and the style in which the composing operations are to be generated%
 \footnote{The argument with this information will be called $style$ thoughout the
-definition indicating that it is the ``style" (implicit or explicit)
+definition indicating that it is the ``style'' (implicit or explicit)
 it should be transformed.}.
 
 \begin{vdm_al}
@@ -224,7 +224,7 @@ MakeInpPar(fidl) ==
 
 In the function $MakeOutPair$ it should be noticed that if a data
 transformer contains more that one data flow out from it, it is
-necessary to ``invent" a new identifier to denote the result of the
+necessary to ``invent'' a new identifier to denote the result of the
 data transformer ($ResultIdConf$).
 
 \begin{vdm_al}
@@ -1604,7 +1604,7 @@ inv mk_(hdfd,dd,-) ==
 The hierarchy of data flow diagrams is defined recursively. Each
 $HDFD$ has a name, an unordered collection of data stores used in
 the DFD, a description of its topology, a collection of 
-uniquely identified data transformers (``bubbles") 
+uniquely identified data transformers (``bubbles'') 
 which are further decomposed as $HDFD$s,
 and a description of the signatures of all the data transformers.
 
