@@ -5,7 +5,7 @@
 	    "type": "vdm",
 	    "request": "launch",
 	    "noDebug": false,
-	    "defaultName": "LUHN",
+	    "defaultName": "DEFAULT",
 	    "command": "print luhn([1,2,3,4,5])"
 	}
 	,
@@ -14,7 +14,7 @@
 	    "type": "vdm",
 	    "request": "launch",
 	    "noDebug": false,
-	    "defaultName": "LUHN",
+	    "defaultName": "DEFAULT",
 	    "command": "print luhns(\"12345\")"
 	}
 	,
@@ -23,7 +23,7 @@
 	    "type": "vdm",
 	    "request": "launch",
 	    "noDebug": false,
-	    "defaultName": "LUHN",
+	    "defaultName": "DEFAULT",
 	    "command": "print luhnn(12345)"
 	}
     ]

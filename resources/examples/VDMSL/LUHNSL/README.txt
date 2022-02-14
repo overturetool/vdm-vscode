@@ -16,6 +16,6 @@ accidental errors, not malicious attacks. Most credit cards and many government 
 use the algorithm as a simple method of distinguishing valid numbers from collections of random digits.
 
 Language Version: vdm10
-Entry point     : LUHN`luhn([1,2,3,4,5])
-Entry point     : LUHN`luhns("12345")
-Entry point     : LUHN`luhnn(12345)
+Entry point     : DEFAULT`luhn([1,2,3,4,5])
+Entry point     : DEFAULT`luhns("12345")
+Entry point     : DEFAULT`luhnn(12345)
