@@ -7,23 +7,23 @@
 */
 module Char
 imports from Seq all
-exports types Upper
-              Lower
-              Letter
-              struct Digit 
-              Octal
-              Hex
-              AlphaNum
-              AlphaNumUpper
-              AlphaNumLower
-              Space
-              WhiteSpace
-              Phrase
-              PhraseUpper
-              PhraseLower
-              Text
-              TextUpper
-              TextLower
+exports types struct Upper
+              struct Lower
+              struct Letter
+              struct Digit
+              struct Octal
+              struct Hex
+              struct AlphaNumUpper
+              struct AlphaNumLower
+              struct AlphaNum
+              struct Space
+              struct WhiteSpace
+              struct Phrase
+              struct PhraseUpper
+              struct PhraseLower
+              struct Text
+              struct TextUpper
+              struct TextLower
         values SP, TB, CR, LF : char
                WHITE_SPACE, UPPER, LOWER, DIGIT, OCTAL, HEX : set of char
                UPPERS, LOWERS, OCTALS, HEXS: seq of char
