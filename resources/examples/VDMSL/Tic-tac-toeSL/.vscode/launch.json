@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Launch Tic-tac-toeSL Debug 1",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "defaultName": "XOTests",
+            "command": "p test(OX, T1)"
+        }
+    ]
+}
