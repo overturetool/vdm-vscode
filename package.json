@@ -70,7 +70,7 @@
                 "extensions": [
                     ".vdmsl"
                 ],
-                "configuration": "./language-configuration.json"
+                "configuration": "./syntaxes/language-configuration.json"
             },
             {
                 "id": "vdmpp",
@@ -82,7 +82,7 @@
                 "extensions": [
                     ".vdmpp"
                 ],
-                "configuration": "./language-configuration.json"
+                "configuration": "./syntaxes/language-configuration.json"
             },
             {
                 "id": "vdmrt",
@@ -93,7 +93,7 @@
                 "extensions": [
                     ".vdmrt"
                 ],
-                "configuration": "./language-configuration.json"
+                "configuration": "./syntaxes/language-configuration.json"
             }
         ],
         "grammars": [
