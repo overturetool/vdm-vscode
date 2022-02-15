@@ -117,13 +117,13 @@ export class CombinatorialTestingView implements Disposable {
         let canFilter = this._filterHandler != undefined;
         let canInterpret = this._interpreterHandler != undefined;
 
-        ///// Show options /////
+        //* Show options /////
         commands.executeCommand("setContext", "vdm-vscode.ct.show-execute-filter-button", canFilter);
         commands.executeCommand("setContext", "vdm-vscode.ct.show-interpret-button", canInterpret);
         this.showCancelButton(false);
         this.showTreeFilterButton(true);
 
-        ///// Command registration /////
+        //* Command registration /////
         if (canFilter) {
             this.registerCommand("vdm-vscode.ct.setExecuteFilter", () => this._filterHandler.setFilter());
             this.registerCommand("vdm-vscode.ct.filteredExecute", (e) => this.execute(e, true));
@@ -132,7 +132,11 @@ export class CombinatorialTestingView implements Disposable {
             this.registerCommand("vdm-vscode.ct.sendToInterpreter", (e) => this.sendToInterpreter(e));
         }
         this.registerCommand("vdm-vscode.ct.rebuildOutline", () => this.rebuildOutline());
-        this.registerCommand("vdm-vscode.ct.generate", (e) => this.generateTests(e));
+        this.registerCommand("vdm-vscode.ct.generate", (e) =>
+            this.generateTests(e).catch((err) => {
+                /* silent */
+            })
+        );
         this.registerCommand("vdm-vscode.ct.fullExecute", () => this.fullExecute());
         this.registerCommand("vdm-vscode.ct.execute", (e) => this.execute(e));
         this.registerCommand("vdm-vscode.ct.enableVerdictFilter", () => this.treeVerdictFilter(true));
@@ -142,7 +146,7 @@ export class CombinatorialTestingView implements Disposable {
         this.registerCommand("vdm-vscode.ct.selectWorkspaceFolder", () => this.selectWorkspaceFolder());
         this.registerCommand("vdm-vscode.ct.clearView", () => this.clearView());
 
-        ///// Configuration change handler /////
+        //* Configuration change handler /////
         workspace.onDidChangeConfiguration(
             (e) => {
                 if (e.affectsConfiguration("vdm-vscode.combinatorialTesting")) {
@@ -213,51 +217,55 @@ export class CombinatorialTestingView implements Disposable {
     }
 
     private async generateTests(treeItem: CTTreeItem, silent: boolean = false) {
-        // Validate indput type
-        if (!TraceItem.is(treeItem)) return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
-        let traceItem = treeItem as TraceItem;
+        return new Promise(async (resolve, reject) => {
+            // Validate indput type
+            if (!TraceItem.is(treeItem)) return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+            let traceItem = treeItem as TraceItem;
 
-        // Manage state
-        if (this.state != state.idle) return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
-        this.state = state.generatingTests;
+            // Manage state
+            if (this.state != state.idle) return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+            this.state = state.generatingTests;
 
-        // Set status bar
-        let statusBarMessage = window.setStatusBarMessage(`Generating test cases for ${traceItem.label}`);
+            // Set status bar
+            let statusBarMessage = window.setStatusBarMessage(`Generating test cases for ${traceItem.label}`);
 
-        // Setup generate process
-        let generateFunc = async () => {
-            try {
-                // Update the data storage and the view
-                await this._dataStorage.updateTrace(traceItem.name);
-                this._testProvider.rebuildViewFromElement();
-            } catch (e) {
-                // If out of sync, try to recover
-                if (Types.OutOfSyncError.is(e)) {
+            // Setup generate process
+            let generateFunc = async () => {
+                try {
+                    // Update the data storage and the view
+                    await this._dataStorage.updateTrace(traceItem.name);
+                    this._testProvider.rebuildViewFromElement();
+                } catch (e) {
+                    // If out of sync, try to recover
+                    if (Types.OutOfSyncError.is(e)) {
+                        this.state = state.idle;
+                        this.rebuildOutline();
+                        console.info(`[CT View] Test outline out of sync - rebuilding`);
+                    } else {
+                        console.error(`[CT View] Failed to generate tests: ${e}`);
+                        window.showWarningMessage("Failed to generate tests");
+                        return reject(e);
+                    }
+                } finally {
+                    // Remove status bar message
+                    statusBarMessage.dispose();
                     this.state = state.idle;
-                    this.rebuildOutline();
-                    console.info(`[CT View] Test outline out of sync - rebuilding`);
-                } else {
-                    console.error(`[CT View] Failed to generate tests: ${e}`);
-                    window.showWarningMessage("Failed to generate tests");
                 }
-            } finally {
-                // Remove status bar message
-                statusBarMessage.dispose();
-            }
-            this.state = state.idle;
-        };
+                return resolve(null);
+            };
 
-        // Call the function
-        if (silent) await generateFunc();
-        else
-            await window.withProgress(
-                {
-                    location: ProgressLocation.Notification,
-                    title: `Running test generation for ${traceItem.label}`,
-                    cancellable: false,
-                },
-                generateFunc
-            );
+            // Call the function
+            if (silent) await generateFunc();
+            else
+                await window.withProgress(
+                    {
+                        location: ProgressLocation.Notification,
+                        title: `Running test generation for ${traceItem.label}`,
+                        cancellable: false,
+                    },
+                    generateFunc
+                );
+        });
     }
 
     private async execute(treeItem: CTTreeItem, filter: boolean = false) {
@@ -377,16 +385,20 @@ export class CombinatorialTestingView implements Disposable {
         // Manage state
         if (this.state != state.idle) return console.info(`[CT View] Full Execute not possible while in state ${state[this.state]}`);
 
-        // Make sure we are up-to-date
-        await this.rebuildOutline();
+        try {
+            // Make sure we are up-to-date
+            await this.rebuildOutline();
 
-        // Run Execute on all traces of all trace groups
-        for await (const group of await this._testProvider.getChildren()) {
-            for await (const trace of await this._testProvider.getChildren(group)) {
-                await this.generateTests(trace, true);
-                await this.execute(trace, false);
-                if (this._executeCanceled) return;
+            // Run Execute on all traces of all trace groups
+            for await (const group of await this._testProvider.getChildren()) {
+                for await (const trace of await this._testProvider.getChildren(group)) {
+                    await this.generateTests(trace, true);
+                    await this.execute(trace, false);
+                    if (this._executeCanceled) return;
+                }
             }
+        } catch (e) {
+            console.info(`[CT View] Full execute failed with error: ${e}`);
         }
     }
 
