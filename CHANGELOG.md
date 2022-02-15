@@ -1,8 +1,10 @@
 ### 1.3.2
 - Added additional options and buttons to the combinatorial testing view
+- Added partly migration to Web extension 
 - Improved the inline coverage display
 - Improved the look of the POG view
 - Changed library import to support dynamic inclusion from jar files
+- Changed logging to console output
 - Large refactoring of SLSP features
 - Fixed POG view update bug
 - Fixes to VDMJ

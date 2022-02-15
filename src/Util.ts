@@ -224,8 +224,9 @@ export function match(documentSelector: DocumentSelector, uri: Uri) {
         if (typeof ds != "string") {
             let df = ds as DocumentFilter;
             if (df.pattern) {
-                let g = new glob.GlobSync(df.pattern.toString());
-                if (g.found.some((f) => f.includes(uri.path.substring(1)))) {
+                const g = new glob.GlobSync(df.pattern.toString());
+                const found = g.found.map((f) => f.toLowerCase());
+                if (found.some((f) => f.includes(uri.path.substring(1).toLowerCase()))) {
                     if (df.scheme) {
                         if (df.scheme == uri.scheme) {
                             ++match;
