@@ -15,3 +15,4 @@ with alarms. A comparable model of this example also exists in VDM-SL.
 
 
 Language Version: vdm10
+Entry point     : new Test1().Run()
