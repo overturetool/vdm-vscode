@@ -38,7 +38,7 @@ StepTime () == currentTime := currentTime + stepLength;
 And time can be consulted through GetTime.
 
 \begin{vdm_al}
-public 
+pure public 
 GetTime : () ==> Time
 GetTime () == return currentTime;
 
