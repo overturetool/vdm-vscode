@@ -1,12 +1,12 @@
 {
     "configurations": [
-	{
-	    "name": "Launch DiningPP Debug 1",
-	    "type": "vdm",
-	    "request": "launch",
-	    "noDebug": false,
-	    "defaultName": "Table",
-	    "command": "print new Table(2).LetsEat()"
-	}
-    ]
+		{
+			"name": "Launch DiningPP Debug 1",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "Table",
+			"command": "print new Table(2).LetsEat()"
+		}
+	]
 }

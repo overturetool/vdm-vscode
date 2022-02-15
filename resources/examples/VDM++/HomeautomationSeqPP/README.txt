@@ -12,3 +12,4 @@ Software and Informatics, Vol 3., No 2-3, June/September 2009, pp. 305-341.
 
 Language Version: classic
 Entry point     : new TestComplete().Execute()
+Entry point     : new World().Run()

@@ -8,3 +8,4 @@ well as in a distributed real-time VICE version. This is the
 distributed real time version of this example. 
 
 Language Version: vdm10
+Entry point     : new World().Run()

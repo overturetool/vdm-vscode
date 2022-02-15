@@ -10,6 +10,11 @@ private cardNo: CardId;
 
 operations
 
+public Purse: CardId * nat ==> Purse
+Purse(newId, startbal) ==
+( cardNo := newId;
+  balance := startbal ) ;
+
 public IncreaseBal: nat ==> ()
 IncreaseBal(sum)==
   balance := balance + sum;
@@ -26,11 +31,6 @@ GetBalance() ==
 pure public GetCardNo: () ==> CardId
 GetCardNo() == 
   return cardNo;
-
-public Purse: CardId * nat ==> Purse
-Purse(newId, startbal) ==
-( cardNo := newId;
-  balance := startbal ) ;
 
 functions
 -- no functions currently defined

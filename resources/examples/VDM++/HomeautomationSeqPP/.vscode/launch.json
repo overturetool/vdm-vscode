@@ -1,12 +1,20 @@
 {
     "configurations": [
-	{
-	    "name": "Launch HomeautomationSeqPP Debug 1",
-	    "type": "vdm",
-	    "request": "launch",
-	    "noDebug": false,
-	    "defaultName": "TestComplete",
-	    "command": "print new TestComplete().Execute()"
-	}
-    ]
+		{
+			"name": "Launch HomeautomationSeqPP Debug 1",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "TestComplete",
+			"command": "print new TestComplete().Execute()"
+		},
+		{
+			"name": "Launch HomeautomationSeqPP Debug 2",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "World",
+			"command": "print new World().Run()"
+		}
+	]
 }
