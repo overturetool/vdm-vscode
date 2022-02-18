@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import path = require("path");
+import * as util from "./Util";
 import { extensions, workspace, WorkspaceFolder } from "vscode";
 import { extensionId } from "./ExtensionInfo";
 
 export interface PluginSetting {
     name: string;
     classname: string;
-    jar?: string;
+    jar: string;
     dialects?: string[];
 }
 
@@ -19,7 +20,8 @@ export function getPlugins(wsFolder: WorkspaceFolder, dialect: string): PluginSe
     let plugins = (serverConfig.get("plugins") as PluginSetting[]) ?? [];
 
     // Get include the built-in plugins that are not manually included
-    // getBuiltInPlugins().filter((pluginA) => !plugins.some((pluginB) => isSamePlugin(pluginA, pluginB)));
+    const builtInPlugins = getBuiltInPlugins().filter((pluginA) => !plugins.some((pluginB) => isSamePlugin(pluginA, pluginB)));
+    plugins.push(...builtInPlugins);
 
     // Filter such that we only get the ones for the dialects that they support
     const pluginsFiltered = plugins.filter((plugin) => {
@@ -42,11 +44,6 @@ export function getJvmAdditions(wsFolder: WorkspaceFolder, dialect: string): str
 export function getClasspathAdditions(wsFolder: WorkspaceFolder, dialect: string): string[] {
     const plugins = getPlugins(wsFolder, dialect);
 
-    // As standard include the jars in "resources/jars/plugins"
-    // const extensionUri = extensions.getExtension(extensionId).extensionUri;
-    // const pluginsFolderPath = path.join(extensionUri.fsPath, "resources", "jars", "plugins", "*");
-    // let result = [pluginsFolderPath];
-
     // If there are some plugin settings, get the jar paths for each plugin
     let result = [];
     if (plugins.length > 0) {
@@ -61,18 +58,25 @@ export function getClasspathAdditions(wsFolder: WorkspaceFolder, dialect: string
     return result;
 }
 
-// function getBuiltInPlugins(): PluginSetting[] {
-//     return [
-//         {
-//             name: "vdm2isa alpha release",
-//             classname: "plugins.ISAPluginSL",
-//             dialects: ["vdmsl"],
-//         },
-//     ];
-// }
+function getBuiltInPlugins(): PluginSetting[] {
+    const pluginsPath = path.join(extensions.getExtension(extensionId).extensionUri.fsPath, "resources", "jars", "plugins");
+    let result = [];
 
-// function isSamePlugin(a: PluginSetting, b: PluginSetting) {
-//     if (a.classname == b.classname) return true;
-//     if (a.name == b.name) return true;
-//     return false;
-// }
+    // Add vdm2isa plugin
+    let vdm2isaJar = util.recursivePathSearch(pluginsPath, /vdm2isa.*jar/i);
+    if (vdm2isaJar)
+        result.push({
+            name: "vdm2isa alpha release",
+            classname: "plugins.ISAPluginSL",
+            jar: vdm2isaJar,
+            dialects: ["vdmsl"],
+        });
+
+    return result;
+}
+
+function isSamePlugin(a: PluginSetting, b: PluginSetting) {
+    if (a.classname == b.classname) return true;
+    if (a.name == b.name) return true;
+    return false;
+}

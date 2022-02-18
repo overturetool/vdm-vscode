@@ -1,10 +1,10 @@
 {
-    "vdm-vscode.server.plugins": [
-        {
-            "name" : "vdm2isa alpha release",
-            "classname" : "plugins.ISAPluginSL",
-            "jar" : "c:\\Users\\au543131\\Documents\\Github\\vdm-vscode\\vdm_test_files\\vdm2isaTest\\vdm2isa-4.4.5-SNAPSHOT-220218.jar",
-            "dialects": ["vdmsl"]
-        }
-    ],
+    // "vdm-vscode.server.plugins": [
+    //     {
+    //         "name" : "vdm2isa alpha release",
+    //         "classname" : "plugins.ISAPluginSL",
+    //         "jar" : "c:\\Users\\au543131\\Documents\\Github\\vdm-vscode\\vdm_test_files\\vdm2isaTest\\vdm2isa-4.4.5-SNAPSHOT-220218.jar",
+    //         "dialects": ["vdmsl"]
+    //     }
+    // ],
 }
