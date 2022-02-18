@@ -763,7 +763,7 @@
                         }
                     },
                     "scope": "resource",
-                    "description": "Plugins for the VDMJ lanugage server."
+                    "description": "Plugins for the VDMJ language server."
                 },
                 "vdm-vscode.coverage.OverlayLatestCoverage": {
                     "type": "boolean",
