@@ -746,7 +746,7 @@
                             },
                             "jar": {
                                 "type": "string",
-                                "description": "Optional: Path to the jar file containing the plugin. If not included, it is assumed that the jars is in the extensions folder: /resources/jars/plugins/"
+                                "description": "Path to the jar file containing the plugin"
                             },
                             "dialects": {
                                 "type": "array",

@@ -15,8 +15,13 @@ export function getPlugins(wsFolder: WorkspaceFolder, dialect: string): PluginSe
     // Get the server configurations
     const serverConfig = workspace.getConfiguration("vdm-vscode.server", wsFolder);
 
-    // Get the plugins and filter such that we only get the ones for the dialects that they support
-    const plugins = (serverConfig.get("plugins") as PluginSetting[]) ?? [];
+    // Get the plugins from setting
+    let plugins = (serverConfig.get("plugins") as PluginSetting[]) ?? [];
+
+    // Get include the built-in plugins that are not manually included
+    // getBuiltInPlugins().filter((pluginA) => !plugins.some((pluginB) => isSamePlugin(pluginA, pluginB)));
+
+    // Filter such that we only get the ones for the dialects that they support
     const pluginsFiltered = plugins.filter((plugin) => {
         if (plugin.dialects && plugin.dialects.length > 0) return plugin.dialects.includes(dialect);
         else return true;
@@ -29,7 +34,7 @@ export function getPlugins(wsFolder: WorkspaceFolder, dialect: string): PluginSe
 export function getJvmAdditions(wsFolder: WorkspaceFolder, dialect: string): string {
     const plugins = getPlugins(wsFolder, dialect);
 
-    if (plugins.length > 0) return "-Dlspx.plugins=" + plugins.map((plugin) => plugin.classname).join(";");
+    if (plugins.length > 0) return `-Dlspx.plugins=${plugins.map((p) => p.classname).join(";")}`;
     else return undefined;
 }
 
@@ -37,20 +42,37 @@ export function getJvmAdditions(wsFolder: WorkspaceFolder, dialect: string): str
 export function getClasspathAdditions(wsFolder: WorkspaceFolder, dialect: string): string[] {
     const plugins = getPlugins(wsFolder, dialect);
 
-    // If there are some plugin settings, get the jar paths for each plugin
-    if (plugins.length > 0) {
-        // As standard include the jars in "resources/jars/plugins"
-        const extensionUri = extensions.getExtension(extensionId).extensionUri;
-        const pluginsFolderPath = path.join(extensionUri.fsPath, "resources", "jars", "plugins", "*");
-        let result = [pluginsFolderPath];
+    // As standard include the jars in "resources/jars/plugins"
+    // const extensionUri = extensions.getExtension(extensionId).extensionUri;
+    // const pluginsFolderPath = path.join(extensionUri.fsPath, "resources", "jars", "plugins", "*");
+    // let result = [pluginsFolderPath];
 
+    // If there are some plugin settings, get the jar paths for each plugin
+    let result = [];
+    if (plugins.length > 0) {
         plugins.forEach((plugin) => {
             let jarPath = plugin.jar;
-            if (jarPath) {
+            if (jarPath && jarPath != "") {
                 result.push(jarPath);
             }
         });
+    }
 
-        return result;
-    } else return [];
+    return result;
 }
+
+// function getBuiltInPlugins(): PluginSetting[] {
+//     return [
+//         {
+//             name: "vdm2isa alpha release",
+//             classname: "plugins.ISAPluginSL",
+//             dialects: ["vdmsl"],
+//         },
+//     ];
+// }
+
+// function isSamePlugin(a: PluginSetting, b: PluginSetting) {
+//     if (a.classname == b.classname) return true;
+//     if (a.name == b.name) return true;
+//     return false;
+// }
