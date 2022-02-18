@@ -1,0 +1,54 @@
+module TestV2IFcns
+exports all
+definitions
+
+functions
+	-- constant function with undeclared specification
+	const: () -> nat
+	const() == 10;
+
+	-- constant function with declared specification
+	constS: () -> nat
+	constS() == 10
+	pre 10 > 5
+	post RESULT > 0;
+
+	-- "normal" function with undeclared specification
+	f: nat * nat1 -> nat1
+	f(x, y) == x + y;
+
+	-- "normal" function with declared specification
+	g: nat * nat1 -> nat1
+	g(x, y) == x + y
+	pre x > 10 and y > 20
+	post x < RESULT;
+
+	-- "normal" function with declared specification and pre/post references
+	h: nat -> nat
+	h(x) == g(x, x)
+	pre pre_g(x, x) and x < 20
+	post post_g(x, x, RESULT) and x > 20;
+
+	-- "normal" function with declared specification without pre/post references
+	h': nat -> nat
+	h'(x) == g(x, x)
+	pre x < 20
+	post x > 20;
+
+	-- "normal" function with declared specification without pre/post references
+	h'': nat -> nat
+	h''(x) == g(x, x)
+	pre x < 20
+	post pre_g(x,RESULT) and x > 20;
+
+	-- curried function with undeclared specification	
+	curried: nat -> nat -> nat
+	curried(x)(y) == x + y;
+
+	-- curried function with declared specification	
+	curriedS: nat -> nat -> nat
+	curriedS(x)(y) == x + y
+	pre x > y
+	post x < RESULT and y < RESULT;
+
+end TestV2IFcns

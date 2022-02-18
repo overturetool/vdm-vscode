@@ -409,7 +409,7 @@
                 },
                 {
                     "command": "vdm-vscode.translate.isabelle",
-                    "when": "vdm-vscode.translate.isabelle == true",
+                    "when": "vdm-vscode.translate.isabelle == true && explorerResourceIsFolder || vdm-vscode.translate.isabelle == true && resourceLangId == vdmsl",
                     "group": "translate@3"
                 },
                 {
@@ -730,6 +730,40 @@
                     "default": "",
                     "scope": "resource",
                     "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
+                },
+                "vdm-vscode.server.plugins": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Name of the plugin"
+                            },
+                            "classname": {
+                                "type": "string",
+                                "description": "Fully quilified name of the main class"
+                            },
+                            "jar": {
+                                "type": "string",
+                                "description": "Path to the jar file containing the plugin"
+                            },
+                            "dialects": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "vdmsl",
+                                        "vdmpp",
+                                        "vdmrt"
+                                    ]
+                                },
+                                "description": "Dialects that the plugin supports"
+                            }
+                        }
+                    },
+                    "scope": "resource",
+                    "description": "Plugins for the VDMJ lanugage server."
                 },
                 "vdm-vscode.coverage.OverlayLatestCoverage": {
                     "type": "boolean",

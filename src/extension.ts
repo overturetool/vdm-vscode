@@ -6,6 +6,8 @@ import * as net from "net";
 import * as child_process from "child_process";
 import * as util from "./Util";
 import * as languageId from "./slsp/protocol/LanguageId";
+import * as encoding from "./Encoding";
+import * as Plugins from "./Plugins";
 import {
     ExtensionContext,
     TextDocument,
@@ -28,7 +30,6 @@ import { AddRunConfigurationHandler } from "./AddRunConfiguration";
 import { AddExampleHandler } from "./ImportExample";
 import { JavaCodeGenHandler } from "./JavaCodeGenHandler";
 import { AddToClassPathHandler } from "./AddToClassPath";
-import * as encoding from "./Encoding";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
 import { TranslateButton } from "./slsp/views/translate/TranslateButton";
 import { GenerateCoverageButton } from "./slsp/views/translate/GenerateCoverageButton";
@@ -217,6 +218,10 @@ export function activate(context: ExtensionContext) {
             args.push(...split);
         }
 
+        // Add Plugin related JVM args
+        const pluginArgs = Plugins.getJvmAdditions(wsFolder, dialect);
+        if (pluginArgs) args.push(pluginArgs);
+
         // Activate server log
         const logLevel = serverConfig.get("logLevel", "off");
         if (logLevel != "off") {
@@ -248,6 +253,9 @@ export function activate(context: ExtensionContext) {
                 classPath += path.resolve(libPath, "*") + path.delimiter;
             }
         }
+
+        // Add plugin jars
+        Plugins.getClasspathAdditions(wsFolder, dialect).forEach((cp) => (classPath += cp + path.delimiter));
 
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {

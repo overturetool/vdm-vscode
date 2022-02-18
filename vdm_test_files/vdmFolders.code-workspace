@@ -10,7 +10,13 @@
 			"path": "AlarmSL"
 		},
 		{
+			"path": "buffersPP"
+		},
+		{
 			"path": "debugging"
+		},
+		{
+			"path": "EnigmaPP"
 		},
 		{
 			"path": "LUHNSL"
@@ -31,8 +37,10 @@
 			"path": "UTF16"
 		},
 		{
+			"path": "vdm2isaTest"
+		},
+		{
 			"path": "VDMUnitDebug"
 		}
-	],
-	"settings": {}
+	]
 }
