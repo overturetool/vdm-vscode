@@ -742,11 +742,11 @@
                             },
                             "classname": {
                                 "type": "string",
-                                "description": "Fully quilified name of the main class"
+                                "description": "Fully qualified name of the main class"
                             },
                             "jar": {
                                 "type": "string",
-                                "description": "Path to the jar file containing the plugin"
+                                "description": "Optional: Path to the jar file containing the plugin. If not included, it is assumed that the jars is in the extensions folder: /resources/jars/plugins/"
                             },
                             "dialects": {
                                 "type": "array",
@@ -758,7 +758,7 @@
                                         "vdmrt"
                                     ]
                                 },
-                                "description": "Dialects that the plugin supports"
+                                "description": "Optional: Dialects that the plugin supports. If not included, it is assumed that the plugin is available for all VDM dialects"
                             }
                         }
                     },
