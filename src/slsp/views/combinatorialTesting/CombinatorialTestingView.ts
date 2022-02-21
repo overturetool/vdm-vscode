@@ -1,16 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import {
-    Disposable,
-    TreeView,
-    commands,
-    ExtensionContext,
-    window,
-    WorkspaceFolder,
-    ProgressLocation,
-    CancellationTokenSource,
-    workspace,
-} from "vscode";
+import { Disposable, TreeView, commands, window, WorkspaceFolder, ProgressLocation, CancellationTokenSource, workspace } from "vscode";
 import CTTestTreeDataProvider from "./CTTestTreeDataProvider";
 import CTResultTreeDataProvider from "./CTResultTreeDataProvider";
 import { CTViewDataStorage } from "./CTViewDataStorage";

@@ -2,14 +2,7 @@
 
 import * as util from "../../Util";
 import { Uri } from "vscode";
-import {
-    ClientCapabilities,
-    Disposable,
-    DocumentSelector,
-    ServerCapabilities,
-    StaticFeature,
-    WorkDoneProgressOptions,
-} from "vscode-languageclient";
+import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature } from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/Translate";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { TranslateProvider, TranslateProviderManager } from "../views/translate/TranslateProviderManager";
@@ -17,7 +10,7 @@ import { TranslateProvider, TranslateProviderManager } from "../views/translate/
 export default class TranslateFeature implements StaticFeature {
     private _disposables: Disposable[] = [];
     private _selector: DocumentSelector;
-    private _supportWorkDone: boolean = false;
+    // private _supportWorkDone: boolean = false;
 
     constructor(private _client: SpecificationLanguageClient, private _language: string) {}
 
@@ -45,9 +38,9 @@ export default class TranslateFeature implements StaticFeature {
             this._disposables.push(TranslateProviderManager.registerTranslateProvider(this._selector, provider, this._language));
         }
 
-        // Check if support work done progress
-        if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
-            this._supportWorkDone = translateCapabilities.workDoneProgress;
+        // Check if support work done progress // TODO not currently used for anything..
+        // if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
+        // this._supportWorkDone = translateCapabilities.workDoneProgress;
     }
     dispose(): void {
         while (this._disposables.length) this._disposables.pop().dispose();

@@ -16,7 +16,7 @@ export class GenerateCoverageButton extends TranslateButton {
         super(LanguageId.coverage);
     }
     // Override
-    protected async translate(uri: Uri, wsFolder: WorkspaceFolder) {
+    protected async translate(_uri: Uri, wsFolder: WorkspaceFolder) {
         for await (const p of TranslateProviderManager.getProviders(this._language)) {
             if (Util.match(p.selector, wsFolder.uri)) {
                 try {

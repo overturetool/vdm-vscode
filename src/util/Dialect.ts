@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { WorkspaceFolder, RelativePattern, workspace, Uri, window } from "vscode";
+import { WorkspaceFolder, RelativePattern, workspace, Uri } from "vscode";
 
 export const dialectExtensions: Map<string, string[]> = new Map([
     ["vdmsl", ["vdmsl", "vsl"]],

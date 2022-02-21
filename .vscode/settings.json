@@ -4,7 +4,10 @@
     "out": false // set this to true to hide the "out" folder with the compiled JS files
   },
   "search.exclude": {
-    "out": true // set this to false to include "out" folder in search results
+    "out": true, // set this to false to include "out" folder in search results
+    "dist": true,
+    "resources/examples": true,
+    "vdm_test_files": true
   },
   "typescript.tsdk": "./node_modules/typescript/lib",
   "[typescript]": {
@@ -22,5 +25,4 @@
   },
   "prettier.tabWidth": 4,
   "prettier.printWidth": 140, // we want to use the TS server from our node_modules folder to control its version,
-
 }

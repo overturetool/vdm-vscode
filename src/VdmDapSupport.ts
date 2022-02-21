@@ -66,7 +66,7 @@ export namespace VdmDapSupport {
         resolveDebugConfiguration(
             folder: vscode.WorkspaceFolder | undefined,
             inConfig: vscode.DebugConfiguration,
-            token?: vscode.CancellationToken
+            _token?: vscode.CancellationToken
         ): vscode.ProviderResult<vscode.DebugConfiguration> {
             let uri = folder.uri.toString();
             let config: VdmDebugConfiguration = inConfig;
@@ -106,7 +106,7 @@ export namespace VdmDapSupport {
 
         createDebugAdapterDescriptor(
             session: vscode.DebugSession,
-            executable: vscode.DebugAdapterExecutable | undefined
+            _executable: vscode.DebugAdapterExecutable | undefined
         ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
             // Check if server has not been launched
             let uri = session.workspaceFolder.uri;
