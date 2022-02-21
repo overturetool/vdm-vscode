@@ -843,6 +843,87 @@
                     "scope": "resource",
                     "description": "If enabled, translates only the selected file. If disabled, translate is always applied to the whole project"
                 },
+                "vdm-vscode.translate.isabelle.strict": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Strict handling of certain errors (e.g. print output or not, raise VDMJ warnings as translation errors, etc.)."
+                },
+                "vdm-vscode.translate.isabelle.maxErrors": {
+                    "type": "number",
+                    "default": 100,
+                    "scope": "resource",
+                    "description": "Maximum number (default=100) of translation errors to report. This is similar to VDMJ's maxErrors",
+                    "minimum": 10,
+                    "maximum": 10000
+                },
+                "vdm-vscode.translate.isabelle.reportVDMWarnings": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Report VDMJ warnings as part of the plugin output."
+                },
+                "vdm-vscode.translate.isabelle.linientPost": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Translate VDM source as an Isabelle comment alongside its translation."
+                },
+                "vdm-vscode.translate.isabelle.printVDMComments": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Prints VDM user comments as Isabelle comments when true, or ignore them when false."
+                },
+                "vdm-vscode.translate.isabelle.printIsaComments": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Prints Isabelle translation comments to the user (e.g., explanatory comments about translation's implicit VDM checks)."
+                },
+                "vdm-vscode.translate.isabelle.runExu": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Chooses whether to run the Exu VDM analyser prior to translation. Exu will provide information about VDM style and potential translation issues."
+                },
+                "vdm-vscode.translate.isabelle.valueAsAbbreviation": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Translate VDM values as Isabelle abbreviations when true, and as Isabelle definitions when false."
+                },
+                "vdm-vscode.translate.isabelle.translateTypeDefMinMax": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Translate VDM min_T or max_T when translating ordering predicates for type definitions."
+                },
+                "vdm-vscode.translate.isabelle.printVDMSource": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Translate VDM source as an Isabelle comment immediately before its translation."
+                },
+                "vdm-vscode.translate.isabelle.printLocations": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Translate VDM source location information as an Isabelle comment alongside its VDM source translation."
+                },
+                "vdm-vscode.translate.isabelle.proofStrategy": {
+                    "type": "string",
+                    "enum": [
+                        "optimistic",
+                        "hopeful",
+                        "pessimistic",
+                        "realistic",
+                        "surrender"
+                    ],
+                    "default": "surrender",
+                    "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
+                    "scope": "resource"
+                },
                 "vdm-vscode.encoding.showWarning": {
                     "type": "boolean",
                     "default": true,
