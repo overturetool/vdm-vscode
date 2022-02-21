@@ -18,7 +18,7 @@ export class AddLibraryHandler {
     private readonly libraryEncoding: BufferEncoding = "utf8";
 
     constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
-        commands.executeCommand("setContext", "add-lib-show-button", true);
+        commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         this.context = context;
         this.registerCommand((inputUri: Uri) => this.addLibrary(workspace.getWorkspaceFolder(inputUri)));
         Util.registerCommand(context, "vdm-vscode.addLibraryJarFolders", () =>

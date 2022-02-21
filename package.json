@@ -172,19 +172,22 @@
                 "command": "vdm-vscode.addRunConfiguration",
                 "title": "Add VDM Run Configuration",
                 "category": "VDM",
-                "icon": "$(library)"
+                "icon": "$(library)",
+                "enablement": "vdm-vscode.addRunConfiguration"
             },
             {
                 "command": "vdm-vscode.addLibrary",
                 "title": "Add VDM Library",
                 "category": "VDM",
-                "icon": "$(library)"
+                "icon": "$(library)",
+                "enablement": "vdm-vscode.addLibrary"
             },
             {
                 "command": "vdm-vscode.javaCodeGen",
                 "title": "Generate Java Code",
                 "category": "VDM",
-                "icon": "$(codegen)"
+                "icon": "$(codegen)",
+                "enablement": "vdm-vscode.javaCodeGen"
             },
             {
                 "command": "vdm-vscode.importExample",
@@ -196,31 +199,36 @@
                 "command": "vdm-vscode.translate.latex",
                 "title": "Translate to LaTeX",
                 "category": "VDM",
-                "icon": "$(references)"
+                "icon": "$(references)",
+                "enablement": "vdm-vscode.translate.latex"
             },
             {
                 "command": "vdm-vscode.translate.word",
                 "title": "Translate to Word",
                 "category": "VDM",
-                "icon": "$(references)"
+                "icon": "$(references)",
+                "enablement": "vdm-vscode.translate.word"
             },
             {
                 "command": "vdm-vscode.translate.coverage",
                 "title": "Generate Coverage",
                 "category": "VDM",
-                "icon": "$(references)"
+                "icon": "$(references)",
+                "enablement": "vdm-vscode.translate.coverage"
             },
             {
                 "command": "vdm-vscode.translate.graphviz",
                 "title": "Generate Dependency Graph",
                 "category": "VDM",
-                "icon": "$(references)"
+                "icon": "$(references)",
+                "enablement": "vdm-vscode.translate.graphviz"
             },
             {
                 "command": "vdm-vscode.translate.isabelle",
                 "title": "Translate to Isabelle",
                 "category": "VDM",
-                "icon": "$(references)"
+                "icon": "$(references)",
+                "enablement": "vdm-vscode.translate.isabelle"
             },
             {
                 "command": "vdm-vscode.coverage.show",
@@ -399,42 +407,35 @@
                 },
                 {
                     "command": "vdm-vscode.translate.latex",
-                    "when": "vdm-vscode.translate.latex == true",
                     "group": "translate@1"
                 },
                 {
                     "command": "vdm-vscode.translate.word",
-                    "when": "vdm-vscode.translate.word == true",
                     "group": "translate@2"
                 },
                 {
                     "command": "vdm-vscode.translate.isabelle",
-                    "when": "vdm-vscode.translate.isabelle == true && explorerResourceIsFolder || vdm-vscode.translate.isabelle == true && resourceLangId == vdmsl",
+                    "when": "explorerResourceIsFolder || resourceLangId == vdmsl",
                     "group": "translate@3"
                 },
                 {
                     "command": "vdm-vscode.translate.coverage",
-                    "when": "vdm-vscode.translate.coverage == true",
                     "group": "generate@1"
                 },
                 {
                     "command": "vdm-vscode.javaCodeGen",
-                    "when": "jcg-show-button == true",
                     "group": "generate@2"
                 },
                 {
                     "command": "vdm-vscode.translate.graphviz",
-                    "when": "vdm-vscode.translate.graphviz == true",
                     "group": "generate@3"
                 },
                 {
                     "command": "vdm-vscode.addLibrary",
-                    "when": "add-lib-show-button == true",
                     "group": "workspace@1"
                 },
                 {
                     "command": "vdm-vscode.addRunConfiguration",
-                    "when": "add-runconf-show-button == true",
                     "group": "workspace@2"
                 }
             ],

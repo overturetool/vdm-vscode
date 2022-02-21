@@ -7,17 +7,17 @@ import { spawn } from "child_process";
 import * as path from "path";
 
 export class JavaCodeGenHandler {
-    private jarPath;
+    private jarPath: string;
 
     constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
         this.jarPath = util.recursivePathSearch(path.resolve(this.context.extensionPath, "resources", "jars"), /javagen.*jar/i);
         if (!this.jarPath) {
             console.log("Code generation jar not found - Disable code generation feature");
-            commands.executeCommand("setContext", "jcg-show-button", false);
+            commands.executeCommand("setContext", "vdm-vscode.javaCodeGen", false);
         } else {
             // Activate code generation feature
             this.registerCommand((inputUri: Uri) => this.javaCodeGen(workspace.getWorkspaceFolder(inputUri)));
-            commands.executeCommand("setContext", "jcg-show-button", true);
+            commands.executeCommand("setContext", "vdm-vscode.javaCodeGen", true);
         }
     }
 

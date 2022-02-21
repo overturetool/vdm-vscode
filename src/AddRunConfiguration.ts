@@ -43,7 +43,7 @@ export class AddRunConfigurationHandler {
     private lastConfigApplyArgs: Map<string, VdmArgument[]> = new Map();
 
     constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
-        commands.executeCommand("setContext", "add-runconf-show-button", true);
+        commands.executeCommand("setContext", "vdm-vscode.addRunConfiguration", true);
         this.context = context;
         util.registerCommand(this.context, "vdm-vscode.addRunConfiguration", (inputUri: Uri) =>
             this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri))
