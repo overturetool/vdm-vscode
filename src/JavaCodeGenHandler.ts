@@ -1,31 +1,35 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Disposable, extensions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as util from "./Util";
 import { spawn } from "child_process";
 import * as path from "path";
+import { extensionId } from "./ExtensionInfo";
 
-export class JavaCodeGenHandler {
+export class JavaCodeGenHandler implements Disposable {
+    private _disposables: Disposable[] = [];
     private jarPath: string;
 
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
-        this.jarPath = util.recursivePathSearch(path.resolve(this.context.extensionPath, "resources", "jars"), /javagen.*jar/i);
+    constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
+        this.jarPath = util.recursivePathSearch(
+            path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
+            /javagen.*jar/i
+        );
         if (!this.jarPath) {
             console.log("Code generation jar not found - Disable code generation feature");
             commands.executeCommand("setContext", "vdm-vscode.javaCodeGen", false);
         } else {
             // Activate code generation feature
-            this.registerCommand((inputUri: Uri) => this.javaCodeGen(workspace.getWorkspaceFolder(inputUri)));
+            util.registerCommand(this._disposables, "vdm-vscode.javaCodeGen", (inputUri: Uri) =>
+                this.javaCodeGen(workspace.getWorkspaceFolder(inputUri))
+            );
             commands.executeCommand("setContext", "vdm-vscode.javaCodeGen", true);
         }
     }
-
-    private registerCommand = (callback: (...args: any[]) => any) => {
-        let disposable = commands.registerCommand("vdm-vscode.javaCodeGen", callback);
-        this.context.subscriptions.push(disposable);
-        return disposable;
-    };
+    dispose() {
+        while (this._disposables.length) this._disposables.pop().dispose();
+    }
 
     private async javaCodeGen(wsFolder: WorkspaceFolder) {
         let dialect = null;

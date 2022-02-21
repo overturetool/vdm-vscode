@@ -62,11 +62,7 @@ export class CombinatorialTestingView implements Disposable {
         commands.executeCommand("setContext", "vdm-vscode.ct.idle-state", newState == state.idle);
     }
 
-    constructor(
-        context: ExtensionContext,
-        private _filterHandler?: CTExecuteFilterHandler,
-        private _interpreterHandler?: CTInterpreterHandler
-    ) {
+    constructor(private _filterHandler?: CTExecuteFilterHandler, private _interpreterHandler?: CTInterpreterHandler) {
         this.state = state.idle;
 
         // Create data provider
@@ -117,13 +113,13 @@ export class CombinatorialTestingView implements Disposable {
         let canFilter = this._filterHandler != undefined;
         let canInterpret = this._interpreterHandler != undefined;
 
-        ///// Show options /////
+        //* Show options /////
         commands.executeCommand("setContext", "vdm-vscode.ct.show-execute-filter-button", canFilter);
         commands.executeCommand("setContext", "vdm-vscode.ct.show-interpret-button", canInterpret);
         this.showCancelButton(false);
         this.showTreeFilterButton(true);
 
-        ///// Command registration /////
+        //* Command registration /////
         if (canFilter) {
             this.registerCommand("vdm-vscode.ct.setExecuteFilter", () => this._filterHandler.setFilter());
             this.registerCommand("vdm-vscode.ct.filteredExecute", (e) => this.execute(e, true));
@@ -142,7 +138,7 @@ export class CombinatorialTestingView implements Disposable {
         this.registerCommand("vdm-vscode.ct.selectWorkspaceFolder", () => this.selectWorkspaceFolder());
         this.registerCommand("vdm-vscode.ct.clearView", () => this.clearView());
 
-        ///// Configuration change handler /////
+        //* Configuration change handler /////
         workspace.onDidChangeConfiguration(
             (e) => {
                 if (e.affectsConfiguration("vdm-vscode.combinatorialTesting")) {
@@ -188,7 +184,7 @@ export class CombinatorialTestingView implements Disposable {
                 title: `Generating trace outline for ${this._currentWsFolder.name}`,
                 cancellable: false,
             },
-            async (progress, token) => {
+            async (_progress, _token) => {
                 try {
                     // Update data storage
                     let traceGroups = await this._dataStorage.updateTraceGroups(this._currentWsFolder);

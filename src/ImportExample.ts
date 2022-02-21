@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, Uri, window, workspace } from "vscode";
-import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
+import { commands, Disposable, extensions, Uri, window, workspace } from "vscode";
 import * as util from "./Util";
 import { Dirent, readdirSync } from "fs";
 import { copySync } from "fs-extra";
 import * as path from "path";
+import { extensionId } from "./ExtensionInfo";
 
-export class AddExampleHandler {
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
-        this.context = context;
-        this.registerCommand(() => this.addExample());
+export class AddExampleHandler implements Disposable {
+    private _disposables: Disposable[] = [];
+
+    constructor() {
+        util.registerCommand(this._disposables, "vdm-vscode.importExample", () => this.addExample());
     }
-
-    private registerCommand = (callback: (...args: any[]) => any) => {
-        let disposable = commands.registerCommand("vdm-vscode.importExample", callback);
-        this.context.subscriptions.push(disposable);
-        return disposable;
-    };
+    dispose(): void {
+        while (this._disposables.length) this._disposables.pop().dispose();
+    }
 
     private async addExample() {
         const dialects = ["VDMSL", "VDM++", "VDMRT"];
@@ -33,7 +31,7 @@ export class AddExampleHandler {
                 if (dialect === undefined) return reject(`Empty selection. Add example completed.`);
 
                 // Gather available examples and let user select
-                const exaPath = path.resolve(this.context.extensionPath, "resources", "examples", dialect);
+                const exaPath = path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "examples", dialect);
 
                 const exsInFolder: Dirent[] = readdirSync(exaPath, { withFileTypes: true });
 

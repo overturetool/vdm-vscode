@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as util from "./Util";
-import * as vscode from "vscode";
 import {
     commands,
     ConfigurationTarget,
+    debug,
     DebugConfiguration,
-    ExtensionContext,
+    Disposable,
     RelativePattern,
     Uri,
     window,
@@ -34,7 +34,8 @@ interface VdmLaunchLensConfiguration {
     applyArgs: VdmArgument[];
 }
 
-export class AddRunConfigurationHandler {
+export class AddRunConfigurationHandler implements Disposable {
+    private _disposables: Disposable[] = [];
     private static readonly lensNameBegin: string = "Lens config:";
     private static showArgumentTypeWarning = true;
 
@@ -42,15 +43,17 @@ export class AddRunConfigurationHandler {
     private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map();
     private lastConfigApplyArgs: Map<string, VdmArgument[]> = new Map();
 
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
+    constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
         commands.executeCommand("setContext", "vdm-vscode.addRunConfiguration", true);
-        this.context = context;
-        util.registerCommand(this.context, "vdm-vscode.addRunConfiguration", (inputUri: Uri) =>
+        util.registerCommand(this._disposables, "vdm-vscode.addRunConfiguration", (inputUri: Uri) =>
             this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri))
         );
-        util.registerCommand(this.context, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) =>
+        util.registerCommand(this._disposables, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) =>
             this.addLensRunConfiguration(input)
         );
+    }
+    dispose(): void {
+        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private async addRunConfiguration(wsFolder: WorkspaceFolder) {
@@ -217,8 +220,8 @@ export class AddRunConfigurationHandler {
 
                     // Start debug session with custom debug configurations
                     resolve("Launching");
-                    vscode.commands.executeCommand("workbench.debug.action.focusRepl");
-                    vscode.debug.startDebugging(wsFolder, runConfig);
+                    commands.executeCommand("workbench.debug.action.focusRepl");
+                    debug.startDebugging(wsFolder, runConfig);
                 } catch (e) {
                     reject(e);
                 }

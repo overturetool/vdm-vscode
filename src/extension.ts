@@ -68,7 +68,7 @@ export function activate(context: ExtensionContext) {
 
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
-    context.subscriptions.push(new CombinatorialTestingView(context, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
+    context.subscriptions.push(new CombinatorialTestingView(new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
     context.subscriptions.push(new TranslateButton(languageId.latex));
     context.subscriptions.push(new TranslateButton(languageId.word));
     context.subscriptions.push(new TranslateButton(languageId.graphviz));
@@ -78,11 +78,11 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, languageIds));
 
     // Initialise handlers
-    const addLibraryHandler = new AddLibraryHandler(clients, context);
-    const addRunConfigurationHandler = new AddRunConfigurationHandler(clients, context);
-    const addExampleHandler = new AddExampleHandler(clients, context);
-    const javaCodeGenHandler = new JavaCodeGenHandler(clients, context);
-    const addToClassPathHandler = new AddToClassPathHandler(context);
+    context.subscriptions.push(new AddLibraryHandler(clients));
+    context.subscriptions.push(new AddRunConfigurationHandler(clients));
+    context.subscriptions.push(new AddExampleHandler());
+    context.subscriptions.push(new JavaCodeGenHandler(clients));
+    context.subscriptions.push(new AddToClassPathHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context);
@@ -306,8 +306,8 @@ export function activate(context: ExtensionContext) {
             }
         } else {
             //Discard stdout messages
-            server.stdout.addListener("data", (chunk) => {});
-            server.stderr.addListener("data", (chunk) => {});
+            server.stdout.addListener("data", (_chunk) => {});
+            server.stderr.addListener("data", (_chunk) => {});
         }
     }
 

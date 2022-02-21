@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, ExtensionContext, QuickPickItem, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Disposable, extensions, QuickPickItem, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./Util";
-import { Disposable } from "vscode-languageclient";
+import { extensionId } from "./ExtensionInfo";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -13,27 +13,27 @@ const yauzl = require("yauzl");
 // Encoding handler library
 const iconv = require("iconv-lite");
 
-export class AddLibraryHandler {
+export class AddLibraryHandler implements Disposable {
+    private _disposables: Disposable[] = [];
     private readonly dialects = { vdmsl: "vdmsl", vdmpp: "vdmpp", vdmrt: "vdmrt" };
     private readonly libraryEncoding: BufferEncoding = "utf8";
 
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>, private context: ExtensionContext) {
+    constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
-        this.context = context;
-        this.registerCommand((inputUri: Uri) => this.addLibrary(workspace.getWorkspaceFolder(inputUri)));
-        Util.registerCommand(context, "vdm-vscode.addLibraryJarFolders", () =>
+        Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
+            this.addLibrary(workspace.getWorkspaceFolder(inputUri))
+        );
+        Util.registerCommand(this._disposables, "vdm-vscode.addLibraryJarFolders", () =>
             Util.addToSettingsArray(true, "VDM libraries", "vdm-vscode.server.libraries", "VDM-Libraries")
         );
-        Util.registerCommand(context, "vdm-vscode.addLibraryJars", () =>
+        Util.registerCommand(this._disposables, "vdm-vscode.addLibraryJars", () =>
             Util.addToSettingsArray(false, "VDM libraries", "vdm-vscode.server.libraries", "VDM-Libraries")
         );
     }
 
-    private registerCommand = (callback: (...args: any[]) => any) => {
-        let disposable: Disposable = commands.registerCommand("vdm-vscode.addLibrary", callback);
-        this.context.subscriptions.push(disposable);
-        return disposable;
-    };
+    dispose(): void {
+        while (this._disposables.length) this._disposables.pop().dispose();
+    }
 
     private async addLibrary(wsFolder: WorkspaceFolder) {
         window.setStatusBarMessage(
@@ -308,7 +308,7 @@ export class AddLibraryHandler {
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-                jarPaths.push(...AddLibraryHandler.getIncludedLibraryJars(this.context.extensionPath, wsFolder));
+                jarPaths.push(...AddLibraryHandler.getIncludedLibraryJars(extensions.getExtension(extensionId).extensionPath, wsFolder));
             }
             if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 

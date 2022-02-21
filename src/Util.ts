@@ -2,7 +2,7 @@
 
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { commands, DocumentFilter, DocumentSelector, ExtensionContext, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Disposable, DocumentFilter, DocumentSelector, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import * as glob from "glob";
 
 export function ensureDirectoryExistence(filePath) {
@@ -42,13 +42,18 @@ export function isDir(path: Fs.PathLike): boolean {
 
 export function createDirectory(fullUri: Uri, timestamped?: boolean): Promise<Uri> {
     return new Promise((resolve, reject) => {
-        if (timestamped) {
-            var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-            fullUri = Uri.parse(fullUri + " " + dateString);
-        }
+        try {
+            if (timestamped) {
+                var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
+                fullUri = Uri.parse(fullUri + " " + dateString);
+            }
 
-        Fs.ensureDirSync(fullUri.fsPath);
-        return resolve(fullUri);
+            Fs.ensureDirSync(fullUri.fsPath);
+            return resolve(fullUri);
+        } catch (error) {
+            console.warn(`[Util] Create directory failed with error: ${error}`);
+            reject(error);
+        }
     });
 }
 
@@ -176,9 +181,9 @@ export function findJavaExecutable(binname: string) {
     return null;
 }
 
-export function registerCommand(context: ExtensionContext, command: string, callback: (...args: any[]) => any) {
+export function registerCommand(disposables: Disposable[], command: string, callback: (...args: any[]) => any) {
     let disposable = commands.registerCommand(command, callback);
-    context.subscriptions.push(disposable);
+    disposables.push(disposable);
     return disposable;
 }
 
