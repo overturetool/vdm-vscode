@@ -1,10 +1,10 @@
 .git
+.github/**
 .vs
 .vscode
 documentation
 drawio
-node_modules
-out
+out/test/**
 src
 test
 vdm_test_files
@@ -15,3 +15,13 @@ webpack.config.js
 *.log
 
 
+
+# withWebpack:# node_modules
+# out
+
+# /withWebpack
+
+
+# withoutWebpack:dist
+
+# /withoutWebpack

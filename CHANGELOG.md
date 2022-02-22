@@ -1,3 +1,5 @@
+### 1.3.3
+
 ### 1.3.2
 - Added additional options and buttons to the combinatorial testing view
 - Added partly migration to Web extension 

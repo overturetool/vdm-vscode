@@ -34,8 +34,8 @@
         "VDM-RT",
         "multi-root ready"
     ],
-    "main": "./dist/extension",
-    "browser": "./dist/webExtension.js",
+    "main": "./out/src/extension",
+    "browser": "./out/src/webExtension.js",
     "icon": "resources/icons/Overture.png",
     "homepage": "https://github.com/jonaskrask/vdm-vscode/blob/master/README.md",
     "repository": {
@@ -1044,27 +1044,63 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run package && npm run package-web",
-        "package": "webpack --mode production --devtool hidden-source-map",
-        "package-dev": "webpack --mode development",
+        "vscode:prepublish": "npm run check:version && npm run compile",
         "compile": "tsc -p ./",
-        "test-compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "package-web": "webpack --mode production --devtool hidden-source-map",
-        "package-web-dev": "webpack --mode development",
-        "compile-web": "tsc -p ./"
+        "watch": "tsc --watch -p ./",
+        "lint": "eslint --ext ts src",
+        "pretest": "tsc -p ./",
+        "test": "node ./out/test/runTest.js",
+        "check:version": "node cmd/check-version.js",
+        "enableWebpack": "node cmd/enableWebpack.js",
+        "disableWebpack": "node cmd/enableWebpack.js false"
+    },
+    "withoutWebpack": {
+        "scripts": {
+            "vscode:prepublish": "npm run check:version && npm run compile",
+            "compile": "tsc -p ./",
+            "watch": "tsc --watch -p ./",
+            "lint": "eslint --ext ts src",
+            "pretest": "tsc -p ./",
+            "test": "node ./out/test/runTest.js",
+            "check:version": "node cmd/check-version.js",
+            "enableWebpack": "node cmd/enableWebpack.js",
+            "disableWebpack": "node cmd/enableWebpack.js false"
+        },
+        "main": "./out/src/extension",
+        "browser": "./out/src/webExtension.js"
+    },
+    "withWebpack": {
+        "scripts": {
+            "vscode:prepublish": "npm run check:version && npm run package",
+            "package": "webpack --mode production --devtool hidden-source-map",
+            "compile": "webpack --mode none",
+            "watch": "webpack --mode none --watch",
+            "lint": "eslint --ext ts src",
+            "pretest": "tsc -p ./",
+            "test": "node ./out/test/runTest.js",
+            "check:version": "node cmd/check-version.js",
+            "enableWebpack": "node cmd/enableWebpack.js",
+            "disableWebpack": "node cmd/enableWebpack.js false"
+        },
+        "main": "./dist/extension",
+        "browser": "./dist/webExtension.js"
     },
     "devDependencies": {
+        "@types/chai": "^4.3.0",
         "@types/fs-extra": "^9.0.13",
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.1.0",
         "@types/node": "^17.0.15",
+        "@types/sinon": "^10.0.11",
         "@types/vscode": "^1.64.0",
+        "chai": "^4.3.6",
+        "eslint": "^8.9.0",
         "mocha": "^9.2.0",
+        "sinon": "^13.0.1",
         "ts-loader": "^9.2.6",
         "typescript": "^4.5.5",
         "vscode-test": "^1.6.1",
-        "webpack": "^5.68.0",
+        "webpack": "^5.69.1",
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {

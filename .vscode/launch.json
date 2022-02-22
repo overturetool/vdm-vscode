@@ -15,7 +15,23 @@
       "outFiles": [
         "${workspaceRoot}/out/**/*.js"
       ],
-      "preLaunchTask": "npm: package-dev"
+      "preLaunchTask": "npm: compile"
+    },
+    {
+      "name": "Launch Extension (--disable-extensions)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceRoot}",
+        "--disable-extensions"
+      ],
+      "stopOnEntry": false,
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
     },
     {
       "name": "Launch Tests",
@@ -24,13 +40,12 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}",
-        "--extensionTestsPath=${workspaceRoot}/out/test/index",
-        "${workspaceRoot}/test/testFixture"
+        "--extensionTestsPath=${workspaceRoot}/out/test/index"
       ],
       "outFiles": [
         "${workspaceRoot}/out/test/**/*.js"
       ],
-      "preLaunchTask": "npm: test-compile"
+      "preLaunchTask": "npm: pretest"
     },
     {
       "name": "Run Web Extension in VS Code",
@@ -42,7 +57,7 @@
         "--extensionDevelopmentKind=web"
       ],
       "outFiles": ["${workspaceFolder}/out/web/**/*.js"],
-      "preLaunchTask": "npm: package-web-dev"
+      "preLaunchTask": "npm: compile"
     }
   ]
 }
