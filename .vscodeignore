@@ -1,27 +1,31 @@
 .git
 .github/**
+.gitignore
 .vs
 .vscode
+.vscode-test
+cmd
 documentation
 drawio
 out/test/**
 src
 test
-vdm_test_files
-.gitignore
 tsconfig.json
+vdm_test_files
 webpack.config.js
 *.vsix
 *.log
 
 
 
-# withWebpack:# node_modules
+# withWebpack:
+# node_modules
 # out
 
 # /withWebpack
 
 
-# withoutWebpack:dist
+# withoutWebpack:
+dist
 
 # /withoutWebpack
