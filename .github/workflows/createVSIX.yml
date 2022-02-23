@@ -20,6 +20,9 @@ jobs:
           npm install -g vsce 
           npm install webpack
 
+      - name: Switch to use webpack
+        run: npm run enableWebpack
+
       - name: Create vsix
         run: vsce package
 

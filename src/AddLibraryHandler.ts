@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, extensions, QuickPickItem, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Disposable, extensions, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./Util";
 import { extensionId } from "./ExtensionInfo";
+import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Dialect";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -15,7 +16,6 @@ const iconv = require("iconv-lite");
 
 export class AddLibraryHandler implements Disposable {
     private _disposables: Disposable[] = [];
-    private readonly dialects = { vdmsl: "vdmsl", vdmpp: "vdmpp", vdmrt: "vdmrt" };
     private readonly libraryEncoding: BufferEncoding = "utf8";
 
     constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
@@ -38,143 +38,149 @@ export class AddLibraryHandler implements Disposable {
     private async addLibrary(wsFolder: WorkspaceFolder) {
         window.setStatusBarMessage(
             `Adding Libraries.`,
-            new Promise(async (resolve, reject) =>
-                this.getDialect(wsFolder).then((dialect) =>
-                    // Gather available libraries in jars
-                    this.getLibrariesFromJars(dialect, wsFolder).then(async (jarPathToLibs) => {
-                        if (jarPathToLibs.size < 1) {
-                            // No libraries available. Let user go to settings
-                            window
-                                .showInformationMessage(
-                                    "Cannot locate any VDM libraries. These can be added in the settings",
-                                    ...["Go to settings"]
-                                )
-                                .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.server.libraries"));
-                            return;
-                        }
-
-                        // Let user select libraries
-                        const selectedItems: QuickPickItem[] = await window.showQuickPick(
-                            Array.from(jarPathToLibs.values())
-                                .reduce((prev, curr) => prev.concat(curr), [])
-                                .map((lib) => ({ label: lib.name, description: lib.description } as QuickPickItem)),
-                            {
-                                placeHolder: jarPathToLibs.values().next() == undefined ? "No libraries available.." : "Choose libraries..",
-                                canPickMany: true,
-                            }
-                        );
-                        // None selected
-                        if (selectedItems === undefined || selectedItems.length == 0)
-                            return resolve(`Empty selection. Add library completed.`);
-
-                        // Ensure that target folder exists
-                        const libPathTarget: string = Path.resolve(wsFolder.uri.fsPath, "lib");
-                        Fs.ensureDir(libPathTarget)
-                            .then(() => {
-                                const jarPathTofileNames: Map<string, string[]> = new Map();
-
-                                // Find files that are needed for the selected libraries and map them to jarPaths
-                                jarPathToLibs.forEach((libs: Library[], jarPath: string) => {
-                                    const resolvedItems: QuickPickItem[] = [];
-                                    selectedItems.forEach((quickPickItem) => {
-                                        // Only act if the selected library name corresponds to library from this jar.
-                                        const selectedLib: Library = libs.find((lib) => lib.name == quickPickItem.label);
-                                        // Resolve dependencies
-                                        if (selectedLib) {
-                                            const unresolvedDependencies: string[] = [];
-                                            if (selectedLib.depends.length > 0) {
-                                                const jarPathsToDependLibraries: Map<string, Library[]> = this.ResolveLibraryDependencies(
-                                                    jarPath,
-                                                    selectedLib,
-                                                    jarPathToLibs,
-                                                    new Map<string, Library[]>(),
-                                                    unresolvedDependencies
-                                                );
-
-                                                // Add dependency files
-                                                if (unresolvedDependencies.length == 0 && jarPathsToDependLibraries.size > 0) {
-                                                    Array.from(jarPathsToDependLibraries.entries()).forEach((entry) => {
-                                                        const fileNames: string[] = entry[1]
-                                                            .map((lib) => lib.files)
-                                                            .reduce((prev, cur) => prev.concat(cur));
-                                                        if (jarPathTofileNames.has(entry[0])) {
-                                                            jarPathTofileNames.get(entry[0]).push(...fileNames);
-                                                        } else {
-                                                            jarPathTofileNames.set(entry[0], fileNames);
-                                                        }
-                                                    });
-
-                                                    // Inform of libraries being added as part of a dependency
-                                                    window.showInformationMessage(
-                                                        `Additionally including '${Array.from(jarPathsToDependLibraries.values())
-                                                            .reduce((prev, cur) => prev.concat(cur))
-                                                            .map((lib) => lib.name)
-                                                            .reduce((prev, cur) => prev + ", " + cur)}'` +
-                                                            ` as required by '${selectedLib.name}' library dependencies`
-                                                    );
-                                                }
-                                            }
-
-                                            // Warn of any unresolved dependencies
-                                            if (unresolvedDependencies.length > 0) {
-                                                const msg = `Unable to resolve all dependencies for the library '${
-                                                    selectedLib.name
-                                                }' as the following dependencies could not be found: ${unresolvedDependencies.reduce(
-                                                    (prev, cur) => prev + ", " + cur
-                                                )}. '${selectedLib.name}' has not been added!`;
-                                                window.showWarningMessage(msg);
-                                                console.log(msg);
-                                            }
-                                            // Else add the library files.
-                                            else if (jarPathTofileNames.has(jarPath)) {
-                                                jarPathTofileNames.get(jarPath).push(...selectedLib.files);
-                                            } else {
-                                                jarPathTofileNames.set(jarPath, selectedLib.files);
-                                            }
-
-                                            resolvedItems.push(quickPickItem);
-                                        }
-                                    });
-
-                                    // Remove items that were located in this jar.
-                                    resolvedItems.forEach((itemToRemove) =>
-                                        selectedItems.splice(
-                                            selectedItems.findIndex((quickPickItem) => quickPickItem.label == itemToRemove.label),
-                                            1
-                                        )
-                                    );
-                                });
-
-                                // Remove any duplicate file names
-                                const jarsToFiles: [string, string[]][] = Array.from(jarPathTofileNames.entries()).map((entry) => [
-                                    entry[0],
-                                    entry[1].filter((elem, index, self) => index === self.indexOf(elem)),
-                                ]);
-
-                                // Copy library files from jars to the target folder
-                                const wsEncoding = workspace.getConfiguration("files", wsFolder).get("encoding", "utf8");
-                                Promise.all(
-                                    jarsToFiles.map((jarToFiles) =>
-                                        this.copyLibFilesToTarget(jarToFiles[0], jarToFiles[1], libPathTarget, wsEncoding)
+            new Promise(async (resolve, reject) => {
+                this.getDialect(wsFolder)
+                    .then((dialect) =>
+                        // Gather available libraries in jars
+                        this.getLibrariesFromJars(dialect, wsFolder).then(async (jarPathToLibs) => {
+                            if (jarPathToLibs.size < 1) {
+                                // No libraries available. Let user go to settings
+                                window
+                                    .showInformationMessage(
+                                        "Cannot locate any VDM libraries. These can be added in the settings",
+                                        ...["Go to settings"]
                                     )
-                                )
-                                    .then(() => {
-                                        resolve("Added libraries.");
-                                    })
-                                    .catch((err) => {
-                                        window.showWarningMessage(`Add library failed with error: ${err}`);
-                                        console.log(`Add library failed with error: ${err}`);
-                                        reject("Add library failed with error");
+                                    .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.server.libraries"));
+                                return;
+                            }
+
+                            // Let user select libraries
+                            const selectedItems: QuickPickItem[] = await window.showQuickPick(
+                                Array.from(jarPathToLibs.values())
+                                    .reduce((prev, curr) => prev.concat(curr), [])
+                                    .map((lib) => ({ label: lib.name, description: lib.description } as QuickPickItem)),
+                                {
+                                    placeHolder:
+                                        jarPathToLibs.values().next() == undefined ? "No libraries available.." : "Choose libraries..",
+                                    canPickMany: true,
+                                }
+                            );
+                            // None selected
+                            if (selectedItems === undefined || selectedItems.length == 0)
+                                return resolve(`Empty selection. Add library completed.`);
+
+                            // Ensure that target folder exists
+                            const libPathTarget: string = Path.resolve(wsFolder.uri.fsPath, "lib");
+                            Fs.ensureDir(libPathTarget)
+                                .then(() => {
+                                    const jarPathTofileNames: Map<string, string[]> = new Map();
+
+                                    // Find files that are needed for the selected libraries and map them to jarPaths
+                                    jarPathToLibs.forEach((libs: Library[], jarPath: string) => {
+                                        const resolvedItems: QuickPickItem[] = [];
+                                        selectedItems.forEach((quickPickItem) => {
+                                            // Only act if the selected library name corresponds to library from this jar.
+                                            const selectedLib: Library = libs.find((lib) => lib.name == quickPickItem.label);
+                                            // Resolve dependencies
+                                            if (selectedLib) {
+                                                const unresolvedDependencies: string[] = [];
+                                                if (selectedLib.depends.length > 0) {
+                                                    const jarPathsToDependLibraries: Map<string, Library[]> =
+                                                        this.ResolveLibraryDependencies(
+                                                            jarPath,
+                                                            selectedLib,
+                                                            jarPathToLibs,
+                                                            new Map<string, Library[]>(),
+                                                            unresolvedDependencies
+                                                        );
+
+                                                    // Add dependency files
+                                                    if (unresolvedDependencies.length == 0 && jarPathsToDependLibraries.size > 0) {
+                                                        Array.from(jarPathsToDependLibraries.entries()).forEach((entry) => {
+                                                            const fileNames: string[] = entry[1]
+                                                                .map((lib) => lib.files)
+                                                                .reduce((prev, cur) => prev.concat(cur));
+                                                            if (jarPathTofileNames.has(entry[0])) {
+                                                                jarPathTofileNames.get(entry[0]).push(...fileNames);
+                                                            } else {
+                                                                jarPathTofileNames.set(entry[0], fileNames);
+                                                            }
+                                                        });
+
+                                                        // Inform of libraries being added as part of a dependency
+                                                        window.showInformationMessage(
+                                                            `Additionally including '${Array.from(jarPathsToDependLibraries.values())
+                                                                .reduce((prev, cur) => prev.concat(cur))
+                                                                .map((lib) => lib.name)
+                                                                .reduce((prev, cur) => prev + ", " + cur)}'` +
+                                                                ` as required by '${selectedLib.name}' library dependencies`
+                                                        );
+                                                    }
+                                                }
+
+                                                // Warn of any unresolved dependencies
+                                                if (unresolvedDependencies.length > 0) {
+                                                    const msg = `Unable to resolve all dependencies for the library '${
+                                                        selectedLib.name
+                                                    }' as the following dependencies could not be found: ${unresolvedDependencies.reduce(
+                                                        (prev, cur) => prev + ", " + cur
+                                                    )}. '${selectedLib.name}' has not been added!`;
+                                                    window.showWarningMessage(msg);
+                                                    console.log(msg);
+                                                }
+                                                // Else add the library files.
+                                                else if (jarPathTofileNames.has(jarPath)) {
+                                                    jarPathTofileNames.get(jarPath).push(...selectedLib.files);
+                                                } else {
+                                                    jarPathTofileNames.set(jarPath, selectedLib.files);
+                                                }
+
+                                                resolvedItems.push(quickPickItem);
+                                            }
+                                        });
+
+                                        // Remove items that were located in this jar.
+                                        resolvedItems.forEach((itemToRemove) =>
+                                            selectedItems.splice(
+                                                selectedItems.findIndex((quickPickItem) => quickPickItem.label == itemToRemove.label),
+                                                1
+                                            )
+                                        );
                                     });
-                            })
-                            .catch((error) => {
-                                window.showWarningMessage("Creating directory for library failed");
-                                console.log(`Creating directory for library files failed with error: ${error}`);
-                                reject("Creating directory for library files failed");
-                            });
-                    })
-                )
-            )
+
+                                    // Remove any duplicate file names
+                                    const jarsToFiles: [string, string[]][] = Array.from(jarPathTofileNames.entries()).map((entry) => [
+                                        entry[0],
+                                        entry[1].filter((elem, index, self) => index === self.indexOf(elem)),
+                                    ]);
+
+                                    // Copy library files from jars to the target folder
+                                    const wsEncoding = workspace.getConfiguration("files", wsFolder).get("encoding", "utf8");
+                                    Promise.all(
+                                        jarsToFiles.map((jarToFiles) =>
+                                            this.copyLibFilesToTarget(jarToFiles[0], jarToFiles[1], libPathTarget, wsEncoding)
+                                        )
+                                    )
+                                        .then(() => {
+                                            resolve("Added libraries.");
+                                        })
+                                        .catch((err) => {
+                                            window.showWarningMessage(`Add library failed with error: ${err}`);
+                                            console.log(`Add library failed with error: ${err}`);
+                                            reject("Add library failed with error");
+                                        });
+                                })
+                                .catch((error) => {
+                                    window.showWarningMessage("Creating directory for library failed");
+                                    console.log(`Creating directory for library files failed with error: ${error}`);
+                                    reject("Creating directory for library files failed");
+                                });
+                        })
+                    )
+                    .catch((e) => {
+                        console.info(`[AddLibrary] Failed with error: ${e}`);
+                    });
+            })
         );
     }
 
@@ -239,25 +245,25 @@ export class AddLibraryHandler implements Disposable {
         return new Promise<string>(async (resolve, reject) => {
             const client: SpecificationLanguageClient = this.clients.get(wsFolder.uri.toString());
             if (client) {
-                resolve(this.dialects[client.language]);
+                resolve(client.language);
             } else {
                 console.log(`No client found for the folder: ${wsFolder.name}`);
 
                 // Guess dialect
-                for (const dp in this.dialects) {
-                    if ((await workspace.findFiles(new RelativePattern(wsFolder.uri.path, "*." + dp), null, 1)).length == 1)
-                        return resolve(this.dialects[dp]);
-                }
-                // Let user chose
-                const chosenDialect: string = await window.showQuickPick(Object.keys(this.dialects), {
-                    placeHolder: "Choose dialect",
-                    canPickMany: false,
-                });
-                if (!chosenDialect) {
-                    reject("Add library failed! Unable to determine VDM dialect for workspace");
-                } else {
-                    resolve(this.dialects[chosenDialect]);
-                }
+                guessDialect(wsFolder)
+                    .then((d) => resolve(d))
+                    .catch(async () => {
+                        // Let user chose
+                        const chosenDialect: string = await window.showQuickPick(dialectsPretty, {
+                            placeHolder: "Choose dialect",
+                            canPickMany: false,
+                        });
+                        if (!chosenDialect) {
+                            reject("Add library failed! Unable to determine VDM dialect for workspace");
+                        } else {
+                            resolve(getDialectFromPretty(chosenDialect));
+                        }
+                    });
             }
         });
     }

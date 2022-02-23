@@ -10,8 +10,8 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 	},
-	"include": ["src"],
 	"exclude": [
+		"cmd",
 		"node_modules"
 	]
 }
