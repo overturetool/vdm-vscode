@@ -39,7 +39,8 @@ export class TranslateButton implements Disposable {
                     const saveUri = this.createSaveDir(timestamped, Uri.joinPath(wsFolder.uri, ".generated", this._language));
 
                     // Perform translation and handle result
-                    p.provider.doTranslation(saveUri, uri, this.getOptions(translateConfig)).then(async (mainFileUri) => {
+                    const languageConfig = workspace.getConfiguration(["vdm-vscode", "translate", this._language].join("."), wsFolder);
+                    p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig)).then(async (mainFileUri) => {
                         // Check if a file has been returned
                         if (!util.isDir(mainFileUri.fsPath)) {
                             // Open the main file in the translation
