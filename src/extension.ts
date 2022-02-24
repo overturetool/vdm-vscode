@@ -37,15 +37,17 @@ import { GenerateCoverageButton } from "./slsp/views/translate/GenerateCoverageB
 import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { provideCodeLensesMiddleware } from "./lsp/middleware/ProvideCodeLenses";
+import { Clients } from "./Clients";
 
-let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
     const jarPath = path.resolve(context.extensionPath, "resources", "jars");
     const jarPath_vdmj = path.resolve(jarPath, "vdmj");
     const jarPath_vdmj_hp = path.resolve(jarPath, "vdmj_hp");
     const languageIds = ["vdmpp", "vdmsl", "vdmrt"];
 
-    clients = new Map();
+    let _clients = Clients.instance;
+    context.subscriptions.push(_clients);
+
     let _sortedWorkspaceFolders: string[] | undefined;
 
     // Make sure that there is a java executable
@@ -80,10 +82,10 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, languageIds));
 
     // Initialise handlers
-    context.subscriptions.push(new AddLibraryHandler(clients));
+    context.subscriptions.push(new AddLibraryHandler(_clients));
     context.subscriptions.push(new AddRunConfigurationHandler());
     context.subscriptions.push(new AddExampleHandler());
-    context.subscriptions.push(new JavaCodeGenHandler(clients));
+    context.subscriptions.push(new JavaCodeGenHandler(_clients));
     context.subscriptions.push(new AddToClassPathHandler());
 
     // Initialise debug handler
@@ -94,7 +96,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(commands.registerCommand("vdm-vscode.openServerLogFolder", openServerLogFolder));
     context.subscriptions.push(workspace.onDidOpenTextDocument(didOpenTextDocument));
     workspace.textDocuments.forEach(didOpenTextDocument);
-    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => stopClients(e.removed), this));
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => _clients.stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => (_sortedWorkspaceFolders = undefined)));
 
     // ******************************************************************************
@@ -125,15 +127,10 @@ export function activate(context: ExtensionContext) {
     }
 
     async function launchClient(wsFolder: WorkspaceFolder, dialect: string) {
-        const clientKey = wsFolder.uri.toString();
-
         // Abort if client already exists
-        if (clients.has(clientKey)) {
+        if (_clients.has(wsFolder)) {
             return;
         }
-
-        // Add client to list
-        clients.set(clientKey, null);
 
         // Add settings watch for workspace folder
         context.subscriptions.push(workspace.onDidChangeConfiguration((e) => didChangeConfiguration(e, wsFolder)));
@@ -184,6 +181,9 @@ export function activate(context: ExtensionContext) {
             util.joinUriPath(wsFolder.uri, ".generated")
         );
 
+        // Save client
+        _clients.addClient(wsFolder, client);
+
         // Setup DAP
         client.onReady().then(() => {
             let port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
@@ -191,15 +191,9 @@ export function activate(context: ExtensionContext) {
             else console.warn("[Extension] Did not receive a DAP port on start up, debugging is not activated");
         });
 
-        // Start the and launch the client
+        // Start the client
         console.info(`[Extension] Launching client for the folder ${wsFolder.name} with language ID ${dialect}`);
-        let disposable = client.start();
-
-        // Push the disposable to the context's subscriptions so that the client can be deactivated on extension deactivation
-        context.subscriptions.push(disposable);
-
-        // Save client
-        clients.set(clientKey, client);
+        client.start();
     }
 
     async function launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
@@ -343,20 +337,20 @@ export function activate(context: ExtensionContext) {
         commands.executeCommand("revealFileInOS", context.logUri);
     }
 
-    function stopClients(wsFolders: readonly WorkspaceFolder[]) {
-        for (const folder of wsFolders) {
-            const client = clients.get(folder.uri.toString());
-            if (client) {
-                clients.delete(folder.uri.toString());
-                client
-                    .stop()
-                    .then(() => {
-                        console.info(`[Extension] Client closed for the workspace folder ${folder.name}`);
-                    })
-                    .catch((e) => `[Extension] Client close failed with error: ${e}`);
-            }
-        }
-    }
+    // function stopClients(wsFolders: readonly WorkspaceFolder[]) {
+    //     for (const folder of wsFolders) {
+    //         const client = clients.get(folder.uri.toString());
+    //         if (client) {
+    //             clients.delete(folder.uri.toString());
+    //             client
+    //                 .stop()
+    //                 .then(() => {
+    //                     console.info(`[Extension] Client closed for the workspace folder ${folder.name}`);
+    //                 })
+    //                 .catch((e) => `[Extension] Client close failed with error: ${e}`);
+    //         }
+    //     }
+    // }
 
     function didChangeConfiguration(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
         // Restart the extension if changes has been made to the server settings
@@ -407,13 +401,6 @@ export function deactivate(): Thenable<void> | undefined {
 
     // Hide VDM VS Code buttons
     promises.push(commands.executeCommand("setContext", "vdm-submenus-show", false));
-
-    // Stop clients
-    if (clients) {
-        clients.forEach((client) => {
-            promises.push(client.stop());
-        });
-    }
 
     return Promise.all(promises).then(() => undefined);
 }
