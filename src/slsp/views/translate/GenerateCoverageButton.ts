@@ -12,8 +12,8 @@ export class GenerateCoverageButton extends TranslateButton {
     public eventEmitter = new events.EventEmitter();
     public static translationDoneId: string = "TDONE";
 
-    constructor() {
-        super(LanguageId.coverage);
+    constructor(protected _extensionName: string) {
+        super(LanguageId.coverage, _extensionName);
     }
     // Override
     protected async translate(_uri: Uri, wsFolder: WorkspaceFolder) {

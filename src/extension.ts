@@ -8,6 +8,7 @@ import * as util from "./Util";
 import * as languageId from "./slsp/protocol/LanguageId";
 import * as encoding from "./Encoding";
 import * as Plugins from "./Plugins";
+import * as ExtensionInfo from "./ExtensionInfo";
 import {
     ExtensionContext,
     TextDocument,
@@ -69,11 +70,11 @@ export function activate(context: ExtensionContext) {
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
     context.subscriptions.push(new CombinatorialTestingView(new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
-    context.subscriptions.push(new TranslateButton(languageId.latex));
-    context.subscriptions.push(new TranslateButton(languageId.word));
-    context.subscriptions.push(new TranslateButton(languageId.graphviz));
-    context.subscriptions.push(new TranslateButton(languageId.isabelle));
-    const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton();
+    context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name));
+    context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name));
+    context.subscriptions.push(new TranslateButton(languageId.graphviz, ExtensionInfo.name));
+    context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name));
+    const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name);
     context.subscriptions.push(generateCoverageButton);
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, languageIds));
 
