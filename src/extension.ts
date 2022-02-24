@@ -80,7 +80,7 @@ export function activate(context: ExtensionContext) {
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clients));
-    context.subscriptions.push(new AddRunConfigurationHandler(clients));
+    context.subscriptions.push(new AddRunConfigurationHandler());
     context.subscriptions.push(new AddExampleHandler());
     context.subscriptions.push(new JavaCodeGenHandler(clients));
     context.subscriptions.push(new AddToClassPathHandler());
