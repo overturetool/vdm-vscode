@@ -36,6 +36,7 @@ import { TranslateButton } from "./slsp/views/translate/TranslateButton";
 import { GenerateCoverageButton } from "./slsp/views/translate/GenerateCoverageButton";
 import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
+import { provideCodeLensesMiddleware } from "./lsp/middleware/ProvideCodeLenses";
 
 let clients: Map<string, SpecificationLanguageClient>;
 export function activate(context: ExtensionContext) {
@@ -144,6 +145,9 @@ export function activate(context: ExtensionContext) {
             diagnosticCollectionName: "vdm-vscode",
             workspaceFolder: wsFolder,
             traceOutputChannel: window.createOutputChannel(`vdm-vscode: ${wsFolder.name}`),
+            middleware: {
+                provideCodeLenses: provideCodeLensesMiddleware,
+            },
         };
 
         // Setup server options

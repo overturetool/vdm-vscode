@@ -939,6 +939,12 @@
                     "minimum": 10,
                     "maximum": 1000
                 },
+                "vdm-vscode.codeLenses.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Enable/disable code lenses"
+                },
                 "vdm-vscode.trace.server": {
                     "type": "string",
                     "enum": [
