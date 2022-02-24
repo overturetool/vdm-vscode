@@ -912,14 +912,20 @@
                     "scope": "resource",
                     "description": "Translate VDM source location information as an Isabelle comment alongside its VDM source translation."
                 },
+                "vdm-vscode.translate.isabelle.runIsapog": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Translate VDM POs as a separate theory file associated with the recently translated VDM model."
+                },
                 "vdm-vscode.translate.isabelle.proofStrategy": {
                     "type": "string",
                     "enum": [
-                        "optimistic",
-                        "hopeful",
-                        "pessimistic",
-                        "realistic",
-                        "surrender"
+                    	"optimistic", 
+                    	"hopeful", 
+                    	"pessimistic", 
+                    	"realistic", 
+                    	"surrender"
                     ],
                     "default": "surrender",
                     "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
