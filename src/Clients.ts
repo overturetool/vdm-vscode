@@ -7,13 +7,17 @@ import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
+import AutoDisposable from "./helper/AutoDisposable";
 
-export class Clients implements Disposable {
+export class Clients extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
     private _wsDisposables: Map<string, Disposable[]> = new Map();
     private _restartOnCrash: boolean = true;
 
-    constructor(private _serverFactory: ServerFactory) {}
+    constructor(private _serverFactory: ServerFactory) {
+        super();
+        this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
+    }
 
     get name(): string {
         return this.constructor["name"];
@@ -39,6 +43,14 @@ export class Clients implements Disposable {
         return this._clients.delete(Clients.getKey(wsFolder));
     }
 
+    restart(wsFolder: WorkspaceFolder): void {
+        let client = this.get(wsFolder);
+        if (client) {
+            this.delete(wsFolder);
+            client.stop().then(() => this.launchClient(wsFolder, client.language));
+        }
+    }
+
     stopClients(wsFolders: readonly WorkspaceFolder[]) {
         for (const wsFolder of wsFolders) {
             const client = this.get(wsFolder);
@@ -55,6 +67,8 @@ export class Clients implements Disposable {
     }
 
     dispose() {
+        super.dispose();
+
         // Dispose of server factory
         this._serverFactory.dispose();
 
@@ -144,6 +158,10 @@ export class Clients implements Disposable {
 
     private getDisposables(wsFolder: WorkspaceFolder): Disposable[] {
         return this._wsDisposables.get(Clients.getKey(wsFolder)) ?? [];
+    }
+
+    private restartActiveClient(): void {
+        this.restart(workspace.getWorkspaceFolder(window.activeTextEditor.document.uri));
     }
 
     private didChangeConfigurationCheck(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {

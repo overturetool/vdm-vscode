@@ -149,6 +149,11 @@
         ],
         "commands": [
             {
+                "command": "vdm-vscode.restartActiveClient",
+                "title": "Restart Client (of the active text document)",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.addFoldersToClassPath",
                 "title": "Add folders to Class Path",
                 "category": "VDM"
