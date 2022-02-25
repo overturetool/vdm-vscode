@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, Disposable, extensions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as util from "./Util";
 import { spawn } from "child_process";
 import * as path from "path";
@@ -40,7 +39,7 @@ export class JavaCodeGenHandler implements Disposable {
         window.setStatusBarMessage(
             `Starting code generation.`,
             new Promise(async (resolve, reject) => {
-                let client = this.clients.get(wsFolder) as SpecificationLanguageClient;
+                let client = this.clients.get(wsFolder);
                 if (client?.language) {
                     dialect = dialects[client.language];
                     dialectext = client.language;
