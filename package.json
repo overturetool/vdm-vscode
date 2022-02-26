@@ -918,6 +918,12 @@
                     "scope": "resource",
                     "description": "Translate VDM POs as a separate theory file associated with the recently translated VDM model."
                 },
+                "vdm-vscode.translate.isabelle.linientInvCheck": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Exu invariant type checks allow subtyping instead of explicit invariant/pre calls."
+                },
                 "vdm-vscode.translate.isabelle.proofStrategy": {
                     "type": "string",
                     "enum": [
