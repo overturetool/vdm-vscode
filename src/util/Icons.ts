@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { extensions, ThemeIcon, Uri } from "vscode";
-import { extensionId } from "./ExtensionInfo";
-import { VerdictKind } from "./slsp/protocol/CombinatorialTesting";
+import { extensionId } from "../ExtensionInfo";
+import { VerdictKind } from "../slsp/protocol/CombinatorialTesting";
 
 export namespace Icons {
     export type IconPath = string | Uri | { light: string | Uri; dark: string | Uri } | ThemeIcon;

@@ -932,11 +932,11 @@
                 "vdm-vscode.translate.isabelle.proofStrategy": {
                     "type": "string",
                     "enum": [
-                    	"optimistic", 
-                    	"hopeful", 
-                    	"pessimistic", 
-                    	"realistic", 
-                    	"surrender"
+                        "optimistic",
+                        "hopeful",
+                        "pessimistic",
+                        "realistic",
+                        "surrender"
                     ],
                     "default": "surrender",
                     "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
