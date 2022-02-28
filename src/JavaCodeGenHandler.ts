@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, Disposable, extensions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as util from "./Util";
 import { spawn } from "child_process";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
+import { Clients } from "./Clients";
 
 export class JavaCodeGenHandler implements Disposable {
     private _disposables: Disposable[] = [];
     private jarPath: string;
 
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
+    constructor(private readonly clients: Clients) {
         this.jarPath = util.recursivePathSearch(
             path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
             /javagen.*jar/i
@@ -39,7 +39,7 @@ export class JavaCodeGenHandler implements Disposable {
         window.setStatusBarMessage(
             `Starting code generation.`,
             new Promise(async (resolve, reject) => {
-                let client = this.clients.get(wsFolder.uri.toString());
+                let client = this.clients.get(wsFolder);
                 if (client?.language) {
                     dialect = dialects[client.language];
                     dialectext = client.language;

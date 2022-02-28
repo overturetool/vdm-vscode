@@ -149,6 +149,11 @@
         ],
         "commands": [
             {
+                "command": "vdm-vscode.restartActiveClient",
+                "title": "Restart Client (of the active text document)",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.addFoldersToClassPath",
                 "title": "Add folders to Class Path",
                 "category": "VDM"
@@ -950,6 +955,12 @@
                     "description": "Determine the maximum group size for tests in the combinatorial testing view",
                     "minimum": 10,
                     "maximum": 1000
+                },
+                "vdm-vscode.codeLenses.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Enable/disable code lenses"
                 },
                 "vdm-vscode.trace.server": {
                     "type": "string",

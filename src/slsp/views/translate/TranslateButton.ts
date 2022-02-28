@@ -9,9 +9,9 @@ import { TranslateProviderManager } from "./TranslateProviderManager";
 export class TranslateButton implements Disposable {
     protected _commandDisposable: Disposable;
 
-    constructor(protected _language: string) {
+    constructor(protected _language: string, protected _extensionName: string) {
         this._commandDisposable = commands.registerCommand(
-            `vdm-vscode.translate.${this._language}`,
+            `${_extensionName}.translate.${this._language}`,
             (uri) => {
                 const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
                 if (!wsFolder) throw Error(`Cannot find workspace folder for Uri: ${uri.toString()}`);
@@ -23,7 +23,7 @@ export class TranslateButton implements Disposable {
 
     protected async translate(uri: Uri, wsFolder: WorkspaceFolder): Promise<void> {
         // Check timestamp setting
-        const translateConfig = workspace.getConfiguration(["vdm-vscode", "translate", "general"].join("."), wsFolder);
+        const translateConfig = workspace.getConfiguration([this._extensionName, "translate", "general"].join("."), wsFolder);
         const timestamped = translateConfig?.get("storeAllTranslations", false);
         const allowSingleFile = translateConfig?.get("allowSingleFileTranslation", true);
 
@@ -39,7 +39,10 @@ export class TranslateButton implements Disposable {
                     const saveUri = this.createSaveDir(timestamped, Uri.joinPath(wsFolder.uri, ".generated", this._language));
 
                     // Perform translation and handle result
-                    const languageConfig = workspace.getConfiguration(["vdm-vscode", "translate", this._language].join("."), wsFolder);
+                    const languageConfig = workspace.getConfiguration(
+                        [this._extensionName, "translate", this._language].join("."),
+                        wsFolder
+                    );
                     p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig)).then(async (mainFileUri) => {
                         // Check if a file has been returned
                         if (!util.isDir(mainFileUri.fsPath)) {
@@ -84,7 +87,7 @@ export class TranslateButton implements Disposable {
     }
 
     dispose(): void {
-        commands.executeCommand("setContext", `vdm-vscode.translate.${this._language}`, false);
+        commands.executeCommand("setContext", `${this._extensionName}.translate.${this._language}`, false);
 
         // Clean up our resources
         this._commandDisposable.dispose();

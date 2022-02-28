@@ -7,6 +7,7 @@ import * as Fs from "fs-extra";
 import * as Util from "./Util";
 import { extensionId } from "./ExtensionInfo";
 import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Dialect";
+import { Clients } from "./Clients";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -18,7 +19,7 @@ export class AddLibraryHandler implements Disposable {
     private _disposables: Disposable[] = [];
     private readonly libraryEncoding: BufferEncoding = "utf8";
 
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
+    constructor(private readonly clients: Clients) {
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
             this.addLibrary(workspace.getWorkspaceFolder(inputUri))
@@ -243,7 +244,7 @@ export class AddLibraryHandler implements Disposable {
 
     private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
         return new Promise<string>(async (resolve, reject) => {
-            const client: SpecificationLanguageClient = this.clients.get(wsFolder.uri.toString());
+            const client: SpecificationLanguageClient = this.clients.get(wsFolder);
             if (client) {
                 resolve(client.language);
             } else {

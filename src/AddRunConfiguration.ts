@@ -1,20 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as util from "./Util";
-import {
-    commands,
-    ConfigurationTarget,
-    debug,
-    DebugConfiguration,
-    Disposable,
-    RelativePattern,
-    Uri,
-    window,
-    workspace,
-    WorkspaceFolder,
-} from "vscode";
-import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
+import { commands, ConfigurationTarget, debug, DebugConfiguration, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "./VdmDapSupport";
+import { guessDialect } from "./util/Dialect";
 
 interface VdmArgument {
     name: string;
@@ -43,7 +32,7 @@ export class AddRunConfigurationHandler implements Disposable {
     private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map();
     private lastConfigApplyArgs: Map<string, VdmArgument[]> = new Map();
 
-    constructor(private readonly clients: Map<string, SpecificationLanguageClient>) {
+    constructor() {
         commands.executeCommand("setContext", "vdm-vscode.addRunConfiguration", true);
         util.registerCommand(this._disposables, "vdm-vscode.addRunConfiguration", (inputUri: Uri) =>
             this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri))
@@ -60,12 +49,15 @@ export class AddRunConfigurationHandler implements Disposable {
         window.setStatusBarMessage(
             `Adding Run Configuration.`,
             new Promise(async (resolve, reject) => {
-                let dialect = await this.getDialect(wsFolder);
-                if (dialect == null) {
-                    // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
-                    window.showInformationMessage(`Add run configuration failed! Unable to guess VDM dialect for workspace`);
-                    return reject();
-                }
+                let dialect: string;
+                await guessDialect(wsFolder).then(
+                    (result) => (dialect = result),
+                    (error) => {
+                        console.info(`[Run Config] Add configuration failed: ${error}`);
+                        window.showInformationMessage(`Add run configration failed. Could not guess language`);
+                    }
+                );
+                if (!dialect) return reject();
 
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
@@ -248,26 +240,6 @@ export class AddRunConfigurationHandler implements Disposable {
         return runConf.name.startsWith(AddRunConfigurationHandler.lensNameBegin);
     }
 
-    private async getDialect(wsFolder: WorkspaceFolder) {
-        const dialects = ["vdmsl", "vdmpp", "vdmrt"];
-        let dialect = null;
-
-        let client = this.clients.get(wsFolder.uri.toString());
-        if (client) {
-            dialect = client.language;
-        } else {
-            console.log(`No client found for the folder: ${wsFolder.name}`);
-
-            // Guess dialect
-            for (const d in dialects) {
-                let pattern = new RelativePattern(wsFolder.uri.path, "*." + d);
-                let res = await workspace.findFiles(pattern, null, 1);
-                if (res.length == 1) dialect = d;
-            }
-        }
-        return dialect;
-    }
-
     private async requestArgumentValues(args: VdmArgument[], name: string, type: string): Promise<void> {
         // Request arguments from user
         const commandString = this.getCommandOutlineString(name, args);
@@ -302,9 +274,10 @@ export class AddRunConfigurationHandler implements Disposable {
         else return Promise.resolve(ctorStrings.indexOf(pick));
     }
 
-    private transferArguments(config: VdmLaunchLensConfiguration, ws: string) {
+    // Transfer the arguments frome the last run configuraiton to 'config'
+    private transferArguments(config: VdmLaunchLensConfiguration, wsName: string) {
         // Transfer constructor arguments
-        this.lastConfigCtorArgs[ws]?.forEach((lastArg) => {
+        this.lastConfigCtorArgs[wsName]?.forEach((lastArg: VdmArgument) => {
             config.constructors?.forEach((ctor) => {
                 ctor.forEach((arg) => {
                     if (lastArg.name == arg.name && lastArg.type == arg.type) arg.value = lastArg.value;
@@ -313,7 +286,7 @@ export class AddRunConfigurationHandler implements Disposable {
         });
 
         // Transfer function/operation arguments
-        this.lastConfigApplyArgs[ws]?.forEach((lastArg) => {
+        this.lastConfigApplyArgs[wsName]?.forEach((lastArg: VdmArgument) => {
             config.applyArgs.forEach((arg) => {
                 if (lastArg.name == arg.name && lastArg.type == arg.type) arg.value = lastArg?.value;
             });

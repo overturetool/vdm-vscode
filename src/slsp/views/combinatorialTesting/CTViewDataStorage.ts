@@ -307,7 +307,7 @@ export class CTViewDataStorage {
         this._traceGroups = [];
     }
 
-    ///// Functions for getting data from the storage /////
+    //* Functions for getting data from the storage //
     public getTraceGroupNames(): string[] {
         return this._traceGroups.map((ct) => ct.name);
     }
