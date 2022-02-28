@@ -244,7 +244,7 @@ export class AddLibraryHandler implements Disposable {
 
     private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
         return new Promise<string>(async (resolve, reject) => {
-            const client: SpecificationLanguageClient = this.clients.get(wsFolder) as SpecificationLanguageClient;
+            const client: SpecificationLanguageClient = this.clients.get(wsFolder);
             if (client) {
                 resolve(client.language);
             } else {
