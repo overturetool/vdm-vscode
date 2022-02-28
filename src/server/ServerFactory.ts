@@ -158,6 +158,8 @@ export class ServerFactory implements Disposable {
         // Construct java launch arguments
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);
 
+        // TODO add -strict flag
+
         // Start the LSP server
         let server = child_process.spawn(this._javaPath, args, { cwd: wsFolder.uri.fsPath });
 

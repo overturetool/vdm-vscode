@@ -10,10 +10,14 @@ export default class VdmMiddleware implements Middleware {
         token: CancellationToken,
         next: ProvideCodeLensesSignature
     ): ProviderResult<CodeLens[]> {
+        // Check if code lenses have been disabled
         const wsFolder = workspace.getWorkspaceFolder(document.uri);
         const config = workspace.getConfiguration("vdm-vscode.codeLenses", wsFolder);
         const enabled = config.get("enabled", true);
+
+        // Do the request
         if (enabled) return next(document, token);
+        // Kill the request
         else return [];
     }
 }
