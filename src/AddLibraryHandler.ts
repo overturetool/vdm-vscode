@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, extensions, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, extensions, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./util/Util";
 import { extensionId } from "./ExtensionInfo";
-import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Dialect";
+import { guessDialect, pickDialect } from "./util/Dialect";
 import { Clients } from "./Clients";
+import AutoDisposable from "./helper/AutoDisposable";
 
 // Zip handler library
 const yauzl = require("yauzl");
@@ -15,11 +16,11 @@ const yauzl = require("yauzl");
 // Encoding handler library
 const iconv = require("iconv-lite");
 
-export class AddLibraryHandler implements Disposable {
-    private _disposables: Disposable[] = [];
+export class AddLibraryHandler extends AutoDisposable {
     private readonly libraryEncoding: BufferEncoding = "utf8";
 
     constructor(private readonly clients: Clients) {
+        super();
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
             this.addLibrary(workspace.getWorkspaceFolder(inputUri))
@@ -30,10 +31,6 @@ export class AddLibraryHandler implements Disposable {
         Util.registerCommand(this._disposables, "vdm-vscode.addLibraryJars", () =>
             Util.addToSettingsArray(false, "VDM libraries", "vdm-vscode.server.libraries", "VDM-Libraries")
         );
-    }
-
-    dispose(): void {
-        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private async addLibrary(wsFolder: WorkspaceFolder) {
@@ -255,15 +252,12 @@ export class AddLibraryHandler implements Disposable {
                     .then((d) => resolve(d))
                     .catch(async () => {
                         // Let user chose
-                        const chosenDialect: string = await window.showQuickPick(dialectsPretty, {
-                            placeHolder: "Choose dialect",
-                            canPickMany: false,
-                        });
-                        if (!chosenDialect) {
-                            reject("Add library failed! Unable to determine VDM dialect for workspace");
-                        } else {
-                            resolve(getDialectFromPretty(chosenDialect));
-                        }
+                        await pickDialect()
+                            .then((pick) => {
+                                if (!pick) reject("Add library failed! Unable to determine VDM dialect for workspace");
+                                else resolve(pick);
+                            })
+                            .catch((e) => reject(e));
                     });
             }
         });

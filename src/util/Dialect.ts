@@ -3,14 +3,14 @@
 import { WorkspaceFolder, RelativePattern, workspace, Uri, window } from "vscode";
 
 export const dialects: string[] = ["vdmsl", "vdmpp", "vdmrt"];
-export const dialectsPretty: string[] = ["VDM-SL", "VDM++", "VDM-RT"];
+const dialectsPretty: string[] = ["VDM-SL", "VDM++", "VDM-RT"];
 
-export const dialectExtensions: Map<string, string[]> = new Map([
+const dialectExtensions: Map<string, string[]> = new Map([
     ["vdmsl", ["vdmsl", "vsl"]],
     ["vdmpp", ["vdmpp", "vpp"]],
     ["vdmrt", ["vdmrt", "vrt"]],
 ]);
-export const dialectAlias: Map<string, string[]> = new Map([
+const dialectAlias: Map<string, string[]> = new Map([
     ["vdmsl", [...dialectExtensions.get("vdmsl"), "vdm-sl", "sl"]],
     ["vdmpp", [...dialectExtensions.get("vdmpp"), "vdm-pp", "pp", "vdm++"]],
     ["vdmrt", [...dialectExtensions.get("vdmrt"), "vdm-rt", "rt"]],
