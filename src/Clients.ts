@@ -2,7 +2,7 @@
 
 import * as Util from "./Util";
 import { commands, ConfigurationChangeEvent, Disposable, window, workspace, WorkspaceFolder } from "vscode";
-import { LanguageClientOptions, State } from "vscode-languageclient";
+import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
@@ -124,29 +124,34 @@ export class Clients extends AutoDisposable {
             else console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
         });
 
-        // Setup listener for un-intentional stop of the client
+        // Setup listener for un-intentional stop of the client, which requires a client restart
+        // XXX Look here if unexpected client restart behaviour starts to happen
         this.addDisposable(
             wsFolder,
-            client.onDidChangeState((e) => {
-                if (e.newState == State.Stopped && e.oldState == State.Running) {
-                    // Check for un-intentional stop
-                    if (this._restartOnCrash && this.has(wsFolder)) {
-                        let m = `Client stopped unexpectantly, restarting client..`;
-                        console.warn(`[${this.name}] ${m}`);
-                        window.showWarningMessage(m, "Don't restart again", "Ok").then((press) => {
-                            if (press == "Don't restart again") this._restartOnCrash = false;
-                        });
-
-                        this.delete(wsFolder);
-                        this.launchClient(wsFolder, client.language);
-                    }
-                }
-            }, this)
+            client.onDidChangeState((e) => this.checkForClientCrash(e, wsFolder), this)
         );
 
         // Start the client
         console.info(`[${this.name}] Launching client for the folder ${wsFolder.name} with language ID ${dialect}`);
         client.start();
+    }
+
+    private checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
+        if (e.newState == State.Stopped && e.oldState == State.Running) {
+            // Check for un-intentional stop
+            if (this._restartOnCrash && this.has(wsFolder)) {
+                let client = this.get(wsFolder);
+
+                let m = `Client stopped unexpectantly, restarting client..`;
+                console.warn(`[${this.name}] ${m}`);
+                window.showWarningMessage(m, "Don't restart again", "Ok").then((press) => {
+                    if (press == "Don't restart again") this._restartOnCrash = false;
+                });
+
+                this.delete(wsFolder);
+                this.launchClient(wsFolder, client.language);
+            }
+        }
     }
 
     private addDisposable(wsFolder: WorkspaceFolder, disposable: Disposable) {
