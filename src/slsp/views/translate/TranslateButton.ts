@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as Fs from "fs-extra";
-import * as util from "../../../Util";
+import * as util from "../../../util/Util";
 import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, WorkspaceConfiguration } from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";

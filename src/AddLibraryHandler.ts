@@ -4,7 +4,7 @@ import { commands, Disposable, extensions, QuickPickItem, Uri, window, workspace
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import * as Util from "./Util";
+import * as Util from "./util/Util";
 import { extensionId } from "./ExtensionInfo";
 import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Dialect";
 import { Clients } from "./Clients";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, Disposable, extensions, Uri, window, workspace } from "vscode";
-import * as util from "./Util";
+import * as util from "./util/Util";
 import { Dirent, readdirSync } from "fs";
 import { copySync } from "fs-extra";
 import * as path from "path";

@@ -6,7 +6,7 @@ import { CombinantorialTestingFeature } from "./features/CombinatorialTestingFea
 import * as LanguageId from "./protocol/LanguageId";
 import ProofObligationGenerationFeature from "./features/ProofObligationGenerationFeature";
 import TranslateFeature from "./features/TranslateFeature";
-import * as util from "../Util";
+import * as util from "../util/Util";
 
 export class SpecificationLanguageClient extends LanguageClient {
     public readonly projectRoot = this.clientOptions.workspaceFolder.uri;

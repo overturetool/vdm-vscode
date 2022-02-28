@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Disposable } from "vscode";
-import * as Util from "./Util";
+import * as Util from "./util/Util";
 
 export class AddToClassPathHandler implements Disposable {
     private _disposables: Disposable[] = [];

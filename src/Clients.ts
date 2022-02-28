@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as Util from "./Util";
+import * as Util from "./util/Util";
 import { commands, ConfigurationChangeEvent, Disposable, window, workspace, WorkspaceFolder } from "vscode";
 import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
