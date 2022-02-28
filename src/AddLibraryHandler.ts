@@ -10,10 +10,10 @@ import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Diale
 import { Clients } from "./Clients";
 
 // Zip handler library
-const yauzl = require("yauzl");
+import yauzl = require("yauzl");
 
 // Encoding handler library
-const iconv = require("iconv-lite");
+import iconv = require("iconv-lite");
 
 export class AddLibraryHandler implements Disposable {
     private _disposables: Disposable[] = [];
@@ -39,11 +39,11 @@ export class AddLibraryHandler implements Disposable {
     private async addLibrary(wsFolder: WorkspaceFolder) {
         window.setStatusBarMessage(
             `Adding Libraries.`,
-            new Promise(async (resolve, reject) => {
+            new Promise((resolve, reject) => {
                 this.getDialect(wsFolder)
-                    .then((dialect) =>
+                    .then((dialect: string) =>
                         // Gather available libraries in jars
-                        this.getLibrariesFromJars(dialect, wsFolder).then(async (jarPathToLibs) => {
+                        this.getLibInfoFromJars(dialect, wsFolder).then(async (jarPathToLibs: Map<string, LibInfo[]>) => {
                             if (jarPathToLibs.size < 1) {
                                 // No libraries available. Let user go to settings
                                 window
@@ -58,8 +58,8 @@ export class AddLibraryHandler implements Disposable {
                             // Let user select libraries
                             const selectedItems: QuickPickItem[] = await window.showQuickPick(
                                 Array.from(jarPathToLibs.values())
-                                    .reduce((prev, curr) => prev.concat(curr), [])
-                                    .map((lib) => ({ label: lib.name, description: lib.description } as QuickPickItem)),
+                                    .reduce((prev: LibInfo[], curr: LibInfo[]) => prev.concat(curr), [])
+                                    .map((lib: LibInfo) => ({ label: lib.name, description: lib.description } as QuickPickItem)),
                                 {
                                     placeHolder:
                                         jarPathToLibs.values().next() == undefined ? "No libraries available.." : "Choose libraries..",
@@ -77,43 +77,45 @@ export class AddLibraryHandler implements Disposable {
                                     const jarPathTofileNames: Map<string, string[]> = new Map();
 
                                     // Find files that are needed for the selected libraries and map them to jarPaths
-                                    jarPathToLibs.forEach((libs: Library[], jarPath: string) => {
+                                    jarPathToLibs.forEach((libs: LibInfo[], jarPath: string) => {
                                         const resolvedItems: QuickPickItem[] = [];
-                                        selectedItems.forEach((quickPickItem) => {
+                                        selectedItems.forEach((quickPickItem: QuickPickItem) => {
                                             // Only act if the selected library name corresponds to library from this jar.
-                                            const selectedLib: Library = libs.find((lib) => lib.name == quickPickItem.label);
+                                            const selectedLib: LibInfo = libs.find((lib) => lib.name == quickPickItem.label);
                                             // Resolve dependencies
                                             if (selectedLib) {
                                                 const unresolvedDependencies: string[] = [];
                                                 if (selectedLib.depends.length > 0) {
-                                                    const jarPathsToDependLibraries: Map<string, Library[]> =
+                                                    const jarPathsToDependLibraries: Map<string, LibInfo[]> =
                                                         this.ResolveLibraryDependencies(
                                                             jarPath,
                                                             selectedLib,
                                                             jarPathToLibs,
-                                                            new Map<string, Library[]>(),
+                                                            new Map<string, LibInfo[]>(),
                                                             unresolvedDependencies
                                                         );
 
                                                     // Add dependency files
                                                     if (unresolvedDependencies.length == 0 && jarPathsToDependLibraries.size > 0) {
-                                                        Array.from(jarPathsToDependLibraries.entries()).forEach((entry) => {
-                                                            const fileNames: string[] = entry[1]
-                                                                .map((lib) => lib.files)
-                                                                .reduce((prev, cur) => prev.concat(cur));
-                                                            if (jarPathTofileNames.has(entry[0])) {
-                                                                jarPathTofileNames.get(entry[0]).push(...fileNames);
-                                                            } else {
-                                                                jarPathTofileNames.set(entry[0], fileNames);
+                                                        Array.from(jarPathsToDependLibraries.entries()).forEach(
+                                                            (entry: [string, LibInfo[]]) => {
+                                                                const fileNames: string[] = entry[1]
+                                                                    .map((lib: LibInfo) => lib.files)
+                                                                    .reduce((prev: string[], cur: string[]) => prev.concat(cur));
+                                                                if (jarPathTofileNames.has(entry[0])) {
+                                                                    jarPathTofileNames.get(entry[0]).push(...fileNames);
+                                                                } else {
+                                                                    jarPathTofileNames.set(entry[0], fileNames);
+                                                                }
                                                             }
-                                                        });
+                                                        );
 
                                                         // Inform of libraries being added as part of a dependency
                                                         window.showInformationMessage(
                                                             `Additionally including '${Array.from(jarPathsToDependLibraries.values())
-                                                                .reduce((prev, cur) => prev.concat(cur))
-                                                                .map((lib) => lib.name)
-                                                                .reduce((prev, cur) => prev + ", " + cur)}'` +
+                                                                .reduce((prev: LibInfo[], cur: LibInfo[]) => prev.concat(cur))
+                                                                .map((lib: LibInfo) => lib.name)
+                                                                .reduce((prev: string, cur: string) => prev + ", " + cur)}'` +
                                                                 ` as required by '${selectedLib.name}' library dependencies`
                                                         );
                                                     }
@@ -121,10 +123,10 @@ export class AddLibraryHandler implements Disposable {
 
                                                 // Warn of any unresolved dependencies
                                                 if (unresolvedDependencies.length > 0) {
-                                                    const msg = `Unable to resolve all dependencies for the library '${
+                                                    const msg: string = `Unable to resolve all dependencies for the library '${
                                                         selectedLib.name
                                                     }' as the following dependencies could not be found: ${unresolvedDependencies.reduce(
-                                                        (prev, cur) => prev + ", " + cur
+                                                        (prev: string, cur: string) => prev + ", " + cur
                                                     )}. '${selectedLib.name}' has not been added!`;
                                                     window.showWarningMessage(msg);
                                                     console.log(msg);
@@ -141,9 +143,11 @@ export class AddLibraryHandler implements Disposable {
                                         });
 
                                         // Remove items that were located in this jar.
-                                        resolvedItems.forEach((itemToRemove) =>
+                                        resolvedItems.forEach((itemToRemove: QuickPickItem) =>
                                             selectedItems.splice(
-                                                selectedItems.findIndex((quickPickItem) => quickPickItem.label == itemToRemove.label),
+                                                selectedItems.findIndex(
+                                                    (quickPickItem: QuickPickItem) => quickPickItem.label == itemToRemove.label
+                                                ),
                                                 1
                                             )
                                         );
@@ -152,33 +156,33 @@ export class AddLibraryHandler implements Disposable {
                                     // Remove any duplicate file names
                                     const jarsToFiles: [string, string[]][] = Array.from(jarPathTofileNames.entries()).map((entry) => [
                                         entry[0],
-                                        entry[1].filter((elem, index, self) => index === self.indexOf(elem)),
+                                        entry[1].filter((elem: string, index: number, self: string[]) => index === self.indexOf(elem)),
                                     ]);
 
                                     // Copy library files from jars to the target folder
                                     const wsEncoding = workspace.getConfiguration("files", wsFolder).get("encoding", "utf8");
                                     Promise.all(
-                                        jarsToFiles.map((jarToFiles) =>
+                                        jarsToFiles.map((jarToFiles: [string, string[]]) =>
                                             this.copyLibFilesToTarget(jarToFiles[0], jarToFiles[1], libPathTarget, wsEncoding)
                                         )
                                     )
                                         .then(() => {
                                             resolve("Added libraries.");
                                         })
-                                        .catch((err) => {
+                                        .catch((err: any) => {
                                             window.showWarningMessage(`Add library failed with error: ${err}`);
                                             console.log(`Add library failed with error: ${err}`);
                                             reject("Add library failed with error");
                                         });
                                 })
-                                .catch((error) => {
+                                .catch((error: any) => {
                                     window.showWarningMessage("Creating directory for library failed");
                                     console.log(`Creating directory for library files failed with error: ${error}`);
                                     reject("Creating directory for library files failed");
                                 });
                         })
                     )
-                    .catch((e) => {
+                    .catch((e: any) => {
                         console.info(`[AddLibrary] Failed with error: ${e}`);
                     });
             })
@@ -187,22 +191,22 @@ export class AddLibraryHandler implements Disposable {
 
     private ResolveLibraryDependencies(
         jarPath: string,
-        library: Library,
-        jarPathToAllLibs: Map<string, Library[]>,
-        jarPathToDependendLibs: Map<string, Library[]>,
+        library: LibInfo,
+        jarPathToAllLibs: Map<string, LibInfo[]>,
+        jarPathToDependendLibs: Map<string, LibInfo[]>,
         unresolvedDependencies: string[]
-    ): Map<string, Library[]> {
+    ): Map<string, LibInfo[]> {
         // Resolve dependencies
         library.depends.forEach((dependLibName) => {
             // First search through libraries from the jarPath where the dependencies originated.
-            let dependency: Library = jarPathToAllLibs.get(jarPath).find((lib) => lib.name == dependLibName);
+            let dependency: LibInfo = jarPathToAllLibs.get(jarPath).find((lib: LibInfo) => lib.name == dependLibName);
             if (!dependency) {
                 // The dependency is not in the given jarPath - look in the other jars
-                const otherJars = new Map(jarPathToAllLibs);
+                const otherJars: Map<string, LibInfo[]> = new Map(jarPathToAllLibs);
                 otherJars.delete(jarPath);
 
                 for (let entry of Array.from(otherJars)) {
-                    dependency = entry[1].find((lib) => lib.name == dependLibName);
+                    dependency = entry[1].find((lib: LibInfo) => lib.name == dependLibName);
                     if (dependency) {
                         jarPath = entry[0];
                         break;
@@ -213,7 +217,7 @@ export class AddLibraryHandler implements Disposable {
             if (dependency) {
                 // Found the jar with the dependency. Add the library if not already in dependency map.
                 if (jarPathToDependendLibs.has(jarPath)) {
-                    if (!jarPathToDependendLibs.get(jarPath).find((dependencyLib) => dependencyLib.name == dependency.name)) {
+                    if (!jarPathToDependendLibs.get(jarPath).find((dependencyLib: LibInfo) => dependencyLib.name == dependency.name)) {
                         jarPathToDependendLibs.get(jarPath).push(dependency);
                     }
                 } else {
@@ -243,7 +247,7 @@ export class AddLibraryHandler implements Disposable {
     }
 
     private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
-        return new Promise<string>(async (resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
             const client: SpecificationLanguageClient = this.clients.get(wsFolder);
             if (client) {
                 resolve(client.language);
@@ -252,7 +256,7 @@ export class AddLibraryHandler implements Disposable {
 
                 // Guess dialect
                 guessDialect(wsFolder)
-                    .then((d) => resolve(d))
+                    .then((d: string) => resolve(d))
                     .catch(async () => {
                         // Let user chose
                         const chosenDialect: string = await window.showQuickPick(dialectsPretty, {
@@ -294,8 +298,8 @@ export class AddLibraryHandler implements Disposable {
 
         return libPath
             ? Fs.readdirSync(libPath, { withFileTypes: true })
-                  ?.filter((dirent) => dirent.name.endsWith(".jar"))
-                  ?.map((dirent) => Path.resolve(libPath, dirent.name)) ?? []
+                  ?.filter((dirent: Fs.Dirent) => dirent.name.endsWith(".jar"))
+                  ?.map((dirent: Fs.Dirent) => Path.resolve(libPath, dirent.name)) ?? []
             : [];
     }
 
@@ -303,13 +307,15 @@ export class AddLibraryHandler implements Disposable {
         // Get any library jars specified by the user
         return (
             (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder)?.get("VDM-Libraries") as string[])
-                .map((path) => (Fs.existsSync(path) ? (Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDir(path, "jar") : [path]) : []))
-                ?.reduce((prev, cur) => prev.concat(cur), []) ?? []
+                .map((path: string) =>
+                    Fs.existsSync(path) ? (Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDir(path, "jar") : [path]) : []
+                )
+                ?.reduce((prev: string[], cur: string[]) => prev.concat(cur), []) ?? []
         );
     }
 
-    private getLibrariesFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, Library[]>> {
-        return new Promise<Map<string, Library[]>>(async (resolve, reject) => {
+    private getLibInfoFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, LibInfo[]>> {
+        return new Promise<Map<string, LibInfo[]>>((resolve, reject) => {
             // Get user defined library jars
             const jarPaths: string[] = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder);
 
@@ -319,40 +325,40 @@ export class AddLibraryHandler implements Disposable {
             }
             if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 
-            // Extract libraries
+            // Extract libraries information from jars
             Promise.all(
                 jarPaths.map(
-                    (jarPath) =>
-                        new Promise<[string, Library[]]>(async (resolve, reject) => {
-                            yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
+                    (jarPath: string) =>
+                        new Promise<[string, LibInfo[]]>((resolve, reject) => {
+                            yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err: any, zipfile: any) => {
                                 if (err) reject(err);
-                                zipfile.on("error", (err) => {
+                                zipfile.on("error", (err: any) => {
+                                    zipfile.close();
                                     reject(err);
-                                    zipfile.close();
                                 });
-                                // Resolve to empty array if we have read the whole zip file without finding any libraries
+                                // Resolve to empty array if the whole zip file has been read without finding any libraries information file
                                 zipfile.on("end", () => {
-                                    resolve(["", []]);
                                     zipfile.close();
+                                    resolve(["", []]);
                                 });
-                                zipfile.on("entry", async (entry) => {
-                                    // If we found a library file then read it else we read the next zip entry
+                                zipfile.on("entry", (entry: any) => {
+                                    // If a libraries information file has been found then read it else read the next zip entry
                                     if (!/\/$/.test(entry.fileName) && entry.fileName.toLowerCase().endsWith("library.json")) {
-                                        zipfile.openReadStream(entry, async (error, readStream) => {
+                                        zipfile.openReadStream(entry, (error: any, readStream: any) => {
                                             if (error) {
-                                                reject(error);
                                                 zipfile.close();
+                                                return reject(error);
                                             }
-                                            readStream.on("data", (data) => {
-                                                // Get library information and close file
-                                                const jsonData = JSON.parse(data.toString());
+                                            readStream.on("data", (data: any) => {
+                                                // Get libraries information and close file
+                                                const jsonData: any = JSON.parse(data.toString());
                                                 zipfile.close();
-                                                // Create mapping from jar path to libraries
-                                                const jarPathToLib: [string, Library[]] = [jarPath, []];
-                                                const libraries: Library[] = jsonData[dialect];
+                                                // Create mapping from jar path to library information
+                                                const jarPathToLib: [string, LibInfo[]] = [jarPath, []];
+                                                const libraries: LibInfo[] = jsonData[dialect];
                                                 if (libraries) {
-                                                    // Include jarpath in library object
-                                                    libraries.forEach((library) => {
+                                                    // Include jarpath in library information object
+                                                    libraries.forEach((library: LibInfo) => {
                                                         const libraryToAdd = library;
                                                         libraryToAdd.jarPath = jarPath;
                                                         jarPathToLib[1].push(libraryToAdd);
@@ -369,16 +375,16 @@ export class AddLibraryHandler implements Disposable {
                             });
                         })
                 )
-            ) // When we have looked through all jar files and found all libraries
-                .then((jarPathToLibs) => {
+            ) // When we have looked through all jar files and found all information on all libraries
+                .then((jarPathToLibs: [string, LibInfo[]][]) => {
                     // Collect entries to single map
-                    const jarPathsToLibs: Map<string, Library[]> = new Map();
-                    jarPathToLibs.forEach((jarToLibs) => {
+                    const jarPathsToLibs: Map<string, LibInfo[]> = new Map();
+                    jarPathToLibs.forEach((jarToLibs: [string, LibInfo[]]) => {
                         if (jarToLibs[0] && jarToLibs[1].length > 0) {
-                            // Watch out for libraries with identical names
-                            const jarPathToDuplicateLibs: Map<string, Library[]> = new Map();
+                            // Watch out for library information for libraries with identical names
+                            const jarPathToDuplicateLibs: Map<string, LibInfo[]> = new Map();
                             for (let entry of Array.from(jarPathsToLibs.entries())) {
-                                const duplicateLib = Array.from(entry[1]).find((existingLib) =>
+                                const duplicateLib: LibInfo = Array.from(entry[1]).find((existingLib) =>
                                     jarToLibs[1].find((newLib) => existingLib.name == newLib.name)
                                 );
                                 if (duplicateLib) {
@@ -397,8 +403,8 @@ export class AddLibraryHandler implements Disposable {
                             }
 
                             // Inform of libraries with identical names - this is done per jar to avoid generating too many messages.
-                            jarPathToDuplicateLibs.forEach((libraries, jarPath) => {
-                                const msg = `Libraries '${libraries
+                            jarPathToDuplicateLibs.forEach((libraries: LibInfo[], jarPath: string) => {
+                                const msg: string = `Libraries '${libraries
                                     .map((library) => library.name)
                                     .reduce((prev, cur) => prev + ", " + cur)}' are in multiple jars.. Using libraries from '${jarPath}`;
                                 window.showWarningMessage(msg);
@@ -410,40 +416,44 @@ export class AddLibraryHandler implements Disposable {
                     });
                     resolve(jarPathsToLibs);
                 })
-                .catch((err) => reject(err));
+                .catch((err: any) => reject(err));
         });
     }
 
     private copyLibFilesToTarget(jarPath: string, libFileNames: string[], targetFolderPath: string, wsEncoding: string): Promise<void> {
         // Extract library from jar file and write it to the target folder
-        return new Promise<void>(async (resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             if (!jarPath) return reject();
             if (libFileNames.length < 1) return resolve();
             try {
                 // Open the jar file
-                yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
+                yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err: any, zipfile: any) => {
                     if (err) return reject(err);
-                    zipfile.on("error", (err) => {
+                    zipfile.on("error", (err: any) => {
                         reject(err);
                     });
 
                     zipfile.on("end", () => {
-                        reject(`Unable to locate and copy the following files: ${libFileNames.reduce((prev, cur) => prev + ", " + cur)}`);
+                        reject(
+                            `Unable to locate and copy the following files: ${libFileNames.reduce(
+                                (prev: string, cur: string) => prev + ", " + cur
+                            )}`
+                        );
                     });
 
                     // Handle entry
-                    zipfile.on("entry", (entry) => {
+                    zipfile.on("entry", (entry: any) => {
                         const fileName: string = Path.basename(entry.fileName);
-                        // Resolve when we have found all library files
+                        // Resolve when all library files have been found
                         if (libFileNames.length < 1) {
                             zipfile.close();
                             resolve();
                         } else if (!/\/$/.test(entry.fileName)) {
-                            // We have found a file and not a folder. See if the file is for a library that we need to extract and copy it to the target folder
-                            const libFileNamesIndex: number = libFileNames.findIndex((libFileName) => libFileName == fileName);
+                            // A file has been found and not a folder. See if the file is for a library that needs to be extracted and copy it to the target folder
+                            const libFileNamesIndex: number = libFileNames.findIndex((libFileName: string) => libFileName == fileName);
                             if (libFileNamesIndex >= 0) {
                                 // Create a read stream from the file and pipe it to a write stream to the target folder.
-                                zipfile.openReadStream(entry, (error, readStream) => {
+                                zipfile.openReadStream(entry, (error: any, readStream: any) => {
                                     if (error) return reject(error);
                                     // Check encoding
                                     if (!Buffer.isEncoding(wsEncoding))
@@ -472,14 +482,14 @@ export class AddLibraryHandler implements Disposable {
                     });
                     zipfile.readEntry();
                 });
-            } catch (exception) {
+            } catch (exception: any) {
                 reject(exception);
             }
         });
     }
 }
 
-class Library {
+class LibInfo {
     constructor(
         public readonly name: string,
         public readonly description: string,
