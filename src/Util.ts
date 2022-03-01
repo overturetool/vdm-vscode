@@ -105,7 +105,7 @@ export async function addToSettingsArray(
                 canSelectFolders: folders,
                 canSelectMany: true,
                 openLabel: "Add",
-                title: `Add to ${settingName}...`,
+                title: `Add to ${settingName}`,
             });
 
             // None selected
