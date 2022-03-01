@@ -1,23 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, extensions, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Disposable, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./Util";
-import { extensionId } from "./ExtensionInfo";
 import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Dialect";
 import { Clients } from "./Clients";
-
-// Zip handler library
+// Zip library
 import yauzl = require("yauzl");
-
-// Encoding handler library
+// Encoding library
 import iconv = require("iconv-lite");
+import { getExtensionPath } from "./util/ExtensionUtil";
 
 export class AddLibraryHandler implements Disposable {
     private _disposables: Disposable[] = [];
-    private readonly libraryEncoding: BufferEncoding = "utf8";
+    private readonly _libraryEncoding: BufferEncoding = "utf8";
+    private static _userDefinedJarPaths: string[] = [];
 
     constructor(private readonly clients: Clients) {
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
@@ -37,6 +36,7 @@ export class AddLibraryHandler implements Disposable {
     }
 
     public static getIncludedLibrariesFolderPath(extensionPath: string, wsFolder: WorkspaceFolder): string {
+        // Get the standard or high precision path of the included library jars folder
         const libPath: string = Path.resolve(
             extensionPath,
             "resources",
@@ -53,21 +53,11 @@ export class AddLibraryHandler implements Disposable {
         return libPath;
     }
 
-    public static getIncludedLibraryJars(extensionPath: string, wsFolder: WorkspaceFolder): string[] {
-        // Get the standard or high precision path of the included library jars
-        const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(extensionPath, wsFolder);
-
-        return libPath
-            ? Fs.readdirSync(libPath, { withFileTypes: true })
-                  ?.filter((dirent: Fs.Dirent) => dirent.name.endsWith(".jar"))
-                  ?.map((dirent: Fs.Dirent) => Path.resolve(libPath, dirent.name)) ?? []
-            : [];
-    }
-
-    public static getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): string[] {
-        // Get any library jars specified by the user
+    private static resolveAndFlattenJarPaths(jarPaths: string[], wsFolder: WorkspaceFolder): string[] {
+        // Resolve jar paths, flatten directories, filter duplicate jar names and inform the user
+        const visitedJarPaths: Map<string, string> = new Map<string, string>();
         return (
-            (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder)?.get("VDM-Libraries") as string[])
+            jarPaths
                 .map((path: string) => {
                     let errMsg: string = "";
                     if (!Path.isAbsolute(path)) {
@@ -78,7 +68,7 @@ export class AddLibraryHandler implements Disposable {
                         }
                         path = resolvedPath;
                     } else if (!Fs.existsSync(path)) {
-                        errMsg = `Cannot resolve path to the library jar '${path}'.`;
+                        errMsg = `The library jar path '${path}' does not exist.`;
                     }
                     if (errMsg) {
                         AddLibraryHandler.showAndLogWarning(errMsg);
@@ -87,7 +77,56 @@ export class AddLibraryHandler implements Disposable {
                     return Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDir(path, "jar") : [path];
                 })
                 ?.reduce((prev: string[], cur: string[]) => prev.concat(cur), []) ?? []
-        );
+        ).filter((jarPath: string) => {
+            const jarName: string = Path.basename(jarPath);
+            if (!visitedJarPaths.has(jarName)) {
+                visitedJarPaths.set(jarName, jarPath);
+                return true;
+            }
+            window.showInformationMessage(
+                `The library jar '${jarName}' is in multiple paths.. Using the path '${visitedJarPaths.get(jarName)}'.`
+            );
+            return false;
+        });
+    }
+
+    public static getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): string[] {
+        // Get library jars specified by the user at the folder level setting - if not defined at this level then the "next up" level where it is defined is returned.
+        let folderSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder.uri)?.get("VDM-Libraries") ??
+            []) as string[];
+
+        // Get library jars specified by the user at the user or workspace level setting - if the workspace level setting is defined then it is returned instead of the user level setting.
+        let userOrWorkspaceSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries")?.get("VDM-Libraries") ??
+            []) as string[];
+
+        const jarPathsFromSettings: string[] = AddLibraryHandler.resolveAndFlattenJarPaths(folderSettings, wsFolder);
+
+        // Determine if settings are equal, e.g. if the setting is not defined at the folder level.
+        if (
+            folderSettings.length != userOrWorkspaceSettings.length ||
+            !folderSettings.every((ujp: string) => userOrWorkspaceSettings.find((fjp: string) => fjp == ujp))
+        ) {
+            // If the settings are not equal then merge them and in case of duplicate jar names the folder level takes precedence over the workspace/user level.
+            jarPathsFromSettings.push(
+                ...AddLibraryHandler.resolveAndFlattenJarPaths(userOrWorkspaceSettings, wsFolder).filter((uwsPath: string) => {
+                    const uwsPathName: string = Path.basename(uwsPath);
+                    const existingJarPath: string = jarPathsFromSettings.find(
+                        (fsPath: string) => Path.basename(fsPath) == Path.basename(uwsPath)
+                    );
+                    if (existingJarPath) {
+                        window.showInformationMessage(
+                            `The library jar ${uwsPathName} has been defined on multiple settings levels. The path '${existingJarPath}' from the 'folder' level is being used.`
+                        );
+                        return false;
+                    }
+                    return true;
+                })
+            );
+        }
+
+        // Save the list of jar paths as this is the list known by the server and therefore does not need to be generated again.
+        AddLibraryHandler._userDefinedJarPaths = jarPathsFromSettings;
+        return jarPathsFromSettings;
     }
 
     private static showAndLogWarning(msg: string, err?: string) {
@@ -335,80 +374,84 @@ export class AddLibraryHandler implements Disposable {
     private getLibInfoFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, LibInfo[]>> {
         return new Promise<Map<string, LibInfo[]>>((resolve, reject) => {
             // Get user defined library jars
-            const jarPaths: string[] = AddLibraryHandler.getUserDefinedLibraryJars(wsFolder);
+            const jarPaths: string[] = AddLibraryHandler._userDefinedJarPaths;
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-                jarPaths.push(...AddLibraryHandler.getIncludedLibraryJars(extensions.getExtension(extensionId).extensionPath, wsFolder));
+                let includedJarsPaths: string[] = Util.getFilesFromDir(
+                    AddLibraryHandler.getIncludedLibrariesFolderPath(getExtensionPath(), wsFolder),
+                    "jar"
+                );
+
+                if (jarPaths.length > 0) {
+                    includedJarsPaths = includedJarsPaths.filter((ijp: string) => {
+                        const jarName: string = Path.basename(ijp);
+                        const existingJarPath: string = jarPaths.find((jp: string) => Path.basename(jp) == jarName);
+                        if (existingJarPath) {
+                            window.showInformationMessage(
+                                `The included library jar '${jarName}' is also defined by the user in the path '${existingJarPath}'. Ignoring the version included with the extension.`
+                            );
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+
+                jarPaths.push(...includedJarsPaths);
             }
 
             if (!jarPaths || jarPaths.length < 1) return resolve(new Map());
 
-            // Used to filter duplicated paths before mapping
-            const filterForUniquePath: Set<string> = new Set<string>();
-
             // Extract libraries information from jars
             Promise.all(
-                jarPaths
-                    .filter((jarPath: string) => {
-                        const jarName: string = Path.basename(jarPath);
-                        if (!filterForUniquePath.has(jarName)) {
-                            filterForUniquePath.add(jarName);
-                            return true;
-                        }
-                        window.showInformationMessage(
-                            `Found multiple paths for the library jar '${jarName}'. Ignoring the path '${jarPath}'.`
-                        );
-                        return false;
-                    })
-                    .map(
-                        (jarPath: string) =>
-                            new Promise<[string, LibInfo[]]>((resolve, reject) => {
-                                yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err: any, zipfile: any) => {
-                                    if (err) reject(err);
-                                    zipfile.on("error", (err: any) => {
-                                        zipfile.close();
-                                        reject(err);
-                                    });
-                                    // Resolve to empty array if the whole zip file has been read without finding any libraries information file
-                                    zipfile.on("end", () => {
-                                        zipfile.close();
-                                        resolve(["", []]);
-                                    });
-                                    zipfile.on("entry", (entry: any) => {
-                                        // If a libraries information file has been found then read it else read the next zip entry
-                                        if (!/\/$/.test(entry.fileName) && entry.fileName.toLowerCase().endsWith("library.json")) {
-                                            zipfile.openReadStream(entry, (error: any, readStream: any) => {
-                                                if (error) {
-                                                    zipfile.close();
-                                                    return reject(error);
-                                                }
-                                                readStream.on("data", (data: any) => {
-                                                    // Get libraries information and close file
-                                                    const jsonData: any = JSON.parse(data.toString());
-                                                    zipfile.close();
-                                                    // Create mapping from jar path to library information
-                                                    const jarPathToLib: [string, LibInfo[]] = [jarPath, []];
-                                                    const libraries: LibInfo[] = jsonData[dialect];
-                                                    if (libraries) {
-                                                        // Include jarpath in library information object
-                                                        libraries.forEach((library: LibInfo) => {
-                                                            const libraryToAdd = library;
-                                                            libraryToAdd.jarPath = jarPath;
-                                                            jarPathToLib[1].push(libraryToAdd);
-                                                        });
-                                                    }
-                                                    return resolve(jarPathToLib);
-                                                });
-                                            });
-                                        } else {
-                                            zipfile.readEntry();
-                                        }
-                                    });
-                                    zipfile.readEntry();
+                jarPaths.map(
+                    (jarPath: string) =>
+                        new Promise<[string, LibInfo[]]>((resolve, reject) => {
+                            yauzl.open(jarPath, { lazyEntries: true, autoClose: true }, (err: any, zipfile: any) => {
+                                if (err) reject(err);
+                                zipfile.on("error", (err: any) => {
+                                    zipfile.close();
+                                    reject(err);
                                 });
-                            })
-                    )
+                                // Resolve to empty array if the whole zip file has been read without finding any libraries information file
+                                zipfile.on("end", () => {
+                                    zipfile.close();
+                                    resolve(["", []]);
+                                });
+                                zipfile.on("entry", (entry: any) => {
+                                    // If a libraries information file has been found then read it else read the next zip entry
+                                    if (!/\/$/.test(entry.fileName) && entry.fileName.toLowerCase().endsWith("library.json")) {
+                                        zipfile.openReadStream(entry, (error: any, readStream: any) => {
+                                            if (error) {
+                                                zipfile.close();
+                                                return reject(error);
+                                            }
+                                            readStream.on("data", (data: any) => {
+                                                // Get libraries information and close file
+                                                const jsonData: any = JSON.parse(data.toString());
+                                                zipfile.close();
+                                                // Create mapping from jar path to library information
+                                                const jarPathToLib: [string, LibInfo[]] = [jarPath, []];
+                                                const libraries: LibInfo[] = jsonData[dialect];
+                                                if (libraries) {
+                                                    // Include jarpath in library information object
+                                                    libraries.forEach((library: LibInfo) => {
+                                                        const libraryToAdd = library;
+                                                        libraryToAdd.jarPath = jarPath;
+                                                        jarPathToLib[1].push(libraryToAdd);
+                                                    });
+                                                }
+                                                return resolve(jarPathToLib);
+                                            });
+                                        });
+                                    } else {
+                                        zipfile.readEntry();
+                                    }
+                                });
+                                zipfile.readEntry();
+                            });
+                        })
+                )
             ) // When we have looked through all jar files and found all information on all libraries
                 .then((jarPathToLibs: [string, LibInfo[]][]) => {
                     // Collect entries to single map
@@ -495,14 +538,14 @@ export class AddLibraryHandler implements Disposable {
                                     // Create writestream with needed encoding to the target path
                                     const writeStream: Fs.WriteStream = Fs.createWriteStream(Path.join(targetFolderPath, fileName), {
                                         encoding:
-                                            wsEncoding == this.libraryEncoding || !Buffer.isEncoding(wsEncoding)
-                                                ? this.libraryEncoding
+                                            wsEncoding == this._libraryEncoding || !Buffer.isEncoding(wsEncoding)
+                                                ? this._libraryEncoding
                                                 : wsEncoding,
                                     });
 
                                     // Pipe the readstream into the iconv-lite decoder, then into the encoder (to handle workspaces encoded in other formats than utf8), then finally to the writestream and handle erros.
                                     readStream
-                                        .pipe(iconv.decodeStream(this.libraryEncoding))
+                                        .pipe(iconv.decodeStream(this._libraryEncoding))
                                         .pipe(iconv.encodeStream(wsEncoding))
                                         .pipe(writeStream)
                                         .on("error", (err) => {
