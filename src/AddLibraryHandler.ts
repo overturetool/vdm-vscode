@@ -53,18 +53,57 @@ export class AddLibraryHandler implements Disposable {
         return libPath;
     }
 
-    private static resolveAndFlattenJarPaths(jarPaths: string[], wsFolder: WorkspaceFolder): string[] {
+    public static getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): string[] {
+        // Get library jars specified by the user at the folder level setting - if not defined at this level then the "next up" level where it is defined is returned.
+        let folderSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder.uri)?.get("VDM-Libraries") ??
+            []) as string[];
+
+        // Get library jars specified by the user at the user or workspace level setting - if the workspace level setting is defined then it is returned instead of the user level setting.
+        let userOrWorkspaceSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries")?.get("VDM-Libraries") ??
+            []) as string[];
+
+        const jarPathsFromSettings: string[] = AddLibraryHandler.resolveJarFilePaths(folderSettings, wsFolder.uri.fsPath);
+
+        // Determine if settings are equal, e.g. if the setting is not defined at the folder level.
+        if (
+            folderSettings.length != userOrWorkspaceSettings.length ||
+            !folderSettings.every((ujp: string) => userOrWorkspaceSettings.find((fjp: string) => fjp == ujp))
+        ) {
+            // If the settings are not equal then merge them and in case of duplicate jar names the folder level takes precedence over the workspace/user level.
+            jarPathsFromSettings.push(
+                ...AddLibraryHandler.resolveJarFilePaths(userOrWorkspaceSettings).filter((uwsPath: string) => {
+                    const uwsPathName: string = Path.basename(uwsPath);
+                    const existingJarPath: string = jarPathsFromSettings.find(
+                        (fsPath: string) => Path.basename(fsPath) == Path.basename(uwsPath)
+                    );
+                    if (existingJarPath) {
+                        window.showInformationMessage(
+                            `The library jar ${uwsPathName} has been defined on multiple settings levels. The path '${existingJarPath}' from the 'folder' level is being used.`
+                        );
+                        return false;
+                    }
+                    return true;
+                })
+            );
+        }
+
+        // Save the list of jar paths as this is the list known by the server and therefore does not need to be generated again.
+        AddLibraryHandler._userDefinedJarPaths = jarPathsFromSettings;
+        return jarPathsFromSettings;
+    }
+
+    private static resolveJarFilePaths(jarPaths: string[], relativePath?: string): string[] {
         // Resolve jar paths, flatten directories, filter duplicate jar names and inform the user
         const visitedJarPaths: Map<string, string> = new Map<string, string>();
         return (
             jarPaths
                 .map((path: string) => {
                     let errMsg: string = "";
-                    if (!Path.isAbsolute(path)) {
+                    if (relativePath && !Path.isAbsolute(path)) {
                         // Path should be relative to the project
-                        const resolvedPath: string = Path.resolve(...[wsFolder.uri.fsPath, path]);
+                        const resolvedPath: string = Path.resolve(...[relativePath, path]);
                         if (!Fs.existsSync(resolvedPath)) {
-                            errMsg = `Cannot resolve relative path to the library jar '${path}'. Root path is expected to be '${wsFolder.uri.fsPath}'`;
+                            errMsg = `Cannot resolve relative path to the library jar '${path}'. Root path is expected to be '${relativePath}'`;
                         }
                         path = resolvedPath;
                     } else if (!Fs.existsSync(path)) {
@@ -88,45 +127,6 @@ export class AddLibraryHandler implements Disposable {
             );
             return false;
         });
-    }
-
-    public static getUserDefinedLibraryJars(wsFolder: WorkspaceFolder): string[] {
-        // Get library jars specified by the user at the folder level setting - if not defined at this level then the "next up" level where it is defined is returned.
-        let folderSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder.uri)?.get("VDM-Libraries") ??
-            []) as string[];
-
-        // Get library jars specified by the user at the user or workspace level setting - if the workspace level setting is defined then it is returned instead of the user level setting.
-        let userOrWorkspaceSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries")?.get("VDM-Libraries") ??
-            []) as string[];
-
-        const jarPathsFromSettings: string[] = AddLibraryHandler.resolveAndFlattenJarPaths(folderSettings, wsFolder);
-
-        // Determine if settings are equal, e.g. if the setting is not defined at the folder level.
-        if (
-            folderSettings.length != userOrWorkspaceSettings.length ||
-            !folderSettings.every((ujp: string) => userOrWorkspaceSettings.find((fjp: string) => fjp == ujp))
-        ) {
-            // If the settings are not equal then merge them and in case of duplicate jar names the folder level takes precedence over the workspace/user level.
-            jarPathsFromSettings.push(
-                ...AddLibraryHandler.resolveAndFlattenJarPaths(userOrWorkspaceSettings, wsFolder).filter((uwsPath: string) => {
-                    const uwsPathName: string = Path.basename(uwsPath);
-                    const existingJarPath: string = jarPathsFromSettings.find(
-                        (fsPath: string) => Path.basename(fsPath) == Path.basename(uwsPath)
-                    );
-                    if (existingJarPath) {
-                        window.showInformationMessage(
-                            `The library jar ${uwsPathName} has been defined on multiple settings levels. The path '${existingJarPath}' from the 'folder' level is being used.`
-                        );
-                        return false;
-                    }
-                    return true;
-                })
-            );
-        }
-
-        // Save the list of jar paths as this is the list known by the server and therefore does not need to be generated again.
-        AddLibraryHandler._userDefinedJarPaths = jarPathsFromSettings;
-        return jarPathsFromSettings;
     }
 
     private static showAndLogWarning(msg: string, err?: string) {
