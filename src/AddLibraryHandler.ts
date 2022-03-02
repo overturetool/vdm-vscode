@@ -95,13 +95,12 @@ export class AddLibraryHandler implements Disposable {
         }
 
         if (resolveFailedPaths.length > 0) {
+            const msg: string = `Unable to resolve the following VDM library jar/folder paths: '${resolveFailedPaths.reduce(
+                (prev, curr) => (curr += `' '${prev} `)
+            )}'. These can be changed in the settings`;
+            console.log(msg);
             window
-                .showInformationMessage(
-                    `Unable to resolve the following VDM library jar/folder paths: '${resolveFailedPaths.reduce(
-                        (prev, curr) => (curr += `' '${prev} `)
-                    )}'. These can be changed in the settings`,
-                    ...["Go to settings"]
-                )
+                .showInformationMessage(msg, ...["Go to settings"])
                 .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.server.libraries"));
         }
 
