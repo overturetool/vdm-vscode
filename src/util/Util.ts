@@ -105,7 +105,7 @@ export async function addToSettingsArray(
                 canSelectFolders: folders,
                 canSelectMany: true,
                 openLabel: "Add",
-                title: `Add to ${settingName}...`,
+                title: `Add to ${settingName}`,
             });
 
             // None selected
@@ -143,10 +143,10 @@ export async function addToSettingsArray(
     );
 }
 
-export function getFilesFromDir(dir: string, fileType: string): string[] {
+export function getFilesFromDirRecur(dir: string, fileType: string): string[] {
     const files = Fs.readdirSync(dir, { withFileTypes: true }).map((dirent) => {
         const filePath: string = Path.resolve(dir, dirent.name);
-        return dirent.isDirectory() ? getFilesFromDir(filePath, fileType) : filePath.endsWith(fileType) ? filePath : [];
+        return dirent.isDirectory() ? getFilesFromDirRecur(filePath, fileType) : filePath.endsWith(fileType) ? filePath : [];
     });
     return Array.prototype.concat(...files);
 }

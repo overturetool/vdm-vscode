@@ -92,7 +92,7 @@ export class Clients extends AutoDisposable {
         }
 
         // Add settings watch for workspace folder
-        workspace.onDidChangeConfiguration((e) => this.didChangeConfigurationCheck(e, wsFolder), this, this.getDisposables(wsFolder));
+        workspace.onDidChangeConfiguration((e) => this.didChangeConfigurationCheck(e), this, this.getDisposables(wsFolder));
 
         // Setup client options
         const clientOptions: LanguageClientOptions = {
@@ -169,9 +169,9 @@ export class Clients extends AutoDisposable {
         this.restart(workspace.getWorkspaceFolder(window.activeTextEditor.document.uri));
     }
 
-    private didChangeConfigurationCheck(event: ConfigurationChangeEvent, wsFolder: WorkspaceFolder) {
+    private didChangeConfigurationCheck(event: ConfigurationChangeEvent) {
         // Restart the extension if changes has been made to the server settings
-        if (event.affectsConfiguration("vdm-vscode.server", wsFolder) || event.affectsConfiguration("files.encoding")) {
+        if (event.affectsConfiguration("vdm-vscode.server") || event.affectsConfiguration("files.encoding")) {
             // Ask the user to restart the extension if setting requires a restart
             window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then((res) => {
                 if (res == "Reload Now") commands.executeCommand("workbench.action.reloadWindow");

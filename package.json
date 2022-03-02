@@ -711,7 +711,7 @@
                     },
                     "default": [],
                     "scope": "resource",
-                    "markdownDescription": "A list containing library jar paths. Adding a folder path will load all library jars in the folder. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
+                    "markdownDescription": "A list containing library jar paths. Adding a folder path will load all library jars in the folder. If using a relative path it is expected to be defined at the 'folder' settings level as the path is expected to be relative to the corresponding project. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
                 },
                 "vdm-vscode.server.libraries.includeDefaultLibraries": {
                     "type": "boolean",
