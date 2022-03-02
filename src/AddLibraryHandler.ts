@@ -96,9 +96,9 @@ export class AddLibraryHandler extends AutoDisposable {
         }
 
         if (resolveFailedPaths.length > 0) {
-            const msg: string = `Unable to resolve the following VDM library jar/folder paths: '${resolveFailedPaths.reduce(
-                (prev, curr) => (curr += `' '${prev} `)
-            )}'. These can be changed in the settings`;
+            const msg: string = `Unable to resolve the following VDM library jar/folder paths: <${resolveFailedPaths.reduce(
+                (prev, curr) => (curr += `> <${prev}`)
+            )}>. These can be changed in the settings.`;
             console.log(msg);
             window
                 .showInformationMessage(msg, ...["Go to settings"])
