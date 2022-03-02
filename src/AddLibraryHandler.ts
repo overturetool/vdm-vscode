@@ -61,8 +61,13 @@ export class AddLibraryHandler implements Disposable {
         // Get library jars specified by the user at the user or workspace level setting - if the workspace level setting is defined then it is returned instead of the user level setting.
         let userOrWorkspaceSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries")?.get("VDM-Libraries") ??
             []) as string[];
-
-        const jarPathsFromSettings: string[] = AddLibraryHandler.resolveJarFilePaths(folderSettings, wsFolder.uri.fsPath);
+        const resolveFailedPaths: string[] = [];
+        const jarPathsFromSettings: string[] = AddLibraryHandler.resolveJarPathsFromSettings(
+            folderSettings,
+            resolveFailedPaths,
+            "Folder",
+            wsFolder.uri
+        );
 
         // Determine if settings are equal, e.g. if the setting is not defined at the folder level.
         if (
@@ -71,20 +76,33 @@ export class AddLibraryHandler implements Disposable {
         ) {
             // If the settings are not equal then merge them and in case of duplicate jar names the folder level takes precedence over the workspace/user level.
             jarPathsFromSettings.push(
-                ...AddLibraryHandler.resolveJarFilePaths(userOrWorkspaceSettings).filter((uwsPath: string) => {
-                    const uwsPathName: string = Path.basename(uwsPath);
-                    const existingJarPath: string = jarPathsFromSettings.find(
-                        (fsPath: string) => Path.basename(fsPath) == Path.basename(uwsPath)
-                    );
-                    if (existingJarPath) {
-                        window.showInformationMessage(
-                            `The library jar ${uwsPathName} has been defined on multiple settings levels. The path '${existingJarPath}' from the 'folder' level is being used.`
+                ...AddLibraryHandler.resolveJarPathsFromSettings(userOrWorkspaceSettings, resolveFailedPaths, "User or Workspace").filter(
+                    (uwsPath: string) => {
+                        const uwsPathName: string = Path.basename(uwsPath);
+                        const existingJarPath: string = jarPathsFromSettings.find(
+                            (fsPath: string) => Path.basename(fsPath) == Path.basename(uwsPath)
                         );
-                        return false;
+                        if (existingJarPath) {
+                            window.showInformationMessage(
+                                `The library jar ${uwsPathName} has been defined on multiple setting levels. The path '${existingJarPath}' from the 'folder' level is being used.`
+                            );
+                            return false;
+                        }
+                        return true;
                     }
-                    return true;
-                })
+                )
             );
+        }
+
+        if (resolveFailedPaths.length > 0) {
+            window
+                .showInformationMessage(
+                    `Unable to resolve the following VDM library jar/folder paths: '${resolveFailedPaths.reduce(
+                        (prev, curr) => (curr += `' '${prev} `)
+                    )}'. These can be changed in the settings`,
+                    ...["Go to settings"]
+                )
+                .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.server.libraries"));
         }
 
         // Save the list of jar paths as this is the list known by the server and therefore does not need to be generated again.
@@ -92,28 +110,28 @@ export class AddLibraryHandler implements Disposable {
         return jarPathsFromSettings;
     }
 
-    private static resolveJarFilePaths(jarPaths: string[], relativePath?: string): string[] {
+    private static resolveJarPathsFromSettings(
+        jarPaths: string[],
+        resolveFailedPaths: string[],
+        settingsLevel: string,
+        rootUri?: Uri
+    ): string[] {
         // Resolve jar paths, flatten directories, filter duplicate jar names and inform the user
         const visitedJarPaths: Map<string, string> = new Map<string, string>();
         return (
             jarPaths
                 .map((path: string) => {
-                    let errMsg: string = "";
-                    if (relativePath && !Path.isAbsolute(path)) {
+                    const originalPath: string = path;
+                    if (rootUri && !Path.isAbsolute(path)) {
                         // Path should be relative to the project
-                        const resolvedPath: string = Path.resolve(...[relativePath, path]);
-                        if (!Fs.existsSync(resolvedPath)) {
-                            errMsg = `Cannot resolve relative path to the library jar '${path}'. Root path is expected to be '${relativePath}'`;
-                        }
+                        const resolvedPath: string = Path.resolve(...[rootUri.fsPath, path]);
                         path = resolvedPath;
-                    } else if (!Fs.existsSync(path)) {
-                        errMsg = `The library jar path '${path}' does not exist.`;
                     }
-                    if (errMsg) {
-                        AddLibraryHandler.showAndLogWarning(errMsg);
+                    if (!Fs.existsSync(path)) {
+                        resolveFailedPaths.push(originalPath);
                         return [];
                     }
-                    return Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDir(path, "jar") : [path];
+                    return Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDirRecur(path, "jar") : [path];
                 })
                 ?.reduce((prev: string[], cur: string[]) => prev.concat(cur), []) ?? []
         ).filter((jarPath: string) => {
@@ -123,7 +141,9 @@ export class AddLibraryHandler implements Disposable {
                 return true;
             }
             window.showInformationMessage(
-                `The library jar '${jarName}' is in multiple paths.. Using the path '${visitedJarPaths.get(jarName)}'.`
+                `The library jar '${jarName}' is in multiple paths for the setting level ${settingsLevel}. Using the path '${visitedJarPaths.get(
+                    jarName
+                )}'.`
             );
             return false;
         });
@@ -378,7 +398,7 @@ export class AddLibraryHandler implements Disposable {
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-                let includedJarsPaths: string[] = Util.getFilesFromDir(
+                let includedJarsPaths: string[] = Util.getFilesFromDirRecur(
                     AddLibraryHandler.getIncludedLibrariesFolderPath(getExtensionPath(), wsFolder),
                     "jar"
                 );
