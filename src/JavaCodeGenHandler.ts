@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, Disposable, extensions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import * as util from "./Util";
+import * as util from "./util/Util";
 import { spawn } from "child_process";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";

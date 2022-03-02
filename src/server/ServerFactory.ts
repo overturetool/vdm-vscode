@@ -4,7 +4,7 @@ import * as net from "net";
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as child_process from "child_process";
-import * as util from "../Util";
+import * as util from "../util/Util";
 import * as encoding from "../Encoding";
 import * as Plugins from "./Plugins";
 import { AddLibraryHandler } from "../AddLibraryHandler";
@@ -157,6 +157,8 @@ export class ServerFactory implements Disposable {
 
         // Construct java launch arguments
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);
+
+        // TODO add -strict flag
 
         // Start the LSP server
         let server = child_process.spawn(this._javaPath, args, { cwd: wsFolder.uri.fsPath });

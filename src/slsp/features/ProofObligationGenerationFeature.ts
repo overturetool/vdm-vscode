@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as util from "../../Util";
+import * as util from "../../util/Util";
 import { window, Uri, EventEmitter } from "vscode";
 import { StaticFeature, ClientCapabilities, ServerCapabilities, DocumentSelector, Disposable } from "vscode-languageclient";
 import { ProofObligationPanel, ProofObligationProvider } from "../views/ProofObligationPanel";

@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import * as Util from "./Util";
-import { dialectsPretty, getDialectFromPretty, guessDialect } from "./util/Dialect";
+import * as Util from "./util/Util";
+import { guessDialect, pickDialect } from "./util/Dialect";
 import { Clients } from "./Clients";
+import AutoDisposable from "./helper/AutoDisposable";
 // Zip library
 import yauzl = require("yauzl");
 // Encoding library
 import iconv = require("iconv-lite");
 import { getExtensionPath } from "./util/ExtensionUtil";
 
-export class AddLibraryHandler implements Disposable {
-    private _disposables: Disposable[] = [];
+export class AddLibraryHandler extends AutoDisposable {
     private readonly _libraryEncoding: BufferEncoding = "utf8";
     private static _userDefinedJarPaths: string[] = [];
 
     constructor(private readonly clients: Clients) {
+        super();
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
             this.addLibrary(workspace.getWorkspaceFolder(inputUri))
@@ -376,15 +377,12 @@ export class AddLibraryHandler implements Disposable {
                     .then((d: string) => resolve(d))
                     .catch(async () => {
                         // Let user chose
-                        const chosenDialect: string = await window.showQuickPick(dialectsPretty, {
-                            placeHolder: "Choose dialect",
-                            canPickMany: false,
-                        });
-                        if (!chosenDialect) {
-                            reject("Add library failed! Unable to determine VDM dialect for workspace");
-                        } else {
-                            resolve(getDialectFromPretty(chosenDialect));
-                        }
+                        await pickDialect()
+                            .then((pick) => {
+                                if (!pick) reject("Add library failed! Unable to determine VDM dialect for workspace");
+                                else resolve(pick);
+                            })
+                            .catch((e) => reject(e));
                     });
             }
         });

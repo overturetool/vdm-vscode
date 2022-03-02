@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import path = require("path");
-import * as util from "../Util";
+import * as util from "../util/Util";
 import { extensions, workspace, WorkspaceFolder } from "vscode";
 import { extensionId } from "../ExtensionInfo";
 

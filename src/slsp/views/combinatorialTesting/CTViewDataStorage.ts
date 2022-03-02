@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as fs from "fs-extra";
-import * as util from "../../../Util";
+import * as util from "../../../util/Util";
 import { CancellationToken, Disposable, Event, Progress, Uri, WorkspaceFolder } from "vscode";
 import { CTFilterOption, NumberRange } from "../../protocol/CombinatorialTesting";
 import * as Types from "./CTDataTypes";
@@ -307,7 +307,7 @@ export class CTViewDataStorage {
         this._traceGroups = [];
     }
 
-    ///// Functions for getting data from the storage /////
+    //* Functions for getting data from the storage //
     public getTraceGroupNames(): string[] {
         return this._traceGroups.map((ct) => ct.name);
     }

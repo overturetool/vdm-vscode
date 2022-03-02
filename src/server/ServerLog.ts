@@ -7,8 +7,8 @@ import AutoDisposable from "../helper/AutoDisposable";
 export class ServerLog extends AutoDisposable {
     constructor(private _logFolderUri: Uri) {
         super();
-        this._disposables.push(commands.registerCommand("vdm-vscode.openServerLog", this.openServerLog));
-        this._disposables.push(commands.registerCommand("vdm-vscode.openServerLogFolder", this.openServerLogFolder));
+        this._disposables.push(commands.registerCommand("vdm-vscode.openServerLog", this.openServerLog, this));
+        this._disposables.push(commands.registerCommand("vdm-vscode.openServerLogFolder", this.openServerLogFolder, this));
     }
 
     get uri(): Uri {

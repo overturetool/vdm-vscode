@@ -15,7 +15,7 @@ import {
     commands,
     DocumentSelector,
 } from "vscode";
-import * as util from "../../Util";
+import * as util from "../../util/Util";
 
 export interface ProofObligation {
     id: number;

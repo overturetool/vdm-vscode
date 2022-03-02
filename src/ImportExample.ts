@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, extensions, Uri, window, workspace } from "vscode";
-import * as util from "./Util";
+import { commands, extensions, Uri, window, workspace } from "vscode";
+import * as util from "./util/Util";
 import { Dirent, readdirSync } from "fs";
 import { copySync } from "fs-extra";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
+import AutoDisposable from "./helper/AutoDisposable";
 
-export class AddExampleHandler implements Disposable {
-    private _disposables: Disposable[] = [];
-
+export class AddExampleHandler extends AutoDisposable {
     constructor() {
+        super();
         util.registerCommand(this._disposables, "vdm-vscode.importExample", () => this.addExample());
-    }
-    dispose(): void {
-        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private async addExample() {
