@@ -8,7 +8,7 @@ import { ServerFactory } from "./server/ServerFactory";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
 import AutoDisposable from "./helper/AutoDisposable";
-import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFolders";
+import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
 
 export class Clients extends AutoDisposable {

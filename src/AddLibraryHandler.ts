@@ -5,7 +5,7 @@ import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient"
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./util/Util";
-import { guessDialect, pickDialect } from "./util/Dialect";
+import { guessDialect, pickDialect } from "./util/DialectUtil";
 import { Clients } from "./Clients";
 import AutoDisposable from "./helper/AutoDisposable";
 // Zip library
@@ -13,6 +13,7 @@ import yauzl = require("yauzl");
 // Encoding library
 import iconv = require("iconv-lite");
 import { getExtensionPath } from "./util/ExtensionUtil";
+import { getFilesFromDirRecur } from "./util/DirectoriesUtil";
 
 export class AddLibraryHandler extends AutoDisposable {
     private readonly _libraryEncoding: BufferEncoding = "utf8";
@@ -131,7 +132,7 @@ export class AddLibraryHandler extends AutoDisposable {
                         resolveFailedPaths.push(originalPath);
                         return [];
                     }
-                    return Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDirRecur(path, "jar") : [path];
+                    return Fs.lstatSync(path).isDirectory() ? getFilesFromDirRecur(path, "jar") : [path];
                 })
                 ?.reduce((prev: string[], cur: string[]) => prev.concat(cur), []) ?? []
         ).filter((jarPath: string) => {
@@ -395,7 +396,7 @@ export class AddLibraryHandler extends AutoDisposable {
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-                let includedJarsPaths: string[] = Util.getFilesFromDirRecur(
+                let includedJarsPaths: string[] = getFilesFromDirRecur(
                     AddLibraryHandler.getIncludedLibrariesFolderPath(getExtensionPath(), wsFolder),
                     "jar"
                 );

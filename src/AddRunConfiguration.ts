@@ -3,7 +3,7 @@
 import * as util from "./util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "./VdmDapSupport";
-import { guessDialect } from "./util/Dialect";
+import { guessDialect } from "./util/DialectUtil";
 
 interface VdmArgument {
     name: string;

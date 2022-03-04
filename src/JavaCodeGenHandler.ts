@@ -6,13 +6,14 @@ import { spawn } from "child_process";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
 import { Clients } from "./Clients";
+import { createDirectory, recursivePathSearch } from "./util/DirectoriesUtil";
 
 export class JavaCodeGenHandler implements Disposable {
     private _disposables: Disposable[] = [];
     private jarPath: string;
 
     constructor(private readonly clients: Clients) {
-        this.jarPath = util.recursivePathSearch(
+        this.jarPath = recursivePathSearch(
             path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
             /javagen.*jar/i
         );
@@ -66,7 +67,7 @@ export class JavaCodeGenHandler implements Disposable {
 
                 let folderUri = util.joinUriPath(wsFolder.uri, ".generated", "java");
 
-                util.createDirectory(folderUri).then(
+                createDirectory(folderUri).then(
                     async () => {
                         try {
                             // Invoke java code gen

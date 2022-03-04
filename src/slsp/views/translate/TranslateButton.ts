@@ -5,6 +5,7 @@ import * as util from "../../../util/Util";
 import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, WorkspaceConfiguration } from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";
+import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
 
 export class TranslateButton implements Disposable {
     protected _commandDisposable: Disposable;
@@ -45,7 +46,7 @@ export class TranslateButton implements Disposable {
                     );
                     p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig)).then(async (mainFileUri) => {
                         // Check if a file has been returned
-                        if (!util.isDir(mainFileUri.fsPath)) {
+                        if (!isDir(mainFileUri.fsPath)) {
                             // Open the main file in the translation
                             const doc = await workspace.openTextDocument(mainFileUri);
 
@@ -64,7 +65,7 @@ export class TranslateButton implements Disposable {
 
     protected createSaveDir(timestamped: boolean = false, location: Uri): Uri {
         // Create save location in "...<worksapcefolder>/.generate/<language>"
-        const saveLocation = util.createDirectorySync(location, timestamped);
+        const saveLocation = createDirectorySync(location, timestamped);
 
         // Make sure the directory is empty
         Fs.emptyDirSync(saveLocation.fsPath);

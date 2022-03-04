@@ -18,8 +18,8 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { Clients } from "./Clients";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialects } from "./util/Dialect";
-import { resetSortedWorkspaceFolders } from "./util/WorkspaceFolders";
+import { dialects } from "./util/DialectUtil";
+import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 
 export function activate(context: ExtensionContext) {

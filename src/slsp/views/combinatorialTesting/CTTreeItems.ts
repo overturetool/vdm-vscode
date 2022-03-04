@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { MarkdownString, TreeItem, TreeItemCollapsibleState, TreeItemLabel } from "vscode";
-import { Icons } from "../../../util/Icons";
+import { Icons } from "../../../util/IconsUtil";
 import { NumberRange, VerdictKind } from "../../protocol/CombinatorialTesting";
 import * as Types from "./CTDataTypes";
 
