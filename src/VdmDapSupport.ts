@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as vscode from "vscode";
-import { DebugAdapter, WorkspaceFolder } from "vscode";
+import { DebugAdapter, workspace, WorkspaceFolder } from "vscode";
+import { Clients } from "./Clients";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
@@ -20,7 +21,7 @@ export namespace VdmDapSupport {
     let factory: VdmDebugAdapterDescriptorFactory;
     let sessions: string[] = new Array(); // Array of running sessions
 
-    export function initDebugConfig(context: vscode.ExtensionContext) {
+    export function initDebugConfig(context: vscode.ExtensionContext, clients: Clients) {
         if (!initialized) {
             initialized = true;
             // register a configuration provider for 'vdm' debug type
@@ -28,7 +29,7 @@ export namespace VdmDapSupport {
             context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("vdm", provider));
 
             // run the debug adapter as a server inside the extension and communicating via a socket
-            factory = new VdmDebugAdapterDescriptorFactory();
+            factory = new VdmDebugAdapterDescriptorFactory(clients);
 
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
         }
@@ -98,44 +99,52 @@ export namespace VdmDapSupport {
     }
 
     export class VdmDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
-        private dapPorts: Map<string, number> = new Map();
+        private dapPorts: Map<vscode.Uri, number> = new Map();
+
+        constructor(private _clients: Clients) {}
 
         addPort(folder: vscode.WorkspaceFolder, dapPort: number) {
-            this.dapPorts.set(folder.uri.toString(), dapPort);
+            this.dapPorts.set(folder.uri, dapPort);
         }
 
-        createDebugAdapterDescriptor(
+        async createDebugAdapterDescriptor(
             session: vscode.DebugSession,
             _executable: vscode.DebugAdapterExecutable | undefined
-        ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+        ): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
             // Check if server has not been launched
             let uri = session.workspaceFolder.uri;
-            if (!this.dapPorts.get(uri.toString())) {
-                // Open a file in the workspace folder to force the client to start for the folder
-                let pattern = new vscode.RelativePattern(uri.fsPath, "*.vdm*");
-                vscode.workspace.findFiles(pattern, null, 1).then(async (res) => {
-                    if (res.length > 0) vscode.workspace.openTextDocument(res[0]);
+            if (!this.dapPorts.get(uri)) {
+                // Locate any VDM file in the project.
+                await vscode.workspace.findFiles(new vscode.RelativePattern(uri.fsPath, "*.vdm*"), null, 1).then(async (res) => {
+                    let errMsg: string = `Unable to launch a debug session for the workspace folder ${session.workspaceFolder.name} without any VDM files, please retry`;
+                    if (res.length > 0) {
+                        // Open a file in the workspace folder to force the client to start for the folder.
+                        const docuUri: vscode.Uri = (await vscode.workspace.openTextDocument(res[0]))?.uri;
+
+                        const wsFolder: vscode.WorkspaceFolder = workspace.getWorkspaceFolder(docuUri);
+
+                        // Wait for the client to be started - this should ensure that there is a DAP port.
+                        await this._clients.get(wsFolder).onReady();
+                        const dapPort: number = this.dapPorts.get(wsFolder.uri);
+                        if (dapPort) {
+                            // Give time for the server to be fully up an running before initialising the debug session
+                            await new Promise((f) => setTimeout(f, 500));
+                            return new vscode.DebugAdapterServer(dapPort);
+                        }
+                        // The client did not receive a dap port so the server probably does not support DAP.
+                        errMsg = `[${this._clients.name}] Did not receive a DAP port on start up, debugging is not activated`;
+                    }
+                    // Warn the user of the error.
+                    vscode.window.showWarningMessage(errMsg);
+
+                    // Remove sessions from active sessions
+                    sessions = sessions.filter((value) => value != uri.toString());
+                    return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session));
                 });
-
-                // Ask the user to retry debugging
-                // FIXME the retry should be done automatically, but right now I can't find a reliable way to know if the client is ready....
-                vscode.window
-                    .showErrorMessage(
-                        `Unable to find server for workspace folder ${session.workspaceFolder.name}, please retry`,
-                        "Retry",
-                        "Close"
-                    )
-                    .then((res) => {
-                        if (res == "Retry") vscode.debug.startDebugging(session.workspaceFolder, session.configuration);
-                    });
-
-                // Remove sessions from active sessions
-                sessions = sessions.filter((value) => value != uri.toString());
-                return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session));
             }
 
             // make VS Code connect to debug server
-            return new vscode.DebugAdapterServer(this.dapPorts.get(uri.toString()));
+            return new vscode.DebugAdapterServer(this.dapPorts.get(uri));
         }
     }
 

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as languageId from "./slsp/protocol/LanguageId";
-import * as encoding from "./Encoding";
 import * as ExtensionInfo from "./ExtensionInfo";
-import { ExtensionContext, TextDocument, window, workspace, commands } from "vscode";
+import { ExtensionContext, window, workspace, commands, TextDocument } from "vscode";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./vdmj/VdmjCTInterpreterHandler";
@@ -20,7 +19,7 @@ import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/Comb
 import { Clients } from "./Clients";
 import { ServerFactory } from "./server/ServerFactory";
 import { dialects } from "./util/Dialect";
-import { getOuterMostWorkspaceFolder, resetSortedWorkspaceFolders } from "./util/WorkspaceFolders";
+import { resetSortedWorkspaceFolders } from "./util/WorkspaceFolders";
 import { ServerLog } from "./server/ServerLog";
 
 export function activate(context: ExtensionContext) {
@@ -34,7 +33,7 @@ export function activate(context: ExtensionContext) {
     }
 
     // Setup client storage
-    let _clients = new Clients(serverFactory);
+    const _clients = new Clients(serverFactory, dialects);
     context.subscriptions.push(_clients);
 
     // Show VDM VS Code buttons
@@ -59,36 +58,13 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new AddToClassPathHandler());
 
     // Initialise debug handler
-    dapSupport.initDebugConfig(context);
+    dapSupport.initDebugConfig(context, _clients);
 
     // Register commands and event handlers
-    context.subscriptions.push(workspace.onDidOpenTextDocument(didOpenTextDocument));
-    workspace.textDocuments.forEach(didOpenTextDocument);
+    context.subscriptions.push(workspace.onDidOpenTextDocument((document: TextDocument) => _clients.launchClient(document)));
+    workspace.textDocuments.forEach((document: TextDocument) => _clients.launchClient(document));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => _clients.stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
-
-    function didOpenTextDocument(document: TextDocument): void {
-        // We are only interested in vdm text
-        if (!dialects.find((languageId) => languageId == document.languageId)) {
-            return;
-        }
-
-        // Check that the document encoding matches the encoding setting
-        encoding.checkEncoding(document);
-
-        const uri = document.uri;
-        let folder = workspace.getWorkspaceFolder(uri);
-        // Files outside a folder can't be handled.
-        if (!folder) {
-            // TODO remove if we get support for single file workspace
-            return;
-        }
-        // If we have nested workspace folders we only start a server on the outer most workspace folder.
-        folder = getOuterMostWorkspaceFolder(folder);
-
-        // Start client for the folder
-        _clients.launchClient(folder, document.languageId);
-    }
 }
 
 export function deactivate(): Thenable<void> | undefined {
