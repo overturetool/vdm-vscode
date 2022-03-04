@@ -21,7 +21,10 @@ export class GenerateCoverageButton extends TranslateButton {
             if (Util.match(p.selector, wsFolder.uri)) {
                 try {
                     // Get save location for coverage files
-                    const saveUri = this.createSaveDir(true, Uri.joinPath(wsFolder.uri, ".generated", this._language, this._language));
+                    const saveUri = this.createSaveDir(
+                        true,
+                        Uri.joinPath(Util.generatedDataPath(wsFolder), this._language, this._language)
+                    );
 
                     // Perform translation to generate coverage files
                     p.provider

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as Util from "./util/Util";
-import { commands, ConfigurationChangeEvent, Disposable, TextDocument, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ConfigurationChangeEvent, Disposable, TextDocument, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
@@ -49,7 +49,7 @@ export class Clients extends AutoDisposable {
         let client = this.get(wsFolder);
         if (client) {
             this.delete(wsFolder);
-            client.stop().then(() => this.startClient(wsFolder, client.language));
+            client.stop().then(() => this.startClient(wsFolder, client.languageId));
         }
     }
 
@@ -131,8 +131,7 @@ export class Clients extends AutoDisposable {
             dialect,
             this._serverFactory.createServerOptions(wsFolder, dialect),
             // getServerOptions(wsFolder, dialect),
-            clientOptions,
-            Util.joinUriPath(wsFolder.uri, ".generated")
+            clientOptions
         );
 
         // Save client
@@ -170,7 +169,7 @@ export class Clients extends AutoDisposable {
                 });
 
                 this.delete(wsFolder);
-                this.startClient(wsFolder, client.language);
+                this.startClient(wsFolder, client.languageId);
             }
         }
     }

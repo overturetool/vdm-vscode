@@ -61,7 +61,7 @@ export class ProofObligationPanel implements Disposable {
     }
 
     private get _resourcesUri(): Uri {
-        return util.joinUriPath(this._context.extensionUri, "resources");
+        return Uri.joinPath(this._context.extensionUri, "resources");
     }
 
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
@@ -292,8 +292,8 @@ export class ProofObligationPanel implements Disposable {
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, "poView.js"));
-        const styleUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, "poView.css"));
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "poView.js"));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "poView.css"));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();

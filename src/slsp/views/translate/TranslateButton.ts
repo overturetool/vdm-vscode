@@ -37,7 +37,7 @@ export class TranslateButton implements Disposable {
             if (util.match(p.selector, uri)) {
                 try {
                     // Get save location for the translation
-                    const saveUri = this.createSaveDir(timestamped, Uri.joinPath(wsFolder.uri, ".generated", this._language));
+                    const saveUri = this.createSaveDir(timestamped, Uri.joinPath(util.generatedDataPath(wsFolder), this._language));
 
                     // Perform translation and handle result
                     const languageConfig = workspace.getConfiguration(

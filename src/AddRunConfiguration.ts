@@ -110,7 +110,7 @@ export class AddRunConfigurationHandler implements Disposable {
                 this.saveRunConfiguration(wsFolder, debugConfiguration);
 
                 // Open launch file
-                window.showTextDocument(util.joinUriPath(wsFolder.uri, ".vscode", "launch.json"), { preview: true, preserveFocus: true });
+                window.showTextDocument(Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"), { preview: true, preserveFocus: true });
             })
         );
     }

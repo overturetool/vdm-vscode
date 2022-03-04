@@ -369,7 +369,7 @@ export class AddLibraryHandler extends AutoDisposable {
         return new Promise<string>((resolve, reject) => {
             const client: SpecificationLanguageClient = this.clients.get(wsFolder);
             if (client) {
-                resolve(client.language);
+                resolve(client.languageId);
             } else {
                 console.log(`No client found for the folder: ${wsFolder.name}`);
 

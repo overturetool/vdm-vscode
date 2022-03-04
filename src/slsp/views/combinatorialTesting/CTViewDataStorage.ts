@@ -5,6 +5,7 @@ import { CancellationToken, Disposable, Event, Progress, Uri, WorkspaceFolder } 
 import { CTFilterOption, NumberRange } from "../../protocol/CombinatorialTesting";
 import * as Types from "./CTDataTypes";
 import { isSameWorkspaceFolder } from "../../../util/WorkspaceFoldersUtil";
+import { generatedDataPath } from "../../../util/Util";
 
 export interface CombinatorialTestProvider {
     provideTraceInfo(): Thenable<Types.TraceGroupInfo[]>;
@@ -25,7 +26,7 @@ export class CTViewDataStorage {
     private _usingPartialResult: boolean = false;
 
     public get storageLocation(): Uri {
-        return Uri.joinPath(this._currentWsFolder?.uri, ".generated", "Combinatorial Testing");
+        return Uri.joinPath(generatedDataPath(this._currentWsFolder), "Combinatorial Testing");
     }
 
     public get workspaceFolders(): WorkspaceFolder[] {

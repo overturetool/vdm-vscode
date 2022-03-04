@@ -41,9 +41,9 @@ export class JavaCodeGenHandler implements Disposable {
             `Starting code generation.`,
             new Promise(async (resolve, reject) => {
                 let client = this.clients.get(wsFolder);
-                if (client?.language) {
-                    dialect = dialects[client.language];
-                    dialectext = client.language;
+                if (client?.languageId) {
+                    dialect = dialects[client.languageId];
+                    dialectext = client.languageId;
                 } else {
                     console.log(`No client found for the folder: ${wsFolder.name}`);
 
@@ -65,7 +65,7 @@ export class JavaCodeGenHandler implements Disposable {
                     }
                 }
 
-                let folderUri = util.joinUriPath(wsFolder.uri, ".generated", "java");
+                const folderUri = Uri.joinPath(util.generatedDataPath(wsFolder), "java");
 
                 createDirectory(folderUri).then(
                     async () => {
