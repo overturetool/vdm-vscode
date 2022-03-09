@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as Util from "./util/Util";
-import { commands, ConfigurationChangeEvent, Disposable, TextDocument, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import {
+    commands,
+    ConfigurationChangeEvent,
+    Disposable,
+    RelativePattern,
+    TextDocument,
+    Uri,
+    window,
+    workspace,
+    WorkspaceFolder,
+} from "vscode";
 import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
@@ -87,6 +96,23 @@ export class Clients extends AutoDisposable {
         });
     }
 
+    async launchClientForWorkspace(wsFolder: WorkspaceFolder): Promise<SpecificationLanguageClient> {
+        // Locate any VDM file in the project.
+        const files: Uri[] = await workspace.findFiles(new RelativePattern(wsFolder.uri.fsPath, "*.vdm*"), null, 1);
+        if (files.length > 0) {
+            // Open a file in the workspace folder to force the client to start for the folder.
+            await workspace.openTextDocument(files[0]);
+
+            // Wait for the client to be ready - i.e. connected to the server.
+            const client: SpecificationLanguageClient = this.get(wsFolder);
+            await client.onReady();
+
+            // Give time for the server to be fully up and running..
+            return client;
+        }
+        return null;
+    }
+
     launchClient(document: TextDocument) {
         // Only accept documents with accepted language ids.
         if (!this._acceptedLanguageIds.find((languageId) => languageId == document.languageId)) {
@@ -95,7 +121,7 @@ export class Clients extends AutoDisposable {
         // Check that the document encoding matches the encoding setting
         encoding.checkEncoding(document);
 
-        let folder = workspace.getWorkspaceFolder(document.uri);
+        const folder = workspace.getWorkspaceFolder(document.uri);
         // Files outside a folder can't be handled.
         if (!folder) {
             // TODO remove if we get support for single file workspace
@@ -130,7 +156,6 @@ export class Clients extends AutoDisposable {
             `vdm-vscode`,
             dialect,
             this._serverFactory.createServerOptions(wsFolder, dialect),
-            // getServerOptions(wsFolder, dialect),
             clientOptions
         );
 
