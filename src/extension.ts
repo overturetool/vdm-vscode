@@ -33,8 +33,8 @@ export function activate(context: ExtensionContext) {
     }
 
     // Setup client storage
-    const _clients = new Clients(serverFactory, dialects);
-    context.subscriptions.push(_clients);
+    const clientManager = new Clients(serverFactory, dialects);
+    context.subscriptions.push(clientManager);
 
     // Show VDM VS Code buttons
     commands.executeCommand("setContext", "vdm-submenus-show", true);
@@ -42,28 +42,28 @@ export function activate(context: ExtensionContext) {
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
     context.subscriptions.push(new CombinatorialTestingView(new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
-    context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name));
-    context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name));
-    context.subscriptions.push(new TranslateButton(languageId.graphviz, ExtensionInfo.name));
-    context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name));
-    const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name);
+    context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name, clientManager));
+    context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
+    context.subscriptions.push(new TranslateButton(languageId.graphviz, ExtensionInfo.name, clientManager));
+    context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name, clientManager));
+    const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, dialects));
 
     // Initialise handlers
-    context.subscriptions.push(new AddLibraryHandler(_clients));
+    context.subscriptions.push(new AddLibraryHandler(clientManager));
     context.subscriptions.push(new AddRunConfigurationHandler());
     context.subscriptions.push(new AddExampleHandler());
-    context.subscriptions.push(new JavaCodeGenHandler(_clients));
+    context.subscriptions.push(new JavaCodeGenHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
 
     // Initialise debug handler
-    dapSupport.initDebugConfig(context, _clients);
+    dapSupport.initDebugConfig(context, clientManager);
 
     // Register commands and event handlers
-    context.subscriptions.push(workspace.onDidOpenTextDocument((document: TextDocument) => _clients.launchClient(document)));
-    workspace.textDocuments.forEach((document: TextDocument) => _clients.launchClient(document));
-    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => _clients.stopClients(e.removed), this));
+    context.subscriptions.push(workspace.onDidOpenTextDocument((document: TextDocument) => clientManager.launchClient(document)));
+    workspace.textDocuments.forEach((document: TextDocument) => clientManager.launchClient(document));
+    context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => clientManager.stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
 }
 

@@ -2,7 +2,7 @@
 
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { commands, Disposable, DocumentFilter, DocumentSelector, Uri, window, workspace } from "vscode";
+import { commands, Disposable, DocumentFilter, DocumentSelector, window, workspace, WorkspaceFolder, Uri } from "vscode";
 import * as glob from "glob";
 
 export function writeToLog(path: string, msg: string) {
@@ -115,9 +115,8 @@ export function registerCommand(disposables: Disposable[], command: string, call
     return disposable;
 }
 
-export function joinUriPath(uri: Uri, ...additions: string[]): Uri {
-    let uriString = uri.toString() + "/" + additions.join("/");
-    return Uri.parse(uriString);
+export function generatedDataPath(wsFolder: WorkspaceFolder): Uri {
+    return Uri.joinPath(wsFolder.uri, ".generated");
 }
 
 /**

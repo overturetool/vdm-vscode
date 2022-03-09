@@ -205,29 +205,25 @@
                 "command": "vdm-vscode.translate.latex",
                 "title": "Translate to LaTeX",
                 "category": "VDM",
-                "icon": "$(references)",
-                "enablement": "vdm-vscode.translate.latex"
+                "icon": "$(references)"
             },
             {
                 "command": "vdm-vscode.translate.word",
                 "title": "Translate to Word",
                 "category": "VDM",
-                "icon": "$(references)",
-                "enablement": "vdm-vscode.translate.word"
+                "icon": "$(references)"
             },
             {
                 "command": "vdm-vscode.translate.coverage",
                 "title": "Generate Coverage",
                 "category": "VDM",
-                "icon": "$(references)",
-                "enablement": "vdm-vscode.translate.coverage"
+                "icon": "$(references)"
             },
             {
                 "command": "vdm-vscode.translate.graphviz",
                 "title": "Generate Dependency Graph",
                 "category": "VDM",
-                "icon": "$(references)",
-                "enablement": "vdm-vscode.translate.graphviz"
+                "icon": "$(references)"
             },
             {
                 "command": "vdm-vscode.translate.isabelle",
