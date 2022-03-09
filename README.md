@@ -1,9 +1,9 @@
 # VDM Language Support in Visual Studio Code
 
 [![License](https://img.shields.io/:license-gpl3-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/visual-studio-marketplace/v/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/jonaskrask.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=jonaskrask.vdm-vscode)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/overturetool.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=overturetool.vdm-vscode)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/overturetool.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=overturetool.vdm-vscode)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/overturetool.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=overturetool.vdm-vscode)
 
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
 The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle).
@@ -18,7 +18,7 @@ Find the wiki at: [https://github.com/jonaskrask/vdm-vscode/wiki](https://github
 
 ## Installation
 
-In Visual Studio Code just type @id:jonaskrask.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
+In Visual Studio Code just type @id:overturetool.vdm-vscode in the Extensions view Search box or type vdm and select VDM VSCode.
 
 ### Requirements
 
