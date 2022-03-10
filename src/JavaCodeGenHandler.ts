@@ -5,14 +5,14 @@ import * as util from "./util/Util";
 import { spawn } from "child_process";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
-import { Clients } from "./Clients";
+import { ClientManager } from "./ClientManager";
 import { createDirectory, recursivePathSearch } from "./util/DirectoriesUtil";
 
 export class JavaCodeGenHandler implements Disposable {
     private _disposables: Disposable[] = [];
     private jarPath: string;
 
-    constructor(private readonly clients: Clients) {
+    constructor(private readonly clients: ClientManager) {
         this.jarPath = recursivePathSearch(
             path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
             /javagen.*jar/i

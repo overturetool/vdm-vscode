@@ -6,12 +6,12 @@ import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, Workspac
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";
 import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
-import { Clients } from "../../../Clients";
+import { ClientManager } from "../../../ClientManager";
 
 export class TranslateButton implements Disposable {
     protected _commandDisposable: Disposable;
 
-    constructor(protected _language: string, protected _extensionName: string, clientManager: Clients) {
+    constructor(protected _language: string, protected _extensionName: string, clientManager: ClientManager) {
         this._commandDisposable = commands.registerCommand(
             `${_extensionName}.translate.${this._language}`,
             async (uri) => {

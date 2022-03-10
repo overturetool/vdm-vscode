@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as vscode from "vscode";
-import { Clients } from "./Clients";
+import { ClientManager } from "./ClientManager";
 import { CompletedParsingParams, CompletedParsingNotification } from "./server/ServerNotifications";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
 
@@ -22,7 +22,7 @@ export namespace VdmDapSupport {
     let factory: VdmDebugAdapterDescriptorFactory;
     let sessions: string[] = new Array(); // Array of running sessions
 
-    export function initDebugConfig(context: vscode.ExtensionContext, clients: Clients) {
+    export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
         if (!initialized) {
             initialized = true;
             // register a configuration provider for 'vdm' debug type
@@ -30,7 +30,7 @@ export namespace VdmDapSupport {
             context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("vdm", provider));
 
             // run the debug adapter as a server inside the extension and communicating via a socket
-            factory = new VdmDebugAdapterDescriptorFactory(clients);
+            factory = new VdmDebugAdapterDescriptorFactory(clientManager);
 
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
         }
@@ -102,7 +102,7 @@ export namespace VdmDapSupport {
     export class VdmDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
         private dapPorts: Map<vscode.Uri, number> = new Map();
 
-        constructor(private _clientManager: Clients) {}
+        constructor(private _clientManager: ClientManager) {}
 
         addPort(folder: vscode.WorkspaceFolder, dapPort: number) {
             this.dapPorts.set(folder.uri, dapPort);
@@ -123,7 +123,7 @@ export namespace VdmDapSupport {
                     dapPort = this.dapPorts.get(session.workspaceFolder.uri);
                     if (!dapPort) {
                         // The client did not receive a dap port so the server probably does not support DAP.
-                        errMsg = `[${this._clientManager.name}] Did not receive a DAP port on start up, debugging is not activated`;
+                        errMsg = `[${this._clientManager.name}] Did not receive a DAP port from the language server on start up, debugging is not activated`;
                     } else {
                         return new Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>>((resolve) => {
                             // Subscribe to the server notification indicating that the server has finished the initial parse/check of the spec.

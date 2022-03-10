@@ -6,7 +6,7 @@ import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./util/Util";
 import { guessDialect, pickDialect } from "./util/DialectUtil";
-import { Clients } from "./Clients";
+import { ClientManager } from "./ClientManager";
 import AutoDisposable from "./helper/AutoDisposable";
 // Zip library
 import yauzl = require("yauzl");
@@ -19,7 +19,7 @@ export class AddLibraryHandler extends AutoDisposable {
     private readonly _libraryEncoding: BufferEncoding = "utf8";
     private static _userDefinedJarPaths: string[] = [];
 
-    constructor(private readonly clients: Clients) {
+    constructor(private readonly clientManager: ClientManager) {
         super();
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
@@ -367,7 +367,7 @@ export class AddLibraryHandler extends AutoDisposable {
 
     private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            const client: SpecificationLanguageClient = this.clients.get(wsFolder);
+            const client: SpecificationLanguageClient = this.clientManager.get(wsFolder);
             if (client) {
                 resolve(client.languageId);
             } else {

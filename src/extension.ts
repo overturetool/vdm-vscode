@@ -16,9 +16,9 @@ import { TranslateButton } from "./slsp/views/translate/TranslateButton";
 import { GenerateCoverageButton } from "./slsp/views/translate/GenerateCoverageButton";
 import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
-import { Clients } from "./Clients";
+import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialects } from "./util/DialectUtil";
+import { dialects, workspaceFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 
@@ -32,8 +32,8 @@ export function activate(context: ExtensionContext) {
         return; // Can't create servers -> no reason to continue
     }
 
-    // Setup client storage
-    const clientManager = new Clients(serverFactory, dialects);
+    // Setup client manager
+    const clientManager: ClientManager = new ClientManager(serverFactory, dialects, workspaceFilePattern);
     context.subscriptions.push(clientManager);
 
     // Show VDM VS Code buttons
@@ -41,7 +41,7 @@ export function activate(context: ExtensionContext) {
 
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
-    context.subscriptions.push(new CombinatorialTestingView(new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
+    context.subscriptions.push(new CombinatorialTestingView(clientManager, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
     context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.graphviz, ExtensionInfo.name, clientManager));

@@ -5,7 +5,7 @@ import * as LanguageId from "../../protocol/LanguageId";
 import { Uri, window, WorkspaceFolder } from "vscode";
 import * as Util from "../../../util/Util";
 import { TranslateProviderManager } from "./TranslateProviderManager";
-import { Clients } from "../../../Clients";
+import { ClientManager } from "../../../ClientManager";
 
 const events = require("events");
 
@@ -13,7 +13,7 @@ export class GenerateCoverageButton extends TranslateButton {
     public eventEmitter = new events.EventEmitter();
     public static translationDoneId: string = "TDONE";
 
-    constructor(protected _extensionName: string, clientManager: Clients) {
+    constructor(protected _extensionName: string, clientManager: ClientManager) {
         super(LanguageId.coverage, _extensionName, clientManager);
     }
     // Override

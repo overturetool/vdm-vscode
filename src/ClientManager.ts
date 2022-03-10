@@ -20,12 +20,16 @@ import AutoDisposable from "./helper/AutoDisposable";
 import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
 
-export class Clients extends AutoDisposable {
+export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
     private _wsDisposables: Map<string, Disposable[]> = new Map();
     private _restartOnCrash: boolean = true;
 
-    constructor(private _serverFactory: ServerFactory, private _acceptedLanguageIds: string[]) {
+    constructor(
+        private _serverFactory: ServerFactory,
+        private _acceptedLanguageIds: string[],
+        private _wsFilePatternFunc: (wsFolder: WorkspaceFolder) => RelativePattern
+    ) {
         super();
         this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
     }
@@ -34,24 +38,17 @@ export class Clients extends AutoDisposable {
         return this.constructor["name"];
     }
 
-    private addClient(wsFolder: WorkspaceFolder, client: SpecificationLanguageClient): void {
-        if (this._clients.has(Clients.getKey(wsFolder)))
-            console.info(`[${this.name}] Overwriting client for workspace folder: ${wsFolder.name}`);
-
-        this._clients.set(Clients.getKey(wsFolder), client);
-    }
-
     has(wsFolder: WorkspaceFolder): boolean {
-        return this._clients.has(Clients.getKey(wsFolder));
+        return this._clients.has(ClientManager.getKey(wsFolder));
     }
 
     get(wsFolder: WorkspaceFolder): SpecificationLanguageClient {
-        return this._clients.get(Clients.getKey(wsFolder));
+        return this._clients.get(ClientManager.getKey(wsFolder));
     }
 
     delete(wsFolder: WorkspaceFolder): boolean {
         this.getDisposables(wsFolder).forEach((d) => d.dispose());
-        return this._clients.delete(Clients.getKey(wsFolder));
+        return this._clients.delete(ClientManager.getKey(wsFolder));
     }
 
     restart(wsFolder: WorkspaceFolder): void {
@@ -98,16 +95,16 @@ export class Clients extends AutoDisposable {
 
     async launchClientForWorkspace(wsFolder: WorkspaceFolder): Promise<SpecificationLanguageClient> {
         // Locate any VDM file in the project.
-        const files: Uri[] = await workspace.findFiles(new RelativePattern(wsFolder.uri.fsPath, "*.vdm*"), null, 1);
+
+        const files: Uri[] = await workspace.findFiles(this._wsFilePatternFunc(wsFolder), null, 1);
         if (files.length > 0) {
             // Open a file in the workspace folder to force the client to start for the folder.
             await workspace.openTextDocument(files[0]);
 
-            // Wait for the client to be ready - i.e. connected to the server.
             const client: SpecificationLanguageClient = this.get(wsFolder);
+            // Wait for the client to be ready - i.e. completed initialization phase.
             await client.onReady();
 
-            // Give time for the server to be fully up and running..
             return client;
         }
         return null;
@@ -130,6 +127,13 @@ export class Clients extends AutoDisposable {
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
         const wsFolder = getOuterMostWorkspaceFolder(folder);
         this.startClient(wsFolder, document.languageId);
+    }
+
+    private addClient(wsFolder: WorkspaceFolder, client: SpecificationLanguageClient): void {
+        if (this._clients.has(ClientManager.getKey(wsFolder)))
+            console.info(`[${this.name}] Overwriting client for workspace folder: ${wsFolder.name}`);
+
+        this._clients.set(ClientManager.getKey(wsFolder), client);
     }
 
     private startClient(wsFolder: WorkspaceFolder, dialect: string) {
@@ -200,14 +204,14 @@ export class Clients extends AutoDisposable {
     }
 
     private addDisposable(wsFolder: WorkspaceFolder, disposable: Disposable) {
-        const wsKey = Clients.getKey(wsFolder);
+        const wsKey = ClientManager.getKey(wsFolder);
         let disposables = this._wsDisposables.get(wsKey) ?? [];
         disposables.push(disposable);
         this._wsDisposables.set(wsKey, disposables);
     }
 
     private getDisposables(wsFolder: WorkspaceFolder): Disposable[] {
-        return this._wsDisposables.get(Clients.getKey(wsFolder)) ?? [];
+        return this._wsDisposables.get(ClientManager.getKey(wsFolder)) ?? [];
     }
 
     private restartActiveClient(): void {
