@@ -7,6 +7,7 @@ import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TestItem, TraceItem } from "./CTTreeItems";
 import * as Types from "./CTDataTypes";
 import { CTFilterOption, NumberRange, VerdictKind } from "../../protocol/CombinatorialTesting";
+import { ClientManager } from "../../../ClientManager";
 
 enum state {
     idle,
@@ -52,7 +53,11 @@ export class CombinatorialTestingView implements Disposable {
         commands.executeCommand("setContext", "vdm-vscode.ct.idle-state", newState == state.idle);
     }
 
-    constructor(private _filterHandler?: CTExecuteFilterHandler, private _interpreterHandler?: CTInterpreterHandler) {
+    constructor(
+        private _clientManager: ClientManager,
+        private _filterHandler?: CTExecuteFilterHandler,
+        private _interpreterHandler?: CTInterpreterHandler
+    ) {
         this.state = state.idle;
 
         // Create data provider
@@ -436,19 +441,36 @@ export class CombinatorialTestingView implements Disposable {
             return;
         }
 
-        // Select workspace folder, if more than one available have the user pick.
+        // Select workspace folder.
+        // Go through all available workspace folders and pick those that contains a file that matches the glob pattern.
         let wsFolder: WorkspaceFolder;
-        let wsFolders = this._dataStorage.workspaceFolders;
-        if (wsFolders.length == 0) window.showInformationMessage("No workspace folders available");
-        else if (wsFolders.length == 1) wsFolder = wsFolders[0];
-        else {
+        const wsFolders: WorkspaceFolder[] = [];
+        wsFolders.push(...workspace.workspaceFolders);
+        if (wsFolders.length > 1) {
+            // Let the user choose the worskpace folder
             let fName = await window.showQuickPick(
                 wsFolders.map((f) => f.name),
                 { canPickMany: false, title: "Select workspace folder" }
             );
-            if (fName) wsFolder = wsFolders.find((f) => f.name == fName);
-        }
 
+            if (fName) {
+                wsFolder = wsFolders.find((f) => f.name == fName);
+                // Check if a data provider has not been registered for the workspace folder.
+                if (!this._dataStorage.workspaceFolders.find((wsfWithProvider) => wsfWithProvider.uri == wsFolder.uri)) {
+                    // If a client already exists the language server does not support combinatorial testing
+                    if (this._clientManager.has(wsFolder)) {
+                        console.info(
+                            "[CT View] Select workspace not possible as the langauge server does not seem to support combinatorial testing"
+                        );
+                    } else if (!(await this._clientManager.launchClientForWorkspace(wsFolders.find((f) => f.name == fName)))) {
+                        // If a client cannot be started for the workspace the workspace does not contain files matching the language id of the extension
+                        window.showInformationMessage(
+                            "[CT View] The selected workspace does not seem to contain any files that can be handled by the extension."
+                        );
+                    }
+                }
+            }
+        }
         // If the workspace folder has changed, rebuild the outline
         if (wsFolder && this._currentWsFolder != wsFolder) {
             this._currentWsFolder = wsFolder;

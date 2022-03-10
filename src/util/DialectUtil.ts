@@ -3,6 +3,7 @@
 import { WorkspaceFolder, RelativePattern, workspace, Uri, window } from "vscode";
 
 export const dialects: string[] = ["vdmsl", "vdmpp", "vdmrt"];
+
 const dialectsPretty: string[] = ["VDM-SL", "VDM++", "VDM-RT"];
 
 const dialectExtensions: Map<string, string[]> = new Map([
@@ -15,6 +16,10 @@ const dialectAlias: Map<string, string[]> = new Map([
     ["vdmpp", [...dialectExtensions.get("vdmpp"), "vdm-pp", "pp", "vdm++"]],
     ["vdmrt", [...dialectExtensions.get("vdmrt"), "vdm-rt", "rt"]],
 ]);
+
+export function workspaceFilePattern(wsFolder: WorkspaceFolder): RelativePattern {
+    return new RelativePattern(wsFolder.uri.fsPath, "*.vdm*");
+}
 
 export async function guessDialect(wsFolder: WorkspaceFolder): Promise<string> {
     return new Promise(async (resolve, reject) => {
