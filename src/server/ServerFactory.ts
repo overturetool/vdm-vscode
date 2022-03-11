@@ -156,10 +156,16 @@ export class ServerFactory implements Disposable {
         // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
         classPath += path.resolve(serverConfig?.highPrecision === true ? this._jarPath_vdmj_hp : this._jarPath_vdmj, "*") + path.delimiter;
 
+        // Set strict
+        const setStrict = serverConfig.get("strict", false);
+        if (setStrict) args.push(`-Dvdmj.strict=true`);
+
+        // Set strict
+        const setVerbose = serverConfig.get("verbose", false);
+        if (setVerbose) args.push(`-Dvdmj.verbose=true`);
+
         // Construct java launch arguments
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);
-
-        // TODO add -strict flag
 
         // Start the LSP server
         let server = child_process.spawn(this._javaPath, args, { cwd: wsFolder.uri.fsPath });
