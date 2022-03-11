@@ -1,6 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Disposable, TreeView, commands, window, WorkspaceFolder, ProgressLocation, CancellationTokenSource, workspace } from "vscode";
+import {
+    Disposable,
+    TreeView,
+    commands,
+    window,
+    WorkspaceFolder,
+    ProgressLocation,
+    CancellationTokenSource,
+    workspace,
+    RelativePattern,
+} from "vscode";
 import CTTestTreeDataProvider from "./CTTestTreeDataProvider";
 import CTResultTreeDataProvider from "./CTResultTreeDataProvider";
 import { CTViewDataStorage } from "./CTViewDataStorage";
@@ -55,6 +65,7 @@ export class CombinatorialTestingView implements Disposable {
 
     constructor(
         private _clientManager: ClientManager,
+        private _wsFilePatternFunc: (wsFolder: WorkspaceFolder) => RelativePattern,
         private _filterHandler?: CTExecuteFilterHandler,
         private _interpreterHandler?: CTInterpreterHandler
     ) {
@@ -441,33 +452,41 @@ export class CombinatorialTestingView implements Disposable {
             return;
         }
 
-        // Select workspace folder.
-        // Go through all available workspace folders and pick those that contains a file that matches the glob pattern.
         let wsFolder: WorkspaceFolder;
         const wsFolders: WorkspaceFolder[] = [];
-        wsFolders.push(...workspace.workspaceFolders);
-        if (wsFolders.length > 1) {
-            // Let the user choose the worskpace folder
-            let fName = await window.showQuickPick(
-                wsFolders.map((f) => f.name),
-                { canPickMany: false, title: "Select workspace folder" }
-            );
+        // Only add workspace folders that contains a file which matches the file pattern.
+        wsFolders.push(
+            ...workspace.workspaceFolders.filter(async (wsFolder) => await workspace.findFiles(this._wsFilePatternFunc(wsFolder), null, 1))
+        );
 
-            if (fName) {
-                wsFolder = wsFolders.find((f) => f.name == fName);
-                // Check if a data provider has not been registered for the workspace folder.
-                if (!this._dataStorage.workspaceFolders.find((wsfWithProvider) => wsfWithProvider.uri == wsFolder.uri)) {
-                    // If a client already exists the language server does not support combinatorial testing
-                    if (this._clientManager.has(wsFolder)) {
-                        console.info(
-                            "[CT View] Select workspace not possible as the langauge server does not seem to support combinatorial testing"
-                        );
-                    } else if (!(await this._clientManager.launchClientForWorkspace(wsFolders.find((f) => f.name == fName)))) {
-                        // If a client cannot be started for the workspace the workspace does not contain files matching the language id of the extension
-                        window.showInformationMessage(
-                            "[CT View] The selected workspace does not seem to contain any files that can be handled by the extension."
-                        );
-                    }
+        if (wsFolders.length == 0) {
+            window.showInformationMessage("Please open a vdm file in the folder");
+            return wsFolder;
+        }
+
+        // Select workspace folder.
+
+        const wsFN: string | WorkspaceFolder =
+            workspace.workspaceFolders.length > 1
+                ? await window.showQuickPick(
+                      wsFolders.map((f) => f.name),
+                      { canPickMany: false, title: "Select workspace folder" }
+                  )
+                : workspace.workspaceFolders[0];
+        if (wsFN) {
+            wsFolder = typeof wsFN === "string" ? wsFolders.find((f) => f.name == wsFN) : wsFN;
+            // Check if a data provider has not been registered for the workspace folder.
+            if (!this._dataStorage.workspaceFolders.find((wsfWithProvider) => wsfWithProvider.uri == wsFolder.uri)) {
+                // If a client already exists the language server does not support combinatorial testing
+                if (this._clientManager.has(wsFolder)) {
+                    console.info(
+                        "[CT View] Select workspace not possible as the langauge server does not seem to support combinatorial testing"
+                    );
+                } else if (!(await this._clientManager.launchClientForWorkspace(wsFolders.find((f) => f.name == wsFolder.name)))) {
+                    // If a client cannot be started for the workspace the workspace does not contain files matching the language id of the extension
+                    window.showInformationMessage(
+                        "[CT View] The selected workspace does not seem to contain any files that can be handled by the extension."
+                    );
                 }
             }
         }

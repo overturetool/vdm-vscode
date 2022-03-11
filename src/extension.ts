@@ -41,7 +41,9 @@ export function activate(context: ExtensionContext) {
 
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
-    context.subscriptions.push(new CombinatorialTestingView(clientManager, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()));
+    context.subscriptions.push(
+        new CombinatorialTestingView(clientManager, workspaceFilePattern, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
+    );
     context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.graphviz, ExtensionInfo.name, clientManager));
