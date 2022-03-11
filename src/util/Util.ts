@@ -2,72 +2,8 @@
 
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { commands, Disposable, DocumentFilter, DocumentSelector, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Disposable, DocumentFilter, DocumentSelector, window, workspace, WorkspaceFolder, Uri } from "vscode";
 import * as glob from "glob";
-
-export function ensureDirectoryExistence(filePath) {
-    var dirname = Path.dirname(filePath);
-    return Fs.ensureDirSync(dirname);
-}
-
-export function getDefaultWorkspaceFolderLocation(): Uri | undefined {
-    if (workspace.workspaceFolders === undefined) {
-        return undefined;
-    }
-    if (workspace.workspaceFile && workspace.workspaceFile.scheme == "file") {
-        return Uri.parse(Path.dirname(workspace.workspaceFile.path));
-    }
-    if (workspace.workspaceFolders.length > 0) {
-        return Uri.parse(Path.dirname(workspace.workspaceFolders[0].uri.path));
-    }
-    return undefined;
-}
-
-export function recursivePathSearch(resourcesPath: string, searcher: { [Symbol.search](string: string): number }): string {
-    if (!Fs.existsSync(resourcesPath) || !isDir(resourcesPath)) return null;
-
-    let elementsInFolder = Fs.readdirSync(resourcesPath, { withFileTypes: true });
-    for (let i = 0; i < elementsInFolder.length; i++) {
-        let element: Fs.Dirent = elementsInFolder[i];
-        let fullElementPath = Path.resolve(resourcesPath, element.name);
-        if (isDir(fullElementPath)) fullElementPath = recursivePathSearch(fullElementPath, searcher);
-        else if (fullElementPath.split(Path.sep)[fullElementPath.split(Path.sep).length - 1].search(searcher) != -1) return fullElementPath;
-    }
-    return null;
-}
-
-export function isDir(path: Fs.PathLike): boolean {
-    return Fs.lstatSync(path).isDirectory();
-}
-
-export function createDirectory(fullUri: Uri, timestamped?: boolean): Promise<Uri> {
-    return new Promise((resolve, reject) => {
-        try {
-            if (timestamped) {
-                var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, "."); //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-                fullUri = Uri.parse(fullUri + " " + dateString);
-            }
-
-            Fs.ensureDirSync(fullUri.fsPath);
-            return resolve(fullUri);
-        } catch (error) {
-            console.warn(`[Util] Create directory failed with error: ${error}`);
-            reject(error);
-        }
-    });
-}
-
-export function createDirectorySync(fullUri: Uri, timestamped?: boolean): Uri {
-    if (timestamped) {
-        //Replace "/" in date format and ":" in time format as these are not allowed in directory names..
-        var dateString = new Date().toLocaleString().replace(/\//g, "-").replace(/:/g, ".");
-        fullUri = Uri.parse(fullUri + " " + dateString);
-    }
-
-    Fs.ensureDirSync(fullUri.fsPath);
-
-    return fullUri;
-}
 
 export function writeToLog(path: string, msg: string) {
     let logStream = Fs.createWriteStream(path, { flags: "a" });
@@ -143,14 +79,6 @@ export async function addToSettingsArray(
     );
 }
 
-export function getFilesFromDirRecur(dir: string, fileType: string): string[] {
-    const files = Fs.readdirSync(dir, { withFileTypes: true }).map((dirent) => {
-        const filePath: string = Path.resolve(dir, dirent.name);
-        return dirent.isDirectory() ? getFilesFromDirRecur(filePath, fileType) : filePath.endsWith(fileType) ? filePath : [];
-    });
-    return Array.prototype.concat(...files);
-}
-
 // MIT Licensed code from: https://github.com/georgewfraser/vscode-javac
 export function findJavaExecutable(binname: string) {
     if (process.platform === "win32") binname = binname + ".exe";
@@ -187,9 +115,8 @@ export function registerCommand(disposables: Disposable[], command: string, call
     return disposable;
 }
 
-export function joinUriPath(uri: Uri, ...additions: string[]): Uri {
-    let uriString = uri.toString() + "/" + additions.join("/");
-    return Uri.parse(uriString);
+export function generatedDataPath(wsFolder: WorkspaceFolder): Uri {
+    return Uri.joinPath(wsFolder.uri, ".generated");
 }
 
 /**
@@ -229,14 +156,4 @@ export function match(documentSelector: DocumentSelector, uri: Uri) {
     }
 
     return match;
-}
-
-export function isSameUri(a: Uri, b: Uri) {
-    if (!a || !b) return false;
-    return a.toString() == b.toString();
-}
-
-export function isSameWorkspaceFolder(a: WorkspaceFolder, b: WorkspaceFolder) {
-    if (!a || !b) return false;
-    else return isSameUri(a.uri, b.uri);
 }

@@ -12,6 +12,7 @@ import { WorkspaceConfiguration, workspace, window, WorkspaceFolder, OutputChann
 import { ServerOptions } from "vscode-languageclient/node";
 import { getExtensionPath } from "../util/ExtensionUtil";
 import { ServerLog } from "./ServerLog";
+import { ensureDirectoryExistence, recursivePathSearch } from "../util/DirectoriesUtil";
 
 export class ServerFactory implements Disposable {
     private _jarPath: string;
@@ -34,7 +35,7 @@ export class ServerFactory implements Disposable {
         }
 
         // Make sure that the VDMJ and LSP jars are present
-        if (!util.recursivePathSearch(this._jarPath_vdmj, /vdmj.*jar/i) || !util.recursivePathSearch(this._jarPath_vdmj, /lsp.*jar/i)) {
+        if (!recursivePathSearch(this._jarPath_vdmj, /vdmj.*jar/i) || !recursivePathSearch(this._jarPath_vdmj, /lsp.*jar/i)) {
             let m = "Server jars not found!";
             console.error("[ServerFactory] " + m);
             throw new Error(m);
@@ -109,7 +110,7 @@ export class ServerFactory implements Disposable {
         if (logLevel != "off") {
             // Ensure logging path exists
             const languageServerLoggingPath = path.resolve(this._log.uri.fsPath, wsFolder.name.toString() + "_lang_server.log");
-            util.ensureDirectoryExistence(languageServerLoggingPath);
+            ensureDirectoryExistence(languageServerLoggingPath);
             args.push(`-Dlsp.log.filename=${languageServerLoggingPath}`);
             args.push(`-Dlsp.log.level=${logLevel}`);
         }
@@ -174,7 +175,7 @@ export class ServerFactory implements Disposable {
         if (stdioConfig.activateStdoutLogging) {
             // Log to file
             if (stdoutLogPath != "") {
-                util.ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString());
+                ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString());
                 server.stdout.addListener("data", (chunk) =>
                     util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk)
                 );

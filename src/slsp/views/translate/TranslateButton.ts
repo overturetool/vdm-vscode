@@ -5,16 +5,23 @@ import * as util from "../../../util/Util";
 import { Uri, ViewColumn, window, workspace, WorkspaceFolder, commands, WorkspaceConfiguration } from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";
+import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
+import { ClientManager } from "../../../ClientManager";
 
 export class TranslateButton implements Disposable {
     protected _commandDisposable: Disposable;
 
-    constructor(protected _language: string, protected _extensionName: string) {
+    constructor(protected _language: string, protected _extensionName: string, clientManager: ClientManager) {
         this._commandDisposable = commands.registerCommand(
             `${_extensionName}.translate.${this._language}`,
-            (uri) => {
+            async (uri) => {
                 const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
                 if (!wsFolder) throw Error(`Cannot find workspace folder for Uri: ${uri.toString()}`);
+                // If in a multi project workspace environment the user could utilise the translate command on a project for which no client (and therefore server) has been started.
+                // So check if a client is present for the workspacefolder or else start it.
+                if (!clientManager.get(wsFolder)) {
+                    await clientManager.launchClientForWorkspace(wsFolder);
+                }
                 this.translate(uri, wsFolder);
             },
             this
@@ -36,7 +43,7 @@ export class TranslateButton implements Disposable {
             if (util.match(p.selector, uri)) {
                 try {
                     // Get save location for the translation
-                    const saveUri = this.createSaveDir(timestamped, Uri.joinPath(wsFolder.uri, ".generated", this._language));
+                    const saveUri = this.createSaveDir(timestamped, Uri.joinPath(util.generatedDataPath(wsFolder), this._language));
 
                     // Perform translation and handle result
                     const languageConfig = workspace.getConfiguration(
@@ -45,7 +52,7 @@ export class TranslateButton implements Disposable {
                     );
                     p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig)).then(async (mainFileUri) => {
                         // Check if a file has been returned
-                        if (!util.isDir(mainFileUri.fsPath)) {
+                        if (!isDir(mainFileUri.fsPath)) {
                             // Open the main file in the translation
                             const doc = await workspace.openTextDocument(mainFileUri);
 
@@ -64,7 +71,7 @@ export class TranslateButton implements Disposable {
 
     protected createSaveDir(timestamped: boolean = false, location: Uri): Uri {
         // Create save location in "...<worksapcefolder>/.generate/<language>"
-        const saveLocation = util.createDirectorySync(location, timestamped);
+        const saveLocation = createDirectorySync(location, timestamped);
 
         // Make sure the directory is empty
         Fs.emptyDirSync(saveLocation.fsPath);

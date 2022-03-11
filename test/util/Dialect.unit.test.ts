@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { getDialectFromAlias, getDialectFromPretty, isVDMFile } from "../../src/util/Dialect";
+import { getDialectFromAlias, getDialectFromPretty, isVDMFile } from "../../src/util/DialectUtil";
 
 describe("getDialectFromAlias", () => {
     it("throw error on mismatch", () => {

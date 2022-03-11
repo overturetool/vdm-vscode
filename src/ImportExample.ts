@@ -7,6 +7,7 @@ import { copySync } from "fs-extra";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
 import AutoDisposable from "./helper/AutoDisposable";
+import { getDefaultWorkspaceFolderLocation } from "./util/WorkspaceFoldersUtil";
 
 export class AddExampleHandler extends AutoDisposable {
     constructor() {
@@ -46,7 +47,7 @@ export class AddExampleHandler extends AutoDisposable {
                 if (typeof selectedExs == "string") selectedExs = [selectedExs];
 
                 // Get save location
-                const workspaceFolderLocation = util.getDefaultWorkspaceFolderLocation();
+                const workspaceFolderLocation = getDefaultWorkspaceFolderLocation();
                 const location = await window.showOpenDialog({
                     defaultUri: workspaceFolderLocation,
                     canSelectFiles: false,

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as fs from "fs-extra";
-import * as util from "../../../util/Util";
 import { CancellationToken, Disposable, Event, Progress, Uri, WorkspaceFolder } from "vscode";
 import { CTFilterOption, NumberRange } from "../../protocol/CombinatorialTesting";
 import * as Types from "./CTDataTypes";
+import { isSameWorkspaceFolder } from "../../../util/WorkspaceFoldersUtil";
+import { generatedDataPath } from "../../../util/Util";
 
 export interface CombinatorialTestProvider {
     provideTraceInfo(): Thenable<Types.TraceGroupInfo[]>;
@@ -25,7 +26,7 @@ export class CTViewDataStorage {
     private _usingPartialResult: boolean = false;
 
     public get storageLocation(): Uri {
-        return Uri.joinPath(this._currentWsFolder?.uri, ".generated", "Combinatorial Testing");
+        return Uri.joinPath(generatedDataPath(this._currentWsFolder), "Combinatorial Testing");
     }
 
     public get workspaceFolders(): WorkspaceFolder[] {
@@ -155,7 +156,7 @@ export class CTViewDataStorage {
     }
 
     public async updateTraceGroups(wsFolder: WorkspaceFolder): Promise<Types.TraceGroup[]> {
-        if (!util.isSameWorkspaceFolder(this._currentWsFolder, wsFolder)) {
+        if (!isSameWorkspaceFolder(this._currentWsFolder, wsFolder)) {
             // Workspace has changed, load data for the workspace
             this._currentWsFolder = wsFolder;
             this._traceGroups = await this.loadCTs();

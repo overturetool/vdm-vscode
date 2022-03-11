@@ -16,6 +16,7 @@ import {
     DocumentSelector,
 } from "vscode";
 import * as util from "../../util/Util";
+import { isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
 
 export interface ProofObligation {
     id: number;
@@ -60,7 +61,7 @@ export class ProofObligationPanel implements Disposable {
     }
 
     private get _resourcesUri(): Uri {
-        return util.joinUriPath(this._context.extensionUri, "resources");
+        return Uri.joinPath(this._context.extensionUri, "resources");
     }
 
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
@@ -106,7 +107,7 @@ export class ProofObligationPanel implements Disposable {
 
             // Switch to active editor is on a file from the clients workspace
             let activeWsFolder = workspace.getWorkspaceFolder(window.activeTextEditor?.document.uri);
-            if (!util.isSameWorkspaceFolder(activeWsFolder, this._lastWsFolder)) uri = activeWsFolder.uri;
+            if (!isSameWorkspaceFolder(activeWsFolder, this._lastWsFolder)) uri = activeWsFolder.uri;
 
             // If POG is possible
             if (canRun) {
@@ -125,7 +126,7 @@ export class ProofObligationPanel implements Disposable {
         // Check if a panel already exists
         if (this._panel) {
             // Check if panel is for another workspace folder
-            if (wsFolder && !util.isSameWorkspaceFolder(wsFolder, this._lastWsFolder)) {
+            if (wsFolder && !isSameWorkspaceFolder(wsFolder, this._lastWsFolder)) {
                 this._panel.title = "Proof Obligations" + (wsFolder ? ": " + wsFolder.name : "");
             }
 
@@ -291,8 +292,8 @@ export class ProofObligationPanel implements Disposable {
     }
 
     private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, "poView.js"));
-        const styleUri = webview.asWebviewUri(util.joinUriPath(this._resourcesUri, "poView.css"));
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "poView.js"));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "poView.css"));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = getNonce();

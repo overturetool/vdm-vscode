@@ -3,7 +3,7 @@
 import * as util from "./util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "./VdmDapSupport";
-import { guessDialect } from "./util/Dialect";
+import { guessDialect } from "./util/DialectUtil";
 
 interface VdmArgument {
     name: string;
@@ -110,7 +110,7 @@ export class AddRunConfigurationHandler implements Disposable {
                 this.saveRunConfiguration(wsFolder, debugConfiguration);
 
                 // Open launch file
-                window.showTextDocument(util.joinUriPath(wsFolder.uri, ".vscode", "launch.json"), { preview: true, preserveFocus: true });
+                window.showTextDocument(Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"), { preview: true, preserveFocus: true });
             })
         );
     }

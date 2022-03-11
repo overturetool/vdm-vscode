@@ -5,6 +5,7 @@ import * as LanguageId from "../../protocol/LanguageId";
 import { Uri, window, WorkspaceFolder } from "vscode";
 import * as Util from "../../../util/Util";
 import { TranslateProviderManager } from "./TranslateProviderManager";
+import { ClientManager } from "../../../ClientManager";
 
 const events = require("events");
 
@@ -12,8 +13,8 @@ export class GenerateCoverageButton extends TranslateButton {
     public eventEmitter = new events.EventEmitter();
     public static translationDoneId: string = "TDONE";
 
-    constructor(protected _extensionName: string) {
-        super(LanguageId.coverage, _extensionName);
+    constructor(protected _extensionName: string, clientManager: ClientManager) {
+        super(LanguageId.coverage, _extensionName, clientManager);
     }
     // Override
     protected async translate(_uri: Uri, wsFolder: WorkspaceFolder) {
@@ -21,7 +22,10 @@ export class GenerateCoverageButton extends TranslateButton {
             if (Util.match(p.selector, wsFolder.uri)) {
                 try {
                     // Get save location for coverage files
-                    const saveUri = this.createSaveDir(true, Uri.joinPath(wsFolder.uri, ".generated", this._language, this._language));
+                    const saveUri = this.createSaveDir(
+                        true,
+                        Uri.joinPath(Util.generatedDataPath(wsFolder), this._language, this._language)
+                    );
 
                     // Perform translation to generate coverage files
                     p.provider

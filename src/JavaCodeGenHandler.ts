@@ -5,14 +5,15 @@ import * as util from "./util/Util";
 import { spawn } from "child_process";
 import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
-import { Clients } from "./Clients";
+import { ClientManager } from "./ClientManager";
+import { createDirectory, recursivePathSearch } from "./util/DirectoriesUtil";
 
 export class JavaCodeGenHandler implements Disposable {
     private _disposables: Disposable[] = [];
     private jarPath: string;
 
-    constructor(private readonly clients: Clients) {
-        this.jarPath = util.recursivePathSearch(
+    constructor(private readonly clients: ClientManager) {
+        this.jarPath = recursivePathSearch(
             path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
             /javagen.*jar/i
         );
@@ -40,9 +41,9 @@ export class JavaCodeGenHandler implements Disposable {
             `Starting code generation.`,
             new Promise(async (resolve, reject) => {
                 let client = this.clients.get(wsFolder);
-                if (client?.language) {
-                    dialect = dialects[client.language];
-                    dialectext = client.language;
+                if (client?.languageId) {
+                    dialect = dialects[client.languageId];
+                    dialectext = client.languageId;
                 } else {
                     console.log(`No client found for the folder: ${wsFolder.name}`);
 
@@ -64,9 +65,9 @@ export class JavaCodeGenHandler implements Disposable {
                     }
                 }
 
-                let folderUri = util.joinUriPath(wsFolder.uri, ".generated", "java");
+                const folderUri = Uri.joinPath(util.generatedDataPath(wsFolder), "java");
 
-                util.createDirectory(folderUri).then(
+                createDirectory(folderUri).then(
                     async () => {
                         try {
                             // Invoke java code gen

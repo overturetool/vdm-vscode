@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import path = require("path");
-import * as util from "../util/Util";
 import { extensions, workspace, WorkspaceFolder } from "vscode";
 import { extensionId } from "../ExtensionInfo";
+import { recursivePathSearch } from "../util/DirectoriesUtil";
 
 export interface PluginSetting {
     name: string;
@@ -63,7 +63,7 @@ function getBuiltInPlugins(): PluginSetting[] {
     let result = [];
 
     // Add vdm2isa plugin
-    let vdm2isaJar = util.recursivePathSearch(pluginsPath, /vdm2isa.*jar/i);
+    let vdm2isaJar = recursivePathSearch(pluginsPath, /vdm2isa.*jar/i);
     if (vdm2isaJar)
         result.push({
             name: "vdm2isa alpha release",

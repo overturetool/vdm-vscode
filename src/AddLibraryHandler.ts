@@ -5,20 +5,21 @@ import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient"
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./util/Util";
-import { guessDialect, pickDialect } from "./util/Dialect";
-import { Clients } from "./Clients";
+import { guessDialect, pickDialect } from "./util/DialectUtil";
+import { ClientManager } from "./ClientManager";
 import AutoDisposable from "./helper/AutoDisposable";
 // Zip library
 import yauzl = require("yauzl");
 // Encoding library
 import iconv = require("iconv-lite");
 import { getExtensionPath } from "./util/ExtensionUtil";
+import { getFilesFromDirRecur } from "./util/DirectoriesUtil";
 
 export class AddLibraryHandler extends AutoDisposable {
     private readonly _libraryEncoding: BufferEncoding = "utf8";
     private static _userDefinedJarPaths: string[] = [];
 
-    constructor(private readonly clients: Clients) {
+    constructor(private readonly clientManager: ClientManager) {
         super();
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
@@ -131,7 +132,7 @@ export class AddLibraryHandler extends AutoDisposable {
                         resolveFailedPaths.push(originalPath);
                         return [];
                     }
-                    return Fs.lstatSync(path).isDirectory() ? Util.getFilesFromDirRecur(path, "jar") : [path];
+                    return Fs.lstatSync(path).isDirectory() ? getFilesFromDirRecur(path, "jar") : [path];
                 })
                 ?.reduce((prev: string[], cur: string[]) => prev.concat(cur), []) ?? []
         ).filter((jarPath: string) => {
@@ -366,9 +367,9 @@ export class AddLibraryHandler extends AutoDisposable {
 
     private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            const client: SpecificationLanguageClient = this.clients.get(wsFolder);
+            const client: SpecificationLanguageClient = this.clientManager.get(wsFolder);
             if (client) {
-                resolve(client.language);
+                resolve(client.languageId);
             } else {
                 console.log(`No client found for the folder: ${wsFolder.name}`);
 
@@ -395,7 +396,7 @@ export class AddLibraryHandler extends AutoDisposable {
 
             // Include default library jars
             if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-                let includedJarsPaths: string[] = Util.getFilesFromDirRecur(
+                let includedJarsPaths: string[] = getFilesFromDirRecur(
                     AddLibraryHandler.getIncludedLibrariesFolderPath(getExtensionPath(), wsFolder),
                     "jar"
                 );

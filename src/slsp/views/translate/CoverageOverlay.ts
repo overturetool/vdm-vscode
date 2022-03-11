@@ -16,6 +16,7 @@ import * as Fs from "fs-extra";
 import * as Path from "path";
 import * as LanguageId from "../../protocol/LanguageId";
 import { GenerateCoverageButton, GeneratedCoverage } from "./GenerateCoverageButton";
+import { generatedDataPath } from "../../../util/Util";
 
 export class CoverageOverlay {
     private _visibleEditorsChangedDisposable: Disposable;
@@ -240,7 +241,7 @@ export class CoverageOverlay {
             }
 
             // Get coverage folders
-            const folderPath = Uri.joinPath(wsFolder.uri, ".generated", LanguageId.coverage).fsPath;
+            const folderPath = Uri.joinPath(generatedDataPath(wsFolder), LanguageId.coverage).fsPath;
             const coverageFolders: Uri[] = Fs.existsSync(folderPath)
                 ? Fs.readdirSync(folderPath, { withFileTypes: true })
                       ?.filter((dirent) => dirent.isDirectory())
