@@ -99,19 +99,33 @@
         ],
         "grammars": [
             {
+                "language": "latex",
+                "scopeName": "text.tex.latex",
+                "path": "./syntaxes/LaTex.tmLanguage.json"
+            },
+            {
                 "language": "vdmsl",
                 "scopeName": "source.vdmsl",
-                "path": "./syntaxes/vdmsl.tmLanguage.json"
+                "path": "./syntaxes/vdmsl.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.inline.latex": "latex"
+                }
             },
             {
                 "language": "vdmpp",
                 "scopeName": "source.vdmpp",
-                "path": "./syntaxes/vdmpp.tmLanguage.json"
+                "path": "./syntaxes/vdmpp.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.inline.latex": "latex"
+                }
             },
             {
                 "language": "vdmrt",
                 "scopeName": "source.vdmrt",
-                "path": "./syntaxes/vdmrt.tmLanguage.json"
+                "path": "./syntaxes/vdmrt.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.inline.latex": "latex"
+                }
             },
             {
                 "scopeName": "source.vdm",
