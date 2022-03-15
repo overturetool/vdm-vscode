@@ -3,6 +3,7 @@
 import * as languageId from "./slsp/protocol/LanguageId";
 import * as ExtensionInfo from "./ExtensionInfo";
 import { ExtensionContext, window, workspace, commands, TextDocument } from "vscode";
+import * as vscode from "vscode";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./vdmj/VdmjCTInterpreterHandler";
@@ -23,6 +24,73 @@ import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 
 export function activate(context: ExtensionContext) {
+    const tokenTypes = ["class", "interface", "enum", "function", "variable"];
+    const tokenModifiers = ["declaration", "documentation"];
+    const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+
+    const provider: vscode.DocumentSemanticTokensProvider = {
+        provideDocumentSemanticTokens(document: vscode.TextDocument): vscode.ProviderResult<vscode.SemanticTokens> {
+            const tokensBuilder = new vscode.SemanticTokensBuilder(legend);
+            const beginText = "\\begin{vdm_al}";
+            const endText = "\\end{vdm_al}";
+            let currentBeginLine: number = -1;
+            let currentEndLine: number = 0;
+
+            const startEndLatex: any[] = [];
+            let curStartLine: vscode.TextLine;
+            let curEndLine: vscode.TextLine;
+            for (let line = 0; line < document.lineCount; line++) {
+                const curLine = document.lineAt(line);
+                if (curLine.text.includes(beginText)) {
+                    curStartLine = curLine;
+                } else if (curLine.text.includes(endText)) {
+                    curEndLine = curLine;
+                    startEndLatex.push({ start: curStartLine, end: curEndLine });
+                }
+            }
+
+            startEndLatex.forEach((startEnd) => {
+                const startLine = startEnd.start;
+                const endLine = startEnd.end;
+            });
+
+            // analyze the document
+            for (let lineNumber = 0; lineNumber < document.lineCount; lineNumber++) {
+                const line = document.lineAt(lineNumber);
+                if (line.text.includes(beginText)) {
+                    if (currentBeginLine == -1 && line.lineNumber != 0) {
+                        tokensBuilder.push(
+                            new vscode.Range(new vscode.Position(0, 0), new vscode.Position(line.lineNumber, line.text.length + 1)),
+                            "class"
+                        );
+                    } else {
+                        const range = new vscode.Range(
+                            new vscode.Position(currentEndLine, 0),
+                            new vscode.Position(line.lineNumber, line.text.length + 1)
+                        );
+                        tokensBuilder.push(range, "class");
+                    }
+                    currentBeginLine = line.lineNumber;
+                } else if (line.text.includes(endText)) {
+                    currentEndLine = line.lineNumber;
+                } else if (currentBeginLine > -1 && currentEndLine < line.lineNumber) {
+                    tokensBuilder.push(
+                        new vscode.Range(
+                            new vscode.Position(line.lineNumber, 0),
+                            new vscode.Position(line.lineNumber, line.text.length + 1)
+                        ),
+                        "class"
+                    );
+                }
+            }
+
+            // build semantic tokens
+            return tokensBuilder.build();
+        },
+    };
+
+    vscode.languages.registerDocumentSemanticTokensProvider({ language: "vdmpp", scheme: "file" }, provider, legend);
+
     // Setup server factory
     let serverFactory: ServerFactory;
     try {
