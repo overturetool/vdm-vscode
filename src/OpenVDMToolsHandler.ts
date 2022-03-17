@@ -38,18 +38,21 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                     vdmToolsPath = Path.join(vdmToolsPath, "vdmgde.app", "Contents", "MacOS", "vdmgde");
                 } else if (dialect == vdmDialectKinds.VDMRT) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vicegde.app", "Contents", "MacOS", "vicegde");
+                } else {
+                    window.showErrorMessage(`Unkown dialect '${dialect}'. Cannot start VDMTools`);
+                    return;
                 }
             } else if (Fs.statSync(vdmToolsPath).isDirectory()) {
                 window.showErrorMessage("The VDMTools path should point to the GUI binary");
                 return;
             }
 
-            // Build and save the project and options file content used by VDMTools.
+            // Generate and save the project and options file content used by VDMTools.
             const configHelper: VDMToolsConfigurationHelper = new VDMToolsConfigurationHelper();
             configHelper
                 .saveConfiguration(
-                    configHelper.buildVDMToolsOptFileContent(wsFolder.name),
-                    configHelper.buildVDMToolsPrjFileContent(
+                    configHelper.generateVDMToolsOptFileContent(wsFolder.name),
+                    configHelper.generateVDMToolsPrjFileContent(
                         dialect,
                         (await workspace.findFiles(vdmWorkspaceFilePattern(wsFolder))).map((uri) => uri.fsPath)
                     ),
@@ -76,7 +79,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
     }
 }
 
-// Logic for building the options and project file content is from Overture
+// Logic for generating the options and project file content is from Overture
 class VDMToolsConfigurationHelper {
     // Headers from Overture
     public CONTENT_START: string = "b";
@@ -84,7 +87,7 @@ class VDMToolsConfigurationHelper {
     public CONTET_DIALECT_SL: string = "k11,ProjectFilef3,f";
     public CONTENT_FILE: string = "e2,m4,filem";
 
-    public buildVDMToolsOptFileContent(projectName: string): string {
+    public generateVDMToolsOptFileContent(projectName: string): string {
         const options: VDMToolOptions = new VDMToolOptions();
         options.JCG_PACKAGE = projectName + ".model";
         let stringToReturn: string = Object.keys(options).reduce((prev, cur) => {
@@ -97,7 +100,7 @@ class VDMToolsConfigurationHelper {
         return stringToReturn;
     }
 
-    public buildVDMToolsPrjFileContent(dialect: string, vdmFilesInProject: string[]): string {
+    public generateVDMToolsPrjFileContent(dialect: string, vdmFilesInProject: string[]): string {
         // Append start
         let projFileContent: string = `${this.CONTENT_START}${vdmFilesInProject.length + 3},`;
 
@@ -106,6 +109,9 @@ class VDMToolsConfigurationHelper {
             projFileContent += this.CONTENT_DIALECT_PP_RT;
         } else if (dialect == vdmDialectKinds.VDMSL) {
             projFileContent += this.CONTET_DIALECT_SL;
+        } else {
+            window.showErrorMessage(`Unkown dialect '${dialect}'. Cannot generate proj file for VDMTools`);
+            return "";
         }
 
         // Append number of files
