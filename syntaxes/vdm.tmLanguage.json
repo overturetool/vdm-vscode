@@ -64,14 +64,36 @@
         "embedded-latex": {
             "patterns": [
                 {
-                    "name": "meta.embedded.inline.latex",
-                    "begin": "^\\\\end{vdm_al}",
-                    "end": "^\\\\begin{vdm_al}"
+                    "name": "meta.embedded.latex",
+                    "begin": "^\\\\end{vdm_al} *$|^%comment *$|^\\\\document *$|^\\\\section *$|^\\\\subsection *$",
+                    "captures": {
+                        "0": {
+                            "patterns": [
+                                {
+                                    "include": "text.tex.latex"
+                                }
+                            ]
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "text.tex.latex"
+                        }
+                    ],
+                    "end": "^\\\\begin{vdm_al} *$"
                 },
                 {
-                    "name": "meta.embedded.inline.latex",
-                    "begin": "^\\\\end{vdm_al}",
-                    "end": "^((?!\\\\begin{vdm_al}).)*$"
+                    "name": "meta.embedded.latex",
+                    "match": "^\\\\begin{vdm_al} *$|^\\\\end{vdm_al} *$",
+                    "captures": {
+                        "0": {
+                            "patterns": [
+                                {
+                                    "include": "text.tex.latex"
+                                }
+                            ]
+                        }
+                    }
                 }
             ]
         },
