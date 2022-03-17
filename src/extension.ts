@@ -18,9 +18,10 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialects, workspaceFilePattern } from "./util/DialectUtil";
+import { dialects, vdmWorkspaceFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
+import { OpenVDMToolsHandler } from "./OpenVDMToolsHandler";
 
 export function activate(context: ExtensionContext) {
     // Setup server factory
@@ -33,7 +34,7 @@ export function activate(context: ExtensionContext) {
     }
 
     // Setup client manager
-    const clientManager: ClientManager = new ClientManager(serverFactory, dialects, workspaceFilePattern);
+    const clientManager: ClientManager = new ClientManager(serverFactory, dialects, vdmWorkspaceFilePattern);
     context.subscriptions.push(clientManager);
 
     // Show VDM VS Code buttons
@@ -42,7 +43,7 @@ export function activate(context: ExtensionContext) {
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
     context.subscriptions.push(
-        new CombinatorialTestingView(clientManager, workspaceFilePattern, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
+        new CombinatorialTestingView(clientManager, vdmWorkspaceFilePattern, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
     );
     context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
@@ -58,6 +59,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new AddExampleHandler());
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
+    context.subscriptions.push(new OpenVDMToolsHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);

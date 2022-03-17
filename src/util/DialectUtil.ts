@@ -4,6 +4,12 @@ import { WorkspaceFolder, RelativePattern, workspace, Uri, window } from "vscode
 
 export const dialects: string[] = ["vdmsl", "vdmpp", "vdmrt"];
 
+export enum vdmDialectKinds {
+    VDMSL = "vdmsl",
+    VDMPP = "vdmpp",
+    VDMRT = "vdmrt",
+}
+
 const dialectsPretty: string[] = ["VDM-SL", "VDM++", "VDM-RT"];
 
 const dialectExtensions: Map<string, string[]> = new Map([
@@ -17,7 +23,7 @@ const dialectAlias: Map<string, string[]> = new Map([
     ["vdmrt", [...dialectExtensions.get("vdmrt"), "vdm-rt", "rt"]],
 ]);
 
-export function workspaceFilePattern(wsFolder: WorkspaceFolder): RelativePattern {
+export function vdmWorkspaceFilePattern(wsFolder: WorkspaceFolder): RelativePattern {
     return new RelativePattern(wsFolder.uri.fsPath, "*.vdm*");
 }
 

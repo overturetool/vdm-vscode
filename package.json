@@ -150,6 +150,12 @@
         ],
         "commands": [
             {
+                "command": "vdm-vscode.OpenVDMTools",
+                "title": "Open in VDMTools",
+                "category": "VDM",
+                "icon": "$(references)"
+            },
+            {
                 "command": "vdm-vscode.restartActiveClient",
                 "title": "Restart Client (of the active text document)",
                 "category": "VDM"
@@ -439,6 +445,10 @@
                 {
                     "command": "vdm-vscode.addRunConfiguration",
                     "group": "workspace@2"
+                },
+                {
+                    "command": "vdm-vscode.OpenVDMTools",
+                    "group": "workspace@3"
                 }
             ],
             "view/title": [
@@ -648,6 +658,10 @@
                 },
                 {
                     "command": "vdm-vscode.javaCodeGen",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.OpenVDMTools",
                     "when": "false"
                 }
             ]
@@ -981,6 +995,13 @@
                     "default": "off",
                     "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
                     "scope": "window"
+                },
+                "vdm-vscode.vdmtools.path": {
+                    "title": "Path to VDMTools",
+                    "type": "string",
+                    "default": "",
+                    "scope": "resource",
+                    "description": "Path to VDMTools."
                 }
             }
         },
