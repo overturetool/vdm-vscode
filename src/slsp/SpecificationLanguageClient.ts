@@ -2,7 +2,7 @@
 
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { CombinantorialTestingFeature } from "./features/CombinatorialTestingFeature";
-import * as LanguageId from "./protocol/LanguageId";
+import * as TranslationLanguageId from "./protocol/TranslationLanguageId";
 import ProofObligationGenerationFeature from "./features/ProofObligationGenerationFeature";
 import TranslateFeature from "./features/TranslateFeature";
 
@@ -21,10 +21,10 @@ export class SpecificationLanguageClient extends LanguageClient {
         super.registerBuiltinFeatures();
         this.registerFeature(new ProofObligationGenerationFeature(this));
         this.registerFeature(new CombinantorialTestingFeature(this));
-        this.registerFeature(new TranslateFeature(this, LanguageId.latex));
-        this.registerFeature(new TranslateFeature(this, LanguageId.word));
-        this.registerFeature(new TranslateFeature(this, LanguageId.coverage));
-        this.registerFeature(new TranslateFeature(this, LanguageId.graphviz));
-        this.registerFeature(new TranslateFeature(this, LanguageId.isabelle));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.latex));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.word));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.coverage));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.graphviz));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.isabelle));
     }
 }
