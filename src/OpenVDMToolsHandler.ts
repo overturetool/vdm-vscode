@@ -1,21 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import * as Util from "./util/Util";
 import AutoDisposable from "./helper/AutoDisposable";
 import { ChildProcess, spawn } from "child_process";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { guessDialectFromUri, vdmDialectKinds, vdmWorkspaceFilePattern } from "./util/DialectUtil";
+import { guessDialectFromUri, prettyDialectToDialect, vdmDialectKinds, vdmWorkspaceFilePattern } from "./util/DialectUtil";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
     constructor() {
         super();
         Util.registerCommand(this._disposables, "vdm-vscode.OpenVDMTools", async (inputUri: Uri) => {
             const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(inputUri);
-            let vdmToolsPath: string = workspace.getConfiguration("vdm-vscode.vdmtools", wsFolder)?.path;
+            const dialect: string = await guessDialectFromUri(inputUri);
+            const prettyDialect: string = prettyDialectToDialect(dialect);
+            if (dialect == vdmDialectKinds.VDMRT) {
+                window.showInformationMessage(`VDMTools does not support ${prettyDialect}`);
+                return;
+            }
+            let vdmToolsPath: string = workspace.getConfiguration(`vdm-vscode.vdmtools.${prettyDialect}`, wsFolder)?.path;
             if (!vdmToolsPath) {
-                window.showErrorMessage("No path for VDMTools specified in the settings");
+                window
+                    .showInformationMessage(`No path to VDMTools specified for ${prettyDialect} in the settings`, ...["Go to settings"])
+                    .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.vdmtools"));
                 return;
             }
 
@@ -30,17 +38,12 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                     vdmToolsPath = absolutePath;
                 }
             }
-            const dialect: string = await guessDialectFromUri(inputUri);
+
             if (process.platform === "darwin") {
                 if (dialect == vdmDialectKinds.VDMPP) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vppgde.app", "Contents", "MacOS", "vppgde");
                 } else if (dialect == vdmDialectKinds.VDMSL) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vdmgde.app", "Contents", "MacOS", "vdmgde");
-                } else if (dialect == vdmDialectKinds.VDMRT) {
-                    vdmToolsPath = Path.join(vdmToolsPath, "vicegde.app", "Contents", "MacOS", "vicegde");
-                } else {
-                    window.showErrorMessage(`Unkown dialect '${dialect}'. Cannot start VDMTools`);
-                    return;
                 }
             } else if (Fs.statSync(vdmToolsPath).isDirectory()) {
                 window.showErrorMessage("The VDMTools path should point to the GUI binary");
@@ -105,13 +108,10 @@ class VDMToolsConfigurationHelper {
         let projFileContent: string = `${this.CONTENT_START}${vdmFilesInProject.length + 3},`;
 
         // Append dialect
-        if (dialect == vdmDialectKinds.VDMPP || dialect == vdmDialectKinds.VDMRT) {
+        if (dialect == vdmDialectKinds.VDMPP) {
             projFileContent += this.CONTENT_DIALECT_PP_RT;
         } else if (dialect == vdmDialectKinds.VDMSL) {
             projFileContent += this.CONTET_DIALECT_SL;
-        } else {
-            window.showErrorMessage(`Unkown dialect '${dialect}'. Cannot generate proj file for VDMTools`);
-            return "";
         }
 
         // Append number of files

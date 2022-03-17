@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as languageId from "./slsp/protocol/LanguageId";
+import * as languageId from "./slsp/protocol/TranslationLanguageId";
 import * as ExtensionInfo from "./ExtensionInfo";
 import { ExtensionContext, window, workspace, commands, TextDocument } from "vscode";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
@@ -18,7 +18,7 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialects, vdmWorkspaceFilePattern } from "./util/DialectUtil";
+import { getDialects, vdmWorkspaceFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./OpenVDMToolsHandler";
@@ -32,9 +32,8 @@ export function activate(context: ExtensionContext) {
         window.showErrorMessage(e);
         return; // Can't create servers -> no reason to continue
     }
-
     // Setup client manager
-    const clientManager: ClientManager = new ClientManager(serverFactory, dialects, vdmWorkspaceFilePattern);
+    const clientManager: ClientManager = new ClientManager(serverFactory, getDialects(), vdmWorkspaceFilePattern);
     context.subscriptions.push(clientManager);
 
     // Show VDM VS Code buttons
@@ -51,7 +50,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name, clientManager));
     const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
-    context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, dialects));
+    context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, getDialects()));
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clientManager));

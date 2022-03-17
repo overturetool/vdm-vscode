@@ -2,7 +2,7 @@
 
 import { WorkspaceFolder, RelativePattern, workspace, Uri, window } from "vscode";
 
-export const dialects: string[] = ["vdmsl", "vdmpp", "vdmrt"];
+const dialects: string[] = ["vdmsl", "vdmpp", "vdmrt"];
 
 export enum vdmDialectKinds {
     VDMSL = "vdmsl",
@@ -75,10 +75,20 @@ export function getDialectFromAlias(input: string) {
     else return result;
 }
 
-export function getDialectFromPretty(input: string): string {
+export function dialectToPrettyDialect(input: string): string {
     for (let i = 0; i < dialectsPretty.length; ++i) {
         if (input == dialectsPretty[i]) return dialects[i];
     }
+}
+
+export function prettyDialectToDialect(input: string): string {
+    for (let i = 0; i < dialects.length; ++i) {
+        if (input == dialects[i]) return dialectsPretty[i];
+    }
+}
+
+export function getDialects(): string[] {
+    return dialects;
 }
 
 export function isVDMFile(filePath: string) {
@@ -104,7 +114,7 @@ export async function pickDialect(): Promise<string> {
         });
         if (!chosenDialect) return reject("No dialect picked");
         else {
-            const result: string = getDialectFromPretty(chosenDialect);
+            const result: string = dialectToPrettyDialect(chosenDialect);
             if (result) return resolve(result);
             else {
                 console.error(`[Dialect] Could not convert chosen dialect: ${chosenDialect}`);

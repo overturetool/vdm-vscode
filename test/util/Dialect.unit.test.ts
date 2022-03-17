@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { getDialectFromAlias, getDialectFromPretty, isVDMFile } from "../../src/util/DialectUtil";
+import { getDialectFromAlias, dialectToPrettyDialect, isVDMFile } from "../../src/util/DialectUtil";
 
 describe("getDialectFromAlias", () => {
     it("throw error on mismatch", () => {
@@ -44,12 +44,12 @@ describe("getDialectFromPretty", () => {
         ["VDM-RT", "vdmrt"],
     ].forEach((testInput) => {
         it("return dialects on match", () => {
-            expect(getDialectFromPretty(testInput[0])).to.be(testInput[1]);
+            expect(dialectToPrettyDialect(testInput[0])).to.be(testInput[1]);
         });
     });
 
     it("return undefined on no match", () => {
-        expect(getDialectFromPretty("badInput")).to.be.undefined;
+        expect(dialectToPrettyDialect("badInput")).to.be.undefined;
     });
 });
 

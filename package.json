@@ -996,12 +996,19 @@
                     "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
                     "scope": "window"
                 },
-                "vdm-vscode.vdmtools.path": {
-                    "title": "Path to VDMTools",
+                "vdm-vscode.vdmtools.path.vdmpp": {
+                    "title": "Path to VDMTools for VDM++",
                     "type": "string",
                     "default": "",
                     "scope": "resource",
-                    "description": "Path to VDMTools."
+                    "description": "Path to VDMTools for VDM++."
+                },
+                "vdm-vscode.vdmtools.path.vdmsl": {
+                    "title": "Path to VDMTools for VDM-SL",
+                    "type": "string",
+                    "default": "",
+                    "scope": "resource",
+                    "description": "Path to VDMTools for VDM-SL."
                 }
             }
         },
