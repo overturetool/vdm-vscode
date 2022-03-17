@@ -61,6 +61,15 @@
         "onCommand:vdm-vscode.openServerLogFolder"
     ],
     "contributes": {
+        "configurationDefaults": {
+            "editor.tokenColorCustomizations": {"textMateRules": [{
+                "scope": "meta.embedded.latex",
+                "settings": {
+                    "fontStyle": "italic",
+                    "foreground": "#7c7c7c"
+                }
+            }]}
+        },
         "languages": [
             {
                 "id": "vdmsl",

@@ -67,6 +67,10 @@
                     "name": "meta.embedded.latex",
                     "begin": "^\\\\end{vdm_al} *$|^%comment *$|^\\\\document *$|^\\\\section *$|^\\\\subsection *$",
                     "end": "^\\\\begin{vdm_al} *$"
+                },
+                {
+                    "name": "meta.embedded.latex",
+                    "match": "^\\\\begin{vdm_al} *$|^\\\\end{vdm_al} *$"
                 }
             ]
         },
