@@ -63,7 +63,7 @@
     "contributes": {
         "configurationDefaults": {
             "editor.tokenColorCustomizations": {"textMateRules": [{
-                "scope": "meta.embedded.latex",
+                "scope": "meta.embedded.inline.latex",
                 "settings": {
                     "fontStyle": "italic",
                     "foreground": "#7c7c7c"
@@ -112,7 +112,7 @@
                 "scopeName": "source.vdmsl",
                 "path": "./syntaxes/vdmsl.tmLanguage.json",
                 "embeddedLanguages": {
-                    "meta.embedded.latex": "latex"
+                    "meta.embedded.inline.latex": "latex"
                 }
             },
             {
@@ -120,7 +120,7 @@
                 "scopeName": "source.vdmpp",
                 "path": "./syntaxes/vdmpp.tmLanguage.json",
                 "embeddedLanguages": {
-                    "meta.embedded.latex": "latex"
+                    "meta.embedded.inline.latex": "latex"
                 }
             },
             {
@@ -128,7 +128,7 @@
                 "scopeName": "source.vdmrt",
                 "path": "./syntaxes/vdmrt.tmLanguage.json",
                 "embeddedLanguages": {
-                    "meta.embedded.latex": "latex"
+                    "meta.embedded.inline.latex": "latex"
                 }
             },
             {
