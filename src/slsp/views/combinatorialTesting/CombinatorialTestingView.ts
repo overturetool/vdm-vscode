@@ -454,18 +454,20 @@ export class CombinatorialTestingView implements Disposable {
 
         let wsFolder: WorkspaceFolder;
         const wsFolders: WorkspaceFolder[] = [];
+
         // Only add workspace folders that contains a file which matches the file pattern.
-        wsFolders.push(
-            ...workspace.workspaceFolders.filter(async (wsFolder) => await workspace.findFiles(this._wsFilePatternFunc(wsFolder), null, 1))
-        );
+        for await (const wsFolder of workspace.workspaceFolders) {
+            if ((await workspace.findFiles(this._wsFilePatternFunc(wsFolder), null, 1)).length > 0) {
+                wsFolders.push(wsFolder);
+            }
+        }
 
         if (wsFolders.length == 0) {
-            window.showInformationMessage("Please open a vdm file in the folder");
+            window.showInformationMessage("Unable to find any workspace folders containing files that the extension can handle");
             return wsFolder;
         }
 
         // Select workspace folder.
-
         const wsFN: string | WorkspaceFolder =
             workspace.workspaceFolders.length > 1
                 ? await window.showQuickPick(
