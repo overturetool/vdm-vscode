@@ -445,10 +445,6 @@
                 {
                     "command": "vdm-vscode.addRunConfiguration",
                     "group": "workspace@2"
-                },
-                {
-                    "command": "vdm-vscode.OpenVDMTools",
-                    "group": "workspace@3"
                 }
             ],
             "view/title": [
@@ -658,10 +654,6 @@
                 },
                 {
                     "command": "vdm-vscode.javaCodeGen",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.OpenVDMTools",
                     "when": "false"
                 }
             ]

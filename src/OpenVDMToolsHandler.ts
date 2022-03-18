@@ -1,33 +1,73 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, RelativePattern, window, workspace, WorkspaceFolder } from "vscode";
 import * as Util from "./util/Util";
 import AutoDisposable from "./helper/AutoDisposable";
 import { ChildProcess, spawn } from "child_process";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { guessDialectFromUri, prettyDialectToDialect, vdmDialectKinds, vdmWorkspaceFilePattern } from "./util/DialectUtil";
+import { dialectExtensions, dialectsPretty, vdmDialects, vdmWorkspaceFilePattern } from "./util/DialectUtil";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
     constructor() {
         super();
-        Util.registerCommand(this._disposables, "vdm-vscode.OpenVDMTools", async (inputUri: Uri) => {
-            const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(inputUri);
-            const dialect: string = await guessDialectFromUri(inputUri);
-            const prettyDialect: string = prettyDialectToDialect(dialect);
-            if (dialect == vdmDialectKinds.VDMRT) {
-                window.showInformationMessage(`VDMTools does not support ${prettyDialect}`);
+        Util.registerCommand(this._disposables, "vdm-vscode.OpenVDMTools", async () => {
+            // Collect all workspace folders containing vdmpp or vdmsl files
+            const wsFodlersToDialect: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
+            const dialectExts: Map<vdmDialects, string[]> = new Map<vdmDialects, string[]>([
+                [vdmDialects.VDMPP, dialectExtensions.get(vdmDialects.VDMPP)],
+                [vdmDialects.VDMSL, dialectExtensions.get(vdmDialects.VDMSL)],
+            ]);
+
+            for await (const wsFolder of workspace.workspaceFolders) {
+                for (const [dialect, extensions] of dialectExts) {
+                    const foundVDMFile: boolean =
+                        (
+                            await workspace.findFiles(
+                                new RelativePattern(wsFolder.uri.path, `*.{${extensions.reduce((prev, cur) => `${prev},${cur}`)}}`),
+                                null,
+                                1
+                            )
+                        ).length > 0;
+
+                    if (foundVDMFile) {
+                        wsFodlersToDialect.set(wsFolder, dialect);
+                        break;
+                    }
+                }
+            }
+
+            // Ask the user to choose one of the workspace folders if more than one has been found
+            const wsFS: string | WorkspaceFolder =
+                workspace.workspaceFolders.length > 1
+                    ? await window.showQuickPick(
+                          Array.from(wsFodlersToDialect.keys()).map((f) => f.name),
+                          { canPickMany: false, title: "Select workspace folder" }
+                      )
+                    : workspace.workspaceFolders[0];
+
+            if (!wsFS) {
                 return;
             }
-            let vdmToolsPath: string = workspace.getConfiguration(`vdm-vscode.vdmtools.${prettyDialect}`, wsFolder)?.path;
+
+            // Get the workspace folder and dialect
+            const wsFolder: WorkspaceFolder =
+                typeof wsFS === "string" ? Array.from(wsFodlersToDialect.entries()).find((entry) => entry[0].name == wsFS)?.[0] : wsFS;
+            const dialect: vdmDialects = wsFodlersToDialect.get(wsFolder);
+
+            // Check if the user has defined the VDMTools path in settings
+            let vdmToolsPath: string = workspace.getConfiguration(`vdm-vscode.vdmtools.${dialectsPretty.get(dialect)}`, wsFolder)?.path;
             if (!vdmToolsPath) {
                 window
-                    .showInformationMessage(`No path to VDMTools specified for ${prettyDialect} in the settings`, ...["Go to settings"])
+                    .showInformationMessage(
+                        `No path to VDMTools specified for ${dialectsPretty.get(dialect)} in the settings`,
+                        ...["Go to settings"]
+                    )
                     .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.vdmtools"));
                 return;
             }
 
-            // Return if the VDMTools path cannot be resolved
+            // Check if the VDMTools path cannot be resolved
             if (!Fs.existsSync(vdmToolsPath)) {
                 // Path could be relative to project
                 const absolutePath = Path.resolve(...[wsFolder.uri.fsPath, vdmToolsPath]);
@@ -39,10 +79,11 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                 }
             }
 
+            // Handle path in MAC OS
             if (process.platform === "darwin") {
-                if (dialect == vdmDialectKinds.VDMPP) {
+                if (dialect == vdmDialects.VDMPP) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vppgde.app", "Contents", "MacOS", "vppgde");
-                } else if (dialect == vdmDialectKinds.VDMSL) {
+                } else if (dialect == vdmDialects.VDMSL) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vdmgde.app", "Contents", "MacOS", "vdmgde");
                 }
             } else if (Fs.statSync(vdmToolsPath).isDirectory()) {
@@ -103,14 +144,14 @@ class VDMToolsConfigurationHelper {
         return stringToReturn;
     }
 
-    public generateVDMToolsPrjFileContent(dialect: string, vdmFilesInProject: string[]): string {
+    public generateVDMToolsPrjFileContent(dialect: vdmDialects, vdmFilesInProject: string[]): string {
         // Append start
         let projFileContent: string = `${this.CONTENT_START}${vdmFilesInProject.length + 3},`;
 
         // Append dialect
-        if (dialect == vdmDialectKinds.VDMPP) {
+        if (dialect == vdmDialects.VDMPP) {
             projFileContent += this.CONTENT_DIALECT_PP_RT;
-        } else if (dialect == vdmDialectKinds.VDMSL) {
+        } else if (dialect == vdmDialects.VDMSL) {
             projFileContent += this.CONTET_DIALECT_SL;
         }
 

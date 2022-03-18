@@ -2,52 +2,56 @@
 
 import { WorkspaceFolder, RelativePattern, workspace, Uri, window } from "vscode";
 
-const dialects: string[] = ["vdmsl", "vdmpp", "vdmrt"];
-
-export enum vdmDialectKinds {
+export enum vdmDialects {
     VDMSL = "vdmsl",
     VDMPP = "vdmpp",
     VDMRT = "vdmrt",
 }
 
-const dialectsPretty: string[] = ["VDM-SL", "VDM++", "VDM-RT"];
-
-const dialectExtensions: Map<string, string[]> = new Map([
-    ["vdmsl", ["vdmsl", "vsl"]],
-    ["vdmpp", ["vdmpp", "vpp"]],
-    ["vdmrt", ["vdmrt", "vrt"]],
+export const dialectsPretty: Map<vdmDialects, string> = new Map([
+    [vdmDialects.VDMSL, "VDM-SL"],
+    [vdmDialects.VDMPP, "VDM++"],
+    [vdmDialects.VDMRT, "VDM-RT"],
 ]);
-const dialectAlias: Map<string, string[]> = new Map([
-    ["vdmsl", [...dialectExtensions.get("vdmsl"), "vdm-sl", "sl"]],
-    ["vdmpp", [...dialectExtensions.get("vdmpp"), "vdm-pp", "pp", "vdm++"]],
-    ["vdmrt", [...dialectExtensions.get("vdmrt"), "vdm-rt", "rt"]],
+
+export const dialectExtensions: Map<vdmDialects, string[]> = new Map([
+    [vdmDialects.VDMSL, ["vdmsl", "vsl"]],
+    [vdmDialects.VDMPP, ["vdmpp", "vpp"]],
+    [vdmDialects.VDMRT, ["vdmrt", "vrt"]],
+]);
+
+export const dialectAlias: Map<vdmDialects, string[]> = new Map([
+    [vdmDialects.VDMSL, [...dialectExtensions.get(vdmDialects.VDMSL), "vdm-sl", "sl"]],
+    [vdmDialects.VDMPP, [...dialectExtensions.get(vdmDialects.VDMPP), "vdm-pp", "pp", "vdm++"]],
+    [vdmDialects.VDMRT, [...dialectExtensions.get(vdmDialects.VDMRT), "vdm-rt", "rt"]],
 ]);
 
 export function vdmWorkspaceFilePattern(wsFolder: WorkspaceFolder): RelativePattern {
-    return new RelativePattern(wsFolder.uri.fsPath, "*.vdm*");
+    return new RelativePattern(
+        wsFolder.uri.fsPath,
+        `*.{${Array.from(dialectExtensions.values())
+            .map((dialects) => dialects.reduce((prev, cur) => `${prev},${cur}`))
+            .reduce((prev, cur) => `${prev},${cur}`)}}`
+    );
 }
 
-export async function guessDialect(wsFolder: WorkspaceFolder): Promise<string> {
+export async function guessDialect(wsFolder: WorkspaceFolder): Promise<vdmDialects> {
     return new Promise(async (resolve, reject) => {
         for await (const [dialect, extensions] of dialectExtensions) {
-            let isThis = false;
-            for await (const extension of extensions) {
-                const pattern = new RelativePattern(wsFolder.uri.path, `*.${extension}`);
-                const res = await workspace.findFiles(pattern, null, 1);
-                if (res.length > 0) {
-                    isThis = true;
-                    break;
-                }
+            const pattern: RelativePattern = new RelativePattern(
+                wsFolder.uri.path,
+                `*.{${extensions.reduce((prev, cur) => `${prev},${cur}`)}}`
+            );
+            if ((await workspace.findFiles(pattern, null, 1)).length > 0) {
+                return resolve(dialect);
             }
-
-            if (isThis) return resolve(dialect);
         }
 
         return reject(`Could not guess dialect for workspace folder: ${wsFolder.name}`);
     });
 }
 
-export async function guessDialectFromUri(uri: Uri): Promise<string> {
+export async function guessDialectFromUri(uri: Uri): Promise<vdmDialects> {
     return new Promise((resolve, reject) => {
         const wsFolder = workspace.getWorkspaceFolder(uri);
         if (!wsFolder) return reject(`Could not find workspace folder for path: ${uri.path}`);
@@ -59,36 +63,21 @@ export async function guessDialectFromUri(uri: Uri): Promise<string> {
     });
 }
 
-export function getDialectFromAlias(input: string) {
-    const inputSmall = input.toLowerCase();
-    let result: string;
+export function getDialectFromAlias(alias: string): vdmDialects {
+    let returnDialect: vdmDialects;
     dialectAlias.forEach((aliases, dialect) => {
-        for (const alias of aliases) {
-            if (inputSmall == alias) {
-                result = dialect;
+        for (const knownAlias of aliases) {
+            if (alias.toLowerCase() == knownAlias) {
+                returnDialect = dialect;
                 return;
             }
         }
     });
-
-    if (!result) throw new Error("Input alias does not match any known alias");
-    else return result;
-}
-
-export function dialectToPrettyDialect(input: string): string {
-    for (let i = 0; i < dialectsPretty.length; ++i) {
-        if (input == dialectsPretty[i]) return dialects[i];
+    if (!returnDialect) {
+        throw new Error("Input alias does not match any known alias");
+    } else {
+        return returnDialect;
     }
-}
-
-export function prettyDialectToDialect(input: string): string {
-    for (let i = 0; i < dialects.length; ++i) {
-        if (input == dialects[i]) return dialectsPretty[i];
-    }
-}
-
-export function getDialects(): string[] {
-    return dialects;
 }
 
 export function isVDMFile(filePath: string) {
@@ -105,21 +94,18 @@ export function isVDMFile(filePath: string) {
     return result != undefined;
 }
 
-export async function pickDialect(): Promise<string> {
+export async function pickDialect(): Promise<vdmDialects> {
     return new Promise(async (resolve, reject) => {
-        // Let user chose
-        const chosenDialect: string = await window.showQuickPick(dialectsPretty, {
+        // Let user choose
+        const chosenDialect: string = await window.showQuickPick(Array.from(dialectsPretty.values()), {
             placeHolder: "Choose dialect",
             canPickMany: false,
         });
         if (!chosenDialect) return reject("No dialect picked");
         else {
-            const result: string = dialectToPrettyDialect(chosenDialect);
-            if (result) return resolve(result);
-            else {
-                console.error(`[Dialect] Could not convert chosen dialect: ${chosenDialect}`);
-                reject();
-            }
+            dialectsPretty.forEach((val, key) => {
+                if (val == chosenDialect) return resolve(key);
+            });
         }
     });
 }

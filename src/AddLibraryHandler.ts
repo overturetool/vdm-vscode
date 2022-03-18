@@ -5,7 +5,7 @@ import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient"
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import * as Util from "./util/Util";
-import { guessDialect, pickDialect } from "./util/DialectUtil";
+import { guessDialect, getDialectFromAlias, pickDialect, vdmDialects } from "./util/DialectUtil";
 import { ClientManager } from "./ClientManager";
 import AutoDisposable from "./helper/AutoDisposable";
 // Zip library
@@ -160,7 +160,7 @@ export class AddLibraryHandler extends AutoDisposable {
             `Adding Libraries.`,
             new Promise((resolve, reject) => {
                 this.getDialect(wsFolder)
-                    .then((dialect: string) =>
+                    .then((dialect: vdmDialects) =>
                         // Gather available libraries in jars
                         this.getLibInfoFromJars(dialect, wsFolder).then(async (jarPathToLibs: Map<string, LibInfo[]>) => {
                             if (jarPathToLibs.size < 1) {
@@ -365,17 +365,17 @@ export class AddLibraryHandler extends AutoDisposable {
         return jarPathToDependendLibs;
     }
 
-    private getDialect(wsFolder: WorkspaceFolder): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
+    private getDialect(wsFolder: WorkspaceFolder): Promise<vdmDialects> {
+        return new Promise<vdmDialects>((resolve, reject) => {
             const client: SpecificationLanguageClient = this.clientManager.get(wsFolder);
             if (client) {
-                resolve(client.languageId);
+                resolve(getDialectFromAlias(client.languageId));
             } else {
                 console.log(`No client found for the folder: ${wsFolder.name}`);
 
                 // Guess dialect
                 guessDialect(wsFolder)
-                    .then((d: string) => resolve(d))
+                    .then((d: vdmDialects) => resolve(d))
                     .catch(async () => {
                         // Let user chose
                         await pickDialect()
@@ -389,7 +389,7 @@ export class AddLibraryHandler extends AutoDisposable {
         });
     }
 
-    private getLibInfoFromJars(dialect: string, wsFolder: WorkspaceFolder): Promise<Map<string, LibInfo[]>> {
+    private getLibInfoFromJars(dialect: vdmDialects, wsFolder: WorkspaceFolder): Promise<Map<string, LibInfo[]>> {
         return new Promise<Map<string, LibInfo[]>>((resolve, reject) => {
             // Get user defined library jars
             const jarPaths: string[] = AddLibraryHandler._userDefinedJarPaths;
