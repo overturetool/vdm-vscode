@@ -56,7 +56,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
             const dialect: vdmDialects = wsFodlersToDialect.get(wsFolder);
 
             // Check if the user has defined the VDMTools path in settings
-            let vdmToolsPath: string = workspace.getConfiguration(`vdm-vscode.vdmtools.${dialectsPretty.get(dialect)}`, wsFolder)?.path;
+            let vdmToolsPath: string = workspace.getConfiguration("vdm-vscode.vdmtools.path", wsFolder).get(dialect);
             if (!vdmToolsPath) {
                 window
                     .showInformationMessage(

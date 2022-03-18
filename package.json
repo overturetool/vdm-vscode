@@ -151,7 +151,7 @@
         "commands": [
             {
                 "command": "vdm-vscode.OpenVDMTools",
-                "title": "Open in VDMTools",
+                "title": "Open project in VDMTools",
                 "category": "VDM",
                 "icon": "$(references)"
             },
