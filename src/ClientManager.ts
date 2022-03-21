@@ -28,7 +28,7 @@ export class ClientManager extends AutoDisposable {
     constructor(
         private _serverFactory: ServerFactory,
         private _acceptedLanguageIds: string[],
-        private _wsFilePatternFunc: (wsFolder: WorkspaceFolder) => RelativePattern
+        private _languageIdFilePatternFunc: (fsPath: string) => RelativePattern
     ) {
         super();
         this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
@@ -94,9 +94,9 @@ export class ClientManager extends AutoDisposable {
     }
 
     async launchClientForWorkspace(wsFolder: WorkspaceFolder): Promise<SpecificationLanguageClient> {
-        // Locate any VDM file in the project.
+        // Locate any file with accepted language id in the project.
 
-        const files: Uri[] = await workspace.findFiles(this._wsFilePatternFunc(wsFolder), null, 1);
+        const files: Uri[] = await workspace.findFiles(this._languageIdFilePatternFunc(wsFolder.uri.fsPath), null, 1);
         if (files.length > 0) {
             // Open a file in the workspace folder to force the client to start for the folder.
             await workspace.openTextDocument(files[0]);

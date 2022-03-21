@@ -1,47 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, RelativePattern, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, window, workspace, WorkspaceFolder } from "vscode";
 import * as Util from "./util/Util";
 import AutoDisposable from "./helper/AutoDisposable";
 import { ChildProcess, spawn } from "child_process";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { dialectExtensions, dialectsPretty, vdmDialects, vdmWorkspaceFilePattern } from "./util/DialectUtil";
+import { dialectToPrettyFormat, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
-    constructor() {
+    constructor(knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
         super();
         Util.registerCommand(this._disposables, "vdm-vscode.OpenVDMTools", async () => {
-            // Collect all workspace folders containing vdmpp or vdmsl files
-            const wsFodlersToDialect: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
-            const dialectExts: Map<vdmDialects, string[]> = new Map<vdmDialects, string[]>([
-                [vdmDialects.VDMPP, dialectExtensions.get(vdmDialects.VDMPP)],
-                [vdmDialects.VDMSL, dialectExtensions.get(vdmDialects.VDMSL)],
-            ]);
-
-            for await (const wsFolder of workspace.workspaceFolders) {
-                for (const [dialect, extensions] of dialectExts) {
-                    const foundVDMFile: boolean =
-                        (
-                            await workspace.findFiles(
-                                new RelativePattern(wsFolder.uri.path, `*.{${extensions.reduce((prev, cur) => `${prev},${cur}`)}}`),
-                                null,
-                                1
-                            )
-                        ).length > 0;
-
-                    if (foundVDMFile) {
-                        wsFodlersToDialect.set(wsFolder, dialect);
-                        break;
-                    }
-                }
-            }
-
             // Ask the user to choose one of the workspace folders if more than one has been found
             const wsFS: string | WorkspaceFolder =
                 workspace.workspaceFolders.length > 1
                     ? await window.showQuickPick(
-                          Array.from(wsFodlersToDialect.keys()).map((f) => f.name),
+                          Array.from(knownVdmFolders.entries())
+                              .filter((entry) => entry[1] == vdmDialects.VDMPP || entry[1] == vdmDialects.VDMSL)
+                              .map((entry) => entry[0].name),
                           { canPickMany: false, title: "Select workspace folder" }
                       )
                     : workspace.workspaceFolders[0];
@@ -52,15 +29,15 @@ export class OpenVDMToolsHandler extends AutoDisposable {
 
             // Get the workspace folder and dialect
             const wsFolder: WorkspaceFolder =
-                typeof wsFS === "string" ? Array.from(wsFodlersToDialect.entries()).find((entry) => entry[0].name == wsFS)?.[0] : wsFS;
-            const dialect: vdmDialects = wsFodlersToDialect.get(wsFolder);
+                typeof wsFS === "string" ? Array.from(knownVdmFolders.keys()).find((key) => key.name == wsFS) : wsFS;
+            const dialect: vdmDialects = knownVdmFolders.get(wsFolder);
 
             // Check if the user has defined the VDMTools path in settings
             let vdmToolsPath: string = workspace.getConfiguration("vdm-vscode.vdmtools.path", wsFolder).get(dialect);
             if (!vdmToolsPath) {
                 window
                     .showInformationMessage(
-                        `No path to VDMTools specified for ${dialectsPretty.get(dialect)} in the settings`,
+                        `No path to VDMTools specified for ${dialectToPrettyFormat.get(dialect)} in the settings`,
                         ...["Go to settings"]
                     )
                     .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.vdmtools"));
@@ -98,7 +75,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                     configHelper.generateVDMToolsOptFileContent(wsFolder.name),
                     configHelper.generateVDMToolsPrjFileContent(
                         dialect,
-                        (await workspace.findFiles(vdmWorkspaceFilePattern(wsFolder))).map((uri) => uri.fsPath)
+                        (await workspace.findFiles(vdmFilePattern(wsFolder.uri.fsPath))).map((uri) => uri.fsPath)
                     ),
                     Path.join(Util.generatedDataPath(wsFolder).fsPath, "VDMTools"),
                     wsFolder.name

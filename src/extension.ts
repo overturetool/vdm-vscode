@@ -2,7 +2,7 @@
 
 import * as languageId from "./slsp/protocol/TranslationLanguageId";
 import * as ExtensionInfo from "./ExtensionInfo";
-import { ExtensionContext, window, workspace, commands, TextDocument } from "vscode";
+import { ExtensionContext, window, workspace, commands, TextDocument, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
 import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./vdmj/VdmjCTInterpreterHandler";
@@ -18,7 +18,7 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialectExtensions, vdmWorkspaceFilePattern } from "./util/DialectUtil";
+import { dialectExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./OpenVDMToolsHandler";
@@ -32,14 +32,31 @@ export function activate(context: ExtensionContext) {
         window.showErrorMessage(e);
         return; // Can't create servers -> no reason to continue
     }
+
     // File extension types aka language ids that can be handled
     const acceptedLanguageIds: string[] = Array.from(dialectExtensions.values()).reduce((prev, cur) => {
         return prev.concat(cur);
     });
 
     // Setup client manager
-    const clientManager: ClientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmWorkspaceFilePattern);
+    const clientManager: ClientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
     context.subscriptions.push(clientManager);
+
+    // Keep track of VDM workspace folders
+    const knownVdmFolders: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
+    workspace.workspaceFolders.forEach((wsFolder) => guessDialect(wsFolder).then((dialect) => knownVdmFolders.set(wsFolder, dialect)));
+    context.subscriptions.push(
+        workspace.onDidChangeWorkspaceFolders(async (e: WorkspaceFoldersChangeEvent) => {
+            e.added.forEach((wsFolder) => {
+                guessDialect(wsFolder).then((dialect) => knownVdmFolders.set(wsFolder, dialect));
+            });
+            e.removed.forEach((wsFolder) => {
+                if (knownVdmFolders.has(wsFolder)) {
+                    knownVdmFolders.delete(wsFolder);
+                }
+            });
+        })
+    );
 
     // Show VDM VS Code buttons
     commands.executeCommand("setContext", "vdm-submenus-show", true);
@@ -47,7 +64,7 @@ export function activate(context: ExtensionContext) {
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context));
     context.subscriptions.push(
-        new CombinatorialTestingView(clientManager, vdmWorkspaceFilePattern, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
+        new CombinatorialTestingView(clientManager, knownVdmFolders, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
     );
     context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
@@ -63,7 +80,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new AddExampleHandler());
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
-    context.subscriptions.push(new OpenVDMToolsHandler());
+    context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
