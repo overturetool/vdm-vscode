@@ -65,12 +65,12 @@
             "patterns": [
                 {
                     "name": "meta.embedded.inline.latex",
-                    "begin": "^\\\\end{vdm_al} *$|^%comment *$|^\\\\document *$|^\\\\section *$|^\\\\subsection *$",
-                    "end": "^\\\\begin{vdm_al} *$"
+                    "begin": "^\\\\end{.*} *$|^%comment|^\\\\document.*{.*}|^\\\\(?:sub)?section.*{.*}",
+                    "end": "^\\\\begin{.*} *$"
                 },
                 {
                     "name": "meta.embedded.inline.latex",
-                    "match": "^\\\\begin{vdm_al} *$|^\\\\end{vdm_al} *$"
+                    "match": "^\\\\begin{.*} *$"
                 }
             ]
         },
