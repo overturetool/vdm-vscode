@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { dialectsPretty, getDialectFromAlias, isVDMFile } from "../../src/util/DialectUtil";
+import { dialectToPrettyFormat, getDialectFromAlias, isVDMFile, vdmDialects } from "../../src/util/DialectUtil";
 
 describe("getDialectFromAlias", () => {
     it("throw error on mismatch", () => {
@@ -7,19 +7,19 @@ describe("getDialectFromAlias", () => {
     });
 
     [
-        ["vdmsl", "vdmsl"],
-        ["vsl", "vdmsl"],
-        ["vdm-sl", "vdmsl"],
-        ["sl", "vdmsl"],
-        ["vdmpp", "vdmpp"],
-        ["vpp", "vdmpp"],
-        ["vdm-pp", "vdmpp"],
-        ["pp", "vdmpp"],
-        ["vdm++", "vdmpp"],
-        ["vdmrt", "vdmrt"],
-        ["vrt", "vdmrt"],
-        ["vdm-rt", "vdmrt"],
-        ["rt", "vdmrt"],
+        ["vdmsl", vdmDialects.VDMSL],
+        ["vsl", vdmDialects.VDMSL],
+        ["vdm-sl", vdmDialects.VDMSL],
+        ["sl", vdmDialects.VDMSL],
+        ["vdmpp", vdmDialects.VDMPP],
+        ["vpp", vdmDialects.VDMPP],
+        ["vdm-pp", vdmDialects.VDMPP],
+        ["pp", vdmDialects.VDMPP],
+        ["vdm++", vdmDialects.VDMPP],
+        ["vdmrt", vdmDialects.VDMRT],
+        ["vrt", vdmDialects.VDMRT],
+        ["vdm-rt", vdmDialects.VDMRT],
+        ["rt", vdmDialects.VDMRT],
     ].forEach((testInput) => {
         it("return valid dialects on direct match", () => {
             expect(getDialectFromAlias(testInput[0])).to.be(testInput[1]);
@@ -27,9 +27,9 @@ describe("getDialectFromAlias", () => {
     });
 
     [
-        ["VDMSL", "vdmsl"],
-        ["VdM++", "vdmpp"],
-        ["VDM-rt", "vdmrt"],
+        ["VDMSL", vdmDialects.VDMSL],
+        ["VdM++", vdmDialects.VDMPP],
+        ["VDM-rt", vdmDialects.VDMRT],
     ].forEach((testInput) => {
         it("return valid dialects on large letters", () => {
             expect(getDialectFromAlias(testInput[0])).to.be(testInput[1]);
@@ -37,19 +37,19 @@ describe("getDialectFromAlias", () => {
     });
 });
 
-describe("getDialectFromPretty", () => {
+describe("dialectToPrettyFormat", () => {
     [
-        ["VDM-SL", "vdmsl"],
-        ["VDM++", "vdmpp"],
-        ["VDM-RT", "vdmrt"],
+        [vdmDialects.VDMSL, "VDM-SL"],
+        [vdmDialects.VDMPP, "VDM++"],
+        [vdmDialects.VDMRT, "VDM-RT"],
     ].forEach((testInput) => {
         it("return dialects on match", () => {
-            expect(dialectsPretty[testInput[0]]).to.be(testInput[1]);
+            expect(dialectToPrettyFormat[testInput[0]]).to.be(testInput[1]);
         });
     });
 
     it("return undefined on no match", () => {
-        expect(dialectsPretty["badInput"]).to.be.undefined;
+        expect(dialectToPrettyFormat["badInput"]).to.be.undefined;
     });
 });
 
