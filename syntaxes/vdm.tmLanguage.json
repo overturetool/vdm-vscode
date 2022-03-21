@@ -1,584 +1,600 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "VDM",
-	"patterns": [
-		{
-			"include": "#comment"
-		},
-		{
-			"include": "#modifier"
-		},
-		{
-			"include": "#storage"
-		},
-		{
-			"include": "#end"
-		},
-		{
-			"include": "#definitions"
-		},
-		{
-			"include": "#keywords"
-		},
-		{
-			"include": "#mode"
-		},
-		{
-			"include": "source.vdm.type"
-		},
-		{
-			"include": "source.vdm.statements"
-		},
-		{
-			"include": "source.vdm.operators"
-		},
-		{
-			"include": "source.vdm.number"
-		},
-		{
-			"include": "#constants"
-		},
-		{
-			"include": "#collection"
-		},
-		{
-			"include": "#functions-definition"
-		},
-		{
-			"include": "#operations-definition"
-		},
-		{
-			"include": "#values-definition"
-		},
-		{
-			"include": "#types-definition"
-		},
-		{
-			"include": "#instance-variables-definition"
-		}
-	],
-	"repository": {
-		"comment": {
-			"patterns": [
-				{
-					"name": "comment.line.double-dash.vdm",
-					"begin": "--",
-					"end": "\\n",
-					"beginCaptures": {
-						"0": {
-							"name": "punctuation.definition.comment.vdm"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#annotation-keywords"
-						}
-					]
-				},
-				{
-					"include": "#block-comments"
-				},
-				{
-					"name": "comment.block.vdm",
-					"begin": "/\\*",
-					"end": "\\*/"
-				}
-			]
-		},
-		"annotation-keywords": {
-			"patterns": [
-				{
-					"match": "@(Override|Trace|NoPOG|Printf|OnFail|Warning)\\b",
-					"name": "keyword.other.documentation.vdm"
-				}
-			]
-		},
-		"block-comments": {
-			"patterns": [
-				{
-					"name": "comment.block.empty.vdm",
-					"match": "/\\*\\*/",
-					"captures": {
-						"0": {
-							"name": "punctuation.definition.comment.vdm"
-						}
-					}
-				},
-				{
-					"name": "comment.block.vdm",
-					"begin": "/\\*",
-					"end": "\\*/",
-					"beginCaptures": {
-						"1": {
-							"name": "punctuation.definition.comment.vdm"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#annotation-keywords"
-						},
-						{
-							"include": "#block-comments"
-						}
-					],
-					"endCaptures": {
-						"0": {
-							"name": "punctuation.definition.comment.vdm"
-						}
-					}
-				}
-			]
-		},
-		"function-name": {
-			"match": "(\\w+)(\\()(\\S+|\\s+)(\\))(\\s+)(==)",
-			"captures": {
-				"1": {
-					"name": "entity.name.function.vdm"
-				},
-				"2": {
-					"name": "punctuation.operation.parameters.begin.vdm"
-				},
-				"3": {
-					"name": "variable.parameter.vdm"
-				},
-				"4": {
-					"name": "punctuation.operation.parameters.end.vdm"
-				},
-				"6": {
-					"name": "keyword.operator.assignment.vdm"
-				}
-			}
-		},
-		"definitions": {
-			"patterns": [
-				{
-					"name": "storage.type.definition.vdm",
-					"match": "\\b(operations|functions|types|values|instance variables|traces|definitions)\\b"
-				}
-			]
-		},
-		"modifier": {
-			"patterns": [
-				{
-					"name": "storage.modifier.vdm",
-					"match": "\\b(public|private|protected|static|pre|post|pure|inv)\\b"
-				}
-			]
-		},
-		"storage": {
-			"name": "storage.type.dcl.vdm",
-			"match": "\\b(dcl|struct|state|def|atomic)\\b"
-		},
-		"end": {
-			"patterns": [
-				{
-					"name": "keyword.other.end.vdm",
-					"match": "(?<!\\\\)\\bend\\b"
-				}
-			]
-		},
-		"prefixes": {
-			"patterns": [
-				{
-					"name": "keyword.other.prefix.vdm",
-					"match": "\\b(init_|inv_|is_|post_|pre_)"
-				}
-			]
-		},
-		"variable-name": {
-			"patterns": [
-				{
-					"name": "variable.other.readwrite.vdm",
-					"match": "([^:()\\s=>])"
-				}
-			]
-		},
-		"keywords": {
-			"patterns": [
-				{
-					"name": "keyword.other.vdm",
-					"match": "\\b(always|error|errs|ext|exit|skip|using)\\b"
-				}
-			]
-		},
-		"mode": {
-			"patterns": [
-				{
-					"name": "keyword.other.mode.vdm",
-					"match": "\\b(rd|wr)\\b"
-				}
-			]
-		},
-		"instance-variables-definition": {
-			"name": "meta.instance-variables.vdm",
-			"begin": "\\b(instance variables)\\b",
-			"end": "(.*)(?=(operations|functions|types|values|end))",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#definitions"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#instance-variables-declator"
-				},
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"instance-variables-declator": {
-			"name": "meta.instance-variables.declator.vdm",
-			"begin": "(\\S+)\\s*:\\s*([^;\\n]+)",
-			"end": ";",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#variable-name"
-						}
-					]
-				},
-				"2": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"include": "#statements"
-						}
-					]
-				}
-			}
-		},
-		"types-definition": {
-			"name": "meta.types.vdm",
-			"begin": "\\b(types)\\b",
-			"end": "(.*)(?=(operations|functions|values|instance variables|end))",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#definitions"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#types-declator"
-				},
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"types-declator": {
-			"name": "meta.types.declator.vdm",
-			"begin": "(public|private)\\s+(\\S+)\\s+=\\s+([^;]+)",
-			"end": ";",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#modifier"
-						}
-					]
-				},
-				"2": {
-					"patterns": [
-						{
-							"include": "#variable-name"
-						}
-					]
-				},
-				"3": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"name": "support.type.primitive.vdm",
-							"match": "\\S+"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"values-definition": {
-			"name": "meta.values.vdm",
-			"begin": "\\b(values)\\b",
-			"end": "(.*)(?=(operations|functions|types|instance variables|end))",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#definitions"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#values-declator"
-				},
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"values-declator": {
-			"name": "meta.values.declator.vdm",
-			"begin": "(public|private)\\s+(static)\\s+(\\S+)\\s+:\\s+(\\S+)",
-			"end": ";",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#modifier"
-						}
-					]
-				},
-				"2": {
-					"patterns": [
-						{
-							"include": "#modifier"
-						}
-					]
-				},
-				"3": {
-					"patterns": [
-						{
-							"include": "#variable-name"
-						}
-					]
-				},
-				"4": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"name": "support.type.primitive.vdm",
-							"match": "\\S+"
-						}
-					]
-				}
-			},
-			"endCaptures": {
-				"1": {
-					"name": "storage.type.vdm"
-				},
-				"2": {
-					"name": "entity.name.class.vdm"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"functions-definition": {
-			"name": "meta.functions.vdm",
-			"begin": "\\b(functions)\\b",
-			"end": ".*(?=operations|values|types|instance variables|end)",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#definitions"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#functions-declator"
-				},
-				{
-					"include": "#functions-implementation"
-				},
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"functions-declator": {
-			"name": "meta.functions.declator.vdm",
-			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#modifier"
-						}
-					]
-				},
-				"2": {
-					"name": "entity.name.function"
-				},
-				"3": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"name": "support.type.primitive.vdm",
-							"match": "\\S+"
-						}
-					]
-				}
-			},
-			"end": "(==>|->)\\s+(seq of char|\\S+)",
-			"endCaptures": {
-				"1": {
-					"name": "storage.type.function.arrow.js"
-				},
-				"2": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"name": "support.type.primitive.vdm",
-							"match": "\\S+"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"functions-implementation": {
-			"name": "meta.functions.implementation.vdm",
-			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
-			"end": ";",
-			"beginCaptures": {
-				"1": {
-					"name": "entity.name.function.vdm"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"operations-definition": {
-			"name": "meta.operations.vdm",
-			"begin": "\\b(operations)\\b",
-			"end": "(.*)(?=(functions|values|types|instance variables|end))",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#definitions"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#operations-declator"
-				},
-				{
-					"include": "#operations-implementation"
-				},
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"operations-declator": {
-			"name": "meta.operations.declator.vdm",
-			"begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
-			"beginCaptures": {
-				"1": {
-					"patterns": [
-						{
-							"include": "#modifier"
-						}
-					]
-				},
-				"2": {
-					"name": "entity.name.function"
-				},
-				"3": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"name": "support.type.primitive.vdm",
-							"match": "\\S+"
-						}
-					]
-				}
-			},
-			"end": "(==>|->)\\s+(seq of char|\\S+)",
-			"endCaptures": {
-				"1": {
-					"name": "storage.type.function.arrow.js"
-				},
-				"2": {
-					"patterns": [
-						{
-							"include": "source.vdm.type"
-						},
-						{
-							"name": "support.type.primitive.vdm",
-							"match": "\\S+"
-						}
-					]
-				}
-			},
-			"patterns": [
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"operations-implementation": {
-			"name": "meta.operations.implementation.vdm",
-			"begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
-			"end": ";",
-			"beginCaptures": {
-				"1": {
-					"name": "entity.name.function.vdm"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#use-function"
-				},
-				{
-					"include": "#statements"
-				}
-			]
-		},
-		"use-function": {
-			"name": "meta.use-function.vdm",
-			"begin": "(\\S+)\\s*\\(",
-			"end": "\\)",
-			"beginCaptures": {
-				"1": {
-					"name": "support.function.vdm"
-				}
-			}
-		}
-	},
-	"scopeName": "source.vdm"
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "VDM",
+    "patterns": [
+        {
+            "include": "#embedded-latex"
+        },
+        {
+            "include": "#comment"
+        },
+        {
+            "include": "#modifier"
+        },
+        {
+            "include": "#storage"
+        },
+        {
+            "include": "#end"
+        },
+        {
+            "include": "#definitions"
+        },
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#mode"
+        },
+        {
+            "include": "source.vdm.type"
+        },
+        {
+            "include": "source.vdm.statements"
+        },
+        {
+            "include": "source.vdm.operators"
+        },
+        {
+            "include": "source.vdm.number"
+        },
+        {
+            "include": "#constants"
+        },
+        {
+            "include": "#collection"
+        },
+        {
+            "include": "#functions-definition"
+        },
+        {
+            "include": "#operations-definition"
+        },
+        {
+            "include": "#values-definition"
+        },
+        {
+            "include": "#types-definition"
+        },
+        {
+            "include": "#instance-variables-definition"
+        }
+    ],
+    "repository": {
+        "embedded-latex": {
+            "patterns": [
+                {
+                    "name": "meta.embedded.inline.latex",
+                    "begin": "^\\\\end{.*} *$|^%comment |^\\\\document.*{.*}|^\\\\(?:sub)?section.*{.*}",
+                    "end": "^\\\\begin{.*} *$"
+                },
+                {
+                    "name": "meta.embedded.inline.latex",
+                    "match": "^\\\\begin{.*} *$"
+                }
+            ]
+        },
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-dash.vdm",
+                    "begin": "--",
+                    "end": "\\n",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#annotation-keywords"
+                        }
+                    ]
+                },
+                {
+                    "include": "#block-comments"
+                },
+                {
+                    "name": "comment.block.vdm",
+                    "begin": "/\\*",
+                    "end": "\\*/"
+                }
+            ]
+        },
+        "annotation-keywords": {
+            "patterns": [
+                {
+                    "match": "@(Override|Trace|NoPOG|Printf|OnFail|Warning)\\b",
+                    "name": "keyword.other.documentation.vdm"
+                }
+            ]
+        },
+        "block-comments": {
+            "patterns": [
+                {
+                    "name": "comment.block.empty.vdm",
+                    "match": "/\\*\\*/",
+                    "captures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    }
+                },
+                {
+                    "name": "comment.block.vdm",
+                    "begin": "/\\*",
+                    "end": "\\*/",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "#annotation-keywords"
+                        },
+                        {
+                            "include": "#block-comments"
+                        }
+                    ],
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.vdm"
+                        }
+                    }
+                }
+            ]
+        },
+        "function-name": {
+            "match": "(\\w+)(\\()(\\S+|\\s+)(\\))(\\s+)(==)",
+            "captures": {
+                "1": {
+                    "name": "entity.name.function.vdm"
+                },
+                "2": {
+                    "name": "punctuation.operation.parameters.begin.vdm"
+                },
+                "3": {
+                    "name": "variable.parameter.vdm"
+                },
+                "4": {
+                    "name": "punctuation.operation.parameters.end.vdm"
+                },
+                "6": {
+                    "name": "keyword.operator.assignment.vdm"
+                }
+            }
+        },
+        "definitions": {
+            "patterns": [
+                {
+                    "name": "storage.type.definition.vdm",
+                    "match": "\\b(operations|functions|types|values|instance variables|traces|definitions)\\b"
+                }
+            ]
+        },
+        "modifier": {
+            "patterns": [
+                {
+                    "name": "storage.modifier.vdm",
+                    "match": "\\b(public|private|protected|static|pre|post|pure|inv)\\b"
+                }
+            ]
+        },
+        "storage": {
+            "name": "storage.type.dcl.vdm",
+            "match": "\\b(dcl|struct|state|def|atomic)\\b"
+        },
+        "end": {
+            "patterns": [
+                {
+                    "name": "keyword.other.end.vdm",
+                    "match": "(?<!\\\\)\\bend\\b"
+                }
+            ]
+        },
+        "prefixes": {
+            "patterns": [
+                {
+                    "name": "keyword.other.prefix.vdm",
+                    "match": "\\b(init_|inv_|is_|post_|pre_)"
+                }
+            ]
+        },
+        "variable-name": {
+            "patterns": [
+                {
+                    "name": "variable.other.readwrite.vdm",
+                    "match": "([^:()\\s=>])"
+                }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.other.vdm",
+                    "match": "\\b(always|error|errs|ext|exit|skip|using)\\b"
+                }
+            ]
+        },
+        "mode": {
+            "patterns": [
+                {
+                    "name": "keyword.other.mode.vdm",
+                    "match": "\\b(rd|wr)\\b"
+                }
+            ]
+        },
+        "instance-variables-definition": {
+            "name": "meta.instance-variables.vdm",
+            "begin": "\\b(instance variables)\\b",
+            "end": "(.*)(?=(operations|functions|types|values|end))",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#definitions"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#instance-variables-declator"
+                },
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "instance-variables-declator": {
+            "name": "meta.instance-variables.declator.vdm",
+            "begin": "(\\S+)\\s*:\\s*([^;\\n]+)",
+            "end": ";",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#variable-name"
+                        }
+                    ]
+                },
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "include": "#statements"
+                        }
+                    ]
+                }
+            }
+        },
+        "types-definition": {
+            "name": "meta.types.vdm",
+            "begin": "\\b(types)\\b",
+            "end": "(.*)(?=(operations|functions|values|instance variables|end))",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#definitions"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#types-declator"
+                },
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "types-declator": {
+            "name": "meta.types.declator.vdm",
+            "begin": "(public|private)\\s+(\\S+)\\s+=\\s+([^;]+)",
+            "end": ";",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#modifier"
+                        }
+                    ]
+                },
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "#variable-name"
+                        }
+                    ]
+                },
+                "3": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "name": "support.type.primitive.vdm",
+                            "match": "\\S+"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "values-definition": {
+            "name": "meta.values.vdm",
+            "begin": "\\b(values)\\b",
+            "end": "(.*)(?=(operations|functions|types|instance variables|end))",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#definitions"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#values-declator"
+                },
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "values-declator": {
+            "name": "meta.values.declator.vdm",
+            "begin": "(public|private)\\s+(static)\\s+(\\S+)\\s+:\\s+(\\S+)",
+            "end": ";",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#modifier"
+                        }
+                    ]
+                },
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "#modifier"
+                        }
+                    ]
+                },
+                "3": {
+                    "patterns": [
+                        {
+                            "include": "#variable-name"
+                        }
+                    ]
+                },
+                "4": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "name": "support.type.primitive.vdm",
+                            "match": "\\S+"
+                        }
+                    ]
+                }
+            },
+            "endCaptures": {
+                "1": {
+                    "name": "storage.type.vdm"
+                },
+                "2": {
+                    "name": "entity.name.class.vdm"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "functions-definition": {
+            "name": "meta.functions.vdm",
+            "begin": "\\b(functions)\\b",
+            "end": ".*(?=operations|values|types|instance variables|end)",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#definitions"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#functions-declator"
+                },
+                {
+                    "include": "#functions-implementation"
+                },
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "functions-declator": {
+            "name": "meta.functions.declator.vdm",
+            "begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#modifier"
+                        }
+                    ]
+                },
+                "2": {
+                    "name": "entity.name.function"
+                },
+                "3": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "name": "support.type.primitive.vdm",
+                            "match": "\\S+"
+                        }
+                    ]
+                }
+            },
+            "end": "(==>|->)\\s+(seq of char|\\S+)",
+            "endCaptures": {
+                "1": {
+                    "name": "storage.type.function.arrow.js"
+                },
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "name": "support.type.primitive.vdm",
+                            "match": "\\S+"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "functions-implementation": {
+            "name": "meta.functions.implementation.vdm",
+            "begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
+            "end": ";",
+            "beginCaptures": {
+                "1": {
+                    "name": "entity.name.function.vdm"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "operations-definition": {
+            "name": "meta.operations.vdm",
+            "begin": "\\b(operations)\\b",
+            "end": "(.*)(?=(functions|values|types|instance variables|end))",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#definitions"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#operations-declator"
+                },
+                {
+                    "include": "#operations-implementation"
+                },
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "operations-declator": {
+            "name": "meta.operations.declator.vdm",
+            "begin": "(public|private)\\s+(\\S+)\\s*:\\s*(\\S+)\\s+",
+            "beginCaptures": {
+                "1": {
+                    "patterns": [
+                        {
+                            "include": "#modifier"
+                        }
+                    ]
+                },
+                "2": {
+                    "name": "entity.name.function"
+                },
+                "3": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "name": "support.type.primitive.vdm",
+                            "match": "\\S+"
+                        }
+                    ]
+                }
+            },
+            "end": "(==>|->)\\s+(seq of char|\\S+)",
+            "endCaptures": {
+                "1": {
+                    "name": "storage.type.function.arrow.js"
+                },
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "source.vdm.type"
+                        },
+                        {
+                            "name": "support.type.primitive.vdm",
+                            "match": "\\S+"
+                        }
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "operations-implementation": {
+            "name": "meta.operations.implementation.vdm",
+            "begin": "(\\S+)\\s*\\(\\s*\\S*\\s*\\)\\s*==",
+            "end": ";",
+            "beginCaptures": {
+                "1": {
+                    "name": "entity.name.function.vdm"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#use-function"
+                },
+                {
+                    "include": "#statements"
+                }
+            ]
+        },
+        "use-function": {
+            "name": "meta.use-function.vdm",
+            "begin": "(\\S+)\\s*\\(",
+            "end": "\\)",
+            "beginCaptures": {
+                "1": {
+                    "name": "support.function.vdm"
+                }
+            }
+        }
+    },
+    "scopeName": "source.vdm"
 }
