@@ -61,6 +61,15 @@
         "onCommand:vdm-vscode.openServerLogFolder"
     ],
     "contributes": {
+        "configurationDefaults": {
+            "editor.tokenColorCustomizations": {"textMateRules": [{
+                "scope": "meta.embedded.inline.latex",
+                "settings": {
+                    "fontStyle": "italic",
+                    "foreground": "#7c7c7c"
+                }
+            }]}
+        },
         "languages": [
             {
                 "id": "vdmsl",
@@ -101,17 +110,26 @@
             {
                 "language": "vdmsl",
                 "scopeName": "source.vdmsl",
-                "path": "./syntaxes/vdmsl.tmLanguage.json"
+                "path": "./syntaxes/vdmsl.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.inline.latex": "latex"
+                }
             },
             {
                 "language": "vdmpp",
                 "scopeName": "source.vdmpp",
-                "path": "./syntaxes/vdmpp.tmLanguage.json"
+                "path": "./syntaxes/vdmpp.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.inline.latex": "latex"
+                }
             },
             {
                 "language": "vdmrt",
                 "scopeName": "source.vdmrt",
-                "path": "./syntaxes/vdmrt.tmLanguage.json"
+                "path": "./syntaxes/vdmrt.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.inline.latex": "latex"
+                }
             },
             {
                 "scopeName": "source.vdm",
