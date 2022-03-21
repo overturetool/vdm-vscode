@@ -65,7 +65,7 @@
             "patterns": [
                 {
                     "name": "meta.embedded.inline.latex",
-                    "begin": "^\\\\end{.*} *$|^%comment|^\\\\document.*{.*}|^\\\\(?:sub)?section.*{.*}",
+                    "begin": "^\\\\end{.*} *$|^%comment |^\\\\document.*{.*}|^\\\\(?:sub)?section.*{.*}",
                     "end": "^\\\\begin{.*} *$"
                 },
                 {
