@@ -7,6 +7,7 @@ import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
 import { ClientManager } from "./ClientManager";
 import { createDirectory, recursivePathSearch } from "./util/DirectoriesUtil";
+import { getDialectFromAlias, guessDialect, pickDialect, vdmDialects } from "./util/DialectUtil";
 
 export class JavaCodeGenHandler implements Disposable {
     private _disposables: Disposable[] = [];
@@ -33,36 +34,30 @@ export class JavaCodeGenHandler implements Disposable {
     }
 
     private async javaCodeGen(wsFolder: WorkspaceFolder) {
-        let dialect = null;
-        let dialectext = null;
-        const dialects = { vdmsl: "sl", vdmpp: "pp", vdmrt: "rt" };
-
+        let dialect: vdmDialects;
+        const javaCodeGendialects = { vdmsl: "sl", vdmpp: "pp", vdmrt: "rt" };
         window.setStatusBarMessage(
             `Starting code generation.`,
             new Promise(async (resolve, reject) => {
                 let client = this.clients.get(wsFolder);
                 if (client?.languageId) {
-                    dialect = dialects[client.languageId];
-                    dialectext = client.languageId;
+                    dialect = getDialectFromAlias(client.languageId);
                 } else {
                     console.log(`No client found for the folder: ${wsFolder.name}`);
 
                     // Guess dialect
-                    for (var dp in dialects) {
-                        let pattern = new RelativePattern(wsFolder.uri.path, "*." + dp);
-                        let res = await workspace.findFiles(pattern, null, 1);
-                        if (res.length == 1) {
-                            dialect = dialects[dp];
-                            dialectext = dp;
-                        }
-                    }
+                    await guessDialect(wsFolder)
+                        .then((dia: vdmDialects) => (dialect = dia))
+                        .catch(async () => {
+                            await pickDialect()
+                                .then((dia: vdmDialects) => (dialect = dia))
+                                .catch(() => {});
+                        });
+                }
 
-                    if (!dialect || !dialectext) {
-                        // TODO could insert a selection window here so that the user can manually choose the dialect if we can't guess
-                        window.showInformationMessage(`Code generation failed! Unable to guess VDM dialect for workspace`);
-                        reject();
-                        return;
-                    }
+                if (!dialect) {
+                    window.showInformationMessage(`Code generation failed! Unable to resolve VDM dialect for workspace`);
+                    return reject();
                 }
 
                 const folderUri = Uri.joinPath(util.generatedDataPath(wsFolder), "java");
@@ -80,7 +75,7 @@ export class JavaCodeGenHandler implements Disposable {
                                 reject();
                             }
 
-                            args.push(...["-jar", this.jarPath, "-" + dialect]);
+                            args.push(...["-jar", this.jarPath, "-" + javaCodeGendialects[dialect]]);
 
                             const config = workspace.getConfiguration("vdm-vscode", wsFolder.uri);
 
@@ -113,7 +108,7 @@ export class JavaCodeGenHandler implements Disposable {
                             }
                             args.push(...["-output", folderUri.fsPath]);
 
-                            let pattern = new RelativePattern(wsFolder.uri.path, "*." + dialectext);
+                            let pattern = new RelativePattern(wsFolder.uri.path, "*." + dialect);
                             let res = await workspace.findFiles(pattern, null);
                             if (res && res.length > 0) {
                                 args.push(...res.map((u) => u.fsPath));

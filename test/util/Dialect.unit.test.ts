@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { dialectToPrettyFormat, getDialectFromAlias, isVDMFile, vdmDialects } from "../../src/util/DialectUtil";
+import { dialectToPrettyFormat, getDialectFromAlias, vdmDialects } from "../../src/util/DialectUtil";
 
 describe("getDialectFromAlias", () => {
     it("throw error on mismatch", () => {
@@ -50,16 +50,6 @@ describe("dialectToPrettyFormat", () => {
 
     it("return undefined on no match", () => {
         expect(dialectToPrettyFormat["badInput"]).to.be.undefined;
-    });
-});
-
-describe("isVDMFile", () => {
-    it("return true for vdm file extension", () => {
-        expect(isVDMFile("some.path.vdmsl")).to.be.true;
-    });
-
-    it("return false for non vdm file extension", () => {
-        expect(isVDMFile("some.invalid.vdmsl.path")).to.be.false;
     });
 });
 
