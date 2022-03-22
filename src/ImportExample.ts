@@ -8,6 +8,7 @@ import * as path from "path";
 import { extensionId } from "./ExtensionInfo";
 import AutoDisposable from "./helper/AutoDisposable";
 import { getDefaultWorkspaceFolderLocation } from "./util/WorkspaceFoldersUtil";
+import { dialectToPrettyFormat } from "./util/DialectUtil";
 
 export class AddExampleHandler extends AutoDisposable {
     constructor() {
@@ -16,20 +17,18 @@ export class AddExampleHandler extends AutoDisposable {
     }
 
     private async addExample() {
-        const dialects = ["VDMSL", "VDM++", "VDMRT"];
-
         window.setStatusBarMessage(
             `Adding Example.`,
             new Promise(async (resolve, reject) => {
-                let dialect: string = await window.showQuickPick(dialects, {
+                const dialectPretty: string = await window.showQuickPick(Array.from(dialectToPrettyFormat.values()), {
                     placeHolder: "Choose dialect",
                     canPickMany: false,
                 });
 
-                if (dialect === undefined) return reject(`Empty selection. Add example completed.`);
+                if (dialectPretty === undefined) return reject(`Empty selection. Add example completed.`);
 
                 // Gather available examples and let user select
-                const exaPath = path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "examples", dialect);
+                const exaPath = path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "examples", dialectPretty);
 
                 const exsInFolder: Dirent[] = readdirSync(exaPath, { withFileTypes: true });
 

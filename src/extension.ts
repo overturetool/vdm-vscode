@@ -18,7 +18,7 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialectExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
+import { dialectToExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./OpenVDMToolsHandler";
@@ -34,7 +34,7 @@ export function activate(context: ExtensionContext) {
     }
 
     // File extension types aka language ids that can be handled
-    const acceptedLanguageIds: string[] = Array.from(dialectExtensions.values()).reduce((prev, cur) => {
+    const acceptedLanguageIds: string[] = Array.from(dialectToExtensions.values()).reduce((prev, cur) => {
         return prev.concat(cur);
     });
 
@@ -44,11 +44,13 @@ export function activate(context: ExtensionContext) {
 
     // Keep track of VDM workspace folders
     const knownVdmFolders: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
-    workspace.workspaceFolders.forEach((wsFolder) => guessDialect(wsFolder).then((dialect) => knownVdmFolders.set(wsFolder, dialect)));
+    workspace.workspaceFolders.forEach((wsFolder) =>
+        guessDialect(wsFolder).then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+    );
     context.subscriptions.push(
         workspace.onDidChangeWorkspaceFolders(async (e: WorkspaceFoldersChangeEvent) => {
             e.added.forEach((wsFolder) => {
-                guessDialect(wsFolder).then((dialect) => knownVdmFolders.set(wsFolder, dialect));
+                guessDialect(wsFolder).then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect));
             });
             e.removed.forEach((wsFolder) => {
                 if (knownVdmFolders.has(wsFolder)) {

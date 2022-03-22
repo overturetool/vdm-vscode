@@ -3,7 +3,7 @@
 import * as util from "./util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "./VdmDapSupport";
-import { guessDialect } from "./util/DialectUtil";
+import { guessDialect, vdmDialects } from "./util/DialectUtil";
 
 interface VdmArgument {
     name: string;
@@ -49,9 +49,9 @@ export class AddRunConfigurationHandler implements Disposable {
         window.setStatusBarMessage(
             `Adding Run Configuration.`,
             new Promise(async (resolve, reject) => {
-                let dialect: string;
+                let dialect: vdmDialects;
                 await guessDialect(wsFolder).then(
-                    (result) => (dialect = result),
+                    (result: vdmDialects) => (dialect = result),
                     (error) => {
                         console.info(`[Run Config] Add configuration failed: ${error}`);
                         window.showInformationMessage(`Add run configration failed. Could not guess language`);
@@ -62,7 +62,7 @@ export class AddRunConfigurationHandler implements Disposable {
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
                 let selectedCommand: string;
-                if (dialect == "vdmsl") {
+                if (dialect == vdmDialects.VDMSL) {
                     selectedClass = await window.showInputBox({
                         prompt: "Input entry point Module",
                         placeHolder: "Module",
@@ -103,7 +103,7 @@ export class AddRunConfigurationHandler implements Disposable {
                     measureChecks: true,
                     defaultName: className,
                 };
-                if (dialect == "vdmsl") debugConfiguration.command = `print ${selectedCommand}`;
+                if (dialect == vdmDialects.VDMSL) debugConfiguration.command = `print ${selectedCommand}`;
                 else debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
 
                 // Save run configuration
