@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, QuickPickItem, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
+import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import * as Util from "./util/Util";
-import { guessDialect, getDialectFromAlias, pickDialect, vdmDialects } from "./util/DialectUtil";
-import { ClientManager } from "./ClientManager";
-import AutoDisposable from "./helper/AutoDisposable";
+import * as Util from "../util/Util";
+import { guessDialect, getDialectFromAlias, pickDialect, vdmDialects } from "../util/DialectUtil";
+import { ClientManager } from "../ClientManager";
+import AutoDisposable from "../helper/AutoDisposable";
 // Zip library
 import yauzl = require("yauzl");
 // Encoding library
 import iconv = require("iconv-lite");
-import { getExtensionPath } from "./util/ExtensionUtil";
-import { getFilesFromDirRecur } from "./util/DirectoriesUtil";
+import { getExtensionPath } from "../util/ExtensionUtil";
+import { getFilesFromDirRecur } from "../util/DirectoriesUtil";
 
 export class AddLibraryHandler extends AutoDisposable {
     private readonly _libraryEncoding: BufferEncoding = "utf8";
@@ -31,10 +31,6 @@ export class AddLibraryHandler extends AutoDisposable {
         Util.registerCommand(this._disposables, "vdm-vscode.addLibraryJars", () =>
             Util.addToSettingsArray(false, "VDM libraries", "vdm-vscode.server.libraries", "VDM-Libraries")
         );
-    }
-
-    dispose(): void {
-        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     public static getIncludedLibrariesFolderPath(extensionPath: string, wsFolder: WorkspaceFolder): string {

@@ -15,6 +15,7 @@ import {
     commands,
     DocumentSelector,
 } from "vscode";
+import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
 import { isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
 
@@ -40,7 +41,6 @@ interface Message {
 export class ProofObligationPanel implements Disposable {
     private static _providers: { selector: DocumentSelector; provider: ProofObligationProvider }[] = [];
 
-    private _context: ExtensionContext;
     private _panel: WebviewPanel;
     private _lastWsFolder: WorkspaceFolder;
     private _lastUri: Uri;
@@ -50,9 +50,23 @@ export class ProofObligationPanel implements Disposable {
     private _currentSortingHeader: string;
     private _statusFilter: string[] = [];
 
-    constructor(context: ExtensionContext) {
-        this._context = context;
-        this._disposables.push(commands.registerCommand(`vdm-vscode.pog.run`, this.onRunPog, this));
+    constructor(private readonly _context: ExtensionContext, clientManager: ClientManager) {
+        this._disposables.push(
+            commands.registerCommand(
+                `vdm-vscode.pog.run`,
+                async (uri: Uri) => {
+                    const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
+                    if (!wsFolder) throw Error(`[POG]: Cannot find workspace folder for iri: ${uri.toString()}`);
+                    // If in a multi project workspace environment the user could utilise the pog.run command on a project for which no client (and therefore server) has been started.
+                    // So check if a client is present for the workspacefolder or else start it.
+                    if (!clientManager.get(wsFolder)) {
+                        await clientManager.launchClientForWorkspace(wsFolder);
+                    }
+                    this.onRunPog(uri);
+                },
+                this
+            )
+        );
         this._disposables.push(commands.registerCommand(`vdm-vscode.pog.update`, this.onUpdate, this));
     }
 
@@ -156,7 +170,7 @@ export class ProofObligationPanel implements Disposable {
             // Handle messages from the webview
             this._panel.webview.onDidReceiveMessage(
                 async (message: Message) => {
-                    console.log(`[Proof Obligation View] Received new message: ${message}`);
+                    console.log(`[Proof Obligation View] Received new message: ${message.command}`);
                     switch (message.command) {
                         case "goToSymbol":
                             // Find path of po with id

@@ -3,14 +3,14 @@
 import * as languageId from "./slsp/protocol/TranslationLanguageId";
 import * as ExtensionInfo from "./ExtensionInfo";
 import { ExtensionContext, window, workspace, commands, TextDocument, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
-import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
+import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./vdmj/VdmjCTInterpreterHandler";
-import { AddLibraryHandler } from "./AddLibraryHandler";
-import { AddRunConfigurationHandler } from "./AddRunConfiguration";
-import { AddExampleHandler } from "./ImportExample";
-import { JavaCodeGenHandler } from "./JavaCodeGenHandler";
-import { AddToClassPathHandler } from "./AddToClassPath";
+import { AddLibraryHandler } from "./handlers/AddLibraryHandler";
+import { AddRunConfigurationHandler } from "./handlers/AddRunConfigurationHandler";
+import { AddExampleHandler } from "./handlers/ImportExampleHandler";
+import { JavaCodeGenHandler } from "./handlers/JavaCodeGenHandler";
+import { AddToClassPathHandler } from "./handlers/AddToClassPathHandler";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
 import { TranslateButton } from "./slsp/views/translate/TranslateButton";
 import { GenerateCoverageButton } from "./slsp/views/translate/GenerateCoverageButton";
@@ -21,7 +21,7 @@ import { ServerFactory } from "./server/ServerFactory";
 import { dialectToExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
-import { OpenVDMToolsHandler } from "./OpenVDMToolsHandler";
+import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 
 export function activate(context: ExtensionContext) {
     // Setup server factory
@@ -45,12 +45,16 @@ export function activate(context: ExtensionContext) {
     // Keep track of VDM workspace folders
     const knownVdmFolders: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
     workspace.workspaceFolders.forEach((wsFolder) =>
-        guessDialect(wsFolder).then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+        guessDialect(wsFolder)
+            .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+            .catch(() => {})
     );
     context.subscriptions.push(
         workspace.onDidChangeWorkspaceFolders(async (e: WorkspaceFoldersChangeEvent) => {
             e.added.forEach((wsFolder) => {
-                guessDialect(wsFolder).then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect));
+                guessDialect(wsFolder)
+                    .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+                    .catch(() => {});
             });
             e.removed.forEach((wsFolder) => {
                 if (knownVdmFolders.has(wsFolder)) {
@@ -64,7 +68,7 @@ export function activate(context: ExtensionContext) {
     commands.executeCommand("setContext", "vdm-submenus-show", true);
 
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
-    context.subscriptions.push(new ProofObligationPanel(context));
+    context.subscriptions.push(new ProofObligationPanel(context, clientManager));
     context.subscriptions.push(
         new CombinatorialTestingView(clientManager, knownVdmFolders, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
     );

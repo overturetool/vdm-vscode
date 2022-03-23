@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, extensions, Uri, window, workspace } from "vscode";
-import * as util from "./util/Util";
+import * as util from "../util/Util";
 import { Dirent, readdirSync } from "fs";
 import { copySync } from "fs-extra";
 import * as path from "path";
-import { extensionId } from "./ExtensionInfo";
-import AutoDisposable from "./helper/AutoDisposable";
-import { getDefaultWorkspaceFolderLocation } from "./util/WorkspaceFoldersUtil";
-import { dialectToPrettyFormat } from "./util/DialectUtil";
+import { extensionId } from "../ExtensionInfo";
+import AutoDisposable from "../helper/AutoDisposable";
+import { getDefaultWorkspaceFolderLocation } from "../util/WorkspaceFoldersUtil";
+import { dialectToPrettyFormat } from "../util/DialectUtil";
 
 export class AddExampleHandler extends AutoDisposable {
     constructor() {

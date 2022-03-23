@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Disposable } from "vscode";
-import * as Util from "./util/Util";
+import AutoDisposable from "../helper/AutoDisposable";
+import * as Util from "../util/Util";
 
-export class AddToClassPathHandler implements Disposable {
-    private _disposables: Disposable[] = [];
-
+export class AddToClassPathHandler extends AutoDisposable {
     constructor() {
+        super();
         Util.registerCommand(this._disposables, "vdm-vscode.addFoldersToClassPath", () =>
             Util.addToSettingsArray(true, "class path", "vdm-vscode.server", "classPathAdditions")
         );
         Util.registerCommand(this._disposables, "vdm-vscode.addFilesToClassPath", () =>
             Util.addToSettingsArray(false, "class path", "vdm-vscode.server", "classPathAdditions")
         );
-    }
-    dispose(): void {
-        while (this._disposables.length) this._disposables.pop().dispose();
     }
 }

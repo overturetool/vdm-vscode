@@ -7,7 +7,7 @@ import * as child_process from "child_process";
 import * as util from "../util/Util";
 import * as encoding from "../Encoding";
 import * as Plugins from "./Plugins";
-import { AddLibraryHandler } from "../AddLibraryHandler";
+import { AddLibraryHandler } from "../handlers/AddLibraryHandler";
 import { WorkspaceConfiguration, workspace, window, WorkspaceFolder, OutputChannel, Disposable } from "vscode";
 import { ServerOptions } from "vscode-languageclient/node";
 import { getExtensionPath } from "../util/ExtensionUtil";

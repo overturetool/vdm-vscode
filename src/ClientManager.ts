@@ -15,7 +15,7 @@ import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languagec
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
-import { VdmDapSupport as dapSupport } from "./VdmDapSupport";
+import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import AutoDisposable from "./helper/AutoDisposable";
 import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
