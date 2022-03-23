@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import * as util from "./util/Util";
+import * as util from "../util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { VdmDebugConfiguration } from "./VdmDapSupport";
-import { guessDialect, vdmDialects } from "./util/DialectUtil";
+import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
+import { guessDialect, vdmDialects } from "../util/DialectUtil";
 
 interface VdmArgument {
     name: string;

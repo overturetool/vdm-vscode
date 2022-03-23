@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, extensions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import * as util from "./util/Util";
+import { commands, extensions, RelativePattern, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import * as util from "../util/Util";
 import { spawn } from "child_process";
 import * as path from "path";
-import { extensionId } from "./ExtensionInfo";
-import { ClientManager } from "./ClientManager";
-import { createDirectory, recursivePathSearch } from "./util/DirectoriesUtil";
-import { getDialectFromAlias, guessDialect, pickDialect, vdmDialects } from "./util/DialectUtil";
+import { extensionId } from "../ExtensionInfo";
+import { ClientManager } from "../ClientManager";
+import { createDirectory, recursivePathSearch } from "../util/DirectoriesUtil";
+import { getDialectFromAlias, guessDialect, pickDialect, vdmDialects } from "../util/DialectUtil";
+import AutoDisposable from "../helper/AutoDisposable";
 
-export class JavaCodeGenHandler implements Disposable {
-    private _disposables: Disposable[] = [];
+export class JavaCodeGenHandler extends AutoDisposable {
     private jarPath: string;
 
     constructor(private readonly clients: ClientManager) {
+        super();
         this.jarPath = recursivePathSearch(
             path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
             /javagen.*jar/i
@@ -28,9 +29,6 @@ export class JavaCodeGenHandler implements Disposable {
             );
             commands.executeCommand("setContext", "vdm-vscode.javaCodeGen", true);
         }
-    }
-    dispose() {
-        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private async javaCodeGen(wsFolder: WorkspaceFolder) {

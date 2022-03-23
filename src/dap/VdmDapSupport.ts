@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as vscode from "vscode";
-import { ClientManager } from "./ClientManager";
-import { CompletedParsingParams, CompletedParsingNotification } from "./server/ServerNotifications";
-import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
+import { ClientManager } from "../ClientManager";
+import { CompletedParsingParams, CompletedParsingNotification } from "../server/ServerNotifications";
+import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, window, workspace, WorkspaceFolder } from "vscode";
-import * as Util from "./util/Util";
-import AutoDisposable from "./helper/AutoDisposable";
+import * as Util from "../util/Util";
+import AutoDisposable from "../helper/AutoDisposable";
 import { ChildProcess, spawn } from "child_process";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { dialectToPrettyFormat, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
+import { dialectToPrettyFormat, vdmDialects, vdmFilePattern } from "../util/DialectUtil";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
     constructor(knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
