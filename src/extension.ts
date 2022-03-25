@@ -23,6 +23,8 @@ import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 
+let clientManager: ClientManager;
+
 export function activate(context: ExtensionContext) {
     // Setup server factory
     let serverFactory: ServerFactory;
@@ -39,7 +41,7 @@ export function activate(context: ExtensionContext) {
     });
 
     // Setup client manager
-    const clientManager: ClientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
+    clientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
     context.subscriptions.push(clientManager);
 
     // Keep track of VDM workspace folders
@@ -100,6 +102,7 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate(): Thenable<void> | undefined {
     let promises: Thenable<void>[] = [];
+    clientManager.stopClients();
 
     // Hide VDM VS Code buttons
     promises.push(commands.executeCommand("setContext", "vdm-submenus-show", false));

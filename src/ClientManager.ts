@@ -59,8 +59,8 @@ export class ClientManager extends AutoDisposable {
         }
     }
 
-    stopClients(wsFolders: readonly WorkspaceFolder[]) {
-        for (const wsFolder of wsFolders) {
+    stopClients(wsFolders?: readonly WorkspaceFolder[]) {
+        for (const wsFolder of wsFolders ?? Array.from(this._clients.keys()).map((key) => workspace.getWorkspaceFolder(Uri.parse(key)))) {
             const client = this.get(wsFolder);
             if (client) {
                 this.delete(wsFolder);
