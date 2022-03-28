@@ -44,7 +44,7 @@ export function activate(context: ExtensionContext) {
 
     // Keep track of VDM workspace folders
     const knownVdmFolders: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
-    workspace.workspaceFolders.forEach((wsFolder) =>
+    workspace.workspaceFolders?.forEach((wsFolder) =>
         guessDialect(wsFolder)
             .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
             .catch(() => {})
