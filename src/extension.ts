@@ -100,12 +100,12 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
 }
 
-export function deactivate(): Thenable<void> | undefined {
-    let promises: Thenable<void>[] = [];
-    clientManager.stopClients();
+export async function deactivate() {
+    // Make sure that the extension sends the client/shutDown message to the server before deactivation
+    for (const client of clientManager.getAllClients()) {
+        await client.stop();
+    }
 
-    // Hide VDM VS Code buttons
-    promises.push(commands.executeCommand("setContext", "vdm-submenus-show", false));
-
-    return Promise.all(promises).then(() => undefined);
+    // Hide VDM buttons
+    await commands.executeCommand("setContext", "vdm-submenus-show", false);
 }

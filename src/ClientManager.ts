@@ -38,6 +38,10 @@ export class ClientManager extends AutoDisposable {
         return this.constructor["name"];
     }
 
+    getAllClients(): SpecificationLanguageClient[] {
+        return Array.from(this._clients.values());
+    }
+
     has(wsFolder: WorkspaceFolder): boolean {
         return this._clients.has(ClientManager.getKey(wsFolder));
     }
