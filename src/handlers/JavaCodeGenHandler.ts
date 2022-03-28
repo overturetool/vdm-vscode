@@ -16,7 +16,7 @@ export class JavaCodeGenHandler extends AutoDisposable {
     constructor(private readonly clients: ClientManager) {
         super();
         this.jarPath = recursivePathSearch(
-            path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars"),
+            path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", "jars", "tools"),
             /javagen.*jar/i
         );
         if (!this.jarPath) {
