@@ -22,6 +22,7 @@ import { dialectToExtensions, guessDialect, vdmDialects, vdmFilePattern } from "
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
+import { FMUHandler } from "./handlers/FMUHandler";
 
 export function activate(context: ExtensionContext) {
     // Setup server factory
@@ -87,6 +88,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
     context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
+    context.subscriptions.push(new FMUHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
