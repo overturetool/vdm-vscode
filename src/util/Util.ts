@@ -119,6 +119,12 @@ export function generatedDataPath(wsFolder: WorkspaceFolder): Uri {
     return Uri.joinPath(wsFolder.uri, ".generated");
 }
 
+export function showRestartMsg(msg: string) {
+    window.showInformationMessage(msg, "Reload Now").then((res) => {
+        if (res == "Reload Now") commands.executeCommand("workbench.action.reloadWindow");
+    });
+}
+
 /**
  * Used to determine if a Uri matches with the parameters of a document selector.
  * Normally you would use the vscode.languages.match(DocumentSelector, TextDocument) function.

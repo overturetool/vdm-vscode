@@ -1,12 +1,20 @@
 {
     "configurations": [
-	{
-	    "name": "Launch buffersPP Debug 1",
-	    "type": "vdm",
-	    "request": "launch",
-	    "noDebug": false,
-	    "defaultName": "Buffers",
-	    "command": "print new Buffers().getBuffers()"
-	}
+        {
+            "name": "Launch VDM Debug from getBuffers()`Buffers",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "settings": {
+                "dynamicTypeChecks": true,
+                "invariantsChecks": true,
+                "preConditionChecks": true,
+                "postConditionChecks": true,
+                "measureChecks": true
+            },
+            "properties": {},
+            "defaultName": "getBuffers()",
+            "command": "print new Buffers().getBuffers()"
+        }
     ]
 }

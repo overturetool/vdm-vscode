@@ -1,46 +1,46 @@
 {
-	"folders": [
-		{
-			"path": "Alarm++tracesPP"
-		},
-		{
-			"path": "AlarmPP"
-		},
-		{
-			"path": "AlarmSL"
-		},
-		{
-			"path": "buffersPP"
-		},
-		{
-			"path": "debugging"
-		},
-		{
-			"path": "EmptyFolder"
-		},
-		{
-			"path": "LUHNSL"
-		},
-		{
-			"path": "PacemakerRT"
-		},
-		{
-			"path": "PacemakerSeqPP"
-		},
-		{
-			"path": "POGTestPP"
-		},
-		{
-			"path": "POGTestSL"
-		},
-		{
-			"path": "UTF16"
-		},
-		{
-			"path": "vdm2isaTest"
-		},
-		{
-			"path": "VDMUnitDebug"
-		}
-	]
+    "folders": [
+        {
+            "path": "AlarmPP"
+        },
+        {
+            "path": "AlarmSL"
+        },
+        {
+            "path": "buffersPP"
+        },
+        {
+            "path": "debugging"
+        },
+        {
+            "path": "EmptyFolder"
+        },
+        {
+            "path": "LUHNSL"
+        },
+        {
+            "path": "PacemakerRT"
+        },
+        {
+            "path": "PacemakerSeqPP"
+        },
+        {
+            "path": "POGTestPP"
+        },
+        {
+            "path": "POGTestSL"
+        },
+        {
+            "path": "UTF16"
+        },
+        {
+            "path": "vdm2isaTest"
+        },
+        {
+            "path": "VDMUnitDebug"
+        },
+        {
+            "path": "Alarm++tracesPP"
+        }
+    ]
 }
