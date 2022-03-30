@@ -1262,6 +1262,7 @@
                             "postConditionChecks": true,
                             "measureChecks": true
                         },
+                        "properties": {},
                         "defaultName": null
                     }
                 ],
@@ -1281,6 +1282,7 @@
                                 "postConditionChecks": true,
                                 "measureChecks": true
                             },
+                            "properties": {},
                             "defaultName": null
                         }
                     },
@@ -1299,6 +1301,7 @@
                                 "postConditionChecks": true,
                                 "measureChecks": true
                             },
+                            "properties": {},
                             "defaultName": "DEFAULT",
                             "command": "print ${1:Function/Operation}(${2:arguments})"
                         }
@@ -1318,6 +1321,7 @@
                                 "postConditionChecks": true,
                                 "measureChecks": true
                             },
+                            "properties": {},
                             "defaultName": "${1:Class}",
                             "command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
                         }
@@ -1337,6 +1341,7 @@
                                 "postConditionChecks": true,
                                 "measureChecks": true
                             },
+                            "properties": {},
                             "defaultName": null,
                             "remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
                         }
