@@ -7,7 +7,8 @@ import * as Path from "path";
 import { extensionId } from "../ExtensionInfo";
 
 export class ChangeVdmjPropertiesHandler extends AutoDisposable {
-    private readonly fileName: string = "vdmj.properties";
+    private readonly _fileName: string = "vdmj.properties";
+    private readonly _defaultPropertiesWithValues: Map<string, string> = new Map<string, string>();
     constructor(readonly knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
         super();
         commands.executeCommand("setContext", "vdm-vscode.changeVdmjProperties", true);
@@ -19,81 +20,101 @@ export class ChangeVdmjPropertiesHandler extends AutoDisposable {
                 window.showInformationMessage("Cannot find any VDMJ workspace folders");
                 return;
             }
+            if (this._defaultPropertiesWithValues.size == 0) {
+                await this.readPropertiesFiles()
+                    .then((properties) => properties.forEach((value, key) => this._defaultPropertiesWithValues.set(key, value)))
+                    .catch((err) => console.log("[Change VDMJ Properties]: Unable read default VDMJ properties due to: " + err));
+            }
+
             const chosenWsFolder = await window.showQuickPick(
                 Array.from(knownVdmFolders.entries()).map((entry) => entry[0].name),
                 { canPickMany: false, title: "Select workspace folder" }
             );
+
             if (chosenWsFolder) {
                 const wsFolder: WorkspaceFolder = Array.from(knownVdmFolders.keys()).find((key) => key.name == chosenWsFolder);
                 const vscodeFolder: Uri = Uri.joinPath(wsFolder.uri, ".vscode");
                 await Fs.ensureDir(vscodeFolder.fsPath);
-                const propertiesFilePath: string = Uri.joinPath(vscodeFolder, this.fileName).fsPath;
-                this.readPropertiesFiles(propertiesFilePath)
-                    .then((properties) => this.changeProperties(properties, propertiesFilePath))
-                    .catch((err) => console.log("[Change VDMJ Properties]: Unable to change properties due to: " + err));
+                const propertiesFilePath: string = Uri.joinPath(vscodeFolder, this._fileName).fsPath;
+                this.changeProperties(propertiesFilePath);
             }
         });
     }
 
-    private async changeProperties(properties: Map<string, string>, propertiesFilePath: string) {
+    private async changeProperties(propertiesFilePath: string) {
+        if (this._defaultPropertiesWithValues.size == 0) {
+            return;
+        }
+
         // Let the user select the properties that they wish to change
         const chosenProperties: string[] = await window.showQuickPick(
-            Array.from(properties.entries())
+            Array.from(this._defaultPropertiesWithValues.entries())
                 .map((entry) => this.prettifyPropertyName(entry[0]))
                 .sort((a, b) => b.localeCompare(a))
                 .reverse(),
             { canPickMany: true, title: "Select properties to change" }
         );
-        // If the user selected properties then prompt the user to change them one by one.
-        let userBailed: boolean = !chosenProperties;
-        if (!userBailed) {
-            for await (const prettyProperty of chosenProperties) {
-                const property: string = this.unPrettifyPropertyName(prettyProperty);
-                const value: string = properties.get(property);
-                const newValue: string = await window.showInputBox({
-                    title: prettyProperty,
-                    value: value,
-                    prompt: "Insert new value for the property.",
-                    validateInput: (userInput: string) => {
-                        // The input should be a number if original value is also a number
-                        return !Number(userInput) && Number(value) ? `The value should be a number. Original value: ${value}` : "";
-                    },
-                });
-                userBailed = !newValue;
-                if (userBailed) {
-                    break;
-                }
-                properties.set(property, newValue);
-            }
-            // Save the changes if the user did not bail on changing property values
-            if (userBailed) {
-                window.showInformationMessage("No property changes have been saved");
-            } else {
-                let newText: string = "";
-                properties.forEach((value, key) => (newText += `${key} = ${value}\n`));
 
-                Fs.writeFile(propertiesFilePath, newText.trim())
-                    .then(() => Util.showRestartMsg("VDMJ properties changed. Please reload VS Code to enable the changes."))
-                    .catch((err) => {
-                        const msg: string = "Failed to save the changes";
-                        window.showInformationMessage(msg);
-                        console.log(`${msg}: ${err}`);
-                    });
+        // If the user selected properties then prompt the user to change them one by one.
+        let userBailed: boolean = !chosenProperties || chosenProperties.length == 0;
+        if (userBailed) {
+            return;
+        }
+
+        // The user has already changed some value so extract them.
+        const propertiesWithChangedValue: Map<string, string> = new Map<string, string>();
+        if (Fs.existsSync(propertiesFilePath)) {
+            Fs.readFileSync(propertiesFilePath, "utf8")
+                ?.trim()
+                ?.split(new RegExp("[\r\n\t]+"))
+                ?.forEach((line) => {
+                    if (line.startsWith("vdmj.")) {
+                        const lineSplit: string[] = line.split("=").map((split) => split.trim());
+                        propertiesWithChangedValue.set(lineSplit[0], lineSplit[1]);
+                    }
+                });
+        }
+
+        for await (const prettyProperty of chosenProperties) {
+            const property: string = this.unPrettifyPropertyName(prettyProperty);
+            const value: string = propertiesWithChangedValue.get(property) ?? this._defaultPropertiesWithValues.get(property);
+            const orgValue: string = this._defaultPropertiesWithValues.get(property);
+            const newValue: string = await window.showInputBox({
+                title: prettyProperty,
+                value: value,
+                prompt: "Insert new value for the property.",
+                placeHolder: `Default: ${orgValue}`,
+                validateInput: (userInput: string) => {
+                    // The input should be a number if original value is also a number
+                    return !Number(userInput) && Number(orgValue) ? "The value should be a number" : "";
+                },
+            });
+            userBailed = !newValue;
+            if (userBailed) {
+                break;
             }
+            propertiesWithChangedValue.set(property, newValue);
+        }
+        // Save the changes if the user did not bail on changing property values
+        if (userBailed) {
+            window.showInformationMessage("No property changes have been saved");
+        } else {
+            let newText: string = "";
+            propertiesWithChangedValue.forEach((value, key) => (newText += `${key} = ${value}\n`));
+
+            Fs.writeFile(propertiesFilePath, newText.trim())
+                .then(() => Util.showRestartMsg("VDMJ properties changed. Please reload VS Code to enable the changes."))
+                .catch((err) => {
+                    const msg: string = "Failed to save the changes";
+                    window.showInformationMessage(msg);
+                    console.log(`${msg}: ${err}`);
+                });
         }
     }
 
-    private readPropertiesFiles(propertiesFilePath: string): Promise<Map<string, string>> {
+    private readPropertiesFiles(): Promise<Map<string, string>> {
         return new Promise<Map<string, string>>(async (resolve, reject) => {
-            if (!Fs.existsSync(propertiesFilePath)) {
-                // Copy default properties file
-                await Fs.copyFile(
-                    Path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", this.fileName),
-                    propertiesFilePath
-                );
-            }
-
-            Fs.readFile(propertiesFilePath, "utf8")
+            Fs.readFile(Path.resolve(extensions.getExtension(extensionId).extensionPath, "resources", this._fileName), "utf8")
                 .then((content) => {
                     // Read the properties file and map property name to value
                     const properties: Map<string, string> = new Map();
