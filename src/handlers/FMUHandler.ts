@@ -20,7 +20,7 @@ export class FMUHandler extends AutoDisposable {
         if (!this.jarPath) {
             console.log("FMU jar not found - Disable FMU Import/Export features");
             commands.executeCommand("setContext", "vdm-vscode.fmuImport", false);
-            commands.executeCommand("setContext", "vdm-vscode.fmuExport", false);
+            commands.executeCommand("setContext", "vdm-vscode.fmuWrpExport", false);
         } else {
             // Activate FMU Import feature
             util.registerCommand(this._disposables, "vdm-vscode.fmuImport", (inputUri: Uri) =>
@@ -28,10 +28,10 @@ export class FMUHandler extends AutoDisposable {
             );
             commands.executeCommand("setContext", "vdm-vscode.fmuImport", true);
             // Activate FMU Export feature
-            util.registerCommand(this._disposables, "vdm-vscode.fmuExport", (inputUri: Uri) =>
-                this.fmuExport(workspace.getWorkspaceFolder(inputUri))
+            util.registerCommand(this._disposables, "vdm-vscode.fmuWrpExport", (inputUri: Uri) =>
+                this.fmuWrpExport(workspace.getWorkspaceFolder(inputUri))
             );
-            commands.executeCommand("setContext", "vdm-vscode.fmuExport", true);
+            commands.executeCommand("setContext", "vdm-vscode.fmuWrpExport", true);
         }
     }
 
@@ -107,7 +107,7 @@ export class FMUHandler extends AutoDisposable {
         );
     }
 
-    private async fmuExport(wsFolder: WorkspaceFolder): Promise<boolean> {
+    private async fmuWrpExport(wsFolder: WorkspaceFolder): Promise<boolean> {
         const name = wsFolder.name;
         const folderUri = util.generatedDataPath(wsFolder);
 

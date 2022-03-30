@@ -226,7 +226,7 @@
                 "icon": "$(example)"
             },
             {
-                "command": "vdm-vscode.fmuExport",
+                "command": "vdm-vscode.fmuWrpExport",
                 "title": "Export Tool Wrapper FMU",
                 "category": "VDM",
                 "icon": "$(example)"
@@ -447,7 +447,7 @@
                     "group": "fmu@0"
                 },
                 {
-                    "command": "vdm-vscode.fmuExport",
+                    "command": "vdm-vscode.fmuWrpExport",
                     "group": "fmu@1"
                 }
             ],

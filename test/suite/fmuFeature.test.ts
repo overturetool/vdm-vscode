@@ -28,7 +28,7 @@ suite("FMU Import Export", () => {
     });
 
     test("Should succedd in exporting the FMU", async () => {
-        await vscode.commands.executeCommand("vdm-vscode.fmuExport", "/tmp/").then((ret) => {
+        await vscode.commands.executeCommand("vdm-vscode.fmuWrpExport", "/tmp/").then((ret) => {
             console.log(ret);
             assert.ok(ret);
         });
