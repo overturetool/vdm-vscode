@@ -1146,7 +1146,7 @@
                                     },
                                     "vdmj.parser.external_readers": {
                                         "type": ["string", "null"],
-                                        "description": "External readers <.suffix> = <class> pairs (default null)",
+                                        "description": "External readers [.suffix]=[class] pairs (default null)",
                                         "default": null
                                     },
                                     "vdmj.annotations.packages": {
