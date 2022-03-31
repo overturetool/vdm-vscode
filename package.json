@@ -173,12 +173,12 @@
         "commands": [
             {
                 "command": "vdm-vscode.changeVdmjProperties",
-                "title": "Change project wide VDMJ properties",
+                "title": "Change Project Wide VDMJ Properties",
                 "category": "VDM"
             },
             {
                 "command": "vdm-vscode.OpenVDMTools",
-                "title": "Open project in VDMTools",
+                "title": "Open Project in VDMTools",
                 "category": "VDM"
             },
             {
