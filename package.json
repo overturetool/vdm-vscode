@@ -1117,7 +1117,7 @@
                                 "type": "object",
                                 "default": {
                                     "vdmj.parser.comment_nesting": 3,
-                                    "vdmj.parser.external_readers": [],
+                                    "vdmj.parser.external_readers": null,
                                     "vdmj.annotations.packages": "com.fujitsu.vdmj.ast.annotations;annotations.ast",
                                     "vdmj.annotations.debug": false,
                                     "vdmj.mapping.search_path": null,
@@ -1145,9 +1145,9 @@
                                         "default": 3
                                     },
                                     "vdmj.parser.external_readers": {
-                                        "type": "array",
-                                        "description": "External readers .suffix>=<class> pairs (default null)",
-                                        "default": []
+                                        "type": ["string", "null"],
+                                        "description": "External readers <.suffix> = <class> pairs (default null)",
+                                        "default": null
                                     },
                                     "vdmj.annotations.packages": {
                                         "type": "string",
@@ -1160,7 +1160,7 @@
                                         "default": false
                                     },
                                     "vdmj.mapping.search_path": {
-                                        "type": "string",
+                                        "type": ["string", "null"],
                                         "description": "An alternative search path for the ClassMapper (default null)",
                                         "default": null
                                     },
@@ -1255,14 +1255,6 @@
                         "type": "vdm",
                         "request": "launch",
                         "noDebug": false,
-                        "settings": {
-                            "dynamicTypeChecks": true,
-                            "invariantsChecks": true,
-                            "preConditionChecks": true,
-                            "postConditionChecks": true,
-                            "measureChecks": true
-                        },
-                        "properties": {},
                         "defaultName": null
                     }
                 ],
@@ -1275,14 +1267,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "settings": {
-                                "dynamicTypeChecks": true,
-                                "invariantsChecks": true,
-                                "preConditionChecks": true,
-                                "postConditionChecks": true,
-                                "measureChecks": true
-                            },
-                            "properties": {},
                             "defaultName": null
                         }
                     },
@@ -1294,14 +1278,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "settings": {
-                                "dynamicTypeChecks": true,
-                                "invariantsChecks": true,
-                                "preConditionChecks": true,
-                                "postConditionChecks": true,
-                                "measureChecks": true
-                            },
-                            "properties": {},
                             "defaultName": "DEFAULT",
                             "command": "print ${1:Function/Operation}(${2:arguments})"
                         }
@@ -1314,14 +1290,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "settings": {
-                                "dynamicTypeChecks": true,
-                                "invariantsChecks": true,
-                                "preConditionChecks": true,
-                                "postConditionChecks": true,
-                                "measureChecks": true
-                            },
-                            "properties": {},
                             "defaultName": "${1:Class}",
                             "command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
                         }
@@ -1334,14 +1302,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "settings": {
-                                "dynamicTypeChecks": true,
-                                "invariantsChecks": true,
-                                "preConditionChecks": true,
-                                "postConditionChecks": true,
-                                "measureChecks": true
-                            },
-                            "properties": {},
                             "defaultName": null,
                             "remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
                         }

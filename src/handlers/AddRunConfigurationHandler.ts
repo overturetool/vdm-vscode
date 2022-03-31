@@ -17,14 +17,6 @@ interface VdmLaunchConfiguration {
     type: string; // The type of the debug session.
     request: string; // The request type of the debug session.
     noDebug: boolean;
-    settings: {
-        dynamicTypeChecks: boolean;
-        invariantsChecks: boolean;
-        preConditionChecks: boolean;
-        postConditionChecks: boolean;
-        measureChecks: boolean;
-    };
-    properties: {};
     defaultName: string;
 }
 
@@ -245,14 +237,6 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             type: "vdm", // The type of the debug session.
             request: "launch", // The request type of the debug session.
             noDebug: false,
-            settings: {
-                dynamicTypeChecks: true,
-                invariantsChecks: true,
-                preConditionChecks: true,
-                postConditionChecks: true,
-                measureChecks: true,
-            },
-            properties: {},
             defaultName: defaultName,
         };
     }
