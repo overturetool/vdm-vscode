@@ -62,13 +62,17 @@
     ],
     "contributes": {
         "configurationDefaults": {
-            "editor.tokenColorCustomizations": {"textMateRules": [{
-                "scope": "meta.embedded.inline.latex",
-                "settings": {
-                    "fontStyle": "italic",
-                    "foreground": "#7c7c7c"
-                }
-            }]}
+            "editor.tokenColorCustomizations": {
+                "textMateRules": [
+                    {
+                        "scope": "meta.embedded.inline.latex",
+                        "settings": {
+                            "fontStyle": "italic",
+                            "foreground": "#7c7c7c"
+                        }
+                    }
+                ]
+            }
         },
         "languages": [
             {
@@ -168,10 +172,14 @@
         ],
         "commands": [
             {
+                "command": "vdm-vscode.changeVdmjProperties",
+                "title": "Change Project Wide VDMJ Properties",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.OpenVDMTools",
-                "title": "Open project in VDMTools",
-                "category": "VDM",
-                "icon": "$(references)"
+                "title": "Open Project in VDMTools",
+                "category": "VDM"
             },
             {
                 "command": "vdm-vscode.restartActiveClient",
@@ -590,6 +598,14 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "vdm-vscode.changeVdmjProperties",
+                    "when": "vdm-vscode.changeVdmjProperties"
+                },
+                {
+                    "command": "vdm-vscode.OpenVDMTools",
+                    "when": "vdm-vscode.OpenVDMTools"
+                },
                 {
                     "command": "vdm-vscode.coverage.show",
                     "when": "false"
@@ -1058,30 +1074,177 @@
                                 "description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
                                 "default": ""
                             },
-                            "dynamicTypeChecks": {
-                                "type": "boolean",
-                                "description": "Type check values during interpretation of a VDM model.",
-                                "default": true
+                            "settings": {
+                                "description": "Checks settings.",
+                                "type": "object",
+                                "default": {
+                                    "dynamicTypeChecks": true,
+                                    "invariantsChecks": true,
+                                    "preConditionChecks": true,
+                                    "postConditionChecks": true,
+                                    "measureChecks": true
+                                  },
+                                "properties": {
+                                    "dynamicTypeChecks": {
+                                        "type": "boolean",
+                                        "description": "Type check values during interpretation of a VDM model.",
+                                        "default": true
+                                    },
+                                    "invariantsChecks": {
+                                        "type": "boolean",
+                                        "description": "Check both state and type invariants.",
+                                        "default": true
+                                    },
+                                    "preConditionChecks": {
+                                        "type": "boolean",
+                                        "description": "Check pre-conditions for all functions and operations during interpretation of a VDM model.",
+                                        "default": true
+                                    },
+                                    "postConditionChecks": {
+                                        "type": "boolean",
+                                        "description": "Check post-conditions for all functions and operations during interpretation of a VDM model.",
+                                        "default": true
+                                    },
+                                    "measureChecks": {
+                                        "type": "boolean",
+                                        "description": "Check recursive functions, for which a function has been defined.",
+                                        "default": true
+                                    }
+                                }
                             },
-                            "invariantsChecks": {
-                                "type": "boolean",
-                                "description": "Check both state and type invariants.",
-                                "default": true
-                            },
-                            "preConditionChecks": {
-                                "type": "boolean",
-                                "description": "Check pre-conditions for all functions and operations during interpretation of a VDM model.",
-                                "default": true
-                            },
-                            "postConditionChecks": {
-                                "type": "boolean",
-                                "description": "Check post-conditions for all functions and operations during interpretation of a VDM model.",
-                                "default": true
-                            },
-                            "measureChecks": {
-                                "type": "boolean",
-                                "description": "Check recursive functions, for which a function has been defined.",
-                                "default": true
+                            "properties": {
+                                "description": "Override default/project wide VDMJ properties",
+                                "type": "object",
+                                "default": {
+                                    "vdmj.parser.comment_nesting": 3,
+                                    "vdmj.parser.external_readers": null,
+                                    "vdmj.annotations.packages": "com.fujitsu.vdmj.ast.annotations;annotations.ast",
+                                    "vdmj.annotations.debug": false,
+                                    "vdmj.mapping.search_path": null,
+                                    "vdmj.tc.skip_recursive_check": false,
+                                    "vdmj.tc.skip_cyclic_check": false,
+                                    "vdmj.traces.max_errors": 100,
+                                    "vdmj.traces.max_repeats": 5,
+                                    "vdmj.traces.save_state": false,
+                                    "vdmj.traces.max_arg_length": 50,
+                                    "vdmj.scheduler.fcfs_timeslice": 10,
+                                    "vdmj.scheduler.virtual_timeslice": 10000,
+                                    "vdmj.scheduler.jitter": 0,
+                                    "vdmj.rt.duration_default": 2,
+                                    "vdmj.rt.duration_transactions": false,
+                                    "vdmj.rt.log_instvarchanges": false,
+                                    "vdmj.rt.max_periodic_overlaps": 20,
+                                    "vdmj.rt.diags_guards": false,
+                                    "vdmj.rt.diags_timestep": false,
+                                    "vdmj.in.powerset_limit": 30
+                                  },
+                                "properties": {
+                                    "vdmj.parser.comment_nesting": {
+                                        "type": "number",
+                                        "description": "Nesting of block comments: 0=support, 1=warning, 2=error, 3=ignore (default 3)",
+                                        "default": 3
+                                    },
+                                    "vdmj.parser.external_readers": {
+                                        "type": ["string", "null"],
+                                        "description": "External readers [.suffix]=[class] pairs (default null)",
+                                        "default": null
+                                    },
+                                    "vdmj.annotations.packages": {
+                                        "type": "string",
+                                        "description": "The package list for annotation classes to load (default 'com.fujitsu.vdmj.ast.annotations;annotations.ast')",
+                                        "default": "com.fujitsu.vdmj.ast.annotations;annotations.ast"
+                                    },
+                                    "vdmj.annotations.debug": {
+                                        "type": "boolean",
+                                        "description": "Enable annotation debugging (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.mapping.search_path": {
+                                        "type": ["string", "null"],
+                                        "description": "An alternative search path for the ClassMapper (default null)",
+                                        "default": null
+                                    },
+                                    "vdmj.tc.skip_recursive_check": {
+                                        "type": "boolean",
+                                        "description": "Skip the check for mutually-recursive function calls (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.tc.skip_cyclic_check": {
+                                        "type": "boolean",
+                                        "description": "Skip the check for definition dependency cycles (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.traces.max_errors": {
+                                        "type": "number",
+                                        "description": "The maximum TC errors reported before 'Too many errors' (default 100)",
+                                        "default": 100
+                                    },
+                                    "vdmj.traces.max_repeats": {
+                                        "type": "number",
+                                        "description": "The maximum number of expansions for '+'' and '*' trace patterns (default 5)",
+                                        "default": 5
+                                    },
+                                    "vdmj.traces.save_state": {
+                                        "type": "boolean",
+                                        "description": "Serialize the system state between trace tests (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.traces.max_arg_length": {
+                                        "type": "number",
+                                        "description": "The size below which trace function args are expanded (default 50)",
+                                        "default": 50
+                                    },
+                                    "vdmj.scheduler.fcfs_timeslice": {
+                                        "type": "number",
+                                        "description": "The default timeslice (statements executed) for the FCFS policy (default 10)",
+                                        "default": 10
+                                    },
+                                    "vdmj.scheduler.virtual_timeslice": {
+                                        "type": "number",
+                                        "description": "The vCPU/vBUS timeslice (default 10000)",
+                                        "default": 10000
+                                    },
+                                    "vdmj.scheduler.jitter": {
+                                        "type": "number",
+                                        "description": "The timeslice variation (+/- jitter ticks, default 0)",
+                                        "default": 0
+                                    },
+                                    "vdmj.rt.duration_default": {
+                                        "type": "number",
+                                        "description": "The default duration for RT statements (default 2)",
+                                        "default": 2
+                                    },
+                                    "vdmj.rt.duration_transactions": {
+                                        "type": "boolean",
+                                        "description": "Enable transactional variable updates (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.rt.log_instvarchanges": {
+                                        "type": "boolean",
+                                        "description": "Enable InstVarChange RT log entries (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.rt.max_periodic_overlaps": {
+                                        "type": "number",
+                                        "description": "Maximum period thread overlaps allowed per object (default 20 - zero mean off)",
+                                        "default": 20
+                                    },
+                                    "vdmj.rt.diags_guards": {
+                                        "type": "boolean",
+                                        "description": "Enable extra diagnostics for guards etc. (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.rt.diags_timestep": {
+                                        "type": "boolean",
+                                        "description": "Enable extra RT log diagnostics for timesteps (default false)",
+                                        "default": false
+                                    },
+                                    "vdmj.in.powerset_limit": {
+                                        "type": "number",
+                                        "description": "The set size limit for power set expressions (default 30)",
+                                        "default": 30
+                                    }
+                                }
                             }
                         }
                     }
@@ -1092,11 +1255,6 @@
                         "type": "vdm",
                         "request": "launch",
                         "noDebug": false,
-                        "dynamicTypeChecks": true,
-                        "invariantsChecks": true,
-                        "preConditionChecks": true,
-                        "postConditionChecks": true,
-                        "measureChecks": true,
                         "defaultName": null
                     }
                 ],
@@ -1109,11 +1267,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "dynamicTypeChecks": true,
-                            "invariantsChecks": true,
-                            "preConditionChecks": true,
-                            "postConditionChecks": true,
-                            "measureChecks": true,
                             "defaultName": null
                         }
                     },
@@ -1125,11 +1278,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "dynamicTypeChecks": true,
-                            "invariantsChecks": true,
-                            "preConditionChecks": true,
-                            "postConditionChecks": true,
-                            "measureChecks": true,
                             "defaultName": "DEFAULT",
                             "command": "print ${1:Function/Operation}(${2:arguments})"
                         }
@@ -1142,11 +1290,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "dynamicTypeChecks": true,
-                            "invariantsChecks": true,
-                            "preConditionChecks": true,
-                            "postConditionChecks": true,
-                            "measureChecks": true,
                             "defaultName": "${1:Class}",
                             "command": "print new ${1:Class}(${2:Class Arguments}).${3:Function/Operation}(${4:Arguments})"
                         }
@@ -1159,11 +1302,6 @@
                             "type": "vdm",
                             "request": "launch",
                             "noDebug": false,
-                            "dynamicTypeChecks": true,
-                            "invariantsChecks": true,
-                            "preConditionChecks": true,
-                            "postConditionChecks": true,
-                            "measureChecks": true,
                             "defaultName": null,
                             "remoteControl": "${1:Full package/class name (e.g.: 'com.fujitsu.ctrl.GUI')}"
                         }

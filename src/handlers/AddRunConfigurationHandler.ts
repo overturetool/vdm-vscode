@@ -1,14 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as util from "../util/Util";
-import { commands, ConfigurationTarget, debug, DebugConfiguration, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, ConfigurationTarget, debug, DebugConfiguration, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
 import { guessDialect, vdmDialects } from "../util/DialectUtil";
+import AutoDisposable from "../helper/AutoDisposable";
 
 interface VdmArgument {
     name: string;
     type: string;
     value?: string;
+}
+
+interface VdmLaunchConfiguration {
+    name: string; // The name of the debug session.
+    type: string; // The type of the debug session.
+    request: string; // The request type of the debug session.
+    noDebug: boolean;
+    defaultName: string;
 }
 
 interface VdmLaunchLensConfiguration {
@@ -23,8 +32,7 @@ interface VdmLaunchLensConfiguration {
     applyArgs: VdmArgument[];
 }
 
-export class AddRunConfigurationHandler implements Disposable {
-    private _disposables: Disposable[] = [];
+export class AddRunConfigurationHandler extends AutoDisposable {
     private static readonly lensNameBegin: string = "Lens config:";
     private static showArgumentTypeWarning = true;
 
@@ -33,6 +41,7 @@ export class AddRunConfigurationHandler implements Disposable {
     private lastConfigApplyArgs: Map<string, VdmArgument[]> = new Map();
 
     constructor() {
+        super();
         commands.executeCommand("setContext", "vdm-vscode.addRunConfiguration", true);
         util.registerCommand(this._disposables, "vdm-vscode.addRunConfiguration", (inputUri: Uri) =>
             this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri))
@@ -40,9 +49,6 @@ export class AddRunConfigurationHandler implements Disposable {
         util.registerCommand(this._disposables, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) =>
             this.addLensRunConfiguration(input)
         );
-    }
-    dispose(): void {
-        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private async addRunConfiguration(wsFolder: WorkspaceFolder) {
@@ -91,18 +97,8 @@ export class AddRunConfigurationHandler implements Disposable {
 
                 // Create run configuration
                 let className = selectedClass.substring(0, selectedClass.indexOf("("));
-                let debugConfiguration: DebugConfiguration = {
-                    name: `Launch VDM Debug from ${className}\`${selectedCommand}`, // The name of the debug session.
-                    type: "vdm", // The type of the debug session.
-                    request: "launch", // The request type of the debug session.
-                    noDebug: false,
-                    dynamicTypeChecks: true,
-                    invariantsChecks: true,
-                    preConditionChecks: true,
-                    postConditionChecks: true,
-                    measureChecks: true,
-                    defaultName: className,
-                };
+                let debugConfiguration: DebugConfiguration = this.buildDebugConfiguration(className, selectedCommand);
+
                 if (dialect == vdmDialects.VDMSL) debugConfiguration.command = `print ${selectedCommand}`;
                 else debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
 
@@ -227,13 +223,22 @@ export class AddRunConfigurationHandler implements Disposable {
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
 
         // Only save one configuration with the same name
-        const lensConfig: boolean = this.isLensConfig(runConf);
-        let i = rawConfigs.findIndex((c) => c.name == runConf.name || (lensConfig && this.isLensConfig(c)));
+        let i = rawConfigs.findIndex((c) => c.name == runConf.name || (this.isLensConfig(runConf) && this.isLensConfig(c)));
         if (i >= 0) rawConfigs[i] = runConf;
         else rawConfigs.push(runConf);
 
         // Update settings file
         launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
+    }
+
+    private buildDebugConfiguration(command: string, defaultName: string): VdmLaunchConfiguration {
+        return {
+            name: `Launch VDM Debug from ${defaultName}\`${command}`, // The name of the debug session.
+            type: "vdm", // The type of the debug session.
+            request: "launch", // The request type of the debug session.
+            noDebug: false,
+            defaultName: defaultName,
+        };
     }
 
     private isLensConfig(runConf: DebugConfiguration): boolean {

@@ -11,10 +11,11 @@ import { dialectToPrettyFormat, vdmDialects, vdmFilePattern } from "../util/Dial
 export class OpenVDMToolsHandler extends AutoDisposable {
     constructor(knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
         super();
+        commands.executeCommand("setContext", "vdm-vscode.OpenVDMTools", true);
         Util.registerCommand(this._disposables, "vdm-vscode.OpenVDMTools", async () => {
             // Open only if file is in folder
             if (!workspace.workspaceFolders) {
-                window.showInformationMessage("Cannot open VDMTools for single file");
+                window.showInformationMessage("Cannot open VDMTools without a workspace folder");
                 return;
             }
 
