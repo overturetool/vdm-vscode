@@ -2,7 +2,16 @@
 
 import * as languageId from "./slsp/protocol/TranslationLanguageId";
 import * as ExtensionInfo from "./ExtensionInfo";
-import { ExtensionContext, window, workspace, commands, TextDocument, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
+import {
+    ExtensionContext,
+    window,
+    workspace,
+    commands,
+    TextDocument,
+    WorkspaceFolder,
+    WorkspaceFoldersChangeEvent,
+    ConfigurationChangeEvent,
+} from "vscode";
 import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
 import { VdmjCTInterpreterHandler } from "./vdmj/VdmjCTInterpreterHandler";
@@ -22,6 +31,8 @@ import { dialectToExtensions, guessDialect, vdmDialects, vdmFilePattern } from "
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
+import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
+import * as Util from "./util/Util";
 
 let clientManager: ClientManager;
 
@@ -46,11 +57,16 @@ export function activate(context: ExtensionContext) {
 
     // Keep track of VDM workspace folders
     const knownVdmFolders: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
-    workspace.workspaceFolders.forEach((wsFolder) =>
-        guessDialect(wsFolder)
-            .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
-            .catch(() => {})
-    );
+    if (workspace.workspaceFolders) {
+        const workspaceFolders: WorkspaceFolder[] = new Array<WorkspaceFolder>(...workspace.workspaceFolders)
+            .sort((a, b) => b.name.localeCompare(a.name))
+            .reverse();
+        for await (const wsFolder of workspaceFolders) {
+            await guessDialect(wsFolder)
+                .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+                .catch(() => {});
+        }
+    }
     context.subscriptions.push(
         workspace.onDidChangeWorkspaceFolders(async (e: WorkspaceFoldersChangeEvent) => {
             e.added.forEach((wsFolder) => {
@@ -89,6 +105,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
     context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
+    context.subscriptions.push(new ChangeVdmjPropertiesHandler(knownVdmFolders));
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
@@ -98,6 +115,17 @@ export function activate(context: ExtensionContext) {
     workspace.textDocuments.forEach((document: TextDocument) => clientManager.launchClient(document));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => clientManager.stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
+
+    // Add settings watch
+    workspace.onDidChangeConfiguration((e) => didChangeConfigurationCheck(e), this, context.subscriptions);
+}
+
+function didChangeConfigurationCheck(event: ConfigurationChangeEvent) {
+    // Restart the extension if changes has been made to the server settings
+    if (event.affectsConfiguration("vdm-vscode.server") || event.affectsConfiguration("files.encoding")) {
+        // Ask the user to restart the extension if setting requires a restart
+        Util.showRestartMsg("Configurations changed. Please reload VS Code to enable it.");
+    }
 }
 
 export async function deactivate() {

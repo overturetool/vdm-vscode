@@ -1,16 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import {
-    commands,
-    ConfigurationChangeEvent,
-    Disposable,
-    RelativePattern,
-    TextDocument,
-    Uri,
-    window,
-    workspace,
-    WorkspaceFolder,
-} from "vscode";
+import { commands, Disposable, RelativePattern, TextDocument, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
@@ -146,9 +136,6 @@ export class ClientManager extends AutoDisposable {
             return;
         }
 
-        // Add settings watch for workspace folder
-        workspace.onDidChangeConfiguration((e) => this.didChangeConfigurationCheck(e), this, this.getDisposables(wsFolder));
-
         // Setup client options
         const clientOptions: LanguageClientOptions = {
             // Document selector defines which files from the workspace, that is also open in the client, to monitor.
@@ -220,16 +207,6 @@ export class ClientManager extends AutoDisposable {
 
     private restartActiveClient(): void {
         this.restart(workspace.getWorkspaceFolder(window.activeTextEditor.document.uri));
-    }
-
-    private didChangeConfigurationCheck(event: ConfigurationChangeEvent) {
-        // Restart the extension if changes has been made to the server settings
-        if (event.affectsConfiguration("vdm-vscode.server") || event.affectsConfiguration("files.encoding")) {
-            // Ask the user to restart the extension if setting requires a restart
-            window.showInformationMessage("Configurations changed. Please reload VS Code to enable it.", "Reload Now").then((res) => {
-                if (res == "Reload Now") commands.executeCommand("workbench.action.reloadWindow");
-            });
-        }
     }
 
     private static getKey(wsFolder: WorkspaceFolder): string {

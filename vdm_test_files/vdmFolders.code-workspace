@@ -1,9 +1,6 @@
 {
     "folders": [
         {
-            "path": "Alarm++tracesPP"
-        },
-        {
             "path": "AlarmPP"
         },
         {
@@ -43,7 +40,7 @@
             "path": "VDMUnitDebug"
         },
         {
-            "path": "OpenOffice"
+            "path": "Alarm++tracesPP"
         }
     ]
 }

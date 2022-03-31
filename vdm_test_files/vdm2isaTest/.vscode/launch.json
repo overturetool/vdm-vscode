@@ -9,11 +9,6 @@
             "type": "vdm",
             "request": "launch",
             "noDebug": false,
-            "dynamicTypeChecks": true,
-            "invariantsChecks": true,
-            "preConditionChecks": true,
-            "postConditionChecks": true,
-            "measureChecks": true,
             "defaultName": null
         }
     ]
