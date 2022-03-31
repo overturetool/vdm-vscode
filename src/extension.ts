@@ -36,7 +36,7 @@ import * as Util from "./util/Util";
 
 let clientManager: ClientManager;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
     // Setup server factory
     let serverFactory: ServerFactory;
     try {
