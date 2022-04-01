@@ -54,17 +54,6 @@ function buildTable(pos, poContainer) {
         mainrow.onclick = function () {
             let subrow = tbdy.getElementsByTagName("tr")[mainrow.rowIndex];
             subrow.style.display = subrow.style.display === "none" ? "table-row" : "none";
-            // mainrow.classList.remove("mainrow");
-            // mainrow.classList.add("mainrowcellexpanded");
-            // if (mainrow.classList.filter((c) => c === "mainrow").length > 0) {
-            //     mainrow.style.backgroundColor = "red";
-            //     mainrow.classList.remove("mainrow");
-            //     mainrow.classList.add("mainrowcellexpanded");
-            // } else {
-            //     console.log("adding mainrow");
-            //     mainrow.classList.remove("mainrowcellexpanded");
-            //     mainrow.classList.add("mainrow");
-            // }
 
             let signcell = tbdy.getElementsByTagName("tr")[mainrow.rowIndex - 1].cells[0];
             signcell.innerText = signcell.innerText === collapsedSign ? expandedSign : collapsedSign;
@@ -115,7 +104,7 @@ function buildTable(pos, poContainer) {
         let subrow_signcell = subrow.insertCell();
         subrow_signcell.classList.add("signcell");
 
-        // The main cell spans the rest of the row being the numbers of headers
+        // The main subrow cell spans the rest of the row being the numbers of headers
         let subrow_cell = subrow.insertCell();
         subrow_cell.colSpan = headers.length;
         subrow_cell.classList.add("subrowcell");

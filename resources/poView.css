@@ -19,7 +19,6 @@ table {
 }
 
 .mainrowcell {
-    cursor: pointer;
     padding: 6px;
     border-top: 1px solid;
 }
@@ -41,8 +40,10 @@ th {
 
 .subrow,
 .subrowcell,
-button,
-.clickableheadercell {
+.button,
+.clickableheadercell,
+.mainrowcell,
+.signcell {
     cursor: pointer;
 }
 
@@ -57,7 +58,6 @@ button,
     background-color: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: 0px;
-    cursor: pointer;
     margin-top: 15px;
     margin-left: 11px;
     margin-bottom: 5px;
