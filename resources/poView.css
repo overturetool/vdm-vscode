@@ -11,11 +11,14 @@ p {
 }
 
 table {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-right: 5px;
     white-space: pre-wrap;
+    border-collapse: collapse;
 }
 
 .mainrowcell {
-    cursor: pointer;
     padding: 6px;
     border-top: 1px solid;
 }
@@ -24,9 +27,6 @@ table {
     padding-top: 2px;
     padding-left: 6px;
     padding-bottom: 6px;
-    border-bottom: 1px solid;
-    border-left: 1px solid;
-    border-right: 1px solid;
 }
 
 th {
@@ -40,8 +40,10 @@ th {
 
 .subrow,
 .subrowcell,
-button,
-.clickableheadercell {
+.button,
+.clickableheadercell,
+.mainrowcell,
+.signcell {
     cursor: pointer;
 }
 
@@ -56,10 +58,9 @@ button,
     background-color: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: 0px;
-    cursor: pointer;
-    margin-top: 6px;
-    margin-left: 6px;
-    margin-bottom: 6px;
+    margin-top: 15px;
+    margin-left: 11px;
+    margin-bottom: 5px;
 }
 
 .headerrow,
@@ -68,6 +69,7 @@ button,
 .signcell,
 .expandPOsBtn,
 .filterPOsBtn,
+.button,
 p {
     font-family: var(--vscode-editor-font-family);
     font-weight: var(--vscode-editor-font-weight);
