@@ -1,4 +1,6 @@
-import { ExtensionContext, Uri, ViewColumn, Webview, WebviewPanel, window } from "vscode";
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+import { commands, ExtensionContext, TextDocument, Uri, ViewColumn, Webview, WebviewPanel, window, workspace } from "vscode";
 import AutoDisposable from "./helper/AutoDisposable";
 
 interface IRtViewMessage {
@@ -11,9 +13,26 @@ export class RTLogView extends AutoDisposable {
 
     constructor(private readonly _context: ExtensionContext) {
         super();
+        this._disposables.push(
+            workspace.onDidOpenTextDocument((doc: TextDocument) => {
+                if (doc.uri.fsPath.endsWith(".log")) {
+                    commands.executeCommand("workbench.action.closeActiveEditor");
+                    this.createWebView(doc.uri.fsPath);
+                }
+            })
+        );
+    }
+
+    dispose() {
+        // Figure out how to close the editor that showed the log view
+        this._panel.dispose();
+        while (this._disposables.length) this._disposables.pop().dispose();
     }
 
     private createWebView(logPath: string) {
+        if (!logPath) {
+            return;
+        }
         // Define which column the po view should be in
         const column = window.activeTextEditor ? ViewColumn.Beside : ViewColumn.Two;
 
@@ -39,7 +58,33 @@ export class RTLogView extends AutoDisposable {
         this._panel.onDidDispose(() => (this._panel = undefined), this, this._disposables);
 
         // Handle messages from the webview
-        this._panel.webview.onDidReceiveMessage(async (message: IRtViewMessage) => {}, null, this._disposables);
+        this._panel.webview.onDidReceiveMessage(
+            async (message: IRtViewMessage) => {
+                console.log("Received command from view: " + message.command);
+                switch (message.command) {
+                    case "initial":
+                        this._panel.webview.postMessage({
+                            command: "initial",
+                            data: "Initial Content",
+                        });
+                        break;
+                    case "view1":
+                        this._panel.webview.postMessage({
+                            command: "view1",
+                            data: "View 1 Content",
+                        });
+                        break;
+                    case "view2":
+                        this._panel.webview.postMessage({
+                            command: "view2",
+                            data: "View 2 Content",
+                        });
+                        break;
+                }
+            },
+            null,
+            this._disposables
+        );
 
         // Generate the html for the webview
         this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview);
@@ -63,11 +108,10 @@ export class RTLogView extends AutoDisposable {
             )}" rel="stylesheet">
         </head>
         <body>
-            <button class="button" id="expandPOsBtn">Button 1</button>
-            <button class="button" id="filterPOsBtn">Button 2</button>
-
+            <button class="button" id="ibtn">Initial view</button>
+            <button class="button" id="btn1">View 1</button>
+            <button class="button" id="btn2">View 2</button>
             <br>
-
             <div id="viewContainer"></div>
             <script nonce="${scriptNonce}" src="${webview.asWebviewUri(
             Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js")

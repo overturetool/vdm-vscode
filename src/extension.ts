@@ -33,6 +33,7 @@ import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
 import * as Util from "./util/Util";
+import { RTLogView } from "./RTLogView";
 
 export async function activate(context: ExtensionContext) {
     // Setup server factory
@@ -95,6 +96,7 @@ export async function activate(context: ExtensionContext) {
     const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, acceptedLanguageIds));
+    context.subscriptions.push(new RTLogView(context));
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clientManager));
