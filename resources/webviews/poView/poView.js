@@ -8,8 +8,8 @@ let expandBtn = document.getElementById("expandPOsBtn");
 let filteringPOs = false;
 let expandPOs = false;
 
-const collapsedSign = "\u25B8"; //">";
-const expandedSign = "\u25BE"; //"v";
+const collapsedSign = "\u25B8";
+const expandedSign = "\u25BE";
 
 function buildTable(pos, poContainer) {
     //  Access the DOM to get the table construct and add to it.
@@ -57,6 +57,10 @@ function buildTable(pos, poContainer) {
 
             let signcell = tbdy.getElementsByTagName("tr")[mainrow.rowIndex - 1].cells[0];
             signcell.innerText = signcell.innerText === collapsedSign ? expandedSign : collapsedSign;
+
+            let poContainer = document.getElementById("poContainer");
+            poContainer.style = "none";
+            poContainer.style = "block";
         };
 
         // Click listener for go to
@@ -100,7 +104,7 @@ function buildTable(pos, poContainer) {
         let subrow_signcell = subrow.insertCell();
         subrow_signcell.classList.add("signcell");
 
-        // The main cell spans the rest of the row being the numbers of headers
+        // The main subrow cell spans the rest of the row being the numbers of headers
         let subrow_cell = subrow.insertCell();
         subrow_cell.colSpan = headers.length;
         subrow_cell.classList.add("subrowcell");
