@@ -8,8 +8,8 @@ let expandBtn = document.getElementById("expandPOsBtn");
 let filteringPOs = false;
 let expandPOs = false;
 
-const collapsedSign = "\u25B8"; //">";
-const expandedSign = "\u25BE"; //"v";
+const collapsedSign = "\u25B8";
+const expandedSign = "\u25BE";
 
 function buildTable(pos, poContainer) {
     //  Access the DOM to get the table construct and add to it.
