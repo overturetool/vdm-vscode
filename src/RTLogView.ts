@@ -44,6 +44,17 @@ import * as Fs from "fs-extra";
 //     time: number;
 // }
 
+// interface DelayedThreadSwapIn {
+//     eventKind: string;
+//     id: number;
+//     objref: number;
+//     clnm: string;
+//     delay: number;
+//     cpunm: number;
+//     overhead: number;
+//     time: number;
+// }
+
 // interface ThreadSwapOut {
 //     eventKind: string;
 //     id: number;

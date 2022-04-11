@@ -74,7 +74,6 @@ function buildExecutionOverview(viewId, logData) {
     let cpudecls = [];
     let busdecls = [];
     const eventsOfInterest = [];
-
     logData.forEach((ld) => {
         if (ld.eventKind == "CPUdecl") {
             cpudecls.push(ld);
@@ -87,18 +86,23 @@ function buildExecutionOverview(viewId, logData) {
     cpudecls = cpudecls.sort((a, b) => a.id - b.id);
     busdecls = busdecls.sort((a, b) => a.id - b.id);
 
-    // get context and set font
+    // Define size constants
+    const declFont = "30px Arial";
+    const gridFont = "15px Arial";
     let ctx = canvas.getContext("2d");
-    ctx.font = global_font;
+    ctx.font = gridFont;
+    const gridTextMetrics = ctx.measureText("Gg");
+    const gridFontHeight = gridTextMetrics.fontBoundingBoxAscent + gridTextMetrics.fontBoundingBoxDescent;
+    const event_X_length = gridFontHeight + 1 > 25 ? gridFontHeight + 1 : 25;
 
-    // Calculate text metrics and spacing
-    const textMetrics = ctx.measureText("Gg");
-    const margin_Y = (textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent) * 2;
+    ctx.font = declFont;
+    const declTextMetrics = ctx.measureText("Gg");
+    const margin_Y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
+
     const gridLineWidth = 1;
     const eventLineWidth = 4;
-    const eventLength = 25;
-    const lineWrapperHeight = 14;
-    const margin_X = 10;
+    const lineWrapperHeight = 10 + eventLineWidth;
+    const margin_X = margin_Y / 4;
 
     // Calculate decl text placement
     let widestText = 0;
@@ -113,7 +117,7 @@ function buildExecutionOverview(viewId, logData) {
                 widestText = txtMetrics.width;
             }
 
-            const txtHeight = textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent;
+            const txtHeight = txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent;
 
             decls.push({
                 name: decl.name,
@@ -127,13 +131,14 @@ function buildExecutionOverview(viewId, logData) {
         });
 
     const startPos_X_event = widestText + margin_X * 2;
-
-    canvas.width = eventsOfInterest.length * eventLength + eventLength + startPos_X_event;
-    canvas.height = cpudecls.concat(busdecls).length * margin_Y + margin_Y;
+    const declsTotal_Height = current_Y_pos_text - margin_Y;
+    canvas.width = eventsOfInterest.length * event_X_length + margin_X + startPos_X_event;
+    canvas.height =
+        cpudecls.concat(busdecls).length * margin_Y + margin_Y + ctx.measureText(eventsOfInterest[eventsOfInterest.length - 1].time).width;
 
     // Get context again after resize
     ctx = canvas.getContext("2d");
-    ctx.font = global_font;
+    ctx.font = declFont;
 
     // Draw decl text
     decls.forEach((decl) => {
@@ -147,10 +152,12 @@ function buildExecutionOverview(viewId, logData) {
     let msgTargetCpuId;
     let currentCpuId = 0;
     let activeThreads = [];
+    let currentTime = -1;
+    ctx.font = gridFont;
     for (let i = 0; i < eventsOfInterest.length; i++) {
         const event = eventsOfInterest[i];
         const isCpuEvent = !isBusEvent(event.eventKind);
-        const nextPos_X_event = currentPos_X_event + eventLength;
+        const nextPos_X_event = currentPos_X_event + event_X_length;
         currentBusId = event.eventKind == "MessageRequest" ? event.busid : currentBusId;
         msgTargetCpuId = event.eventKind == "MessageRequest" || event.eventKind == "ReplyRequest" ? event.tocpu : msgTargetCpuId;
         currentCpuId = isCpuEvent ? event.cpunm : currentCpuId;
@@ -158,6 +165,7 @@ function buildExecutionOverview(viewId, logData) {
             (decl) => decl.kind == (isCpuEvent ? "CPUdecl" : "BUSdecl") && decl.id == (isCpuEvent ? currentCpuId : currentBusId)
         ).line_y_pos;
 
+        // Draw horizontal grid line and mark idle thread
         decls.forEach((decl) => {
             ctx.beginPath();
             if (activeThreads.find((thread) => thread.y_pos == decl.line_y_pos && thread.y_pos != current_Y_pos)) {
@@ -176,6 +184,26 @@ function buildExecutionOverview(viewId, logData) {
                 ctx.stroke();
             }
         });
+
+        // Draw vertical grid line
+        if (currentTime != event.time) {
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = gridLineWidth;
+            ctx.setLineDash([1, 4]);
+            const lineStart_Y = margin_Y / 2;
+            const lineEnd_Y = declsTotal_Height + margin_Y / 4;
+            ctx.moveTo(currentPos_X_event, lineStart_Y);
+            ctx.lineTo(currentPos_X_event, lineEnd_Y);
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(currentPos_X_event, lineEnd_Y);
+            ctx.rotate(Math.PI / 2);
+            ctx.fillText(event.time, eventLineWidth, 0);
+            ctx.restore();
+
+            currentTime = event.time;
+        }
 
         // Keep track of threads that have been swapped in but not out
         if (event.eventKind == "ThreadSwapIn" || event.eventKind == "DelayedThreadSwapIn") {
@@ -211,7 +239,7 @@ function buildExecutionOverview(viewId, logData) {
             drawArrow(ctx, pos_x, start_y, pos_x, end_y, 3, 5, false, gridLineWidth, "#000000");
         }
 
-        // Mark event with "line wrapper"
+        // Draw event "line wrapper"
         if (i != eventsOfInterest.length - 1 && !isOperationEvent(event.eventKind)) {
             ctx.beginPath();
             ctx.lineWidth = gridLineWidth;
@@ -228,18 +256,16 @@ function buildExecutionOverview(viewId, logData) {
             ctx.stroke();
         }
 
-        // Mark thread event
+        // Draw thread number and arrow marking swap in/out
         if (isThreadEvent(event.eventKind)) {
-            ctx.font = "15px Arial";
             const textMeasure = ctx.measureText(event.id);
             const textHeight = textMeasure.fontBoundingBoxAscent + textMeasure.fontBoundingBoxDescent;
             const textWidth = textMeasure.width;
             const text_Y_pos = current_Y_pos - eventLineWidth;
-            ctx.fillText(event.id, currentPos_X_event + (eventLength - textWidth) / 2, text_Y_pos);
-            ctx.font = global_font;
+            ctx.fillText(event.id, currentPos_X_event + (event_X_length - textWidth) / 2, text_Y_pos);
 
             if (event.eventKind == "ThreadSwapOut" || event.eventKind == "ThreadSwapIn" || event.eventKind == "DelayedThreadSwapIn") {
-                const pos_x = currentPos_X_event + eventLength / 2;
+                const pos_x = currentPos_X_event + event_X_length / 2;
                 const errowLength = lineWrapperHeight;
                 const isSwapIn = event.eventKind == "ThreadSwapIn" || event.eventKind == "DelayedThreadSwapIn";
                 const end_y = text_Y_pos - errowLength - textHeight - (isSwapIn ? eventLineWidth : 0);
@@ -247,6 +273,7 @@ function buildExecutionOverview(viewId, logData) {
                 drawArrow(ctx, pos_x, start_y, pos_x, end_y, 2, 4, true, eventLineWidth, eventKindToColor(event.eventKind), isSwapIn);
             }
         }
+
         prev_Y_pos = current_Y_pos;
         currentPos_X_event = nextPos_X_event;
     }
