@@ -4,123 +4,6 @@ import { commands, ExtensionContext, TextDocument, Uri, ViewColumn, Webview, Web
 import AutoDisposable from "./helper/AutoDisposable";
 import * as Fs from "fs-extra";
 
-// interface BUSdecl {
-//     eventKind: string;
-//     id: number;
-//     topo: {
-//         from: number;
-//         to: number[];
-//     };
-//     name: string;
-//     time: number;
-// }
-
-// interface CPUdecl {
-//     eventKind: string;
-//     id: number;
-//     expl: boolean;
-//     sys: string;
-//     name: string;
-//     time: number;
-// }
-
-// interface ThreadCreate {
-//     eventKind: string;
-//     id: number;
-//     period: boolean;
-//     objref: number;
-//     clnm: string;
-//     cpunm: number;
-//     time: number;
-// }
-
-// interface ThreadSwapIn {
-//     eventKind: string;
-//     id: number;
-//     objref: number;
-//     clnm: string;
-//     cpunm: number;
-//     overhead: number;
-//     time: number;
-// }
-
-// interface DelayedThreadSwapIn {
-//     eventKind: string;
-//     id: number;
-//     objref: number;
-//     clnm: string;
-//     delay: number;
-//     cpunm: number;
-//     overhead: number;
-//     time: number;
-// }
-
-// interface ThreadSwapOut {
-//     eventKind: string;
-//     id: number;
-//     objref: number;
-//     clnm: string;
-//     cpunm: number;
-//     overhead: number;
-//     time: number;
-// }
-
-// interface ThreadKill {
-//     eventKind: string;
-//     id: number;
-//     cpunm: number;
-//     time: number;
-// }
-
-// interface MessageRequest {
-//     eventKind: string;
-//     busid: number;
-//     fromcpu: number;
-//     tocpu: number;
-//     msgid: number;
-//     callthr: number;
-//     opname: string;
-//     objref: number;
-//     size: number;
-//     time: number;
-// }
-
-// interface MessageActivate {
-//     eventKind: string;
-//     msgid: number;
-//     time: number;
-// }
-
-// interface MessageCompleted {
-//     eventKind: string;
-//     msgid: number;
-//     time: number;
-// }
-
-// interface Operation {
-//     eventKind: string;
-//     id: number;
-//     opname: string;
-//     objref: number;
-//     clnm: string;
-//     cpunm: number;
-//     async: boolean;
-//     time: number;
-// }
-
-// interface ReplyRequest {
-//     eventKind: string;
-//     busid: number;
-//     fromcpu: number;
-//     tocpu: number;
-//     msgid: number;
-//     origmsgid: number;
-//     callthr: number;
-//     calleethr: number;
-//     size: number;
-//     time: number;
-// }
-
 export class RTLogView extends AutoDisposable {
     private _panel: WebviewPanel;
 
@@ -129,8 +12,12 @@ export class RTLogView extends AutoDisposable {
         this._disposables.push(
             workspace.onDidOpenTextDocument((doc: TextDocument) => {
                 if (doc.uri.fsPath.endsWith(".rtlog")) {
-                    commands.executeCommand("workbench.action.closeActiveEditor");
-                    this.parseLogData(doc.uri.fsPath).then((logData) => this.createWebView(logData));
+                    if (this._panel) {
+                        this._panel.dispose();
+                    }
+                    commands.executeCommand("workbench.action.closeActiveEditor").then(() => {
+                        this.parseLogData(doc.uri.fsPath).then((logData: any[]) => this.createWebView(logData));
+                    });
                 }
             })
         );
@@ -144,81 +31,89 @@ export class RTLogView extends AutoDisposable {
 
     private async parseLogData(logPath: string): Promise<any[]> {
         if (!logPath) {
-            return;
+            return [];
         }
         let includeVBus: boolean = false;
         let includeVCpu: boolean = false;
-
-        const logLines: string[] = (await Fs.readFile(logPath, "utf-8")).split(/[\r\n\t]+/g);
+        const logContent: string = await Fs.readFile(logPath, "utf-8");
+        if (!logContent) {
+            return [];
+        }
+        const logLines: string[] = logContent.split(/[\r\n\t]+/g);
+        if (logLines.length <= 0) {
+            return [];
+        }
         const dataObjects: any[] = [];
         const cpudecls: any[] = [];
         const stringPlaceholderSign = "-";
         logLines?.forEach((line) => {
             const lineSplit: string[] = line.split(" -> ");
-            const eventKind: string = lineSplit[0];
-            let content = lineSplit[1];
+            if (lineSplit.length > 1) {
+                const eventKind: string = lineSplit[0];
+                let content = lineSplit[1];
 
-            let firstStringSignIndex = content.indexOf('"');
-            const embeddedStrings = [];
-            while (firstStringSignIndex > -1) {
-                const secondStringSignIndex = content.indexOf('"', firstStringSignIndex + 1);
-                if (secondStringSignIndex > 0) {
-                    const embeddedString = content.slice(firstStringSignIndex, secondStringSignIndex + 1);
-                    embeddedStrings.push(embeddedString);
-                    content = content.replace(embeddedString, stringPlaceholderSign);
+                let firstStringSignIndex = content.indexOf('"');
+                const embeddedStrings = [];
+                while (firstStringSignIndex > -1) {
+                    const secondStringSignIndex = content.indexOf('"', firstStringSignIndex + 1);
+                    if (secondStringSignIndex > 0) {
+                        const embeddedString = content.slice(firstStringSignIndex, secondStringSignIndex + 1);
+                        embeddedStrings.push(embeddedString);
+                        content = content.replace(embeddedString, stringPlaceholderSign);
+                    }
+                    firstStringSignIndex = content.indexOf('"');
                 }
-                firstStringSignIndex = content.indexOf('"');
-            }
-            let contentSplit: string[] = content.split(/[^\S]+/g);
-            if (embeddedStrings.length > 0) {
-                let contentSplitIterator = 0;
-                embeddedStrings.forEach((embeddedString) => {
-                    for (let i = contentSplitIterator; i < contentSplit.length; i++) {
-                        if (contentSplit[i] == stringPlaceholderSign) {
-                            contentSplit[i] = embeddedString;
-                            contentSplitIterator += ++i;
-                            break;
+                let contentSplit: string[] = content.split(/[^\S]+/g);
+                if (embeddedStrings.length > 0) {
+                    let contentSplitIterator = 0;
+                    embeddedStrings.forEach((embeddedString) => {
+                        for (let i = contentSplitIterator; i < contentSplit.length; i++) {
+                            if (contentSplit[i] == stringPlaceholderSign) {
+                                contentSplit[i] = embeddedString;
+                                contentSplitIterator += ++i;
+                                break;
+                            }
+                        }
+                    });
+                }
+
+                const newData: any = {};
+                if (eventKind == "BUSdecl") {
+                    for (let i = 0; i < contentSplit.length - 1; i++) {
+                        const property = contentSplit[i].slice(0, contentSplit[i].length - 1);
+                        if (property == "topo") {
+                            const values = contentSplit[++i];
+                            let to: any = this.stringValueToTypedValue(values.slice(values.indexOf(",") + 1).replace("}", ""));
+                            if (Number(to)) {
+                                to = [to];
+                            }
+                            newData[property] = {
+                                from: this.stringValueToTypedValue(values.slice(0, values.indexOf(",")).replace("{", "")),
+                                to: to,
+                            };
+                        } else {
+                            newData[property] = this.stringValueToTypedValue(contentSplit[++i]);
                         }
                     }
-                });
-            }
+                } else {
+                    for (let i = 0; i < contentSplit.length - 1; i++) {
+                        newData[contentSplit[i].slice(0, contentSplit[i].length - 1)] = this.stringValueToTypedValue(contentSplit[++i]);
+                    }
 
-            const newData: any = {};
-            if (eventKind == "BUSdecl") {
-                for (let i = 0; i < contentSplit.length - 1; i++) {
-                    const property = contentSplit[i].slice(0, contentSplit[i].length - 1);
-                    if (property == "topo") {
-                        const values = contentSplit[++i];
-                        let to: any = this.stringValueToTypedValue(values.slice(values.indexOf(",") + 1).replace("}", ""));
-                        if (Number(to)) {
-                            to = [to];
-                        }
-                        newData[property] = {
-                            from: this.stringValueToTypedValue(values.slice(0, values.indexOf(",")).replace("{", "")),
-                            to: to,
-                        };
-                    } else {
-                        newData[property] = this.stringValueToTypedValue(contentSplit[++i]);
+                    if (eventKind == "CPUdecl") {
+                        cpudecls.push(newData);
                     }
                 }
-            } else {
-                for (let i = 0; i < contentSplit.length - 1; i++) {
-                    newData[contentSplit[i].slice(0, contentSplit[i].length - 1)] = this.stringValueToTypedValue(contentSplit[++i]);
+                newData.eventKind = eventKind;
+                if (!includeVBus && "busid" in newData && newData.busid == 0) {
+                    includeVBus = true;
+                }
+                if (!includeVCpu && "cpunm" in newData && newData.cpunm == 0) {
+                    includeVCpu = true;
                 }
 
-                if (eventKind == "CPUdecl") {
-                    cpudecls.push(newData);
-                }
+                dataObjects.push(newData);
             }
-            newData.eventKind = eventKind;
-            if (!includeVBus && "busid" in newData && newData.busid == 0) {
-                includeVBus = true;
-            }
-            if (!includeVCpu && "cpunm" in newData && newData.cpunm == 0) {
-                includeVCpu = true;
-            }
-
-            dataObjects.push(newData);
         });
 
         if (includeVBus) {
@@ -297,7 +192,7 @@ export class RTLogView extends AutoDisposable {
                 console.log("Received command from view: " + cmd);
                 this._panel.webview.postMessage({
                     cmd: cmd,
-                    data: logData,
+                    logData: logData,
                 });
             },
             null,
@@ -326,9 +221,7 @@ export class RTLogView extends AutoDisposable {
             )}" rel="stylesheet">
         </head>
         <body>
-            <button class="button" id="btn1">Architecture overview</button>
-            <button class="button" id="btn2">Execution overview</button>
-            <button class="button" id="btn3">View 3</button>
+            <button class="button" id="btn1">Architecture overview</button><button class="button" id="btn2">Execution overview</button><button class="button" id="btn3">View 3</button>
             <br>
             <script nonce="${scriptNonce}" src="${webview.asWebviewUri(
             Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js")
