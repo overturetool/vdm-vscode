@@ -1,4 +1,4 @@
-### 2.0.0
+### 1.3.3
 - Updated the publisher name (Breaks settings! Workaround: Replace 'jonaskrask.xyz' to 'overturetool.xyz')
 - Added support to DOC/DOCX/ODT documents 
 - Added Open in VDMTools Feature
