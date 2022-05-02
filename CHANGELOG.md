@@ -1,4 +1,9 @@
-### 1.3.3
+### 2.0.0
+- Updated the publisher name (Breaks settings! Workaround: Replace 'jonaskrask.xyz' to 'overturetool.xyz')
+- Added support to DOC/DOCX/ODT documents 
+- Added Open in VDMTools Feature
+- Added FMI Import/Export features (Port from Overture codebase)
+- Added "Change Project Wide VDMJ Properties" Command
 
 ### 1.3.2
 - Added additional options and buttons to the combinatorial testing view
