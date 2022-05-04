@@ -1113,7 +1113,7 @@
                                     "preConditionChecks": true,
                                     "postConditionChecks": true,
                                     "measureChecks": true
-                                  },
+                                },
                                 "properties": {
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
@@ -1167,7 +1167,7 @@
                                     "vdmj.rt.diags_guards": false,
                                     "vdmj.rt.diags_timestep": false,
                                     "vdmj.in.powerset_limit": 30
-                                  },
+                                },
                                 "properties": {
                                     "vdmj.parser.comment_nesting": {
                                         "type": "number",
@@ -1175,7 +1175,10 @@
                                         "default": 3
                                     },
                                     "vdmj.parser.external_readers": {
-                                        "type": ["string", "null"],
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
                                         "description": "External readers [.suffix]=[class] pairs (default null)",
                                         "default": null
                                     },
@@ -1190,7 +1193,10 @@
                                         "default": false
                                     },
                                     "vdmj.mapping.search_path": {
-                                        "type": ["string", "null"],
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
                                         "description": "An alternative search path for the ClassMapper (default null)",
                                         "default": null
                                     },
