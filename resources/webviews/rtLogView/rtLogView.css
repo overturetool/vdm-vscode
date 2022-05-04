@@ -1,9 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
-button:focus {
-    background-color: var(--vscode-button-secondaryBackground);
-}
-
 .button {
     background-color: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
