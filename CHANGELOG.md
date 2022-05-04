@@ -1,13 +1,12 @@
 ### 1.3.3
 - Updated the publisher name (Breaks settings! Workaround: Replace 'jonaskrask.xyz' to 'overturetool.xyz')
-- Added support to DOC/DOCX/ODT documents 
 - Added Open in VDMTools Feature
 - Added FMI Import/Export features (Port from Overture codebase)
 - Added "Change Project Wide VDMJ Properties" Command
 - Added a .vscode/vdmignore file to ignore selected files
 - Enabled user-provided commands for the debug console
 - Added a "state init" proof obligation
-- Added support for doc, docx, odt and adoc source files
+- Added support for doc, docx, odt and adoc and md source files
 - Added Shift-F12 "find references" functionality
 
 ### 1.3.2
