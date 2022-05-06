@@ -11,6 +11,7 @@ import {
     WebviewPanel,
     window,
     workspace,
+    WorkspaceFolder,
 } from "vscode";
 import AutoDisposable from "./helper/AutoDisposable";
 import * as Fs from "fs-extra";
@@ -35,6 +36,7 @@ enum LogEvent {
 
 export class RTLogView extends AutoDisposable {
     private _panel: WebviewPanel;
+    private _wsFolder: WorkspaceFolder = undefined;
     constructor(private readonly _context: ExtensionContext) {
         super();
         // Add settings watch
@@ -53,13 +55,13 @@ export class RTLogView extends AutoDisposable {
                     if (this._panel) {
                         this._panel.dispose();
                     }
-                    commands
-                        .executeCommand("workbench.action.closeActiveEditor")
-                        .then(() =>
-                            this.parseLogData(doc.uri.fsPath).then((data) =>
-                                this.createWebView(data.busDecls, data.cpuDecls, data.executionEvents, data.cpusWithEvents)
-                            )
-                        );
+                    this.parseLogData(doc.uri.fsPath).then((data) => {
+                        this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
+                        if (data) {
+                            commands.executeCommand("workbench.action.closeActiveEditor");
+                            this.createWebView(data.busDecls, data.cpuDecls, data.executionEvents, data.cpusWithEvents);
+                        }
+                    });
                 }
             })
         );
@@ -74,12 +76,18 @@ export class RTLogView extends AutoDisposable {
     private changesAffectsViewCheck(event: ConfigurationChangeEvent) {
         // The webview needs to redraw its content if the font user changes the theme or font
         if (
-            event.affectsConfiguration("editor.fontFamily") ||
-            event.affectsConfiguration("editor.fontSize") ||
-            event.affectsConfiguration("workbench.colorTheme")
+            this._wsFolder &&
+            (event.affectsConfiguration("editor.fontFamily") ||
+                event.affectsConfiguration("editor.fontSize") ||
+                event.affectsConfiguration("workbench.colorTheme") ||
+                event.affectsConfiguration("vdm-vscode.real-timeLogViewer.scaleWithFont") ||
+                event.affectsConfiguration("vdm-vscode.real-timeLogViewer.matchTheme"))
         ) {
+            const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);
             this._panel.webview.postMessage({
                 cmd: "editorSettingsChanged",
+                scaleWithFont: config.get("scaleWithFont"),
+                matchTheme: config.get("matchTheme"),
             });
         }
     }
@@ -88,8 +96,7 @@ export class RTLogView extends AutoDisposable {
         if (!logPath) {
             return;
         }
-        let includedVBus: boolean = false;
-        let includedVCpu: boolean = false;
+
         const logContent: string = await Fs.readFile(logPath, "utf-8");
         if (!logContent) {
             return;
@@ -105,6 +112,8 @@ export class RTLogView extends AutoDisposable {
         const cpusWithEvents: any[] = [];
         const stringPlaceholderSign = "-";
         const activeMsgInitEvents: any[] = [];
+        const busTopos: any[] = [];
+        const decls: any[] = [];
         logLines?.forEach((line) => {
             const lineSplit: string[] = line.split(" -> ");
             if (lineSplit.length > 1) {
@@ -137,119 +146,116 @@ export class RTLogView extends AutoDisposable {
 
                 const logEventObj: any = { eventKind: lineSplit[0] };
 
-                if (logEventObj.eventKind == LogEvent.BusDecl) {
-                    // If log event is of type busdecl then it needs to be parsed differently
-                    for (let i = 0; i < contentSplit.length - 1; i++) {
-                        const property = contentSplit[i].slice(0, contentSplit[i].length - 1);
-                        if (property == "topo") {
-                            const values = contentSplit[++i];
-                            let to: any = this.stringValueToTypedValue(values.slice(values.indexOf(",") + 1).replace("}", ""));
-                            if (Number(to)) {
-                                to = [to];
+                // Parse the event
+                for (let i = 0; i < contentSplit.length - 1; i++) {
+                    logEventObj[contentSplit[i].slice(0, contentSplit[i].length - 1)] = this.stringValueToTypedValue(contentSplit[++i]);
+                }
+
+                if (logEventObj.eventKind == LogEvent.CpuDecl || logEventObj.eventKind == LogEvent.BusDecl) {
+                    decls.push({ eventKind: logEventObj.eventKind, name: logEventObj.name, id: logEventObj.id });
+                } else if (logEventObj.eventKind != LogEvent.DeployObj) {
+                    if (logEventObj.eventKind != LogEvent.MessageActivate) {
+                        let cpuWithEvents: any;
+                        if (logEventObj.eventKind != LogEvent.MessageCompleted) {
+                            const cpunm =
+                                "cpunm" in logEventObj
+                                    ? logEventObj.cpunm
+                                    : "fromcpu" in logEventObj
+                                    ? logEventObj.fromcpu
+                                    : "tocpu" in logEventObj
+                                    ? logEventObj.tocpu
+                                    : logEventObj.id;
+                            cpuWithEvents = cpusWithEvents.find((cpu) => cpu.id == cpunm);
+                            if (!cpuWithEvents) {
+                                cpuWithEvents = {
+                                    id: cpunm,
+                                    executionEvents: [],
+                                    deployEvents: [],
+                                    name: cpunm == 0 ? "vCPU" : "",
+                                };
+                                cpusWithEvents.push(cpuWithEvents);
                             }
-                            logEventObj[property] = {
-                                from: this.stringValueToTypedValue(values.slice(0, values.indexOf(",")).replace("{", "")),
-                                to: to,
-                            };
                         } else {
-                            logEventObj[property] = this.stringValueToTypedValue(contentSplit[++i]);
+                            const msgInitEvent: any = activeMsgInitEvents.splice(
+                                activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
+                                1
+                            )[0];
+                            cpuWithEvents = cpusWithEvents.find((cpu) => cpu.id == msgInitEvent.tocpu);
+                            logEventObj.busid = msgInitEvent.busid;
+                            logEventObj.tocpu = msgInitEvent.tocpu;
+                            if (!("objref" in msgInitEvent)) {
+                                logEventObj.origmsgid = msgInitEvent.origmsgid;
+                            } else {
+                                logEventObj.objref = msgInitEvent.objref;
+                                logEventObj.clnm = msgInitEvent.clnm;
+                                logEventObj.opname = msgInitEvent.opname;
+                            }
                         }
-                    }
-                    busDecls.push(logEventObj);
-                } else {
-                    // Parse the event
-                    for (let i = 0; i < contentSplit.length - 1; i++) {
-                        logEventObj[contentSplit[i].slice(0, contentSplit[i].length - 1)] = this.stringValueToTypedValue(contentSplit[++i]);
-                    }
 
-                    if (logEventObj.eventKind != LogEvent.DeployObj) {
-                        if (logEventObj.eventKind != LogEvent.MessageActivate) {
-                            let cpuWithEvents: any;
-                            if (logEventObj.eventKind != LogEvent.MessageCompleted) {
-                                const cpunm =
-                                    "cpunm" in logEventObj
-                                        ? logEventObj.cpunm
-                                        : "fromcpu" in logEventObj
-                                        ? logEventObj.fromcpu
-                                        : "tocpu" in logEventObj
-                                        ? logEventObj.tocpu
-                                        : logEventObj.id;
-                                cpuWithEvents = cpusWithEvents.find((cpu) => cpu.id == cpunm);
-                                if (!cpuWithEvents) {
-                                    cpuWithEvents = {
-                                        id: cpunm,
-                                        executionEvents: [],
-                                        deployEvents: [],
-                                        name: cpunm == 0 ? "vCPU" : "",
-                                    };
-                                    cpusWithEvents.push(cpuWithEvents);
-                                }
-                            } else {
-                                const msgInitEvent: any = activeMsgInitEvents.splice(
-                                    activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
-                                    1
-                                )[0];
-                                cpuWithEvents = cpusWithEvents.find((cpu) => cpu.id == msgInitEvent.tocpu);
-                                logEventObj.busid = msgInitEvent.busid;
-                                logEventObj.tocpu = msgInitEvent.tocpu;
-                                if (!("objref" in msgInitEvent)) {
-                                    logEventObj.origmsgid = msgInitEvent.origmsgid;
-                                } else {
-                                    logEventObj.objref = msgInitEvent.objref;
-                                    logEventObj.clnm = msgInitEvent.clnm;
-                                    logEventObj.opname = msgInitEvent.opname;
-                                }
-                            }
-
-                            if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {
-                                activeMsgInitEvents.push(logEventObj);
-                            }
-
-                            if (logEventObj.eventKind == LogEvent.CpuDecl) {
-                                cpuWithEvents.name = logEventObj.name;
-                            } else {
-                                cpuWithEvents.executionEvents.push(logEventObj);
-                            }
+                        if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {
+                            activeMsgInitEvents.push(logEventObj);
                         }
 
                         if (logEventObj.eventKind == LogEvent.CpuDecl) {
-                            cpuDecls.push(logEventObj);
+                            cpuWithEvents.name = logEventObj.name;
                         } else {
-                            executionEvents.push(logEventObj);
+                            cpuWithEvents.executionEvents.push(logEventObj);
                         }
-                    } else {
-                        let cpuWithDeploy = cpusWithDeployEvents.find((cpu) => cpu.id == logEventObj.cpunm);
-                        if (!cpuWithDeploy) {
-                            cpuWithDeploy = { id: logEventObj.cpunm, deployEvents: [] };
-                            cpusWithDeployEvents.push(cpuWithDeploy);
-                        }
-                        cpuWithDeploy.deployEvents.push(logEventObj);
                     }
+
+                    executionEvents.push(logEventObj);
+                } else {
+                    let cpuWithDeploy = cpusWithDeployEvents.find((cpu) => cpu.id == logEventObj.cpunm);
+                    if (!cpuWithDeploy) {
+                        cpuWithDeploy = { id: logEventObj.cpunm, deployEvents: [] };
+                        cpusWithDeployEvents.push(cpuWithDeploy);
+                    }
+                    cpuWithDeploy.deployEvents.push(logEventObj);
                 }
 
-                if (!includedVBus && "busid" in logEventObj && logEventObj.busid == 0) {
-                    includedVBus = true;
-                    busDecls.unshift({
-                        eventKind: LogEvent.BusDecl,
-                        id: 0,
-                        topo: { from: 0, to: cpuDecls.map((cpudecl) => cpudecl.id).filter((id) => id != 0) },
-                        name: "vBUS",
-                        time: 0,
-                    });
-                }
-
-                if (!includedVCpu && "cpunm" in logEventObj && logEventObj.cpunm == 0) {
-                    includedVCpu = true;
-                    cpuDecls.unshift({ eventKind: LogEvent.CpuDecl, id: 0, expl: false, sys: "", name: "vCPU", time: 0 });
+                if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {
+                    const existingBusTopo = busTopos.find((topo: any) => topo.id == logEventObj.busid);
+                    if (!existingBusTopo) {
+                        busTopos.push({ id: logEventObj.busid, topo: { from: logEventObj.fromcpu, to: [logEventObj.tocpu] } });
+                    } else if (
+                        existingBusTopo.topo.from != logEventObj.tocpu &&
+                        existingBusTopo.topo.to.find((toId: any) => toId == logEventObj.tocpu) == undefined
+                    ) {
+                        existingBusTopo.topo.to.push(logEventObj.tocpu);
+                    }
                 }
             }
         });
 
-        cpusWithEvents.forEach(
-            (cpuWithEvent) => (cpuWithEvent.deployEvents = cpusWithDeployEvents.find((cwde) => cwde.id == cpuWithEvent.id).deployEvents)
-        );
+        cpusWithEvents.forEach((cpuWithEvent) => {
+            const cpuWithDeployEvents = cpusWithDeployEvents.find((cwde) => cwde.id == cpuWithEvent.id);
+            cpuWithEvent.deployEvents = cpuWithDeployEvents ? cpuWithDeployEvents.deployEvents : [];
 
-        return { executionEvents: executionEvents, cpuDecls: cpuDecls, busDecls: busDecls, cpusWithEvents: cpusWithEvents };
+            const name: string =
+                decls.find((decl) => decl.eventKind == LogEvent.CpuDecl && decl.id == cpuWithEvent.id)?.name ??
+                (cpuWithEvent.id == 0 ? "vCPU" : `CPU ${cpuWithEvent.id}`);
+            cpuDecls.push({ eventKind: LogEvent.CpuDecl, id: cpuWithEvent.id, expl: false, sys: "", name: name, time: 0 });
+            cpuWithEvent.name = name;
+        });
+
+        busTopos.forEach((bt) => {
+            busDecls.push({
+                eventKind: LogEvent.BusDecl,
+                id: bt.id,
+                topo: bt.topo,
+                name:
+                    decls.find((decl) => decl.eventKind == LogEvent.BusDecl && decl.id == bt.id)?.name ??
+                    (bt.id == 0 ? "vBUS" : `BUS ${bt.id}`),
+                time: 0,
+            });
+        });
+
+        return {
+            executionEvents: executionEvents,
+            cpuDecls: cpuDecls.sort((a, b) => a.id - b.id),
+            busDecls: busDecls.sort((a, b) => a.id - b.id),
+            cpusWithEvents: cpusWithEvents,
+        };
     }
 
     private stringValueToTypedValue(value: string): any {
@@ -281,6 +287,9 @@ export class RTLogView extends AutoDisposable {
     }
 
     private createWebView(busDecls: any[], cpuDecls: any[], executionEvents: any[], cpusWithEvents: any[]) {
+        if (!this._wsFolder) {
+            return;
+        }
         // Define which column the po view should be in
         const column = window.activeTextEditor ? ViewColumn.Beside : ViewColumn.Two;
 
@@ -311,10 +320,13 @@ export class RTLogView extends AutoDisposable {
                 console.log("Received command from view: " + cmd);
                 const returnObj: any = { cmd: cmd };
                 if (cmd == "init") {
+                    const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);
                     returnObj.busDecls = busDecls;
                     returnObj.cpuDecls = cpuDecls;
                     returnObj.executionEvents = executionEvents;
                     returnObj.cpusWithEvents = cpusWithEvents;
+                    returnObj.scaleWithFont = config.get("scaleWithFont");
+                    returnObj.matchTheme = config.get("matchTheme");
                 }
 
                 this._panel.webview.postMessage(returnObj);

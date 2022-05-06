@@ -16,13 +16,14 @@ let graphFont;
 let gridLineWidth;
 let eventLineWidth;
 let eventWrapperHeight;
+let busColors = [];
 const font = { size: undefined, family: undefined, color: undefined };
 const archViewId = "arch";
 const execViewId = "exec";
 const initMsg = "init";
 const editorSettingsChangedMsg = "editorSettingsChanged";
 const logData = { cpuDeclEvents: [], busDeclEvents: [], cpusWithEvents: [], executionEvents: [] };
-const busColors = [];
+
 const BtnColors = {
     primaryBackground: undefined,
     primaryForeground: undefined,
@@ -37,8 +38,8 @@ const buttons = Array.from(document.getElementsByClassName("button"));
 buttons.forEach((btn) => {
     views.push({ id: btn.id, canvas: undefined });
     btn.onclick = function () {
-        const prvBtn = currentViewId ? document.getElementById(currentViewId) : undefined;
-        setButtonColors(prvBtn ? [prvBtn] : [], btn);
+        // Update the pressed button to "pressed" color and the previous pressed button to "standard" color
+        setButtonColors([document.getElementById(currentViewId)], btn);
         // Clear the view container
         viewContainer.innerHTML = "";
         // Check if the canvas for the view has already been generated - the btn id is the view id
@@ -51,21 +52,10 @@ buttons.forEach((btn) => {
     };
 });
 
-// Fetch colors, font size and family and update related variables
-updateEditorRelatedVars();
-
-// Set button colors
-setButtonColors(
-    buttons.filter((btn) => btn.id != currentViewId),
-    document.getElementById(currentViewId)
-);
-
-// Handle event from extension
+// Handle event from extension backend
 window.addEventListener("message", (event) => {
-    viewContainer.innerHTML = "";
-    let viewId = archViewId;
-
     if (event.data.cmd == initMsg) {
+        // Handle parsed log data
         logData.cpuDeclEvents.push(...event.data.cpuDecls);
         logData.busDeclEvents.push(...event.data.busDecls);
         logData.executionEvents.push(...event.data.executionEvents);
@@ -77,26 +67,28 @@ window.addEventListener("message", (event) => {
             });
         });
     } else if (event.data.cmd == editorSettingsChangedMsg) {
-        viewId = currentViewId;
-        // Fetch colors and the font size and family
-        updateEditorRelatedVars();
-        // Set button colors
-        setButtonColors(
-            buttons.filter((btn) => btn.id != currentViewId),
-            document.getElementById(currentViewId)
-        );
         // Remove generated canvas for the views so they are rebuild with new colors/font settings.
         views.forEach((view) => (view.canvas = undefined));
     }
 
-    // Build and display the canvas
-    const viewCanvas = buildViewCanvas(viewId);
+    // Update font and colors
+    updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
+    // Set button colors
+    setButtonColors(
+        buttons.filter((btn) => btn.id != currentViewId),
+        document.getElementById(currentViewId)
+    );
+
+    // A message from the extension backend always entails a rebuild of the canvas
+    const viewCanvas = buildViewCanvas(currentViewId);
     views.find((view) => view.id == currentViewId).canvas = viewCanvas;
+    // Display the canvas (graph)
+    viewContainer.innerHTML = "";
     viewContainer.appendChild(viewCanvas);
 });
 
 // Load data and build the view
-document.body.onload = onLoad();
+document.body.onload = vscode.postMessage(initMsg);
 
 /**
  * Class and function definitions
@@ -121,50 +113,100 @@ class LogEvent {
     static ReplyRequest = "ReplyRequest";
     static DeployObj = "DeployObj";
 
-    static eventKinds = [
-        { kind: LogEvent.ThreadCreate, color: "#00e400", abb: "tc" },
-        { kind: LogEvent.ThreadKill, color: "#ff0000", abb: "tk" },
-        { kind: LogEvent.OpActivate, color: "#0000ff", abb: "oa" },
-        { kind: LogEvent.OpRequest, color: "#0000ff", abb: "or" },
-        { kind: LogEvent.OpCompleted, color: "#0000ff", abb: "oc" },
-        { kind: LogEvent.ThreadSwapOut, color: "#ff8000", abb: "tso" },
-        { kind: LogEvent.ThreadSwapIn, color: "#00b7ff", abb: "tsi" },
-        { kind: LogEvent.DelayedThreadSwapIn, color: "#bf00ff", abb: "dtsi" },
-        { kind: LogEvent.MessageRequest, color: "#808080", abb: "mr" },
-        { kind: LogEvent.ReplyRequest, color: "#737373", abb: "rr" },
-        { kind: LogEvent.MessageActivate, color: "#D0D0D0", abb: "ma" },
-        { kind: LogEvent.MessageCompleted, color: "#B5B5B5", abb: "mc" },
+    static eventKindToColor = [
+        { kind: this.ThreadCreate, color: this.kindToStandardColor(this.ThreadCreate) },
+        { kind: this.ThreadKill, color: this.kindToStandardColor(this.ThreadKill) },
+        { kind: this.OpActivate, color: this.kindToStandardColor(this.OpActivate) },
+        { kind: this.OpRequest, color: this.kindToStandardColor(this.OpRequest) },
+        { kind: this.OpCompleted, color: this.kindToStandardColor(this.OpCompleted) },
+        { kind: this.ThreadSwapOut, color: this.kindToStandardColor(this.ThreadSwapOut) },
+        { kind: this.ThreadSwapIn, color: this.kindToStandardColor(this.ThreadSwapIn) },
+        { kind: this.DelayedThreadSwapIn, color: this.kindToStandardColor(this.DelayedThreadSwapIn) },
+        { kind: this.MessageRequest, color: this.kindToStandardColor(this.MessageRequest) },
+        { kind: this.ReplyRequest, color: this.kindToStandardColor(this.ReplyRequest) },
+        { kind: this.MessageActivate, color: this.kindToStandardColor(this.MessageActivate) },
+        { kind: this.MessageCompleted, color: this.kindToStandardColor(this.MessageCompleted) },
     ];
 
-    static eventKindToColor(eventKind) {
-        return LogEvent.eventKinds.find((eventToColor) => eventToColor.kind == eventKind)?.color;
+    static kindToAbb(eventKind) {
+        return eventKind == this.ThreadKill
+            ? "tk"
+            : eventKind == this.ThreadCreate
+            ? "tc"
+            : eventKind == this.ThreadSwapOut
+            ? "tso"
+            : eventKind == this.ThreadSwapIn
+            ? "tsi"
+            : eventKind == this.DelayedThreadSwapIn
+            ? "dtsi"
+            : eventKind == this.MessageRequest
+            ? "mr"
+            : eventKind == this.ReplyRequest
+            ? "rr"
+            : eventKind == this.MessageActivate
+            ? "ma"
+            : eventKind == this.MessageCompleted
+            ? "mc"
+            : eventKind == this.OpRequest
+            ? "or"
+            : eventKind == this.OpActivate
+            ? "oa"
+            : eventKind == this.OpCompleted
+            ? "oc"
+            : "";
     }
 
-    static isThreadEventKind(eventKind) {
+    static getKindsAbbs() {
+        return this.eventKindToColor.map((ektc) => this.kindToAbb(ektc.kind));
+    }
+
+    static kindToStandardColor(eventKind) {
+        return eventKind == this.ThreadKill
+            ? "#a1260d"
+            : eventKind == this.ThreadCreate
+            ? "#388a34"
+            : eventKind == this.ThreadSwapOut
+            ? "#be8700"
+            : eventKind == this.ThreadSwapIn
+            ? "#bf8803"
+            : eventKind == this.DelayedThreadSwapIn
+            ? "#d186167d"
+            : eventKind == this.MessageRequest
+            ? "#808080"
+            : eventKind == this.ReplyRequest
+            ? "#737373"
+            : eventKind == this.MessageActivate
+            ? "#D0D0D0"
+            : eventKind == this.MessageCompleted
+            ? "#B5B5B5"
+            : "#007acc";
+    }
+
+    static isThreadKind(eventKind) {
         return (
-            eventKind == LogEvent.ThreadKill ||
-            eventKind == LogEvent.ThreadSwapOut ||
-            eventKind == LogEvent.ThreadSwapIn ||
-            eventKind == LogEvent.ThreadCreate ||
-            eventKind == LogEvent.DelayedThreadSwapIn
+            eventKind == this.ThreadKill ||
+            eventKind == this.ThreadSwapOut ||
+            eventKind == this.ThreadSwapIn ||
+            eventKind == this.ThreadCreate ||
+            eventKind == this.DelayedThreadSwapIn
         );
     }
 
-    static isBusEventKind(eventKind) {
+    static isBusKind(eventKind) {
         return (
-            eventKind == LogEvent.ReplyRequest ||
-            eventKind == LogEvent.MessageCompleted ||
-            eventKind == LogEvent.MessageActivate ||
-            eventKind == LogEvent.MessageRequest
+            eventKind == this.ReplyRequest ||
+            eventKind == this.MessageCompleted ||
+            eventKind == this.MessageActivate ||
+            eventKind == this.MessageRequest
         );
     }
 
-    static isThreadSwapEventKind(eventKind) {
-        return eventKind == LogEvent.ThreadSwapIn || eventKind == LogEvent.ThreadSwapOut || eventKind == LogEvent.DelayedThreadSwapIn;
+    static isThreadSwapKind(eventKind) {
+        return eventKind == this.ThreadSwapIn || eventKind == this.ThreadSwapOut || eventKind == this.DelayedThreadSwapIn;
     }
 
-    static isOperationEventKind(eventKind) {
-        return eventKind == LogEvent.OpRequest || eventKind == LogEvent.OpActivate || eventKind == LogEvent.OpCompleted;
+    static isOperationKind(eventKind) {
+        return eventKind == this.OpRequest || eventKind == this.OpActivate || eventKind == this.OpCompleted;
     }
 }
 
@@ -293,7 +335,7 @@ function generateCpuCanvas(viewId) {
     // The first rects to draw should be the ones for the bus starting with the virtual bus if it is present
     let virtualBus = undefined;
     const filteredBusEvents = cpuExecutionEvents.filter((event) => {
-        const isBusEvent = LogEvent.isBusEventKind(event.eventKind);
+        const isBusEvent = LogEvent.isBusKind(event.eventKind);
         if (isBusEvent && event.id == 0) {
             virtualBus = event;
         }
@@ -327,61 +369,75 @@ function generateCpuCanvas(viewId) {
     }
 
     // Each unique obj deployment that is referenced by an event should be converted to a rectangle to display. These should be pushed after the bus rectangles.
-    const requestStartRects = [];
-    let currentCpuRectId;
-    const activeThreadIdToRect = [];
+    let cpuRectId;
     const traversedEvents = [];
+    const threads = [];
     for (let i = 0; i < cpuExecutionEvents.length; i++) {
         const event = cpuExecutionEvents[i];
-        const isBusEvent = LogEvent.isBusEventKind(event.eventKind);
+        // Keep track of events already visited for the ability to look behind.
+        traversedEvents.push(event);
+        const isBusEvent = LogEvent.isBusKind(event.eventKind);
 
-        // Update the current cpu rect
+        // Locate the correct rectangle to place the event under from the events kind
         if (LogEvent.ThreadKill == event.eventKind) {
-            // For a threadkill event the reference to the proper rectangle id can only be found through the previous thread create event.
-            currentCpuRectId = activeThreadIdToRect.splice(
-                activeThreadIdToRect.indexOf(activeThreadIdToRect.find((at) => at.id == event.id)),
-                1
-            )[0].rectId;
+            cpuRectId = threads.find((t) => t.id == event.id).currentRectId;
+        } else if (LogEvent.ThreadCreate == event.eventKind) {
+            cpuRectId = event.objref;
+            threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [], active: false });
+        } else if (event.eventKind == LogEvent.ThreadKill) {
+            cpuRectId = threads.splice(threads.indexOf(threads.find((at) => at.id == event.id)), 1).currentRectId;
+        } else if (event.eventKind == LogEvent.ThreadSwapOut || event.eventKind == LogEvent.ThreadSwapIn) {
+            const thread = threads.find((t) => t.id == event.id);
+            thread.active = event.eventKind == LogEvent.ThreadSwapIn;
+            cpuRectId = thread.currentRectId;
+        } else if (event.eventKind == LogEvent.OpRequest) {
+            cpuRectId = threads.find((t) => t.id == event.id).currentRectId;
+        } else if (event.eventKind == LogEvent.OpActivate) {
+            const thread = threads.find((t) => t.id == event.id);
+            const rectId = event.objref;
+            thread.prevRectIds.push(thread.currentRectId);
+            thread.currentRectId = rectId;
+            cpuRectId = rectId;
         } else if (event.eventKind == LogEvent.OpCompleted) {
-            // An OpCompleted event might happen any number of events later than the OpRequest event
-            // so the the correct rectangle id needs to be found among the OpRequests that has not yet "finished" with an OpCompleted event.
-            currentCpuRectId =
-                requestStartRects.length > 0
-                    ? requestStartRects.splice(
-                          requestStartRects.indexOf(
-                              requestStartRects.find(
-                                  (sr) => sr.objref == event.objref && sr.clnm == event.clnm && sr.opname == event.opname
-                              )
-                          ),
-                          1
-                      )[0].rectId
-                    : currentCpuRectId;
-        } else if (LogEvent.isThreadEventKind(event.eventKind) || event.eventKind == LogEvent.OpActivate) {
-            currentCpuRectId = event.objref;
+            const thread = threads.find((t) => t.id == event.id);
+            thread.currentRectId = thread.prevRectIds.pop();
+            cpuRectId = thread.currentRectId;
         } else if (event.eventKind == LogEvent.MessageCompleted) {
             if ("objref" in event) {
-                currentCpuRectId = event.objref;
+                cpuRectId = event.objref;
             } else {
                 // If the message completed event does not have an obj ref it is a reply to a messsage request
                 // so look behind for the message request event to find the proper rectangle id.
-                const orgMsgEvent = traversedEvents.find((te) => te.eventKind == LogEvent.MessageRequest && te.msgid == event.origmsgid);
-                currentCpuRectId = traversedEvents.find(
-                    (te) => te.eventKind == LogEvent.OpRequest && te.opname == orgMsgEvent.opname && te.objref == orgMsgEvent.objref
-                ).rectId;
+                const msgRequest = traversedEvents.find((te) => te.eventKind == LogEvent.MessageRequest && te.msgid == event.origmsgid);
+                const opReqeust = msgRequest
+                    ? traversedEvents.find(
+                          (te) => te.eventKind == LogEvent.OpRequest && te.opname == msgRequest.opname && te.objref == msgRequest.objref
+                      )
+                    : undefined;
+                // If we cannot find the event then just use next rect id
+                cpuRectId = opReqeust ? opReqeust.rectId : i < cpuExecutionEvents.length - 1 ? cpuExecutionEvents[i + 1].rectId : cpuRectId;
+
+                if (opReqeust) {
+                    traversedEvents.push({
+                        eventKind: LogEvent.OpCompleted,
+                        id: opReqeust.id,
+                        opname: opReqeust.opname,
+                        objref: opReqeust.objref,
+                        clnm: opReqeust.clnm,
+                        cpunm: opReqeust.cpunm,
+                        async: opReqeust.async,
+                        time: event.time,
+                        rectId: opReqeust.rectId,
+                    });
+                }
+
                 // Set the obj ref so that an arrow can be drawn to the correct rectangle.
-                event.objref = currentCpuRectId;
+                event.objref = cpuRectId;
             }
         }
 
-        if (LogEvent.ThreadCreate == event.eventKind) {
-            activeThreadIdToRect.push({ id: event.id, rectId: currentCpuRectId });
-        } else if (event.eventKind == LogEvent.OpRequest) {
-            requestStartRects.push({ objref: event.objref, clnm: event.clnm, rectId: currentCpuRectId, opname: event.opname });
-        }
-
         // Set the current rectangle and generate it if it does not exist.
-        const rectId = isBusEvent ? logData.busDeclEvents.find((bde) => bde.id == event.busid).name : currentCpuRectId;
-        event.rectId = rectId;
+        const rectId = isBusEvent ? logData.busDeclEvents.find((bde) => bde.id == event.busid).name : cpuRectId;
         let currentRect = rects.find((rect) => rect.rectId == rectId);
         if (!currentRect) {
             const rectName = isBusEvent ? rectId : event.clnm + `(${rectId})`;
@@ -403,14 +459,14 @@ function generateCpuCanvas(viewId) {
 
         // Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
         if (
-            (LogEvent.isOperationEventKind(event.eventKind) || (event.eventKind == LogEvent.MessageCompleted && "opname" in event)) &&
+            (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.MessageCompleted && "opname" in event)) &&
             i < cpuExecutionEvents.length - 1
         ) {
             const targetRectIndex = rects.indexOf(
                 rects.find(
                     (rect) =>
                         rect.rectId ==
-                        (LogEvent.isBusEventKind(cpuExecutionEvents[i + 1].eventKind)
+                        (LogEvent.isBusKind(cpuExecutionEvents[i + 1].eventKind)
                             ? logData.busDeclEvents.find((bde) => bde.id == cpuExecutionEvents[i + 1].busid).name
                             : event.objref)
                 )
@@ -426,8 +482,8 @@ function generateCpuCanvas(viewId) {
                 currentRect.margin.left = rectMargin;
             }
         }
-        // Keep track of events already visited for the ability to look behind.
-        traversedEvents.push(event);
+        // Associate the event with the rectangle id
+        event.rectId = rectId;
     }
 
     // Define where the rectangles end
@@ -462,12 +518,12 @@ function generateCpuCanvas(viewId) {
     let lastEventPos_y = 0;
     let currentPos_y = rectEndPos_y + margin;
     const eventKinds = [];
-    const events = cpuExecutionEvents.filter((event) => event.eventKind != LogEvent.MessageActivate);
+    const events = traversedEvents.filter((event) => event.eventKind != LogEvent.MessageActivate);
     const prevOpEvents = [];
     for (let i = 0; i < events.length; i++) {
         const event = events[i];
 
-        if (LogEvent.isOperationEventKind(event.eventKind)) {
+        if (LogEvent.isOperationKind(event.eventKind)) {
             prevOpEvents.unshift(event);
         }
 
@@ -514,7 +570,7 @@ function generateCpuCanvas(viewId) {
                 gridLineWidth,
                 eventLineWidth,
                 eventWrapperHeight,
-                LogEvent.isThreadEventKind(event.eventKind) ? event.id : LogEvent.eventKinds.find((ev) => ev.kind == event.eventKind).abb,
+                LogEvent.isThreadKind(event.eventKind) ? event.id : LogEvent.kindToAbb(event.eventKind),
                 event.eventKind,
                 0,
                 0,
@@ -538,11 +594,7 @@ function generateCpuCanvas(viewId) {
         if (nextEvent) {
             let targetRect = undefined;
             let targetRectId = nextEvent.eventKind == LogEvent.ReplyRequest ? nextEvent.rectId : undefined;
-            if (
-                !targetRectId &&
-                !isDelayedOpComplete &&
-                !(event.rectId == nextEvent.rectId && LogEvent.isOperationEventKind(nextEvent.eventKind))
-            ) {
+            if (!targetRectId && !(event.rectId == nextEvent.rectId && LogEvent.isOperationKind(nextEvent.eventKind))) {
                 targetRect =
                     event.eventKind == LogEvent.OpRequest
                         ? events
@@ -552,7 +604,7 @@ function generateCpuCanvas(viewId) {
                                       (eve.eventKind == LogEvent.OpActivate || eve.eventKind == LogEvent.MessageRequest) &&
                                       event.opname == eve.opname
                               )
-                        : event.eventKind == LogEvent.OpActivate && LogEvent.isOperationEventKind(nextEvent.eventKind)
+                        : event.eventKind == LogEvent.OpActivate && LogEvent.isOperationKind(nextEvent.eventKind)
                         ? events
                               .slice(i + 1, events.length)
                               .find((eve) => eve.eventKind == LogEvent.OpCompleted && event.opname == eve.opname)
@@ -579,7 +631,13 @@ function generateCpuCanvas(viewId) {
                     !(event.eventKind == LogEvent.MessageCompleted && "opname" in event) && event.eventKind != LogEvent.OpRequest;
 
                 const nextRect = rects.find(
-                    (rect) => rect.rectId == (targetRectId ? targetRectId : isReplyArrow ? nextEvent.rectId : event.objref)
+                    (rect) =>
+                        rect.rectId ==
+                        (targetRectId
+                            ? targetRectId
+                            : isReplyArrow && event.eventKind != LogEvent.MessageCompleted
+                            ? nextEvent.rectId
+                            : event.objref)
                 );
                 const arrwEnd_x = (nextRect.x_pos < currentRect.x_pos ? currentRect.x_pos : nextRect.x_pos) - eventWrapperHeight;
                 const arrwStart_x = (nextRect.x_pos < currentRect.x_pos ? nextRect.x_pos : currentRect.x_pos) + eventWrapperHeight;
@@ -621,8 +679,8 @@ function generateCpuCanvas(viewId) {
             prevEvent &&
             (isDelayedOpComplete ||
                 (!eventHasArrowWithTxt &&
-                    LogEvent.isOperationEventKind(event.eventKind) &&
-                    !(LogEvent.isOperationEventKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))
+                    LogEvent.isOperationKind(event.eventKind) &&
+                    !(LogEvent.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))
         ) {
             drawFuncs.push(() => {
                 ctx.font = graphFont;
@@ -721,7 +779,7 @@ function generateArchCanvas() {
     });
 
     // Resize canvas to fit content
-    canvas.height = rectBottomPos_y + busTextPosInc_y * logData.busDeclEvents.length + textHeight;
+    canvas.height = rectBottomPos_y + busTextPosInc_y * logData.busDeclEvents.length + textHeight + margin;
     canvas.width = nextRectPos_x;
 
     // Get context after resize
@@ -814,10 +872,8 @@ function generateEmptyCanvas() {
 function calculateEventLength(ctx) {
     const prevFont = ctx.font;
     ctx.font = graphFont;
-    const threadIdMetrics = ctx.measureText("999");
-    const msgAbbMetrics = ctx.measureText(
-        LogEvent.eventKinds.map((ekwi) => ("abb" in ekwi ? ekwi.abb : "")).reduce((prev, curr) => (prev.size > curr.size ? prev : curr))
-    );
+    const threadIdMetrics = ctx.measureText("9999");
+    const msgAbbMetrics = ctx.measureText(LogEvent.getKindsAbbs().reduce((prev, curr) => (prev.size > curr.size ? prev : curr)));
     const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
     ctx.font = prevFont;
     return txtWidth + gridLineWidth * 2 > eventWrapperHeight * 2 ? txtWidth + gridLineWidth * 2 : eventWrapperHeight * 2;
@@ -850,7 +906,7 @@ function generateEventKindsLegend(
                 gridLineWidth,
                 eventLineWidth,
                 eventWrapperHeight,
-                LogEvent.isThreadEventKind(eventKind) ? undefined : LogEvent.eventKinds.find((ev) => ev.kind == eventKind).abb,
+                LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
                 eventKind,
                 elementPadding,
                 elementPos_y,
@@ -899,7 +955,7 @@ function generateEventGraph(
         const eventKind = event.eventKind;
         // Find the current decl
         let currentDecl;
-        if (LogEvent.isBusEventKind(eventKind)) {
+        if (LogEvent.isBusKind(eventKind)) {
             if (eventKind != LogEvent.MessageRequest && eventKind != LogEvent.ReplyRequest) {
                 currentDecl = currentBusDecl;
             } else {
@@ -966,13 +1022,13 @@ function generateEventGraph(
                 gridLineWidth,
                 eventLineWidth,
                 eventWrapperHeight,
-                LogEvent.isThreadEventKind(eventKind) ? event.id : LogEvent.eventKinds.find((ev) => ev.kind == eventKind).abb,
+                LogEvent.isThreadKind(eventKind) ? event.id : LogEvent.kindToAbb(eventKind),
                 eventKind,
                 eventStartPos_x,
                 eventPos_y,
                 eventEndPos_x,
                 gridLineColor,
-                LogEvent.isBusEventKind(eventKind)
+                LogEvent.isBusKind(eventKind)
                     ? previousEventDecl && (eventKind == LogEvent.MessageRequest || eventKind == LogEvent.ReplyRequest)
                         ? previousEventDecl.y_pos
                         : eventKind == LogEvent.MessageCompleted
@@ -983,7 +1039,7 @@ function generateEventGraph(
         );
 
         // Calculate visual for the event "wrapper line"
-        if (i != logEvents.length - 1 && !LogEvent.isOperationEventKind(eventKind)) {
+        if (i != logEvents.length - 1 && !LogEvent.isOperationKind(eventKind)) {
             const begin_y = currentDecl.y_pos - eventWrapperHeight / 2;
             const end_y = currentDecl.y_pos + eventWrapperHeight / 2;
             drawFuncs.push(() => drawLine(graphCtx, gridLineWidth, [], gridLineColor, eventEndPos_x, begin_y, eventEndPos_x, end_y));
@@ -991,7 +1047,7 @@ function generateEventGraph(
             if (
                 !previousEventDecl ||
                 currentDecl.y_pos != previousEventDecl.y_pos ||
-                (i > 0 && LogEvent.isOperationEventKind(logEvents[i - 1].eventKind))
+                (i > 0 && LogEvent.isOperationKind(logEvents[i - 1].eventKind))
             ) {
                 drawFuncs.push(() =>
                     drawLine(graphCtx, gridLineWidth, [], gridLineColor, eventStartPos_x, begin_y, eventStartPos_x, end_y)
@@ -1034,7 +1090,7 @@ function generateEventGraph(
                         graphCtx,
                         hasActiveThread ? eventLineWidth : gridLineWidth,
                         hasActiveThread ? [4, 4] : [1, 4],
-                        hasActiveThread ? LogEvent.eventKindToColor(LogEvent.OpActivate) : gridLineColor,
+                        hasActiveThread ? LogEvent.eventKindToColor.find((ektc) => ektc.kind == LogEvent.OpActivate).color : gridLineColor,
                         x_end,
                         decl.y_pos,
                         event.x_start,
@@ -1074,7 +1130,7 @@ function generateEventDrawFuncs(
     gridLineColor,
     targetEventPos_y
 ) {
-    const eventColor = LogEvent.eventKindToColor(eventKind);
+    const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
     const drawFuncs = [];
     // Calculate visual for event and add the draw function
     drawFuncs.push(() => {
@@ -1087,7 +1143,7 @@ function generateEventDrawFuncs(
             ctx.fillText(eventTxt, eventStartPos_x + (eventEndPos_x - eventStartPos_x - textWidth) / 2, textPos_y);
         }
     });
-    if (LogEvent.isThreadEventKind(eventKind)) {
+    if (LogEvent.isThreadKind(eventKind)) {
         drawFuncs.push(() => {
             const txtMetrics = eventTxt ? ctx.measureText(eventTxt) : undefined;
             drawThreadEventMarker(
@@ -1103,7 +1159,7 @@ function generateEventDrawFuncs(
                 eventPos_y
             );
         });
-    } else if (LogEvent.isBusEventKind(eventKind)) {
+    } else if (LogEvent.isBusKind(eventKind)) {
         drawFuncs.push(() => {
             // Draw arrows from/to cpu and bus
             if (targetEventPos_y != undefined) {
@@ -1150,7 +1206,7 @@ function drawThreadEventMarker(
     const markerStart_y = eventPos_y - eventLineWidth - txtHeight;
     const markerEnd_y = markerStart_y - eventWrapperHeight;
     const markerWidth = eventLineWidth - 1;
-    if (LogEvent.isThreadSwapEventKind(eventKind)) {
+    if (LogEvent.isThreadSwapKind(eventKind)) {
         // Adjust arrow placement and position depending on in/out
         const isSwapIn = eventKind != LogEvent.ThreadSwapOut;
         drawArrow(
@@ -1322,44 +1378,60 @@ function buildViewCanvas(viewId) {
 }
 
 function setButtonColors(btns, activeBtn) {
+    // There is alwasy an active (pressed) button. Change its color to secondary
     if (activeBtn) {
         activeBtn.style.background = BtnColors.secondaryBackground;
         activeBtn.style.color = BtnColors.secondaryForeground;
     }
 
+    // Update the other buttons to primary color
     btns.forEach((btn) => {
-        btn.style.background = BtnColors.primaryBackground;
-        btn.style.color = BtnColors.primaryForeground;
+        if (btn.id != activeBtn.id) {
+            btn.style.background = BtnColors.primaryBackground;
+            btn.style.color = BtnColors.primaryForeground;
+        }
     });
 }
 
-function onLoad() {
-    vscode.postMessage(initMsg);
-}
+function updateFontAndColors(scaleWithFont, matchTheme) {
+    const computedStyle = getComputedStyle(document.body);
+    // Update font properties
+    font.size = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 15;
+    font.family = computedStyle.getPropertyValue("--vscode-editor-font-family").trim();
+    font.color = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
 
-function updateEditorRelatedVars() {
-    font.size = Number(getComputedStyle(document.body).getPropertyValue("--vscode-editor-font-size").replace(/\D/g, ""));
-    font.family = getComputedStyle(document.body).getPropertyValue("--vscode-editor-font-family").trim();
-    backgroundColor = getComputedStyle(document.body).getPropertyValue("--vscode-editor-background").trim();
-    font.color = getComputedStyle(document.body).getPropertyValue("--vscode-editor-foreground").trim();
-    busColors.splice(0);
-    busColors.push(
-        ...[
-            font.color,
-            getComputedStyle(document.body).getPropertyValue("--vscode-debugIcon-startForeground").trim(),
-            getComputedStyle(document.body).getPropertyValue("--vscode-debugIcon-stopForeground").trim(),
-            getComputedStyle(document.body).getPropertyValue("--vscode-debugIcon-continueForeground").trim(),
-            getComputedStyle(document.body).getPropertyValue("--vscode-debugIcon-breakpointForeground").trim(),
-            getComputedStyle(document.body).getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim(),
-            getComputedStyle(document.body).getPropertyValue("--vscode-editorWarning-foreground").trim(),
-        ]
-    );
+    // Update background color for the graphs
+    backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
 
-    BtnColors.primaryBackground = getComputedStyle(document.body).getPropertyValue("--vscode-button-background").trim();
-    BtnColors.secondaryBackground = getComputedStyle(document.body).getPropertyValue("--vscode-button-secondaryBackground").trim();
-    BtnColors.primaryForeground = getComputedStyle(document.body).getPropertyValue("--vscode-button-foreground").trim();
-    BtnColors.secondaryForeground = getComputedStyle(document.body).getPropertyValue("--vscode-button-secondaryForeground").trim();
+    // Update colors for events and bus
+    LogEvent.eventKindToColor.forEach((ektc) => {
+        if (LogEvent.isOperationKind(ektc.kind) || LogEvent.isThreadKind(ektc.kind)) {
+            const color =
+                ektc.kind == LogEvent.ThreadCreate
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim()
+                    : ektc.kind == LogEvent.ThreadSwapIn
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim()
+                    : ektc.kind == LogEvent.ThreadKill
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim()
+                    : ektc.kind == LogEvent.ThreadSwapOut
+                    ? computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim()
+                    : ektc.kind == LogEvent.DelayedThreadSwapIn
+                    ? computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim()
+                    : computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim();
 
+            ektc.color = matchTheme && color ? color : LogEvent.kindToStandardColor(ektc.kind);
+        }
+    });
+    busColors = [font.color];
+    busColors.push(...LogEvent.eventKindToColor.map((ektc) => ektc.color));
+
+    // Update button colors
+    BtnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();
+    BtnColors.secondaryBackground = computedStyle.getPropertyValue("--vscode-button-secondaryBackground").trim();
+    BtnColors.primaryForeground = computedStyle.getPropertyValue("--vscode-button-foreground").trim();
+    BtnColors.secondaryForeground = computedStyle.getPropertyValue("--vscode-button-secondaryForeground").trim();
+
+    // Update size of graph elements
     declFont = `${font.size * 2}px ${font.family}`;
     graphFont = `${font.size}px ${font.family}`;
     gridLineWidth = font.size / 10 > 1 ? Math.floor(font.size / 10) : 1;
