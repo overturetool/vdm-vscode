@@ -59,7 +59,7 @@ export class RTLogView extends AutoDisposable {
                         this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
                         if (data) {
                             commands.executeCommand("workbench.action.closeActiveEditor");
-                            this.createWebView(data.busDecls, data.cpuDecls, data.executionEvents, data.cpusWithEvents);
+                            this.createWebView(data.busDecls, data.cpuDecls, data.executionEvents, data.cpusWithEvents, data.timeStamps);
                         }
                     });
                 }
@@ -114,6 +114,8 @@ export class RTLogView extends AutoDisposable {
         const activeMsgInitEvents: any[] = [];
         const busTopos: any[] = [];
         const decls: any[] = [];
+        const timeStamps: number[] = [];
+        let currrentTime: number = -1;
         logLines?.forEach((line) => {
             const lineSplit: string[] = line.split(" -> ");
             if (lineSplit.length > 1) {
@@ -151,6 +153,11 @@ export class RTLogView extends AutoDisposable {
                     logEventObj[contentSplit[i].slice(0, contentSplit[i].length - 1)] = this.stringValueToTypedValue(contentSplit[++i]);
                 }
 
+                if (logEventObj.time > currrentTime) {
+                    currrentTime = logEventObj.time;
+                    timeStamps.push(currrentTime);
+                }
+
                 if (logEventObj.eventKind == LogEvent.CpuDecl || logEventObj.eventKind == LogEvent.BusDecl) {
                     decls.push({ eventKind: logEventObj.eventKind, name: logEventObj.name, id: logEventObj.id });
                 } else if (logEventObj.eventKind != LogEvent.DeployObj) {
@@ -165,7 +172,7 @@ export class RTLogView extends AutoDisposable {
                                     : "tocpu" in logEventObj
                                     ? logEventObj.tocpu
                                     : logEventObj.id;
-                            cpuWithEvents = cpusWithEvents.find((cpu) => cpu.id == cpunm);
+                            cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == cpunm);
                             if (!cpuWithEvents) {
                                 cpuWithEvents = {
                                     id: cpunm,
@@ -180,7 +187,7 @@ export class RTLogView extends AutoDisposable {
                                 activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
                                 1
                             )[0];
-                            cpuWithEvents = cpusWithEvents.find((cpu) => cpu.id == msgInitEvent.tocpu);
+                            cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == msgInitEvent.tocpu);
                             logEventObj.busid = msgInitEvent.busid;
                             logEventObj.tocpu = msgInitEvent.tocpu;
                             if (!("objref" in msgInitEvent)) {
@@ -254,7 +261,8 @@ export class RTLogView extends AutoDisposable {
             executionEvents: executionEvents,
             cpuDecls: cpuDecls.sort((a, b) => a.id - b.id),
             busDecls: busDecls.sort((a, b) => a.id - b.id),
-            cpusWithEvents: cpusWithEvents,
+            cpusWithEvents: cpusWithEvents.sort((a, b) => a.id - b.id),
+            timeStamps: timeStamps,
         };
     }
 
@@ -286,7 +294,7 @@ export class RTLogView extends AutoDisposable {
         return value.replace('"', "").replace('"', "");
     }
 
-    private createWebView(busDecls: any[], cpuDecls: any[], executionEvents: any[], cpusWithEvents: any[]) {
+    private createWebView(busDecls: any[], cpuDecls: any[], executionEvents: any[], cpusWithEvents: any[], timeStamps: number[]) {
         if (!this._wsFolder) {
             return;
         }
@@ -325,6 +333,7 @@ export class RTLogView extends AutoDisposable {
                     returnObj.cpuDecls = cpuDecls;
                     returnObj.executionEvents = executionEvents;
                     returnObj.cpusWithEvents = cpusWithEvents;
+                    returnObj.timeStamps = timeStamps;
                     returnObj.scaleWithFont = config.get("scaleWithFont");
                     returnObj.matchTheme = config.get("matchTheme");
                 }
@@ -336,10 +345,10 @@ export class RTLogView extends AutoDisposable {
         );
 
         // Generate the html for the webview
-        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpusWithEvents);
+        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpusWithEvents, timeStamps);
     }
 
-    private buildHtmlForWebview(webview: Webview, cpusWithEvents: any[]) {
+    private buildHtmlForWebview(webview: Webview, cpusWithEvents: any[], timeStamps: number[]) {
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce: string = this.generateNonce();
 
@@ -357,6 +366,11 @@ export class RTLogView extends AutoDisposable {
             )}" rel="stylesheet">
         </head>
         <body>
+            <b> Start time: <b>
+            <select id = "timeStamp" >
+            ${timeStamps.map((t) => `<option> ${t}</option>`)}
+            </select>
+           
             <button class="button" id="arch">Architecture overview</button>
             <button class="button" id="exec">Execution overview</button>
             ${cpusWithEvents

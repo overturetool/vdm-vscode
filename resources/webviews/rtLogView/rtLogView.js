@@ -17,12 +17,13 @@ let gridLineWidth;
 let eventLineWidth;
 let eventWrapperHeight;
 let busColors = [];
+
 const font = { size: undefined, family: undefined, color: undefined };
 const archViewId = "arch";
 const execViewId = "exec";
 const initMsg = "init";
 const editorSettingsChangedMsg = "editorSettingsChanged";
-const logData = { cpuDeclEvents: [], busDeclEvents: [], cpusWithEvents: [], executionEvents: [] };
+const logData = { cpuDeclEvents: [], busDeclEvents: [], cpusWithEvents: [], executionEvents: [], timeStampsWithData: [] };
 
 const BtnColors = {
     primaryBackground: undefined,
@@ -33,6 +34,12 @@ const BtnColors = {
 let currentViewId = archViewId;
 const views = [];
 const buttons = Array.from(document.getElementsByClassName("button"));
+const timeSelector = document.getElementById("timeStamp");
+timeSelector.onchange = (event) => {
+    selectedTime = event.target.value;
+    redrawViews(currentViewId);
+};
+let selectedTime = 0;
 
 // Handle button press
 buttons.forEach((btn) => {
@@ -45,46 +52,56 @@ buttons.forEach((btn) => {
         // Check if the canvas for the view has already been generated - the btn id is the view id
         const existingView = views.find((vc) => vc.id == btn.id);
         if (!existingView.canvas) {
-            existingView.canvas = buildViewCanvas(btn.id);
+            existingView.canvas = buildViewCanvas(btn.id, selectedTime);
         }
         viewContainer.appendChild(existingView.canvas);
         currentViewId = btn.id;
     };
 });
 
-// Handle event from extension backend
-window.addEventListener("message", (event) => {
-    if (event.data.cmd == initMsg) {
-        // Handle parsed log data
-        logData.cpuDeclEvents.push(...event.data.cpuDecls);
-        logData.busDeclEvents.push(...event.data.busDecls);
-        logData.executionEvents.push(...event.data.executionEvents);
-        event.data.cpusWithEvents.forEach((cpuWithEvent) => {
-            logData.cpusWithEvents.push({
-                id: cpuWithEvent.id,
-                executionEvents: cpuWithEvent.executionEvents,
-                deployEvents: cpuWithEvent.deployEvents,
-            });
-        });
-    } else if (event.data.cmd == editorSettingsChangedMsg) {
-        // Remove generated canvas for the views so they are rebuild with new colors/font settings.
-        views.forEach((view) => (view.canvas = undefined));
-    }
-
-    // Update font and colors
-    updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
+function redrawViews(currentViewId) {
+    viewContainer.innerHTML = "";
+    // Remove current canvas from views
+    views.forEach((view) => (view.canvas = undefined));
     // Set button colors
     setButtonColors(
         buttons.filter((btn) => btn.id != currentViewId),
         document.getElementById(currentViewId)
     );
 
-    // A message from the extension backend always entails a rebuild of the canvas
-    const viewCanvas = buildViewCanvas(currentViewId);
+    // Rebuild canvas for the current view
+    const viewCanvas = buildViewCanvas(currentViewId, selectedTime);
     views.find((view) => view.id == currentViewId).canvas = viewCanvas;
     // Display the canvas (graph)
-    viewContainer.innerHTML = "";
+
     viewContainer.appendChild(viewCanvas);
+}
+
+// Handle event from extension backend
+window.addEventListener("message", (event) => {
+    if (event.data.cmd == initMsg) {
+        selectedTime = Math.min(...event.data.timeStamps);
+        // Handle parsed log data
+        logData.cpuDeclEvents.push(...event.data.cpuDecls);
+        logData.busDeclEvents.push(...event.data.busDecls);
+        logData.timeStampsWithData.push(
+            ...event.data.timeStamps.map((ts) => ({
+                time: ts,
+                cpusWithEvents:
+                    selectedTime == ts
+                        ? event.data.cpusWithEvents.map((cpuWithEvent) => ({
+                              id: cpuWithEvent.id,
+                              executionEvents: cpuWithEvent.executionEvents,
+                          }))
+                        : [],
+                executionEvents: selectedTime == ts ? event.data.executionEvents : [],
+            }))
+        );
+    }
+    // Always check for changes to font and theme
+    updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
+    // A message from the extension backend always results in a rebuild of the canvas
+    redrawViews(currentViewId, selectedTime);
 });
 
 // Load data and build the view
@@ -216,7 +233,7 @@ class LogEvent {
  *
  */
 
-function generateExecCanvas() {
+function generateExecCanvas(cpuDeclEvents, busDeclEvents, executionEvents) {
     const canvas = generateEmptyCanvas();
 
     const drawFuncs = [];
@@ -232,10 +249,10 @@ function generateExecCanvas() {
     // Calculate decls placement and push their draw functions
     let widestText = 0;
     let nextDeclPos_y = declPadding_y;
-    logData.cpuDeclEvents
+    cpuDeclEvents
         .slice()
         .reverse()
-        .concat(logData.busDeclEvents)
+        .concat(busDeclEvents)
         .forEach((decl) => {
             const txtMetrics = ctx.measureText(decl.name);
             if (txtMetrics.width > widestText) {
@@ -274,7 +291,7 @@ function generateExecCanvas() {
     const graph = generateEventGraph(
         cpuDecls,
         busDecls,
-        logData.executionEvents,
+        executionEvents,
         declPadding_y / 2,
         graphStartPos_x,
         nextDeclPos_y - declPadding_y / 2,
@@ -315,9 +332,8 @@ function generateExecCanvas() {
     return canvas;
 }
 
-function generateCpuCanvas(viewId) {
+function generateCpuCanvas(cpuExecutionEvents, busDeclEvents) {
     const canvas = generateEmptyCanvas();
-    const cpuExecutionEvents = logData.cpusWithEvents.find((cpu) => cpu.id == viewId.replace(/\D/g, "")).executionEvents;
     let ctx = canvas.getContext("2d");
     const eventLength_y = calculateEventLength(ctx);
     const drawFuncs = [];
@@ -333,25 +349,11 @@ function generateCpuCanvas(viewId) {
     const rects = [];
 
     // The first rects to draw should be the ones for the bus starting with the virtual bus if it is present
-    let virtualBus = undefined;
-    const filteredBusEvents = cpuExecutionEvents.filter((event) => {
-        const isBusEvent = LogEvent.isBusKind(event.eventKind);
-        if (isBusEvent && event.id == 0) {
-            virtualBus = event;
-        }
-        return isBusEvent && event.id != 0;
-    });
-
-    if (filteredBusEvents.length > 0 || virtualBus) {
-        if (virtualBus && filteredBusEvents[0].busid != 0) {
-            // Place the virtual bus in front of the array
-            filteredBusEvents.unshift(virtualBus);
-        }
-        filteredBusEvents.forEach((event) => {
-            // Map busid to the name of the bus so that it does not collide with obj refs
-            const rectId = logData.busDeclEvents.find((bde) => bde.id == event.busid).name;
+    cpuExecutionEvents.forEach((event) => {
+        if (LogEvent.isBusKind(event.eventKind)) {
+            const rectId = busDeclEvents.find((bde) => bde.id == event.busid).name;
             if (!rects.find((rect) => rect.rectId == rectId)) {
-                rects.push({
+                const rectObj = {
                     name: rectId,
                     margin: { right: margin, left: margin },
                     width: ctx.measureText(rectId).width + padding * 2,
@@ -359,14 +361,18 @@ function generateCpuCanvas(viewId) {
                     textHeight: txtHeight,
                     isBusRect: true,
                     rectId: rectId,
-                    events: [],
                     x_pos: 0,
                     y_pos: txtHeight + padding + margin * 2,
-                });
+                };
+                if (event.id == 0) {
+                    rects.unshift(rectObj);
+                } else {
+                    rects.push(rectObj);
+                }
             }
             event.rectId = rectId;
-        });
-    }
+        }
+    });
 
     // Each unique obj deployment that is referenced by an event should be converted to a rectangle to display. These should be pushed after the bus rectangles.
     let cpuRectId;
@@ -380,33 +386,48 @@ function generateCpuCanvas(viewId) {
 
         // Locate the correct rectangle to place the event under from the events kind
         if (LogEvent.ThreadKill == event.eventKind) {
-            cpuRectId = threads.find((t) => t.id == event.id).currentRectId;
+            const thread = threads.find((at) => at.id == event.id);
+            if (thread) {
+                cpuRectId = thread.currentRectId;
+                threads.splice(threads.indexOf(thread), 1);
+            } else {
+                cpuRectId = i == 0 ? cpuExecutionEvents[i + 1].rectId : cpuExecutionEvents[i - 1].rectId;
+            }
         } else if (LogEvent.ThreadCreate == event.eventKind) {
             cpuRectId = event.objref;
             threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [], active: false });
-        } else if (event.eventKind == LogEvent.ThreadKill) {
-            cpuRectId = threads.splice(threads.indexOf(threads.find((at) => at.id == event.id)), 1).currentRectId;
         } else if (event.eventKind == LogEvent.ThreadSwapOut || event.eventKind == LogEvent.ThreadSwapIn) {
             const thread = threads.find((t) => t.id == event.id);
-            thread.active = event.eventKind == LogEvent.ThreadSwapIn;
-            cpuRectId = thread.currentRectId;
+            if (thread) {
+                thread.active = event.eventKind == LogEvent.ThreadSwapIn;
+                cpuRectId = thread.currentRectId;
+            } else {
+                cpuRectId = event.rectId;
+            }
         } else if (event.eventKind == LogEvent.OpRequest) {
-            cpuRectId = threads.find((t) => t.id == event.id).currentRectId;
-        } else if (event.eventKind == LogEvent.OpActivate) {
             const thread = threads.find((t) => t.id == event.id);
+            cpuRectId = thread ? thread.currentRectId : event.rectId;
+        } else if (event.eventKind == LogEvent.OpActivate) {
             const rectId = event.objref;
-            thread.prevRectIds.push(thread.currentRectId);
-            thread.currentRectId = rectId;
+            const thread = threads.find((t) => t.id == event.id);
+            if (thread) {
+                thread.prevRectIds.push(thread.currentRectId);
+                thread.currentRectId = rectId;
+            }
             cpuRectId = rectId;
         } else if (event.eventKind == LogEvent.OpCompleted) {
             const thread = threads.find((t) => t.id == event.id);
-            thread.currentRectId = thread.prevRectIds.pop();
-            cpuRectId = thread.currentRectId;
+            if (thread) {
+                thread.currentRectId = thread.prevRectIds.pop();
+                cpuRectId = thread.currentRectId;
+            } else {
+                cpuRectId = event.rectId;
+            }
         } else if (event.eventKind == LogEvent.MessageCompleted) {
-            if ("objref" in event) {
+            if ("opname" in event) {
                 cpuRectId = event.objref;
             } else {
-                // If the message completed event does not have an obj ref it is a reply to a messsage request
+                // If the message completed event does not have an opname it is a reply to a messsage request
                 // so look behind for the message request event to find the proper rectangle id.
                 const msgRequest = traversedEvents.find((te) => te.eventKind == LogEvent.MessageRequest && te.msgid == event.origmsgid);
                 const opReqeust = msgRequest
@@ -414,9 +435,6 @@ function generateCpuCanvas(viewId) {
                           (te) => te.eventKind == LogEvent.OpRequest && te.opname == msgRequest.opname && te.objref == msgRequest.objref
                       )
                     : undefined;
-                // If we cannot find the event then just use next rect id
-                cpuRectId = opReqeust ? opReqeust.rectId : i < cpuExecutionEvents.length - 1 ? cpuExecutionEvents[i + 1].rectId : cpuRectId;
-
                 if (opReqeust) {
                     traversedEvents.push({
                         eventKind: LogEvent.OpCompleted,
@@ -431,13 +449,18 @@ function generateCpuCanvas(viewId) {
                     });
                 }
 
-                // Set the obj ref so that an arrow can be drawn to the correct rectangle.
-                event.objref = cpuRectId;
+                // Set cpuRectId and the obj ref so that an arrow can be drawn to the correct rectangle.
+                // If we cannot find the event then just use next rect id
+                event.objref = cpuRectId = opReqeust
+                    ? opReqeust.rectId
+                    : i < cpuExecutionEvents.length - 1
+                    ? cpuExecutionEvents[i + 1].rectId
+                    : cpuRectId;
             }
         }
 
         // Set the current rectangle and generate it if it does not exist.
-        const rectId = isBusEvent ? logData.busDeclEvents.find((bde) => bde.id == event.busid).name : cpuRectId;
+        const rectId = isBusEvent ? busDeclEvents.find((bde) => bde.id == event.busid).name : cpuRectId;
         let currentRect = rects.find((rect) => rect.rectId == rectId);
         if (!currentRect) {
             const rectName = isBusEvent ? rectId : event.clnm + `(${rectId})`;
@@ -450,7 +473,6 @@ function generateCpuCanvas(viewId) {
                 textHeight: txtHeight,
                 isBusRect: false,
                 rectId: rectId,
-                events: [],
                 x_pos: 0,
                 y_pos: txtHeight + padding + margin * 2,
             };
@@ -467,7 +489,7 @@ function generateCpuCanvas(viewId) {
                     (rect) =>
                         rect.rectId ==
                         (LogEvent.isBusKind(cpuExecutionEvents[i + 1].eventKind)
-                            ? logData.busDeclEvents.find((bde) => bde.id == cpuExecutionEvents[i + 1].busid).name
+                            ? busDeclEvents.find((bde) => bde.id == cpuExecutionEvents[i + 1].busid).name
                             : event.objref)
                 )
             );
@@ -518,17 +540,17 @@ function generateCpuCanvas(viewId) {
     let lastEventPos_y = 0;
     let currentPos_y = rectEndPos_y + margin;
     const eventKinds = [];
-    const events = traversedEvents.filter((event) => event.eventKind != LogEvent.MessageActivate);
+    const filteredEvents = traversedEvents.filter((event) => event.eventKind != LogEvent.MessageActivate);
     const prevOpEvents = [];
-    for (let i = 0; i < events.length; i++) {
-        const event = events[i];
+    for (let i = 0; i < filteredEvents.length; i++) {
+        const event = filteredEvents[i];
 
         if (LogEvent.isOperationKind(event.eventKind)) {
             prevOpEvents.unshift(event);
         }
 
-        const nextEvent = i < events.length - 1 ? events[i + 1] : undefined;
-        const prevEvent = i > 0 ? events[i - 1] : undefined;
+        const nextEvent = i < filteredEvents.length - 1 ? filteredEvents[i + 1] : undefined;
+        const prevEvent = i > 0 ? filteredEvents[i - 1] : undefined;
         const eventStartPos_y = currentPos_y;
         const eventEndPos_y = eventStartPos_y + eventLength_y;
         const currentRect = rects.find((rect) => rect.rectId == event.rectId);
@@ -597,16 +619,16 @@ function generateCpuCanvas(viewId) {
             if (!targetRectId && !(event.rectId == nextEvent.rectId && LogEvent.isOperationKind(nextEvent.eventKind))) {
                 targetRect =
                     event.eventKind == LogEvent.OpRequest
-                        ? events
-                              .slice(i + 1, events.length)
+                        ? filteredEvents
+                              .slice(i + 1, filteredEvents.length)
                               .find(
                                   (eve) =>
                                       (eve.eventKind == LogEvent.OpActivate || eve.eventKind == LogEvent.MessageRequest) &&
                                       event.opname == eve.opname
                               )
                         : event.eventKind == LogEvent.OpActivate && LogEvent.isOperationKind(nextEvent.eventKind)
-                        ? events
-                              .slice(i + 1, events.length)
+                        ? filteredEvents
+                              .slice(i + 1, filteredEvents.length)
                               .find((eve) => eve.eventKind == LogEvent.OpCompleted && event.opname == eve.opname)
                         : event.eventKind == LogEvent.OpCompleted && nextEvent.eventKind == LogEvent.OpCompleted
                         ? (() => {
@@ -738,7 +760,7 @@ function generateCpuCanvas(viewId) {
     return canvas;
 }
 
-function generateArchCanvas() {
+function generateArchCanvas(cpuDeclEvents, busDeclEvents) {
     const canvas = generateEmptyCanvas();
 
     // Set text style to calculate text sizes
@@ -751,7 +773,7 @@ function generateArchCanvas() {
     const padding = margin / 2;
     const rectBottomPos_y = textHeight + padding * 2 + margin;
     let maxBusTxtWidth = margin;
-    logData.busDeclEvents.forEach((busdecl) => {
+    busDeclEvents.forEach((busdecl) => {
         // The startig position for the rectangle on the x-axis should be max text width + predefined margin
         const metrics = ctx.measureText(busdecl.name);
         const totalWidth = metrics.width + margin;
@@ -763,7 +785,7 @@ function generateArchCanvas() {
 
     // Calculate position for the rectangles and the text inside
     let nextRectPos_x = maxBusTxtWidth;
-    const rects = logData.cpuDeclEvents.map((cpud) => {
+    const rects = cpuDeclEvents.map((cpud) => {
         const rectWidth = ctx.measureText(cpud.name).width + padding * 2;
 
         const rect = {
@@ -779,7 +801,7 @@ function generateArchCanvas() {
     });
 
     // Resize canvas to fit content
-    canvas.height = rectBottomPos_y + busTextPosInc_y * logData.busDeclEvents.length + textHeight + margin;
+    canvas.height = rectBottomPos_y + busTextPosInc_y * busDeclEvents.length + textHeight + margin;
     canvas.width = nextRectPos_x;
 
     // Get context after resize
@@ -797,7 +819,7 @@ function generateArchCanvas() {
 
     // Concat all connections for each rectangle
     const rectConnections = [];
-    logData.busDeclEvents.forEach((busdecl) => {
+    busDeclEvents.forEach((busdecl) => {
         [busdecl.topo.from].concat(busdecl.topo.to).forEach((id) => {
             const existingRectCon = rectConnections.find((rect) => rect.id == id);
             if (existingRectCon) {
@@ -810,8 +832,8 @@ function generateArchCanvas() {
 
     // Draw the connections between rectangles and place the name for each bus
     let nextBusNamePos_y = rectBottomPos_y + busTextPosInc_y;
-    for (let i = 0; i < logData.busDeclEvents.length; i++) {
-        const bus = logData.busDeclEvents[i];
+    for (let i = 0; i < busDeclEvents.length; i++) {
+        const bus = busDeclEvents[i];
 
         // Setup color for and style for the connection line
         ctx.beginPath();
@@ -897,31 +919,33 @@ function generateEventKindsLegend(
     const drawFuncs = [];
     const lgndTxtMetrics = ctx.measureText(eventKinds[0]);
     const txtHeight = lgndTxtMetrics.fontBoundingBoxAscent + lgndTxtMetrics.fontBoundingBoxDescent;
-    eventKinds.forEach((eventKind) => {
-        const elementPos_y = nextLegendElementPos_y;
-        drawFuncs.push(
-            ...generateEventDrawFuncs(
-                ctx,
-                graphFont,
-                gridLineWidth,
-                eventLineWidth,
-                eventWrapperHeight,
-                LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
-                eventKind,
-                elementPadding,
-                elementPos_y,
-                elementPadding + eventLength_x - gridLineWidth * 2,
-                gridLineColor,
-                undefined
-            )
-        );
+    eventKinds
+        .sort((a, b) => a.localeCompare(b))
+        .forEach((eventKind) => {
+            const elementPos_y = nextLegendElementPos_y;
+            drawFuncs.push(
+                ...generateEventDrawFuncs(
+                    ctx,
+                    graphFont,
+                    gridLineWidth,
+                    eventLineWidth,
+                    eventWrapperHeight,
+                    LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
+                    eventKind,
+                    elementPadding,
+                    elementPos_y,
+                    elementPadding + eventLength_x - gridLineWidth * 2,
+                    gridLineColor,
+                    undefined
+                )
+            );
 
-        drawFuncs.push(() =>
-            ctx.fillText(eventKind.replace(/([A-Z])/g, " $1").trim(), elementPadding + eventLength_x + eventLineWidth, elementPos_y)
-        );
+            drawFuncs.push(() =>
+                ctx.fillText(eventKind.replace(/([A-Z])/g, " $1").trim(), elementPadding + eventLength_x + eventLineWidth, elementPos_y)
+            );
 
-        nextLegendElementPos_y += txtHeight * 2;
-    });
+            nextLegendElementPos_y += txtHeight * 2;
+        });
 
     return { endPos_y: nextLegendElementPos_y, drawFuncs: drawFuncs };
 }
@@ -957,7 +981,7 @@ function generateEventGraph(
         let currentDecl;
         if (LogEvent.isBusKind(eventKind)) {
             if (eventKind != LogEvent.MessageRequest && eventKind != LogEvent.ReplyRequest) {
-                currentDecl = currentBusDecl;
+                currentDecl = currentBusDecl ? currentBusDecl : busDecls.find((busDecl) => busDecl.id == event.busid);
             } else {
                 // Keep track of the current bus decl
                 currentDecl = busDecls.find((busDecl) => busDecl.id == event.busid);
@@ -1006,7 +1030,7 @@ function generateEventGraph(
         if (eventKind == LogEvent.MessageRequest || eventKind == LogEvent.ReplyRequest) {
             currentDecl.x_pos = cpuDecls.find((cpuDecl) => cpuDecl.id == event.fromcpu).x_pos;
         } else if (eventKind == LogEvent.MessageCompleted) {
-            cpuDecls.find((cpuDecl) => cpuDecl.id == currentBusDecl.tocpu).x_pos = currentDecl.x_pos + eventLength_x;
+            cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).x_pos = currentDecl.x_pos + eventLength_x;
         } else if (previousEventDecl && eventKind == LogEvent.ThreadCreate) {
             currentDecl.x_pos = previousEventDecl.x_pos;
         }
@@ -1032,7 +1056,7 @@ function generateEventGraph(
                     ? previousEventDecl && (eventKind == LogEvent.MessageRequest || eventKind == LogEvent.ReplyRequest)
                         ? previousEventDecl.y_pos
                         : eventKind == LogEvent.MessageCompleted
-                        ? cpuDecls.find((cpuDecl) => cpuDecl.id == currentBusDecl.tocpu).y_pos
+                        ? cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).y_pos
                         : undefined
                     : undefined
             )
@@ -1105,8 +1129,8 @@ function generateEventGraph(
         }
 
         // Make sure that the x-axis lines extend to the last event
-        const lastEvent = decl.events[decl.events.length - 1];
-        if (lastEvent.x_end < lastEventPos_x) {
+        const lastEvent = decl.events.length > 0 ? decl.events[decl.events.length - 1] : undefined;
+        if (lastEvent && lastEvent.x_end < lastEventPos_x) {
             drawFuncs.push(() =>
                 drawLine(graphCtx, gridLineWidth, [1, 4], gridLineColor, lastEvent.x_end, decl.y_pos, lastEventPos_x, decl.y_pos)
             );
@@ -1373,8 +1397,42 @@ function drawArrow(ctx, x_start, y_start, x_end, y_end, aWidth, aLength, fill, l
  *
  */
 
-function buildViewCanvas(viewId) {
-    return viewId == archViewId ? generateArchCanvas() : viewId == execViewId ? generateExecCanvas() : generateCpuCanvas(viewId);
+function buildViewCanvas(viewId, startTime) {
+    if (viewId == archViewId) {
+        return generateArchCanvas(logData.cpuDeclEvents, logData.busDeclEvents);
+    }
+
+    const dataForTime = logData.timeStampsWithData.find((tswd) => tswd.time == startTime);
+    if (viewId == execViewId) {
+        if (dataForTime.executionEvents.length == 0) {
+            dataForTime.executionEvents = logData.timeStampsWithData
+                .find((tswd) => tswd.time < startTime && tswd.executionEvents.length > 0)
+                .executionEvents.filter((execEvent) => execEvent.time >= startTime);
+        }
+        return generateExecCanvas(logData.cpuDeclEvents, logData.busDeclEvents, dataForTime.executionEvents);
+    }
+
+    const cpuId = viewId.replace(/\D/g, "");
+    let cpuWithEvents = dataForTime.cpusWithEvents.find((cwe) => cwe.id == cpuId);
+    if (!cpuWithEvents) {
+        let executionEvents;
+        for (let i = 0; i < logData.timeStampsWithData.length; i++) {
+            const tswd = logData.timeStampsWithData[i];
+
+            if (tswd.time < startTime) {
+                const cwe = tswd.cpusWithEvents.find((cwe) => cwe.id == cpuId);
+                if (cwe && cwe.executionEvents.length > 0) {
+                    executionEvents = cwe.executionEvents;
+                    break;
+                }
+            }
+        }
+
+        cpuWithEvents = { id: cpuId, executionEvents: executionEvents.filter((execEvent) => execEvent.time >= startTime) };
+        dataForTime.cpusWithEvents.push(cpuWithEvents);
+    }
+
+    return generateCpuCanvas(cpuWithEvents.executionEvents, logData.busDeclEvents);
 }
 
 function setButtonColors(btns, activeBtn) {

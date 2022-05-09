@@ -1,13 +1,18 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
 .button {
-    background-color: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    font-family: var(--vscode-editor-font-family);
-    font-weight: var(--vscode-editor-font-weight);
-    font-size: var(--vscode-editor-font-size);
     border: 0px;
     margin-top: 15px;
     margin-left: 11px;
     margin-bottom: 5px;
+}
+
+b,
+select,
+button {
+    font-family: var(--vscode-editor-font-family);
+    font-weight: var(--vscode-editor-font-weight);
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-editor-background);
 }
