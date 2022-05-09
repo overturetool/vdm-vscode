@@ -72,6 +72,14 @@
                         }
                     }
                 ]
+            },
+            "explorer.fileNesting.enabled": true,
+            "explorer.fileNesting.patterns": {
+                "*.doc": "${capture}.doc.vdmsl, ${capture}.doc.vdmpp, ${capture}.doc.vdmrt",
+                "*.docx": "${capture}.docx.vdmsl, ${capture}.docx.vdmpp, ${capture}.docx.vdmrt",
+                "*.odt": "${capture}.odt.vdmsl, ${capture}.odt.vdmpp, ${capture}.odt.vdmrt",
+                "*.md": "${capture}.md.vdmsl, ${capture}.md.vdmpp, ${capture}.md.vdmrt",
+                "*.adoc": "${capture}.adoc.vdmsl, ${capture}.adoc.vdmpp, ${capture}.adoc.vdmrt, ${capture}.html"
             }
         },
         "languages": [
