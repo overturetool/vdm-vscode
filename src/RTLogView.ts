@@ -55,7 +55,7 @@ export class RTLogView extends AutoDisposable {
                     if (this._panel) {
                         this._panel.dispose();
                     }
-                    this.parseLogData(doc.uri.fsPath).then((data) => {
+                    this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
                         this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
                         if (data) {
                             commands.executeCommand("workbench.action.closeActiveEditor");
@@ -92,7 +92,7 @@ export class RTLogView extends AutoDisposable {
         }
     }
 
-    private async parseLogData(logPath: string): Promise<any> {
+    private async parseAndPrepareLogData(logPath: string): Promise<any> {
         if (!logPath) {
             return;
         }
@@ -162,7 +162,7 @@ export class RTLogView extends AutoDisposable {
                     decls.push({ eventKind: logEventObj.eventKind, name: logEventObj.name, id: logEventObj.id });
                 } else if (logEventObj.eventKind != LogEvent.DeployObj) {
                     if (logEventObj.eventKind != LogEvent.MessageActivate) {
-                        let cpuWithEvents: any;
+                        let cpuWithEvents: any = undefined;
                         if (logEventObj.eventKind != LogEvent.MessageCompleted) {
                             const cpunm =
                                 "cpunm" in logEventObj
@@ -187,16 +187,16 @@ export class RTLogView extends AutoDisposable {
                                 activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
                                 1
                             )[0];
-                            cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == msgInitEvent.tocpu);
+
                             logEventObj.busid = msgInitEvent.busid;
+                            logEventObj.callthr = msgInitEvent.callthr;
                             logEventObj.tocpu = msgInitEvent.tocpu;
-                            if (!("objref" in msgInitEvent)) {
-                                logEventObj.origmsgid = msgInitEvent.origmsgid;
-                            } else {
+                            if (msgInitEvent.eventKind == LogEvent.MessageRequest) {
+                                logEventObj.opname = msgInitEvent.opname;
                                 logEventObj.objref = msgInitEvent.objref;
                                 logEventObj.clnm = msgInitEvent.clnm;
-                                logEventObj.opname = msgInitEvent.opname;
                             }
+                            cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == logEventObj.tocpu);
                         }
 
                         if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {

@@ -24,6 +24,7 @@ const execViewId = "exec";
 const initMsg = "init";
 const editorSettingsChangedMsg = "editorSettingsChanged";
 const logData = { cpuDeclEvents: [], busDeclEvents: [], cpusWithEvents: [], executionEvents: [], timeStampsWithData: [] };
+const cpuViewData = [];
 
 const BtnColors = {
     primaryBackground: undefined,
@@ -82,8 +83,9 @@ window.addEventListener("message", (event) => {
     if (event.data.cmd == initMsg) {
         selectedTime = Math.min(...event.data.timeStamps);
         // Handle parsed log data
-        logData.cpuDeclEvents.push(...event.data.cpuDecls);
-        logData.busDeclEvents.push(...event.data.busDecls);
+        logData.cpuDeclEvents = event.data.cpuDecls;
+        logData.busDeclEvents = event.data.busDecls;
+        logData.cpusWithEvents = event.data.cpusWithEvents;
         logData.timeStampsWithData.push(
             ...event.data.timeStamps.map((ts) => ({
                 time: ts,
@@ -332,7 +334,17 @@ function generateExecCanvas(cpuDeclEvents, busDeclEvents, executionEvents) {
     return canvas;
 }
 
-function generateCpuCanvas(cpuExecutionEvents, busDeclEvents) {
+function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
+    let index = 0;
+    if (startTime > 0) {
+        for (; index < executionEvents.length; index++) {
+            if (executionEvents[index].time >= startTime) {
+                break;
+            }
+        }
+    }
+    const eventFromStartTime = index > 0 ? executionEvents.slice(index) : executionEvents;
+
     const canvas = generateEmptyCanvas();
     let ctx = canvas.getContext("2d");
     const eventLength_y = calculateEventLength(ctx);
@@ -344,12 +356,12 @@ function generateCpuCanvas(cpuExecutionEvents, busDeclEvents) {
     const margin = txtMetrics.width;
     const padding = margin / 2;
     ctx.font = graphFont;
-    const axisStart_x = ctx.measureText(cpuExecutionEvents[cpuExecutionEvents.length - 1].time).width + padding;
+    const axisStart_x = ctx.measureText(eventFromStartTime[eventFromStartTime.length - 1].time).width + padding;
     ctx.font = declFont;
     const rects = [];
 
     // The first rects to draw should be the ones for the bus starting with the virtual bus if it is present
-    cpuExecutionEvents.forEach((event) => {
+    eventFromStartTime.forEach((event) => {
         if (LogEvent.isBusKind(event.eventKind)) {
             const rectId = busDeclEvents.find((bde) => bde.id == event.busid).name;
             if (!rects.find((rect) => rect.rectId == rectId)) {
@@ -378,134 +390,126 @@ function generateCpuCanvas(cpuExecutionEvents, busDeclEvents) {
     let cpuRectId;
     const traversedEvents = [];
     const threads = [];
-    for (let i = 0; i < cpuExecutionEvents.length; i++) {
-        const event = cpuExecutionEvents[i];
-        // Keep track of events already visited for the ability to look behind.
+    const eventsToDraw = [];
+    const rectIdToRectName = [];
+    for (let i = 0; i < executionEvents.length; i++) {
+        const event = executionEvents[i];
         traversedEvents.push(event);
         const isBusEvent = LogEvent.isBusKind(event.eventKind);
+        let opComplete;
+        if (!isBusEvent) {
+            const thread = LogEvent.ThreadCreate != event.eventKind ? threads.find((at) => at.id == event.id) : undefined;
+            if (thread) {
+                if (LogEvent.ThreadKill == event.eventKind) {
+                    threads.splice(threads.indexOf(thread), 1);
+                } else if (event.eventKind == LogEvent.OpActivate) {
+                    thread.prevRectIds.push(thread.currentRectId);
+                    thread.currentRectId = event.objref;
+                } else if (event.eventKind == LogEvent.OpCompleted) {
+                    thread.currentRectId = thread.prevRectIds.length > 0 ? thread.prevRectIds.pop() : thread.currentRectId;
+                }
+            }
 
-        // Locate the correct rectangle to place the event under from the events kind
-        if (LogEvent.ThreadKill == event.eventKind) {
-            const thread = threads.find((at) => at.id == event.id);
-            if (thread) {
-                cpuRectId = thread.currentRectId;
-                threads.splice(threads.indexOf(thread), 1);
-            } else {
-                cpuRectId = i == 0 ? cpuExecutionEvents[i + 1].rectId : cpuExecutionEvents[i - 1].rectId;
-            }
-        } else if (LogEvent.ThreadCreate == event.eventKind) {
-            cpuRectId = event.objref;
-            threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [], active: false });
-        } else if (event.eventKind == LogEvent.ThreadSwapOut || event.eventKind == LogEvent.ThreadSwapIn) {
-            const thread = threads.find((t) => t.id == event.id);
-            if (thread) {
-                thread.active = event.eventKind == LogEvent.ThreadSwapIn;
-                cpuRectId = thread.currentRectId;
-            } else {
-                cpuRectId = event.rectId;
-            }
-        } else if (event.eventKind == LogEvent.OpRequest) {
-            const thread = threads.find((t) => t.id == event.id);
-            cpuRectId = thread ? thread.currentRectId : event.rectId;
-        } else if (event.eventKind == LogEvent.OpActivate) {
-            const rectId = event.objref;
-            const thread = threads.find((t) => t.id == event.id);
-            if (thread) {
-                thread.prevRectIds.push(thread.currentRectId);
-                thread.currentRectId = rectId;
-            }
-            cpuRectId = rectId;
-        } else if (event.eventKind == LogEvent.OpCompleted) {
-            const thread = threads.find((t) => t.id == event.id);
-            if (thread) {
-                thread.currentRectId = thread.prevRectIds.pop();
-                cpuRectId = thread.currentRectId;
-            } else {
-                cpuRectId = event.rectId;
+            cpuRectId = thread
+                ? thread.currentRectId
+                : LogEvent.ThreadKill == event.eventKind
+                ? i == 0
+                    ? executionEvents[i].rectId
+                    : executionEvents[i - 1].rectId
+                : event.objref;
+
+            if (!thread) {
+                threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [] });
             }
         } else if (event.eventKind == LogEvent.MessageCompleted) {
-            if ("opname" in event) {
-                cpuRectId = event.objref;
-            } else {
-                // If the message completed event does not have an opname it is a reply to a messsage request
-                // so look behind for the message request event to find the proper rectangle id.
-                const msgRequest = traversedEvents.find((te) => te.eventKind == LogEvent.MessageRequest && te.msgid == event.origmsgid);
-                const opReqeust = msgRequest
-                    ? traversedEvents.find(
-                          (te) => te.eventKind == LogEvent.OpRequest && te.opname == msgRequest.opname && te.objref == msgRequest.objref
-                      )
-                    : undefined;
-                if (opReqeust) {
-                    traversedEvents.push({
-                        eventKind: LogEvent.OpCompleted,
-                        id: opReqeust.id,
-                        opname: opReqeust.opname,
-                        objref: opReqeust.objref,
-                        clnm: opReqeust.clnm,
-                        cpunm: opReqeust.cpunm,
-                        async: opReqeust.async,
-                        time: event.time,
-                        rectId: opReqeust.rectId,
-                    });
+            if (!("opname" in event)) {
+                for (let i = traversedEvents.length - 1; i >= 0; i--) {
+                    const prevEvent = traversedEvents[i];
+                    if (i - 1 > 0 && prevEvent.eventKind == LogEvent.MessageRequest && prevEvent.callthr == event.callthr) {
+                        opComplete = {
+                            eventKind: LogEvent.OpCompleted,
+                            id: traversedEvents[i - 1].id,
+                            opname: traversedEvents[i - 1].opname,
+                            objref: traversedEvents[i - 2].objref,
+                            clnm: traversedEvents[i - 2].clnm,
+                            cpunm: traversedEvents[i - 2].cpunm,
+                            async: traversedEvents[i - 2].async,
+                            time: event.time,
+                            rectId: traversedEvents[i - 1].rectId,
+                        };
+                        event.objref = traversedEvents[i - 1].rectId;
+                        break;
+                    }
                 }
-
-                // Set cpuRectId and the obj ref so that an arrow can be drawn to the correct rectangle.
-                // If we cannot find the event then just use next rect id
-                event.objref = cpuRectId = opReqeust
-                    ? opReqeust.rectId
-                    : i < cpuExecutionEvents.length - 1
-                    ? cpuExecutionEvents[i + 1].rectId
-                    : cpuRectId;
+            } else {
+                const thread = threads.find((at) => at.id == executionEvents[i + 1].id);
+                if (thread) {
+                    event.objref = thread.currentRectId;
+                    cpuRectId = thread.currentRectId;
+                }
             }
         }
 
-        // Set the current rectangle and generate it if it does not exist.
+        // Associate rectangle id with a rectangle name
         const rectId = isBusEvent ? busDeclEvents.find((bde) => bde.id == event.busid).name : cpuRectId;
-        let currentRect = rects.find((rect) => rect.rectId == rectId);
-        if (!currentRect) {
-            const rectName = isBusEvent ? rectId : event.clnm + `(${rectId})`;
-            ctx.font = declFont;
-            currentRect = {
-                name: rectName,
-                margin: { right: margin, left: margin },
-                width: ctx.measureText(rectName).width + padding * 2,
-                height: txtHeight + padding,
-                textHeight: txtHeight,
-                isBusRect: false,
-                rectId: rectId,
-                x_pos: 0,
-                y_pos: txtHeight + padding + margin * 2,
-            };
-            rects.push(currentRect);
+        if (!isBusEvent && !rectIdToRectName.find((ritc) => ritc.id == rectId)) {
+            rectIdToRectName.push({ id: rectId, name: event.clnm + `(${rectId})` });
         }
 
-        // Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
-        if (
-            (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.MessageCompleted && "opname" in event)) &&
-            i < cpuExecutionEvents.length - 1
-        ) {
-            const targetRectIndex = rects.indexOf(
-                rects.find(
-                    (rect) =>
-                        rect.rectId ==
-                        (LogEvent.isBusKind(cpuExecutionEvents[i + 1].eventKind)
-                            ? busDeclEvents.find((bde) => bde.id == cpuExecutionEvents[i + 1].busid).name
-                            : event.objref)
-                )
-            );
-            ctx.font = graphFont;
-            const rectMargin = ctx.measureText(event.opname).width - currentRect.width / 2;
-            if (
-                (rects.indexOf(currentRect) + 1 == targetRectIndex || rects.indexOf(currentRect) == targetRectIndex) &&
-                currentRect.margin.right < rectMargin
-            ) {
-                currentRect.margin.right = rectMargin;
-            } else if (rects.indexOf(currentRect) - 1 == targetRectIndex && currentRect.margin.left < rectMargin) {
-                currentRect.margin.left = rectMargin;
-            }
-        }
         // Associate the event with the rectangle id
         event.rectId = rectId;
+        if (event.time >= startTime) {
+            // Push events to draw
+            eventsToDraw.push(event);
+            if (opComplete) {
+                eventsToDraw.push(opComplete);
+            }
+
+            // Generate rectangle if it doesnt exist.
+            let currentRect = rects.find((rect) => rect.rectId == rectId);
+            if (!currentRect) {
+                const rectName = isBusEvent ? rectId : rectIdToRectName.find((ritc) => ritc.id == rectId).name;
+                ctx.font = declFont;
+                currentRect = {
+                    name: rectName,
+                    margin: { right: margin, left: margin },
+                    width: ctx.measureText(rectName).width + padding * 2,
+                    height: txtHeight + padding,
+                    textHeight: txtHeight,
+                    isBusRect: false,
+                    rectId: rectId,
+                    x_pos: 0,
+                    y_pos: txtHeight + padding + margin * 2,
+                };
+                rects.push(currentRect);
+            }
+
+            // Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
+            if (
+                (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.MessageCompleted && "opname" in event)) &&
+                i < executionEvents.length - 1
+            ) {
+                const targetRectIndex = rects.indexOf(
+                    rects.find(
+                        (rect) =>
+                            rect.rectId ==
+                            (LogEvent.isBusKind(executionEvents[i + 1].eventKind)
+                                ? busDeclEvents.find((bde) => bde.id == executionEvents[i + 1].busid).name
+                                : event.objref)
+                    )
+                );
+                ctx.font = graphFont;
+                const rectMargin = ctx.measureText(event.opname).width - currentRect.width / 2;
+                if (
+                    (rects.indexOf(currentRect) + 1 == targetRectIndex || rects.indexOf(currentRect) == targetRectIndex) &&
+                    currentRect.margin.right < rectMargin
+                ) {
+                    currentRect.margin.right = rectMargin;
+                } else if (rects.indexOf(currentRect) - 1 == targetRectIndex && currentRect.margin.left < rectMargin) {
+                    currentRect.margin.left = rectMargin;
+                }
+            }
+        }
     }
 
     // Define where the rectangles end
@@ -540,7 +544,7 @@ function generateCpuCanvas(cpuExecutionEvents, busDeclEvents) {
     let lastEventPos_y = 0;
     let currentPos_y = rectEndPos_y + margin;
     const eventKinds = [];
-    const filteredEvents = traversedEvents.filter((event) => event.eventKind != LogEvent.MessageActivate);
+    const filteredEvents = eventsToDraw;
     const prevOpEvents = [];
     for (let i = 0; i < filteredEvents.length; i++) {
         const event = filteredEvents[i];
@@ -597,6 +601,7 @@ function generateCpuCanvas(cpuExecutionEvents, busDeclEvents) {
                 0,
                 0,
                 eventLength_y,
+                font.color,
                 font.color,
                 undefined
             ).forEach((drawFunc) => drawFunc());
@@ -936,6 +941,7 @@ function generateEventKindsLegend(
                     elementPos_y,
                     elementPadding + eventLength_x - gridLineWidth * 2,
                     gridLineColor,
+                    gridLineColor,
                     undefined
                 )
             );
@@ -1052,6 +1058,7 @@ function generateEventGraph(
                 eventPos_y,
                 eventEndPos_x,
                 gridLineColor,
+                gridLineColor,
                 LogEvent.isBusKind(eventKind)
                     ? previousEventDecl && (eventKind == LogEvent.MessageRequest || eventKind == LogEvent.ReplyRequest)
                         ? previousEventDecl.y_pos
@@ -1152,8 +1159,10 @@ function generateEventDrawFuncs(
     eventPos_y,
     eventEndPos_x,
     gridLineColor,
+    txtColor,
     targetEventPos_y
 ) {
+    ctx.fillStyle = txtColor;
     const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
     const drawFuncs = [];
     // Calculate visual for event and add the draw function
@@ -1403,36 +1412,36 @@ function buildViewCanvas(viewId, startTime) {
     }
 
     const dataForTime = logData.timeStampsWithData.find((tswd) => tswd.time == startTime);
+    const timeStampSlice = logData.timeStampsWithData.slice(0, logData.timeStampsWithData.indexOf(dataForTime));
     if (viewId == execViewId) {
         if (dataForTime.executionEvents.length == 0) {
-            dataForTime.executionEvents = logData.timeStampsWithData
-                .find((tswd) => tswd.time < startTime && tswd.executionEvents.length > 0)
-                .executionEvents.filter((execEvent) => execEvent.time >= startTime);
+            for (let i = timeStampSlice.length - 1; i >= 0; i--) {
+                if (timeStampSlice[i].executionEvents.length > 0) {
+                    const executionEvents = timeStampSlice[i].executionEvents;
+                    let sliceInd = 0;
+                    for (let k = 0; k < executionEvents.length; k++) {
+                        sliceInd = k;
+                        if (
+                            executionEvents[k].time == startTime ||
+                            (k > 0 && executionEvents[k - 1].time < startTime && executionEvents[k].time > startTime)
+                        ) {
+                            break;
+                        }
+                    }
+                    dataForTime.executionEvents = executionEvents.slice(sliceInd);
+                    break;
+                }
+            }
         }
         return generateExecCanvas(logData.cpuDeclEvents, logData.busDeclEvents, dataForTime.executionEvents);
     }
 
     const cpuId = viewId.replace(/\D/g, "");
-    let cpuWithEvents = dataForTime.cpusWithEvents.find((cwe) => cwe.id == cpuId);
-    if (!cpuWithEvents) {
-        let executionEvents;
-        for (let i = 0; i < logData.timeStampsWithData.length; i++) {
-            const tswd = logData.timeStampsWithData[i];
-
-            if (tswd.time < startTime) {
-                const cwe = tswd.cpusWithEvents.find((cwe) => cwe.id == cpuId);
-                if (cwe && cwe.executionEvents.length > 0) {
-                    executionEvents = cwe.executionEvents;
-                    break;
-                }
-            }
-        }
-
-        cpuWithEvents = { id: cpuId, executionEvents: executionEvents.filter((execEvent) => execEvent.time >= startTime) };
-        dataForTime.cpusWithEvents.push(cpuWithEvents);
-    }
-
-    return generateCpuCanvas(cpuWithEvents.executionEvents, logData.busDeclEvents);
+    return generateCpuCanvas(
+        logData.timeStampsWithData.find((tswd) => tswd.time == 0).cpusWithEvents.find((cwe) => cwe.id == cpuId).executionEvents,
+        logData.busDeclEvents,
+        startTime
+    );
 }
 
 function setButtonColors(btns, activeBtn) {
