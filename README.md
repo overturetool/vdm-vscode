@@ -8,13 +8,13 @@
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
 The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle).
 
-<img src="https://github.com/jonaskrask/vdm-vscode/raw/development/documentation/screenshots/GUI.png" width="800">
+<img src="https://github.com/overturetool/vdm-vscode/raw/development/documentation/screenshots/GUI.png" width="800">
 
 \*If you are used to the Overture Tool IDE and would like to keep that syntax highlighting we suggest that you use the color theme [Eclipse Classic Light](https://marketplace.visualstudio.com/items?itemName=LorenzoBilli.eclipse-classic-light) or another eclipse color theme.
 
 ## Wiki
-Check out the [wiki](https://github.com/jonaskrask/vdm-vscode/wiki) for the extension for information about how to get started, learning how to use the features, see developer notes and much more!
-Find the wiki at: [https://github.com/jonaskrask/vdm-vscode/wiki](https://github.com/jonaskrask/vdm-vscode/wiki)
+Check out the [wiki](https://github.com/overturetool/vdm-vscode/wiki) for the extension for information about how to get started, learning how to use the features, see developer notes and much more!
+Find the wiki at: [https://github.com/overturetool/vdm-vscode/wiki](https://github.com/overturetool/vdm-vscode/wiki)
 
 ## Installation
 
@@ -60,11 +60,11 @@ Thus, most feature contributions relates to the desktop version of the extension
 
 Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(`.vdmsl`, `.vdmpp` or `.vdmrt`) from the explorer window. This will automatically start the language server in the background.
 
-[Click here](https://github.com/jonaskrask/vdm-vscode/wiki/Usage-GIFs) for an overview of how to use the features of the extension.
+[Click here](https://github.com/overturetool/vdm-vscode/wiki/Usage-GIFs) for an overview of how to use the features of the extension.
 
 ## Settings
 
-This extension contributes a number of settings. [Click here](https://github.com/jonaskrask/vdm-vscode/wiki/Settings) for a detailed overview.
+This extension contributes a number of settings. [Click here](https://github.com/overturetool/vdm-vscode/wiki/Settings) for a detailed overview.
 
 ## Publications
 
@@ -84,9 +84,9 @@ See change log [here](CHANGELOG.md).
 
 ## Issues
 
-Submit an [issue](https://github.com/jonaskrask/vdm-vscode/issues) if you find a bug or have a suggestion for improving the extension.
+Submit an [issue](https://github.com/overturetool/vdm-vscode/issues) if you find a bug or have a suggestion for improving the extension.
 
 ## Contributing
 
-Contributions are very welcome. To do so either open an issue or feature request or fork the [repo](https://github.com/jonaskrask/vdm-vscode) and submit a pull request.
+Contributions are very welcome. To do so either open an issue or feature request or fork the [repo](https://github.com/overturetool/vdm-vscode) and submit a pull request.
 For further information see [here](CONTRIBUTING.md).

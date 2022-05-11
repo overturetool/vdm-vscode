@@ -37,14 +37,14 @@
     "main": "./out/src/extension",
     "browser": "./out/src/webExtension.js",
     "icon": "resources/icons/Overture.png",
-    "homepage": "https://github.com/jonaskrask/vdm-vscode/blob/master/README.md",
+    "homepage": "https://github.com/overturetool/vdm-vscode/blob/master/README.md",
     "repository": {
         "type": "git",
-        "url": "https://github.com/jonaskrask/vdm-vscode"
+        "url": "https://github.com/overturetool/vdm-vscode"
     },
     "bugs": {
         "type": "git",
-        "url": "https://github.com/jonaskrask/vdm-vscode/issues"
+        "url": "https://github.com/overturetool/vdm-vscode/issues"
     },
     "activationEvents": [
         "onDebugResolve:vdm",

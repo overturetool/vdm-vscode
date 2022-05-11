@@ -21,7 +21,7 @@ suite("Extension Test Suite", () => {
             .getExtension("overturetool.vdm-vscode")
             .activate()
             .then(() => {
-                assert.ok(vscode.extensions.getExtension("jonaskrask.vdm-vscode").isActive);
+                assert.ok(vscode.extensions.getExtension("overturetool.vdm-vscode").isActive);
             });
     });
 });
