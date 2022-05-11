@@ -19,6 +19,7 @@ import { AddLibraryHandler } from "./handlers/AddLibraryHandler";
 import { AddRunConfigurationHandler } from "./handlers/AddRunConfigurationHandler";
 import { AddExampleHandler } from "./handlers/ImportExampleHandler";
 import { JavaCodeGenHandler } from "./handlers/JavaCodeGenHandler";
+import { UMLHandler } from "./handlers/UMLHandler";
 import { AddToClassPathHandler } from "./handlers/AddToClassPathHandler";
 import { ProofObligationPanel } from "./slsp/views/ProofObligationPanel";
 import { TranslateButton } from "./slsp/views/translate/TranslateButton";
@@ -102,6 +103,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new AddRunConfigurationHandler());
     context.subscriptions.push(new AddExampleHandler());
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));
+    context.subscriptions.push(new UMLHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
     context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
     context.subscriptions.push(new ChangeVdmjPropertiesHandler(knownVdmFolders));

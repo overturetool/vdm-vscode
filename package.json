@@ -236,6 +236,18 @@
                 "enablement": "vdm-vscode.javaCodeGen"
             },
             {
+                "command": "vdm-vscode.uml.import",
+                "title": "Transform UML to VDM",
+                "category": "VDM",
+                "enablement": "vdm-vscode.uml.import"
+            },
+            {
+                "command": "vdm-vscode.uml.export",
+                "title": "Transform VDM to UML",
+                "category": "VDM",
+                "enablement": "vdm-vscode.uml.export"
+            },
+            {
                 "command": "vdm-vscode.importExample",
                 "title": "Import VDM Example",
                 "category": "VDM",
@@ -495,6 +507,14 @@
                     "group": "generate@2"
                 },
                 {
+                    "command": "vdm-vscode.uml.import",
+                    "group": "uml@1"
+                },
+                {
+                    "command": "vdm-vscode.uml.export",
+                    "group": "uml@2"
+                },
+                {
                     "command": "vdm-vscode.translate.graphviz",
                     "group": "generate@3"
                 },
@@ -726,6 +746,14 @@
                 },
                 {
                     "command": "vdm-vscode.javaCodeGen",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.uml.import",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.uml.export",
                     "when": "false"
                 }
             ]
