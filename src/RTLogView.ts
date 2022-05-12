@@ -15,6 +15,7 @@ import {
 } from "vscode";
 import AutoDisposable from "./helper/AutoDisposable";
 import * as Fs from "fs-extra";
+import * as Path from "path";
 
 enum LogEvent {
     CpuDecl = "CPUdecl",
@@ -37,6 +38,7 @@ enum LogEvent {
 export class RTLogView extends AutoDisposable {
     private _panel: WebviewPanel;
     private _wsFolder: WorkspaceFolder = undefined;
+    private _logName: string = "";
     constructor(private readonly _context: ExtensionContext) {
         super();
         // Add settings watch
@@ -52,16 +54,29 @@ export class RTLogView extends AutoDisposable {
         this._disposables.push(
             workspace.onDidOpenTextDocument((doc: TextDocument) => {
                 if (doc.uri.fsPath.endsWith(".rtlog")) {
-                    if (this._panel) {
-                        this._panel.dispose();
-                    }
-                    this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
-                        this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
-                        if (data) {
-                            commands.executeCommand("workbench.action.closeActiveEditor");
-                            this.createWebView(data.busDecls, data.cpuDecls, data.executionEvents, data.cpusWithEvents, data.timeStamps);
-                        }
-                    });
+                    this._logName = Path.basename(doc.uri.fsPath).split(".")[0];
+                    window
+                        .showInformationMessage(`Open '${this._logName}' in log viewer?`, { modal: true }, ...["Open"])
+                        .then((response) => {
+                            if (response == "Open") {
+                                if (this._panel) {
+                                    this._panel.dispose();
+                                }
+                                this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
+                                    this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
+                                    if (data) {
+                                        commands.executeCommand("workbench.action.closeActiveEditor");
+                                        this.createWebView(
+                                            data.busDecls,
+                                            data.cpuDecls,
+                                            data.executionEvents,
+                                            data.cpusWithEvents,
+                                            data.timeStamps
+                                        );
+                                    }
+                                });
+                            }
+                        });
                 }
             })
         );
@@ -162,27 +177,7 @@ export class RTLogView extends AutoDisposable {
                     decls.push({ eventKind: logEventObj.eventKind, name: logEventObj.name, id: logEventObj.id });
                 } else if (logEventObj.eventKind != LogEvent.DeployObj) {
                     if (logEventObj.eventKind != LogEvent.MessageActivate) {
-                        let cpuWithEvents: any = undefined;
-                        if (logEventObj.eventKind != LogEvent.MessageCompleted) {
-                            const cpunm =
-                                "cpunm" in logEventObj
-                                    ? logEventObj.cpunm
-                                    : "fromcpu" in logEventObj
-                                    ? logEventObj.fromcpu
-                                    : "tocpu" in logEventObj
-                                    ? logEventObj.tocpu
-                                    : logEventObj.id;
-                            cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == cpunm);
-                            if (!cpuWithEvents) {
-                                cpuWithEvents = {
-                                    id: cpunm,
-                                    executionEvents: [],
-                                    deployEvents: [],
-                                    name: cpunm == 0 ? "vCPU" : "",
-                                };
-                                cpusWithEvents.push(cpuWithEvents);
-                            }
-                        } else {
+                        if (logEventObj.eventKind == LogEvent.MessageCompleted) {
                             const msgInitEvent: any = activeMsgInitEvents.splice(
                                 activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
                                 1
@@ -196,7 +191,25 @@ export class RTLogView extends AutoDisposable {
                                 logEventObj.objref = msgInitEvent.objref;
                                 logEventObj.clnm = msgInitEvent.clnm;
                             }
-                            cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == logEventObj.tocpu);
+                        }
+
+                        const cpunm =
+                            "cpunm" in logEventObj
+                                ? logEventObj.cpunm
+                                : "fromcpu" in logEventObj
+                                ? logEventObj.fromcpu
+                                : "tocpu" in logEventObj
+                                ? logEventObj.tocpu
+                                : logEventObj.id;
+                        let cpuWithEvents = cpusWithEvents.find((cwe) => cwe.id == cpunm);
+                        if (!cpuWithEvents) {
+                            cpuWithEvents = {
+                                id: cpunm,
+                                executionEvents: [],
+                                deployEvents: [],
+                                name: cpunm == 0 ? "vCPU" : "",
+                            };
+                            cpusWithEvents.push(cpuWithEvents);
                         }
 
                         if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {
@@ -298,17 +311,15 @@ export class RTLogView extends AutoDisposable {
         if (!this._wsFolder) {
             return;
         }
-        // Define which column the po view should be in
-        const column = window.activeTextEditor ? ViewColumn.Beside : ViewColumn.Two;
 
         // Create panel
         this._panel =
             this._panel ||
             window.createWebviewPanel(
                 `${this._context.extension.id}.rtLogView`,
-                "Real-time log view",
+                `Log Viewer: ${this._logName}`,
                 {
-                    viewColumn: column,
+                    viewColumn: ViewColumn.Active,
                     preserveFocus: true,
                 },
                 {
