@@ -123,14 +123,14 @@ export namespace VdmDapSupport {
                     const logPath: string = Path.join(Util.generatedDataPath(this._session.workspaceFolder).fsPath, "rtlogs");
                     // Ensure that the log file is created overwriting existing log file
                     Fs.ensureDir(logPath).then(() => {
-                        const fullPath: string = Path.join(logPath, `${logName}.log`);
+                        const fullPath: string = Path.join(logPath, `${logName}.rtlog`);
                         Fs.writeFile(fullPath, "").then(() => {
                             // Toggle the button from start to stop
                             vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.stop", true);
                             vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.start", false);
 
                             // Send the command to start logging
-                            this._session.customRequest("log", fullPath);
+                            this._session.customRequest("sdap/log", fullPath);
                         });
                     });
                 })
@@ -142,7 +142,7 @@ export namespace VdmDapSupport {
                     vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.start", true);
 
                     // Send the command to stop logging
-                    this._session.customRequest("log", "stop");
+                    this._session.customRequest("sdap/log", "stop");
                 })
             );
 
