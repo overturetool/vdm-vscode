@@ -55,16 +55,17 @@ export class RTLogView extends AutoDisposable {
             workspace.onDidOpenTextDocument((doc: TextDocument) => {
                 if (doc.uri.fsPath.endsWith(".rtlog")) {
                     this._logName = Path.basename(doc.uri.fsPath).split(".")[0];
-                    this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
-                        this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
-                        if (data) {
-                            window
-                                .showInformationMessage(`Open '${this._logName}' in log viewer?`, { modal: true }, ...["Open"])
-                                .then((response) => {
-                                    if (response == "Open") {
-                                        if (this._panel) {
-                                            this._panel.dispose();
-                                        }
+                    window
+                        .showInformationMessage(`Open '${this._logName}' in log viewer?`, { modal: true }, ...["Open"])
+                        .then((response) => {
+                            if (response == "Open") {
+                                if (this._panel) {
+                                    this._panel.dispose();
+                                }
+
+                                this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
+                                    this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
+                                    if (data) {
                                         commands.executeCommand("workbench.action.closeActiveEditor");
                                         this.createWebView(
                                             data.busDecls,
@@ -75,8 +76,8 @@ export class RTLogView extends AutoDisposable {
                                         );
                                     }
                                 });
-                        }
-                    });
+                            }
+                        });
                 }
             })
         );
@@ -320,7 +321,7 @@ export class RTLogView extends AutoDisposable {
                 `Log Viewer: ${this._logName}`,
                 {
                     viewColumn: ViewColumn.Active,
-                    preserveFocus: true,
+                    preserveFocus: false,
                 },
                 {
                     enableScripts: true, // Enable javascript in the webview
