@@ -111,7 +111,7 @@ export class UMLHandler extends AutoDisposable {
     }
 
     private async Vdm2Uml(wsFolder: WorkspaceFolder): Promise<boolean> {
-        const folderUri = Uri.joinPath(util.generatedDataPath(wsFolder), "generated");
+        const folderUri = util.generatedDataPath(wsFolder);
         let dialect: vdmDialects;
         const vdm2UmlDialects = { vdmpp: "pp", vdmrt: "rt" };
 
