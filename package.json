@@ -934,6 +934,18 @@
                     "scope": "resource",
                     "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
                 },
+                "vdm-vscode.uml.export.preferAssociations": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Prefer associations in generated UML models"
+                },
+                "vdm-vscode.uml.export.deployArtifactsOutsideNodes": {
+                    "type": "boolean",
+                    "default": true,
+                    "scope": "resource",
+                    "description": "Deploy artifacts outside of nodes in generated UML models"
+                },
                 "vdm-vscode.translate.latex.modelOnly": {
                     "type": "boolean",
                     "default": true,
