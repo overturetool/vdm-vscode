@@ -34,6 +34,7 @@ import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
 import * as Util from "./util/Util";
 import { RTLogView } from "./RTLogView";
+import { FMUHandler } from "./handlers/FMUHandler";
 
 export async function activate(context: ExtensionContext) {
     // Setup server factory
@@ -106,6 +107,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new AddToClassPathHandler());
     context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
     context.subscriptions.push(new ChangeVdmjPropertiesHandler(knownVdmFolders));
+    context.subscriptions.push(new FMUHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);

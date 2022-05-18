@@ -37,14 +37,14 @@
     "main": "./out/src/extension",
     "browser": "./out/src/webExtension.js",
     "icon": "resources/icons/Overture.png",
-    "homepage": "https://github.com/jonaskrask/vdm-vscode/blob/master/README.md",
+    "homepage": "https://github.com/overturetool/vdm-vscode/blob/master/README.md",
     "repository": {
         "type": "git",
-        "url": "https://github.com/jonaskrask/vdm-vscode"
+        "url": "https://github.com/overturetool/vdm-vscode"
     },
     "bugs": {
         "type": "git",
-        "url": "https://github.com/jonaskrask/vdm-vscode/issues"
+        "url": "https://github.com/overturetool/vdm-vscode/issues"
     },
     "activationEvents": [
         "onDebugResolve:vdm",
@@ -72,6 +72,14 @@
                         }
                     }
                 ]
+            },
+            "explorer.fileNesting.enabled": true,
+            "explorer.fileNesting.patterns": {
+                "*.doc": "${capture}.doc.vdmsl, ${capture}.doc.vdmpp, ${capture}.doc.vdmrt",
+                "*.docx": "${capture}.docx.vdmsl, ${capture}.docx.vdmpp, ${capture}.docx.vdmrt",
+                "*.odt": "${capture}.odt.vdmsl, ${capture}.odt.vdmpp, ${capture}.odt.vdmrt",
+                "*.md": "${capture}.md.vdmsl, ${capture}.md.vdmpp, ${capture}.md.vdmrt",
+                "*.adoc": "${capture}.adoc.vdmsl, ${capture}.adoc.vdmpp, ${capture}.adoc.vdmrt, ${capture}.html"
             }
         },
         "languages": [
@@ -230,6 +238,18 @@
             {
                 "command": "vdm-vscode.importExample",
                 "title": "Import VDM Example",
+                "category": "VDM",
+                "icon": "$(example)"
+            },
+            {
+                "command": "vdm-vscode.fmuWrpExport",
+                "title": "Export Tool Wrapper FMU",
+                "category": "VDM",
+                "icon": "$(example)"
+            },
+            {
+                "command": "vdm-vscode.fmuImport",
+                "title": "Import FMU Model Description",
                 "category": "VDM",
                 "icon": "$(example)"
             },
@@ -448,9 +468,23 @@
             {
                 "id": "vdm-vscode.vdmsubmenu",
                 "label": "VDM"
+            },
+            {
+                "id": "vdm-vscode.fmusubmenu",
+                "label": "Overture FMU"
             }
         ],
         "menus": {
+            "vdm-vscode.fmusubmenu": [
+                {
+                    "command": "vdm-vscode.fmuImport",
+                    "group": "fmu@0"
+                },
+                {
+                    "command": "vdm-vscode.fmuWrpExport",
+                    "group": "fmu@1"
+                }
+            ],
             "vdm-vscode.vdmsubmenu": [
                 {
                     "command": "vdm-vscode.pog.run",
@@ -489,6 +523,10 @@
                 {
                     "command": "vdm-vscode.addRunConfiguration",
                     "group": "workspace@2"
+                },
+                {
+                    "submenu": "vdm-vscode.fmusubmenu",
+                    "group": "workspace@"
                 }
             ],
             "view/title": [
@@ -1133,7 +1171,7 @@
                                     "preConditionChecks": true,
                                     "postConditionChecks": true,
                                     "measureChecks": true
-                                  },
+                                },
                                 "properties": {
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
@@ -1187,7 +1225,7 @@
                                     "vdmj.rt.diags_guards": false,
                                     "vdmj.rt.diags_timestep": false,
                                     "vdmj.in.powerset_limit": 30
-                                  },
+                                },
                                 "properties": {
                                     "vdmj.parser.comment_nesting": {
                                         "type": "number",
@@ -1195,7 +1233,10 @@
                                         "default": 3
                                     },
                                     "vdmj.parser.external_readers": {
-                                        "type": ["string", "null"],
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
                                         "description": "External readers [.suffix]=[class] pairs (default null)",
                                         "default": null
                                     },
@@ -1210,7 +1251,10 @@
                                         "default": false
                                     },
                                     "vdmj.mapping.search_path": {
-                                        "type": ["string", "null"],
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
                                         "description": "An alternative search path for the ClassMapper (default null)",
                                         "default": null
                                     },
@@ -1387,7 +1431,9 @@
         "compile": "tsc -p ./",
         "watch": "tsc --watch -p ./",
         "lint": "eslint --ext ts src",
-        "pretest": "tsc -p ./",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
         "test": "node ./out/test/runTest.js",
         "check:version": "node cmd/check-version.js",
         "enableWebpack": "node cmd/enableWebpack.js",
@@ -1399,7 +1445,9 @@
             "compile": "tsc -p ./",
             "watch": "tsc --watch -p ./",
             "lint": "eslint --ext ts src",
-            "pretest": "tsc -p ./",
+            "compile-tests": "tsc -p . --outDir out",
+            "watch-tests": "tsc -p . -w --outDir out",
+            "pretest": "npm run compile-tests && npm run compile && npm run lint",
             "test": "node ./out/test/runTest.js",
             "check:version": "node cmd/check-version.js",
             "enableWebpack": "node cmd/enableWebpack.js",
@@ -1415,7 +1463,9 @@
             "compile": "webpack --mode none",
             "watch": "webpack --mode none --watch",
             "lint": "eslint --ext ts src",
-            "pretest": "tsc -p ./",
+            "compile-tests": "tsc -p . --outDir out",
+            "watch-tests": "tsc -p . -w --outDir out",
+            "pretest": "npm run compile-tests && npm run compile && npm run lint",
             "test": "node ./out/test/runTest.js",
             "check:version": "node cmd/check-version.js",
             "enableWebpack": "node cmd/enableWebpack.js",
@@ -1425,25 +1475,25 @@
         "browser": "./dist/webExtension.js"
     },
     "devDependencies": {
-        "@types/chai": "^4.3.0",
         "@types/fs-extra": "^9.0.13",
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.1.0",
         "@types/node": "^17.0.15",
         "@types/sinon": "^10.0.11",
         "@types/vscode": "^1.64.0",
-        "chai": "^4.3.6",
-        "eslint": "^8.9.0",
+        "@typescript-eslint/eslint-plugin": "^5.16.0",
+        "@typescript-eslint/parser": "^5.16.0",
+        "@vscode/test-electron": "^2.1.3",
+        "eslint": "^8.11.0",
+        "glob": "^7.2.0",
         "mocha": "^9.2.0",
         "sinon": "^13.0.1",
         "ts-loader": "^9.2.6",
         "typescript": "^4.5.5",
-        "vscode-test": "^1.6.1",
         "webpack": "^5.69.1",
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {
-        "compile": "0.0.2",
         "fs-extra": "^10.0.0",
         "iconv-lite": "^0.6.3",
         "jschardet": "^3.0.0",
