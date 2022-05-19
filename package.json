@@ -1123,6 +1123,16 @@
                                     "measureChecks": true
                                 },
                                 "properties": {
+                                    "precision": {
+                                        "type": "number",
+                                        "description": "Precision level if using high precision (ignored for regular precision).",
+                                        "default": 100
+                                    },
+                                    "enableLogging": {
+                                        "type": "boolean",
+                                        "description": "Log real-time events.",
+                                        "default": false
+                                    },
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
                                         "description": "Type check values during interpretation of a VDM model.",
