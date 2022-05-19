@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable eqeqeq */
 const vscode = acquireVsCodeApi();
 
 // Create view container
@@ -9,6 +11,17 @@ viewContainer.style.height = "100%";
 viewContainer.style.width = "100%";
 document.body.appendChild(viewContainer);
 
+// Global const variables
+const archViewId = "arch";
+const execViewId = "exec";
+const initMsg = "init";
+const editorSettingsChangedMsg = "editorSettingsChanged";
+const logData = { busDeclEvents: [], cpusWithEvents: [] };
+const btnColors = {};
+const views = [];
+const buttons = Array.from(document.getElementsByClassName("button"));
+const timeSelector = document.getElementById("timeStamp");
+
 // Global variables
 let backgroundColor;
 let declFont;
@@ -17,30 +30,16 @@ let gridLineWidth;
 let eventLineWidth;
 let eventWrapperHeight;
 let busColors = [];
-
-const font = { size: undefined, family: undefined, color: undefined };
-const archViewId = "arch";
-const execViewId = "exec";
-const initMsg = "init";
-const editorSettingsChangedMsg = "editorSettingsChanged";
-const logData = { cpuDeclEvents: [], busDeclEvents: [], cpusWithEvents: [], executionEvents: [], timeStampsWithData: [] };
-const cpuViewData = [];
-
-const BtnColors = {
-    primaryBackground: undefined,
-    primaryForeground: undefined,
-    secondaryBackground: undefined,
-    secondaryForeground: undefined,
-};
+let fontColor;
+let canvasDrawer;
 let currentViewId = archViewId;
-const views = [];
-const buttons = Array.from(document.getElementsByClassName("button"));
-const timeSelector = document.getElementById("timeStamp");
+let selectedTime = 0;
+
+// Handle time change
 timeSelector.onchange = (event) => {
     selectedTime = event.target.value;
     redrawViews(currentViewId);
 };
-let selectedTime = 0;
 
 // Handle button press
 buttons.forEach((btn) => {
@@ -60,36 +59,25 @@ buttons.forEach((btn) => {
     };
 });
 
-function redrawViews(currentViewId) {
-    viewContainer.innerHTML = "";
-    // Remove current canvas from views
-    views.forEach((view) => (view.canvas = undefined));
+// Handle event from extension backend
+window.addEventListener("message", (event) => {
+    if (event.data.cmd == initMsg) {
+        selectedTime = Math.min(...event.data.timeStamps);
+        // Handle parsed log data
+        logData.busDeclEvents = event.data.busDecls;
+        logData.cpusWithEvents = event.data.cpusWithEvents;
+        canvasDrawer = new CanvasDrawer(event.data.cpuDecls, event.data.busDecls, event.data.executionEvents, event.data.conjObjs);
+    }
+    canvasDrawer.clearViewData();
+    // Always check for changes to font and theme
+    updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
+
     // Set button colors
     setButtonColors(
         buttons.filter((btn) => btn.id != currentViewId),
         document.getElementById(currentViewId)
     );
 
-    // Rebuild canvas for the current view
-    const viewCanvas = buildViewCanvas(currentViewId, selectedTime);
-    views.find((view) => view.id == currentViewId).canvas = viewCanvas;
-    // Display the canvas (graph)
-
-    viewContainer.appendChild(viewCanvas);
-}
-
-// Handle event from extension backend
-window.addEventListener("message", (event) => {
-    if (event.data.cmd == initMsg) {
-        selectedTime = Math.min(...event.data.timeStamps);
-        // Handle parsed log data
-        logData.cpuDeclEvents = event.data.cpuDecls;
-        logData.busDeclEvents = event.data.busDecls;
-        logData.cpusWithEvents = event.data.cpusWithEvents;
-        logData.executionEvents = event.data.executionEvents;
-    }
-    // Always check for changes to font and theme
-    updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
     // A message from the extension backend always results in a rebuild of the canvas
     redrawViews(currentViewId, selectedTime);
 });
@@ -101,64 +89,535 @@ document.body.onload = vscode.postMessage(initMsg);
  * Class and function definitions
  */
 
+class CanvasDrawer {
+    execViewDrawData = {};
+    cpuViewDrawData = {};
+
+    constructor(cpuDeclEvents, busDeclEvents, executionEvents, conjObjs) {
+        this.cpuDeclEvents = cpuDeclEvents;
+        this.busDeclEvents = busDeclEvents;
+        this.executionEvents = executionEvents;
+        this.conjObjs = conjObjs;
+        this.clearViewData();
+    }
+
+    clearViewData() {
+        this.execViewDrawData = {
+            declDrawFuncs: [],
+            graphStartPos_x: undefined,
+            gridDrawFuncs: [],
+            declPadding: { y: undefined, x: undefined },
+            eventLength_x: undefined,
+        };
+
+        this.cpuViewDrawData = {
+            declDrawFuncs: [],
+            graphStartPos_x: undefined,
+            gridDrawFuncs: [],
+            declPadding: { y: undefined, x: undefined },
+            eventLength_x: undefined,
+        };
+    }
+
+    generateExecDrawData() {
+        const canvas = generateEmptyCanvas();
+        const cpuDecls = [];
+        const busDecls = [];
+        let ctx = canvas.getContext("2d");
+        this.execViewDrawData.eventLength_x = calculateEventLength(ctx);
+        ctx.font = declFont;
+        const declTextMetrics = ctx.measureText("Gg");
+        this.execViewDrawData.declPadding.y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
+        this.execViewDrawData.declPadding.x = this.execViewDrawData.declPadding.y / 4;
+
+        // Calculate decls placement and push their draw functions
+        let widestText = 0;
+        let nextDeclPos_y = this.execViewDrawData.declPadding.y;
+        this.cpuDeclEvents
+            .slice()
+            .reverse()
+            .concat(this.busDeclEvents)
+            .forEach((decl) => {
+                const txtMetrics = ctx.measureText(decl.name);
+                if (txtMetrics.width > widestText) {
+                    widestText = txtMetrics.width;
+                }
+
+                const txtHeight = txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent;
+                const newDecl = {};
+                newDecl.id = decl.id;
+                newDecl.events = [];
+                newDecl.pos_y = nextDeclPos_y - txtHeight / 2 + eventLineWidth;
+                newDecl.pos_x = undefined;
+                newDecl.name = decl.name;
+
+                if (decl.eventKind == LogEvent.busDecl) {
+                    newDecl.fromcpu = undefined;
+                    newDecl.tocpu = undefined;
+                    busDecls.push(newDecl);
+                } else {
+                    newDecl.activeThreadsNumb = 0;
+                    cpuDecls.push(newDecl);
+                }
+                const declTextPos_y = nextDeclPos_y;
+                this.execViewDrawData.declDrawFuncs.push((ctx) => {
+                    ctx.font = declFont;
+                    ctx.fillText(decl.name, this.execViewDrawData.declPadding.x, declTextPos_y);
+                });
+                nextDeclPos_y += this.execViewDrawData.declPadding.y;
+            });
+
+        // Calculate where events should start on the x-axis
+        this.execViewDrawData.graphStartPos_x = widestText + this.execViewDrawData.declPadding.x * 2;
+
+        // Generate and push draw functions for the graph
+        this.execViewDrawData.gridDrawFuncs = this.generateGridDrawFuncs(
+            cpuDecls,
+            busDecls,
+            this.executionEvents,
+            this.execViewDrawData.declPadding.y / 2,
+            nextDeclPos_y - this.execViewDrawData.declPadding.y / 2,
+            ctx,
+            graphFont,
+            gridLineWidth,
+            fontColor,
+            eventLineWidth,
+            eventWrapperHeight,
+            this.execViewDrawData.eventLength_x
+        );
+    }
+
+    generateArchCanvas() {
+        const canvas = generateEmptyCanvas();
+
+        // Set text style to calculate text sizes
+        let ctx = canvas.getContext("2d");
+        ctx.font = declFont;
+
+        const txtMeasure = ctx.measureText("Gg");
+        const textHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
+        const margin = txtMeasure.width;
+        const padding = margin / 2;
+        const rectBottomPos_y = textHeight + padding * 2 + margin;
+        let maxBusTxtWidth = margin;
+        this.busDeclEvents.forEach((busdecl) => {
+            // The startig position for the rectangle on the x-axis should be max text width + predefined margin
+            const metrics = ctx.measureText(busdecl.name);
+            const totalWidth = metrics.width + margin;
+            if (totalWidth > maxBusTxtWidth) {
+                maxBusTxtWidth = totalWidth;
+            }
+        });
+        const busTextPosInc_y = textHeight * 2;
+
+        // Calculate position for the rectangles and the text inside
+        let nextRectPos_x = maxBusTxtWidth;
+        const rects = this.cpuDeclEvents.map((cpud) => {
+            const rectWidth = ctx.measureText(cpud.name).width + padding * 2;
+
+            const rect = {
+                text: cpud.name,
+                id: cpud.id,
+                start: nextRectPos_x,
+                width: rectWidth,
+                height: textHeight + padding * 2,
+                textHeight: textHeight,
+            };
+            nextRectPos_x += rectWidth + margin;
+            return rect;
+        });
+
+        // Resize canvas to fit content
+        canvas.height = rectBottomPos_y + busTextPosInc_y * this.busDeclEvents.length + textHeight + margin;
+        canvas.width = nextRectPos_x;
+
+        // Get context after resize
+        ctx = canvas.getContext("2d");
+        ctx.font = declFont;
+        ctx.fillStyle = ctx.strokeStyle = fontColor;
+        ctx.lineWidth = gridLineWidth;
+
+        // Draw the rectangles and text
+        rects.forEach((rect) => {
+            ctx.setLineDash(rect.id == 0 ? [2, 2] : []);
+            ctx.strokeRect(rect.start, margin, rect.width, rect.height);
+            ctx.fillText(rect.text, rect.start + padding, rectBottomPos_y - padding);
+        });
+
+        // Concat all connections for each rectangle
+        const rectConnections = [];
+        this.busDeclEvents.forEach((busdecl) => {
+            [busdecl.topo.from].concat(busdecl.topo.to).forEach((id) => {
+                const existingRectCon = rectConnections.find((rect) => rect.id == id);
+                if (existingRectCon) {
+                    existingRectCon.connections += 1;
+                } else {
+                    rectConnections.push({ id: id, connections: 1, established: 0 });
+                }
+            });
+        });
+
+        // Draw the connections between rectangles and place the name for each bus
+        let nextBusNamePos_y = rectBottomPos_y + busTextPosInc_y;
+        for (let i = 0; i < this.busDeclEvents.length; i++) {
+            const bus = this.busDeclEvents[i];
+
+            // Setup color for and style for the connection line
+            ctx.beginPath();
+            ctx.fillStyle = ctx.strokeStyle = i < busColors.length - 1 ? busColors[i] : fontColor;
+            ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
+
+            // Draw bus connections between rectangles
+            const fromRect = rects.find((rect) => rect.id == bus.topo.from);
+            const fromRectConn = rectConnections.find((rect) => rect.id == bus.topo.from);
+
+            // Make sure that lines are spaced evenly on the "from" rectangle
+            const lineOnFromRectPos_x = (fromRect.width / (fromRectConn.connections + 1)) * ++fromRectConn.established + fromRect.start;
+
+            // Draw outgoing part of the line
+            ctx.moveTo(lineOnFromRectPos_x, rectBottomPos_y);
+            ctx.lineTo(lineOnFromRectPos_x, nextBusNamePos_y);
+
+            // Draw the rest of the lines connecting the outgoing part
+            bus.topo.to.forEach((toId) => {
+                const toRect = rects.find((rect) => rect.id == toId);
+                const toRectConn = rectConnections.find((rect) => rect.id == toId);
+
+                // Make sure that lines are spaced evenly on the "to" rectangle
+                const lineOnToRectPos_x = (toRect.width / (toRectConn.connections + 1)) * ++toRectConn.established + toRect.start;
+
+                // Draw the line from the latest "lineTo" position
+                ctx.lineTo(lineOnToRectPos_x, nextBusNamePos_y);
+                ctx.lineTo(lineOnToRectPos_x, rectBottomPos_y);
+                ctx.stroke();
+
+                // Reset to the outgoing line from this rectangle
+                ctx.moveTo(lineOnToRectPos_x, nextBusNamePos_y);
+            });
+
+            // Draw the name of the bus
+            ctx.fillText(bus.name, margin, nextBusNamePos_y + textHeight / 2);
+
+            // Increment y position for next bus name
+            nextBusNamePos_y += busTextPosInc_y;
+        }
+        return canvas;
+    }
+
+    generateExecCanvas(startTime) {
+        if (this.execViewDrawData.declDrawFuncs.length == 0) {
+            this.generateExecDrawData();
+        }
+        // Get all grid draw functions
+        let gridEndPos_y = 0;
+        const eventKinds = new Set();
+        let gridPos_x = this.execViewDrawData.graphStartPos_x;
+        const gridDrawFuncs = [];
+        this.execViewDrawData.gridDrawFuncs.forEach((gdfs) => {
+            if (gdfs.time >= startTime) {
+                gridEndPos_y = gdfs.endPos_y > gridEndPos_y ? gdfs.endPos_y : gridEndPos_y;
+                gdfs.eventKinds.forEach((kind) => eventKinds.add(kind));
+                gdfs.drawFuncs.forEach((drawFunc) => {
+                    const pos_x = gridPos_x;
+                    gridDrawFuncs.push((ctx) => drawFunc(ctx, pos_x));
+                    gridPos_x += this.execViewDrawData.eventLength_x;
+                });
+            }
+        });
+
+        const canvas = generateEmptyCanvas();
+        let ctx = canvas.getContext("2d");
+
+        // Generate draw functions for the legend
+        const legend = generateEventKindsLegend(
+            ctx,
+            graphFont,
+            eventLineWidth,
+            gridLineWidth,
+            fontColor,
+            this.execViewDrawData.declPadding.x,
+            this.execViewDrawData.eventLength_x,
+            eventWrapperHeight,
+            gridEndPos_y + this.execViewDrawData.declPadding.y,
+            Array.from(eventKinds)
+        );
+
+        // Resize canvas to fit content
+        canvas.width = gridPos_x + this.execViewDrawData.graphStartPos_x;
+        canvas.height = legend.endPos_y;
+        ctx = canvas.getContext("2d");
+        ctx.fillStyle = fontColor;
+
+        // Draw visuals on canvas
+        this.execViewDrawData.declDrawFuncs.forEach((func) => func(ctx));
+        legend.drawFuncs.forEach((func) => func());
+        gridDrawFuncs.forEach((func) => func(ctx));
+
+        return canvas;
+    }
+
+    generateGridDrawFuncs(
+        cpuDecls,
+        busDecls,
+        executionEvents,
+        graphStartPos_y,
+        gridHeight,
+        ctx,
+        graphFont,
+        gridLineWidth,
+        gridLineColor,
+        eventLineWidth,
+        eventWrapperHeight,
+        eventLength_x
+    ) {
+        // Calculate draw functions for each event for the decls
+        let currentBusDecl = undefined;
+        let currentTime = -1;
+        let prevDecl;
+        const decls = cpuDecls.concat(busDecls);
+        const drawFuncsForTime = [];
+        for (let index = 0; index < executionEvents.length; index++) {
+            let graphEnd_y = gridHeight;
+            const drawFuncs = [];
+            const event = executionEvents[index];
+            const eventKind = event.eventKind;
+            const isBusEvent = LogEvent.isBusKind(eventKind);
+            // Find the current decl
+            let currentDecl;
+            if (isBusEvent) {
+                if (eventKind != LogEvent.messageRequest && eventKind != LogEvent.replyRequest) {
+                    currentDecl = currentBusDecl ? currentBusDecl : busDecls.find((busDecl) => busDecl.id == event.busid);
+                } else {
+                    // Keep track of the current bus decl
+                    currentDecl = busDecls.find((busDecl) => busDecl.id == event.busid);
+                    currentDecl.tocpu = event.tocpu;
+                    currentDecl.fromcpu = event.fromcpu;
+                }
+                currentBusDecl = currentDecl;
+            } else {
+                currentDecl = cpuDecls.find((cpu) => cpu.id == event.cpunm);
+            }
+
+            currentDecl.isCpuDecl = !isBusEvent;
+
+            // Look back and find the decl for which the message complete is a reply to
+            if (index > 1 && executionEvents[index - 1].eventKind == LogEvent.messageCompleted) {
+                const events = executionEvents.slice(0, index - 1);
+                for (let i = events.length - 1; i >= 0; i--) {
+                    const prevEvent = events[i];
+                    if (prevEvent.eventKind == LogEvent.messageRequest || prevEvent.eventKind == LogEvent.replyRequest) {
+                        if (prevEvent.eventKind == LogEvent.replyRequest && prevEvent.busid == currentBusDecl.id) {
+                            const declWithOp = cpuDecls.find((cpuDecl) => cpuDecl.id == prevEvent.tocpu);
+                            if (declWithOp && declWithOp.activeThreads) {
+                                const activeThread = declWithOp.activeThreads.find((at) => prevEvent.callthr == at.id);
+                                if (activeThread) {
+                                    activeThread.suspended = false;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (eventKind == LogEvent.opRequest && event.async == false && index + 1 < executionEvents.length) {
+                if (!currentDecl.activeThreads) {
+                    currentDecl.activeThreads = [];
+                }
+                const activeThread = currentDecl.activeThreads.find((at) => at.id == event.id);
+                if (activeThread) {
+                    activeThread.suspended = executionEvents[index + 1].eventKind == LogEvent.messageRequest;
+                } else {
+                    currentDecl.activeThreads.push({
+                        eventKind: LogEvent.threadSwapIn,
+                        id: event.id,
+                        suspended: executionEvents[index + 1].eventKind == LogEvent.messageRequest,
+                    });
+                }
+            } else if (LogEvent.isThreadSwapKind(eventKind)) {
+                if (currentDecl.activeThreads) {
+                    if (eventKind == LogEvent.threadSwapOut) {
+                        currentDecl.activeThreads.splice(
+                            currentDecl.activeThreads.indexOf(currentDecl.activeThreads.find((at) => at.id == event.id)),
+                            1
+                        );
+                    } else {
+                        currentDecl.activeThreads.push(event);
+                    }
+                } else {
+                    currentDecl.activeThreads =
+                        eventKind == LogEvent.threadSwapIn || eventKind == LogEvent.delayedThreadSwapIn ? [event] : [];
+                }
+            }
+
+            decls.forEach((decl) => {
+                // Generate the draw functions for the line between events
+                if (decl != currentDecl) {
+                    let color = gridLineColor;
+                    let lineDash = [1, 4];
+                    let lineWidth = gridLineWidth;
+                    const pos_y = decl.pos_y;
+                    if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
+                        lineDash = decl.activeThreads.find((at) => at.suspended == true) ? [4, 4] : [];
+                        lineWidth = eventLineWidth;
+                        color = LogEvent.eventKindToColor.find((ektc) => ektc.kind == LogEvent.opActivate).color;
+                    }
+                    const constLineDash = lineDash;
+                    const constColor = color;
+                    drawFuncs.push((ctx, startPos_x) => {
+                        const x_end = startPos_x + eventLength_x;
+                        const x_start = startPos_x - gridLineWidth;
+                        drawLine(ctx, lineWidth, constLineDash, constColor, x_start, pos_y, x_end, pos_y);
+                    });
+                }
+            });
+
+            // Generate draw function for the x-axis line
+            if (currentTime < event.time) {
+                // Add function that draws the visuals for the x-axis line
+                ctx.font = graphFont;
+                const txtWidth = ctx.measureText(event.time).width;
+                graphEnd_y = gridHeight + txtWidth;
+                drawFuncs.push((ctx, startPos_x) => {
+                    ctx.font = graphFont;
+                    drawLine(ctx, gridLineWidth, [1, 4], gridLineColor, startPos_x, graphStartPos_y, startPos_x, gridHeight);
+
+                    ctx.save();
+                    ctx.translate(startPos_x, gridHeight);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.fillText(event.time, eventLineWidth, 0);
+                    ctx.restore();
+                });
+
+                // Update time
+                currentTime = event.time;
+            }
+
+            // Generate draw functions for event
+            const targetPos_y = LogEvent.isBusKind(eventKind)
+                ? prevDecl && (eventKind == LogEvent.messageRequest || eventKind == LogEvent.replyRequest)
+                    ? prevDecl.pos_y
+                    : eventKind == LogEvent.messageCompleted
+                    ? cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).pos_y
+                    : undefined
+                : undefined;
+            drawFuncs.push((ctx, startPos_x) =>
+                generateEventDrawFuncs(
+                    ctx,
+                    graphFont,
+                    gridLineWidth,
+                    eventLineWidth,
+                    eventWrapperHeight,
+                    LogEvent.isThreadKind(eventKind) ? event.id : LogEvent.kindToAbb(eventKind),
+                    eventKind,
+                    startPos_x,
+                    currentDecl.pos_y,
+                    startPos_x + eventLength_x,
+                    gridLineColor,
+                    gridLineColor,
+                    targetPos_y
+                ).forEach((func) => func())
+            );
+
+            // Generate draw function for the event "wrapper line"
+            if (index != executionEvents.length - 1 && !LogEvent.isOperationKind(eventKind)) {
+                const begin_y = currentDecl.pos_y - eventWrapperHeight / 2;
+                const end_y = currentDecl.pos_y + eventWrapperHeight / 2;
+                drawFuncs.push((ctx, startPos_x) =>
+                    drawLine(ctx, gridLineWidth, [], gridLineColor, startPos_x + eventLength_x, begin_y, startPos_x + eventLength_x, end_y)
+                );
+
+                if (
+                    !prevDecl ||
+                    currentDecl.pos_y != prevDecl.pos_y ||
+                    (index > 0 && LogEvent.isOperationKind(executionEvents[index - 1].eventKind))
+                ) {
+                    drawFuncs.push((ctx, startPos_x) =>
+                        drawLine(ctx, gridLineWidth, [], gridLineColor, startPos_x, begin_y, startPos_x, end_y)
+                    );
+                }
+            }
+            prevDecl = currentDecl;
+
+            // Add draw events to the time
+            let dfft = drawFuncsForTime.find((dfft) => dfft.time == currentTime);
+            if (!dfft) {
+                dfft = {
+                    time: currentTime,
+                    drawFuncs: [],
+                    endPos_y: graphEnd_y,
+                    eventKinds: new Set(),
+                };
+
+                drawFuncsForTime.push(dfft);
+            }
+            dfft.eventKinds.add(eventKind);
+            dfft.drawFuncs.push((ctx, startPos_x) => drawFuncs.forEach((func) => func(ctx, startPos_x)));
+        }
+
+        return drawFuncsForTime;
+    }
+}
+
 // Class for handling log event kinds
 class LogEvent {
     // Event kinds
-    static CpuDecl = "CPUdecl";
-    static BusDecl = "BUSdecl";
-    static ThreadCreate = "ThreadCreate";
-    static ThreadSwapIn = "ThreadSwapIn";
-    static DelayedThreadSwapIn = "DelayedThreadSwapIn";
-    static ThreadSwapOut = "ThreadSwapOut";
-    static ThreadKill = "ThreadKill";
-    static MessageRequest = "MessageRequest";
-    static MessageActivate = "MessageActivate";
-    static MessageCompleted = "MessageCompleted";
-    static OpActivate = "OpActivate";
-    static OpRequest = "OpRequest";
-    static OpCompleted = "OpCompleted";
-    static ReplyRequest = "ReplyRequest";
-    static DeployObj = "DeployObj";
+    static cpuDecl = "CPUdecl";
+    static busDecl = "BUSdecl";
+    static threadCreate = "ThreadCreate";
+    static threadSwapIn = "ThreadSwapIn";
+    static delayedThreadSwapIn = "DelayedThreadSwapIn";
+    static threadSwapOut = "ThreadSwapOut";
+    static threadKill = "ThreadKill";
+    static messageRequest = "MessageRequest";
+    static messageActivate = "MessageActivate";
+    static messageCompleted = "MessageCompleted";
+    static opActivate = "OpActivate";
+    static opRequest = "OpRequest";
+    static opCompleted = "OpCompleted";
+    static replyRequest = "ReplyRequest";
+    static deployObj = "DeployObj";
 
+    // The colors are changed based on the users theme
     static eventKindToColor = [
-        { kind: this.ThreadCreate, color: this.kindToStandardColor(this.ThreadCreate) },
-        { kind: this.ThreadKill, color: this.kindToStandardColor(this.ThreadKill) },
-        { kind: this.OpActivate, color: this.kindToStandardColor(this.OpActivate) },
-        { kind: this.OpRequest, color: this.kindToStandardColor(this.OpRequest) },
-        { kind: this.OpCompleted, color: this.kindToStandardColor(this.OpCompleted) },
-        { kind: this.ThreadSwapOut, color: this.kindToStandardColor(this.ThreadSwapOut) },
-        { kind: this.ThreadSwapIn, color: this.kindToStandardColor(this.ThreadSwapIn) },
-        { kind: this.DelayedThreadSwapIn, color: this.kindToStandardColor(this.DelayedThreadSwapIn) },
-        { kind: this.MessageRequest, color: this.kindToStandardColor(this.MessageRequest) },
-        { kind: this.ReplyRequest, color: this.kindToStandardColor(this.ReplyRequest) },
-        { kind: this.MessageActivate, color: this.kindToStandardColor(this.MessageActivate) },
-        { kind: this.MessageCompleted, color: this.kindToStandardColor(this.MessageCompleted) },
+        { kind: this.threadCreate, color: this.kindToStandardColor(this.threadCreate) },
+        { kind: this.threadKill, color: this.kindToStandardColor(this.threadKill) },
+        { kind: this.opActivate, color: this.kindToStandardColor(this.opActivate) },
+        { kind: this.opRequest, color: this.kindToStandardColor(this.opRequest) },
+        { kind: this.opCompleted, color: this.kindToStandardColor(this.opCompleted) },
+        { kind: this.threadSwapOut, color: this.kindToStandardColor(this.threadSwapOut) },
+        { kind: this.threadSwapIn, color: this.kindToStandardColor(this.threadSwapIn) },
+        { kind: this.delayedThreadSwapIn, color: this.kindToStandardColor(this.delayedThreadSwapIn) },
+        { kind: this.messageRequest, color: this.kindToStandardColor(this.messageRequest) },
+        { kind: this.replyRequest, color: this.kindToStandardColor(this.replyRequest) },
+        { kind: this.messageActivate, color: this.kindToStandardColor(this.messageActivate) },
+        { kind: this.messageCompleted, color: this.kindToStandardColor(this.messageCompleted) },
     ];
 
     static kindToAbb(eventKind) {
-        return eventKind == this.ThreadKill
+        return eventKind == this.threadKill
             ? "tk"
-            : eventKind == this.ThreadCreate
+            : eventKind == this.threadCreate
             ? "tc"
-            : eventKind == this.ThreadSwapOut
+            : eventKind == this.threadSwapOut
             ? "tso"
-            : eventKind == this.ThreadSwapIn
+            : eventKind == this.threadSwapIn
             ? "tsi"
-            : eventKind == this.DelayedThreadSwapIn
+            : eventKind == this.delayedThreadSwapIn
             ? "dtsi"
-            : eventKind == this.MessageRequest
+            : eventKind == this.messageRequest
             ? "mr"
-            : eventKind == this.ReplyRequest
+            : eventKind == this.replyRequest
             ? "rr"
-            : eventKind == this.MessageActivate
+            : eventKind == this.messageActivate
             ? "ma"
-            : eventKind == this.MessageCompleted
+            : eventKind == this.messageCompleted
             ? "mc"
-            : eventKind == this.OpRequest
+            : eventKind == this.opRequest
             ? "or"
-            : eventKind == this.OpActivate
+            : eventKind == this.opActivate
             ? "oa"
-            : eventKind == this.OpCompleted
+            : eventKind == this.opCompleted
             ? "oc"
             : "";
     }
@@ -168,52 +627,52 @@ class LogEvent {
     }
 
     static kindToStandardColor(eventKind) {
-        return eventKind == this.ThreadKill
+        return eventKind == this.threadKill
             ? "#a1260d"
-            : eventKind == this.ThreadCreate
+            : eventKind == this.threadCreate
             ? "#388a34"
-            : eventKind == this.ThreadSwapOut
+            : eventKind == this.threadSwapOut
             ? "#be8700"
-            : eventKind == this.ThreadSwapIn
+            : eventKind == this.threadSwapIn
             ? "#bf8803"
-            : eventKind == this.DelayedThreadSwapIn
+            : eventKind == this.delayedThreadSwapIn
             ? "#d186167d"
-            : eventKind == this.MessageRequest
+            : eventKind == this.messageRequest
             ? "#808080"
-            : eventKind == this.ReplyRequest
+            : eventKind == this.replyRequest
             ? "#737373"
-            : eventKind == this.MessageActivate
+            : eventKind == this.messageActivate
             ? "#D0D0D0"
-            : eventKind == this.MessageCompleted
+            : eventKind == this.messageCompleted
             ? "#B5B5B5"
             : "#007acc";
     }
 
     static isThreadKind(eventKind) {
         return (
-            eventKind == this.ThreadKill ||
-            eventKind == this.ThreadSwapOut ||
-            eventKind == this.ThreadSwapIn ||
-            eventKind == this.ThreadCreate ||
-            eventKind == this.DelayedThreadSwapIn
+            eventKind == this.threadKill ||
+            eventKind == this.threadSwapOut ||
+            eventKind == this.threadSwapIn ||
+            eventKind == this.threadCreate ||
+            eventKind == this.delayedThreadSwapIn
         );
     }
 
     static isBusKind(eventKind) {
         return (
-            eventKind == this.ReplyRequest ||
-            eventKind == this.MessageCompleted ||
-            eventKind == this.MessageActivate ||
-            eventKind == this.MessageRequest
+            eventKind == this.replyRequest ||
+            eventKind == this.messageCompleted ||
+            eventKind == this.messageActivate ||
+            eventKind == this.messageRequest
         );
     }
 
     static isThreadSwapKind(eventKind) {
-        return eventKind == this.ThreadSwapIn || eventKind == this.ThreadSwapOut || eventKind == this.DelayedThreadSwapIn;
+        return eventKind == this.threadSwapIn || eventKind == this.threadSwapOut || eventKind == this.delayedThreadSwapIn;
     }
 
     static isOperationKind(eventKind) {
-        return eventKind == this.OpRequest || eventKind == this.OpActivate || eventKind == this.OpCompleted;
+        return eventKind == this.opRequest || eventKind == this.opActivate || eventKind == this.opCompleted;
     }
 }
 
@@ -222,110 +681,6 @@ class LogEvent {
  * Vies canvas generation functions
  *
  */
-
-function generateExecCanvas(cpuDeclEvents, busDeclEvents, executionEvents, startTime) {
-    const canvas = generateEmptyCanvas();
-
-    const drawFuncs = [];
-    const cpuDecls = [];
-    const busDecls = [];
-    let ctx = canvas.getContext("2d");
-    const eventLength_x = calculateEventLength(ctx);
-    ctx.font = declFont;
-    const declTextMetrics = ctx.measureText("Gg");
-    const declPadding_y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
-    const declPadding_x = declPadding_y / 4;
-
-    // Calculate decls placement and push their draw functions
-    let widestText = 0;
-    let nextDeclPos_y = declPadding_y;
-    cpuDeclEvents
-        .slice()
-        .reverse()
-        .concat(busDeclEvents)
-        .forEach((decl) => {
-            const txtMetrics = ctx.measureText(decl.name);
-            if (txtMetrics.width > widestText) {
-                widestText = txtMetrics.width;
-            }
-
-            const txtHeight = txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent;
-            const newDecl = {};
-            newDecl.id = decl.id;
-            newDecl.events = [];
-            newDecl.y_pos = nextDeclPos_y - txtHeight / 2 + eventLineWidth;
-            newDecl.x_pos = undefined;
-            newDecl.name = decl.name;
-
-            if (decl.eventKind == LogEvent.BusDecl) {
-                newDecl.fromcpu = undefined;
-                newDecl.tocpu = undefined;
-                busDecls.push(newDecl);
-            } else {
-                newDecl.activeThreadsNumb = 0;
-                cpuDecls.push(newDecl);
-            }
-            const declTextPos_y = nextDeclPos_y;
-            drawFuncs.push(() => {
-                ctx.font = declFont;
-                ctx.fillText(decl.name, declPadding_x, declTextPos_y);
-            });
-            nextDeclPos_y += declPadding_y;
-        });
-
-    // Calculate where events should start on the x-axis
-    const graphStartPos_x = widestText + declPadding_x * 2;
-    cpuDecls.concat(busDecls).forEach((decl) => (decl.x_pos = graphStartPos_x));
-
-    // Generate and push draw functions for the graph
-    const graph = generateEventGraph(
-        cpuDecls,
-        busDecls,
-        executionEvents,
-        declPadding_y / 2,
-        graphStartPos_x,
-        nextDeclPos_y - declPadding_y / 2,
-        ctx,
-        graphFont,
-        gridLineWidth,
-        font.color,
-        eventLineWidth,
-        eventWrapperHeight,
-        eventLength_x,
-        startTime
-    );
-    drawFuncs.push(...graph.drawFuncs);
-
-    if (graph.index) {
-        console.log("CAPPED AT TIME: " + executionEvents[graph.index].time);
-    }
-
-    // Generate and push draw functions for the legend
-    const legend = generateEventKindsLegend(
-        ctx,
-        graphFont,
-        eventLineWidth,
-        gridLineWidth,
-        font.color,
-        declPadding_x,
-        eventLength_x,
-        eventWrapperHeight,
-        graph.endPos_y + declPadding_y,
-        graph.eventKinds
-    );
-    drawFuncs.push(...legend.drawFuncs);
-
-    // Resize canvas to fit content
-    canvas.width = graph.endPos_x + graphStartPos_x;
-    canvas.height = legend.endPos_y;
-    ctx = canvas.getContext("2d");
-    ctx.fillStyle = font.color;
-
-    // Draw visuals on canvas
-    drawFuncs.forEach((func) => func());
-
-    return canvas;
-}
 
 function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
     let index = 0;
@@ -365,21 +720,21 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
         const isBusEvent = LogEvent.isBusKind(event.eventKind);
         let opComplete;
         if (!isBusEvent) {
-            const thread = LogEvent.ThreadCreate != event.eventKind ? threads.find((at) => at.id == event.id) : undefined;
+            const thread = LogEvent.threadCreate != event.eventKind ? threads.find((at) => at.id == event.id) : undefined;
             if (thread) {
-                if (LogEvent.ThreadKill == event.eventKind) {
+                if (LogEvent.threadKill == event.eventKind) {
                     threads.splice(threads.indexOf(thread), 1);
-                } else if (event.eventKind == LogEvent.OpActivate) {
+                } else if (event.eventKind == LogEvent.opActivate) {
                     thread.prevRectIds.push(thread.currentRectId);
                     thread.currentRectId = event.objref;
-                } else if (event.eventKind == LogEvent.OpCompleted) {
+                } else if (event.eventKind == LogEvent.opCompleted) {
                     thread.currentRectId = thread.prevRectIds.length > 0 ? thread.prevRectIds.pop() : thread.currentRectId;
                 }
             }
 
             cpuRectId = thread
                 ? thread.currentRectId
-                : LogEvent.ThreadKill == event.eventKind
+                : LogEvent.threadKill == event.eventKind
                 ? i == 0
                     ? executionEvents[i].rectId
                     : executionEvents[i - 1].rectId
@@ -388,13 +743,13 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
             if (!thread) {
                 threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [] });
             }
-        } else if (event.eventKind == LogEvent.MessageCompleted) {
+        } else if (event.eventKind == LogEvent.messageCompleted) {
             if (!("opname" in event)) {
                 for (let ind = traversedEvents.length - 1; ind >= 0; ind--) {
                     const prevEvent = traversedEvents[ind];
-                    if (ind - 1 > 0 && prevEvent.eventKind == LogEvent.MessageRequest && prevEvent.callthr == event.callthr) {
+                    if (ind - 1 > 0 && prevEvent.eventKind == LogEvent.messageRequest && prevEvent.callthr == event.callthr) {
                         opComplete = {
-                            eventKind: LogEvent.OpCompleted,
+                            eventKind: LogEvent.opCompleted,
                             id: traversedEvents[ind - 1].id,
                             opname: traversedEvents[ind - 1].opname,
                             objref: traversedEvents[ind - 2].objref,
@@ -415,10 +770,10 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
                     for (let ind = i; ind < executionEvents.length; ind++) {
                         const nextEvent = executionEvents[ind];
                         if (
-                            (nextEvent.eventKind == LogEvent.ThreadSwapIn ||
-                                nextEvent.eventKind == LogEvent.ThreadCreate ||
-                                nextEvent.eventKind == LogEvent.OpActivate ||
-                                nextEvent.eventKind == LogEvent.OpCompleted) &&
+                            (nextEvent.eventKind == LogEvent.threadSwapIn ||
+                                nextEvent.eventKind == LogEvent.threadCreate ||
+                                nextEvent.eventKind == LogEvent.opActivate ||
+                                nextEvent.eventKind == LogEvent.opCompleted) &&
                             nextEvent.id == event.callthr
                         ) {
                             targetEvent = nextEvent;
@@ -427,7 +782,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
                     }
                     if (targetEvent) {
                         opComplete = {
-                            eventKind: LogEvent.OpCompleted,
+                            eventKind: LogEvent.opCompleted,
                             id: event.callthr,
                             opname: "",
                             objref: targetEvent.objref,
@@ -475,8 +830,8 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
                     textHeight: txtHeight,
                     busId: isBusEvent ? event.busid : undefined,
                     rectId: rectId,
-                    x_pos: 0,
-                    y_pos: txtHeight + padding + margin * 2,
+                    pos_x: 0,
+                    pos_y: txtHeight + padding + margin * 2,
                 };
                 let index = 0;
                 for (; index < rects.length; index++) {
@@ -496,7 +851,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
 
             // Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
             if (
-                (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.MessageCompleted && "opname" in event)) &&
+                (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.messageCompleted && "opname" in event)) &&
                 i < executionEvents.length - 1
             ) {
                 const targetRectIndex = rects.indexOf(
@@ -536,15 +891,15 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
             (i == 0 ? 0 : rects[i - 1].margin.right > rect.margin.left ? 0 : rect.margin.left - rects[i - 1].margin.right);
         drawFuncs.push(() => {
             ctx.font = declFont;
-            ctx.fillStyle = font.color;
-            ctx.strokeStyle = font.color;
-            ctx.lineWidth = font.size / 10 < 1 ? 1 : Math.floor(font.size / 10);
+            ctx.fillStyle = fontColor;
+            ctx.strokeStyle = fontColor;
+            ctx.lineWidth = gridLineWidth;
             ctx.setLineDash(rect.busId ? [2, 2] : []);
             ctx.strokeRect(rectStartPos_x, margin, rect.width, rect.height);
             ctx.fillText(rect.name, rectStartPos_x + padding, rectEndPos_y - (rect.height - rect.textHeight));
         });
 
-        rect.x_pos = rectStartPos_x + rect.width / 2;
+        rect.pos_x = rectStartPos_x + rect.width / 2;
         graphEnd_x = rectStartPos_x + rect.width + rect.margin.right;
         prevRects.push(rect.rectId);
     }
@@ -571,7 +926,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
         rects.forEach((rect) => {
             if (rect.rectId != currentRect.rectId) {
                 drawFuncs.push(() =>
-                    drawLine(ctx, gridLineWidth, yAxisLinesDash, font.color, rect.x_pos, eventStartPos_y, rect.x_pos, eventEndPos_y)
+                    drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, eventStartPos_y, rect.pos_x, eventEndPos_y)
                 );
             }
         });
@@ -583,7 +938,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
             drawFuncs.push(() => {
                 ctx.font = graphFont;
                 const txtMeasure = ctx.measureText(axisTxt);
-                drawLine(ctx, gridLineWidth, [1, 4], font.color, axisStart_x, pos_y, graphEnd_x + margin, pos_y);
+                drawLine(ctx, gridLineWidth, [1, 4], fontColor, axisStart_x, pos_y, graphEnd_x + margin, pos_y);
                 ctx.fillText(
                     axisTxt,
                     axisStart_x - txtMeasure.width - eventLineWidth,
@@ -597,7 +952,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
         // Push draw function for the event
         drawFuncs.push(() => {
             ctx.save();
-            ctx.translate(currentRect.x_pos, eventStartPos_y);
+            ctx.translate(currentRect.pos_x, eventStartPos_y);
             ctx.rotate(Math.PI / 2);
 
             generateEventDrawFuncs(
@@ -611,8 +966,8 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
                 0,
                 0,
                 eventLength_y,
-                font.color,
-                font.color,
+                fontColor,
+                fontColor,
                 undefined
             ).forEach((drawFunc) => drawFunc());
 
@@ -622,7 +977,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
         // Push draw function for the arrow to/from event
         let eventHasArrowWithTxt = false;
         let isDelayedOpComplete =
-            event.eventKind == LogEvent.OpCompleted &&
+            event.eventKind == LogEvent.opCompleted &&
             prevEvent &&
             nextEvent &&
             prevEvent.opname != event.opname &&
@@ -630,32 +985,32 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
 
         if (nextEvent) {
             let targetRect = undefined;
-            let targetRectId = nextEvent.eventKind == LogEvent.ReplyRequest ? nextEvent.rectId : undefined;
+            let targetRectId = nextEvent.eventKind == LogEvent.replyRequest ? nextEvent.rectId : undefined;
             if (!targetRectId && !(event.rectId == nextEvent.rectId && LogEvent.isOperationKind(nextEvent.eventKind))) {
                 targetRect =
-                    event.eventKind == LogEvent.OpRequest
+                    event.eventKind == LogEvent.opRequest
                         ? filteredEvents
                               .slice(i + 1, filteredEvents.length)
                               .find(
                                   (eve) =>
-                                      (eve.eventKind == LogEvent.OpActivate || eve.eventKind == LogEvent.MessageRequest) &&
+                                      (eve.eventKind == LogEvent.opActivate || eve.eventKind == LogEvent.messageRequest) &&
                                       event.opname == eve.opname
                               )
-                        : event.eventKind == LogEvent.OpActivate && LogEvent.isOperationKind(nextEvent.eventKind)
+                        : event.eventKind == LogEvent.opActivate && LogEvent.isOperationKind(nextEvent.eventKind)
                         ? filteredEvents
                               .slice(i + 1, filteredEvents.length)
-                              .find((eve) => eve.eventKind == LogEvent.OpCompleted && event.opname == eve.opname)
-                        : event.eventKind == LogEvent.OpCompleted && nextEvent.eventKind == LogEvent.OpCompleted
+                              .find((eve) => eve.eventKind == LogEvent.opCompleted && event.opname == eve.opname)
+                        : event.eventKind == LogEvent.opCompleted && nextEvent.eventKind == LogEvent.opCompleted
                         ? (() => {
                               const prevOaRect = prevOpEvents.find(
-                                  (eve) => eve.eventKind == LogEvent.OpActivate && eve.opname == nextEvent.opname
+                                  (eve) => eve.eventKind == LogEvent.opActivate && eve.opname == nextEvent.opname
                               );
                               return prevOaRect && prevOaRect.rectId == event.rectId
                                   ? rects.find((rect) => nextEvent.rectId == rect.rectId)
                                   : undefined;
                           }).apply()
                         : undefined;
-                if (targetRect && event.eventKind == LogEvent.OpActivate && targetRect.rectId != nextEvent.rectId) {
+                if (targetRect && event.eventKind == LogEvent.opActivate && targetRect.rectId != nextEvent.rectId) {
                     targetRect = undefined;
                 }
 
@@ -663,15 +1018,15 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
             }
 
             // If there is another target for the event then draw the arrow
-            if ((targetRectId && targetRectId != event.rectId) || event.eventKind == LogEvent.MessageCompleted) {
+            if ((targetRectId && targetRectId != event.rectId) || event.eventKind == LogEvent.messageCompleted) {
                 const isReplyArrow =
-                    !(event.eventKind == LogEvent.MessageCompleted && "opname" in event) && event.eventKind != LogEvent.OpRequest;
+                    !(event.eventKind == LogEvent.messageCompleted && "opname" in event) && event.eventKind != LogEvent.opRequest;
 
                 const nextRect = rects.find(
                     (rect) => rect.rectId == (targetRectId ? targetRectId : isReplyArrow ? nextEvent.rectId : event.objref)
                 );
-                const arrwEnd_x = (nextRect.x_pos < currentRect.x_pos ? currentRect.x_pos : nextRect.x_pos) - eventWrapperHeight;
-                const arrwStart_x = (nextRect.x_pos < currentRect.x_pos ? nextRect.x_pos : currentRect.x_pos) + eventWrapperHeight;
+                const arrwEnd_x = (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - eventWrapperHeight;
+                const arrwStart_x = (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + eventWrapperHeight;
 
                 drawFuncs.push(() => {
                     drawArrow(
@@ -685,12 +1040,12 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
                         false,
                         gridLineWidth,
                         isReplyArrow ? [5, 2] : undefined,
-                        font.color,
-                        nextRect.x_pos < currentRect.x_pos
+                        fontColor,
+                        nextRect.pos_x < currentRect.pos_x
                     );
                 });
 
-                if (!isReplyArrow && nextEvent.eventKind != LogEvent.ReplyRequest) {
+                if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
                     eventHasArrowWithTxt = true;
                     drawFuncs.push(() => {
                         ctx.font = graphFont;
@@ -707,17 +1062,18 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
 
         // Push draw function for the opname if needed
         if (
-            prevEvent &&
-            (isDelayedOpComplete ||
-                (!eventHasArrowWithTxt &&
-                    LogEvent.isOperationKind(event.eventKind) &&
-                    !(LogEvent.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))
+            (prevEvent &&
+                (isDelayedOpComplete ||
+                    (!eventHasArrowWithTxt &&
+                        LogEvent.isOperationKind(event.eventKind) &&
+                        !(LogEvent.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))) ||
+            (!prevEvent && !eventHasArrowWithTxt && LogEvent.isOperationKind(event.eventKind))
         ) {
             drawFuncs.push(() => {
                 ctx.font = graphFont;
                 const txtMeasure = ctx.measureText("Gg");
                 const txtHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
-                const txtStart_x = currentRect.x_pos + eventWrapperHeight + txtHeight;
+                const txtStart_x = currentRect.pos_x + eventWrapperHeight + txtHeight;
                 ctx.fillText(event.opname, txtStart_x, eventEndPos_y - (eventLength_y - txtHeight) / 2);
             });
         }
@@ -736,10 +1092,10 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
     // Push draw functions for graph lines along the x-axis
     rects.forEach((rect) => {
         drawFuncs.push(() =>
-            drawLine(ctx, gridLineWidth, yAxisLinesDash, font.color, rect.x_pos, rectEndPos_y, rect.x_pos, rectEndPos_y + margin)
+            drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectEndPos_y, rect.pos_x, rectEndPos_y + margin)
         );
         drawFuncs.push(() =>
-            drawLine(ctx, gridLineWidth, yAxisLinesDash, font.color, rect.x_pos, lastEventPos_y, rect.x_pos, lastEventPos_y + eventLength_y)
+            drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, lastEventPos_y, rect.pos_x, lastEventPos_y + eventLength_y)
         );
     });
 
@@ -749,7 +1105,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
         graphFont,
         eventLineWidth,
         gridLineWidth,
-        font.color,
+        fontColor,
         (txtHeight * 2) / 4,
         eventLength_y,
         eventWrapperHeight,
@@ -766,123 +1122,6 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
     // Draw on canvas
     drawFuncs.forEach((drawFunc) => drawFunc());
 
-    return canvas;
-}
-
-function generateArchCanvas(cpuDeclEvents, busDeclEvents) {
-    const canvas = generateEmptyCanvas();
-
-    // Set text style to calculate text sizes
-    let ctx = canvas.getContext("2d");
-    ctx.font = declFont;
-
-    const txtMeasure = ctx.measureText("Gg");
-    const textHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
-    const margin = txtMeasure.width;
-    const padding = margin / 2;
-    const rectBottomPos_y = textHeight + padding * 2 + margin;
-    let maxBusTxtWidth = margin;
-    busDeclEvents.forEach((busdecl) => {
-        // The startig position for the rectangle on the x-axis should be max text width + predefined margin
-        const metrics = ctx.measureText(busdecl.name);
-        const totalWidth = metrics.width + margin;
-        if (totalWidth > maxBusTxtWidth) {
-            maxBusTxtWidth = totalWidth;
-        }
-    });
-    const busTextPosInc_y = textHeight * 2;
-
-    // Calculate position for the rectangles and the text inside
-    let nextRectPos_x = maxBusTxtWidth;
-    const rects = cpuDeclEvents.map((cpud) => {
-        const rectWidth = ctx.measureText(cpud.name).width + padding * 2;
-
-        const rect = {
-            text: cpud.name,
-            id: cpud.id,
-            start: nextRectPos_x,
-            width: rectWidth,
-            height: textHeight + padding * 2,
-            textHeight: textHeight,
-        };
-        nextRectPos_x += rectWidth + margin;
-        return rect;
-    });
-
-    // Resize canvas to fit content
-    canvas.height = rectBottomPos_y + busTextPosInc_y * busDeclEvents.length + textHeight + margin;
-    canvas.width = nextRectPos_x;
-
-    // Get context after resize
-    ctx = canvas.getContext("2d");
-    ctx.font = declFont;
-    ctx.fillStyle = ctx.strokeStyle = font.color;
-    ctx.lineWidth = gridLineWidth;
-
-    // Draw the rectangles and text
-    rects.forEach((rect) => {
-        ctx.setLineDash(rect.id == 0 ? [2, 2] : []);
-        ctx.strokeRect(rect.start, margin, rect.width, rect.height);
-        ctx.fillText(rect.text, rect.start + padding, rectBottomPos_y - padding);
-    });
-
-    // Concat all connections for each rectangle
-    const rectConnections = [];
-    busDeclEvents.forEach((busdecl) => {
-        [busdecl.topo.from].concat(busdecl.topo.to).forEach((id) => {
-            const existingRectCon = rectConnections.find((rect) => rect.id == id);
-            if (existingRectCon) {
-                existingRectCon.connections += 1;
-            } else {
-                rectConnections.push({ id: id, connections: 1, established: 0 });
-            }
-        });
-    });
-
-    // Draw the connections between rectangles and place the name for each bus
-    let nextBusNamePos_y = rectBottomPos_y + busTextPosInc_y;
-    for (let i = 0; i < busDeclEvents.length; i++) {
-        const bus = busDeclEvents[i];
-
-        // Setup color for and style for the connection line
-        ctx.beginPath();
-        ctx.fillStyle = ctx.strokeStyle = i < busColors.length - 1 ? busColors[i] : font.color;
-        ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
-
-        // Draw bus connections between rectangles
-        const fromRect = rects.find((rect) => rect.id == bus.topo.from);
-        const fromRectConn = rectConnections.find((rect) => rect.id == bus.topo.from);
-
-        // Make sure that lines are spaced evenly on the "from" rectangle
-        const lineOnFromRectPos_x = (fromRect.width / (fromRectConn.connections + 1)) * ++fromRectConn.established + fromRect.start;
-
-        // Draw outgoing part of the line
-        ctx.moveTo(lineOnFromRectPos_x, rectBottomPos_y);
-        ctx.lineTo(lineOnFromRectPos_x, nextBusNamePos_y);
-
-        // Draw the rest of the lines connecting the outgoing part
-        bus.topo.to.forEach((toId) => {
-            const toRect = rects.find((rect) => rect.id == toId);
-            const toRectConn = rectConnections.find((rect) => rect.id == toId);
-
-            // Make sure that lines are spaced evenly on the "to" rectangle
-            const lineOnToRectPos_x = (toRect.width / (toRectConn.connections + 1)) * ++toRectConn.established + toRect.start;
-
-            // Draw the line from the latest "lineTo" position
-            ctx.lineTo(lineOnToRectPos_x, nextBusNamePos_y);
-            ctx.lineTo(lineOnToRectPos_x, rectBottomPos_y);
-            ctx.stroke();
-
-            // Reset to the outgoing line from this rectangle
-            ctx.moveTo(lineOnToRectPos_x, nextBusNamePos_y);
-        });
-
-        // Draw the name of the bus
-        ctx.fillText(bus.name, margin, nextBusNamePos_y + textHeight / 2);
-
-        // Increment y position for next bus name
-        nextBusNamePos_y += busTextPosInc_y;
-    }
     return canvas;
 }
 
@@ -912,7 +1151,7 @@ function calculateEventLength(ctx) {
 
 function generateEventKindsLegend(
     ctx,
-    graphFont,
+    font,
     eventLineWidth,
     gridLineWidth,
     gridLineColor,
@@ -923,7 +1162,6 @@ function generateEventKindsLegend(
     eventKinds
 ) {
     // Calculate placement of legend and its visuals
-    ctx.font = graphFont;
     let nextLegendElementPos_y = startPos_y;
     const drawFuncs = [];
     const lgndTxtMetrics = ctx.measureText(eventKinds[0]);
@@ -932,22 +1170,25 @@ function generateEventKindsLegend(
         .sort((a, b) => a.localeCompare(b))
         .forEach((eventKind) => {
             const elementPos_y = nextLegendElementPos_y;
-            drawFuncs.push(
-                ...generateEventDrawFuncs(
-                    ctx,
-                    graphFont,
-                    gridLineWidth,
-                    eventLineWidth,
-                    eventWrapperHeight,
-                    LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
-                    eventKind,
-                    elementPadding,
-                    elementPos_y,
-                    elementPadding + eventLength_x - gridLineWidth * 2,
-                    gridLineColor,
-                    gridLineColor,
-                    undefined
-                )
+            generateEventDrawFuncs(
+                ctx,
+                font,
+                gridLineWidth,
+                eventLineWidth,
+                eventWrapperHeight,
+                LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
+                eventKind,
+                elementPadding,
+                elementPos_y,
+                elementPadding + eventLength_x - gridLineWidth * 2,
+                gridLineColor,
+                gridLineColor,
+                undefined
+            ).forEach((func) =>
+                drawFuncs.push(() => {
+                    ctx.font = font;
+                    func();
+                })
             );
 
             drawFuncs.push(() =>
@@ -960,220 +1201,9 @@ function generateEventKindsLegend(
     return { endPos_y: nextLegendElementPos_y, drawFuncs: drawFuncs };
 }
 
-function generateEventGraph(
-    cpuDecls,
-    busDecls,
-    logEvents,
-    graphStartPos_y,
-    graphStartPos_x,
-    gridHeight,
-    graphCtx,
-    graphFont,
-    gridLineWidth,
-    gridLineColor,
-    eventLineWidth,
-    eventWrapperHeight,
-    eventLength_x,
-    startTime
-) {
-    // Calculate draw functions for each event for the decls
-    let graphEnd_y = gridHeight;
-    let currentBusDecl = undefined;
-    let currentTime = -1;
-    let prevDecl;
-    let lastEventPos_x = 0;
-    let eventStartPos_x = graphStartPos_x;
-    const decls = cpuDecls.concat(busDecls);
-    const drawFuncs = [];
-    const knownEventKinds = [];
-    let index = 0;
-    for (; index < logEvents.length; index++) {
-        const event = logEvents[index];
-        const eventKind = event.eventKind;
-        const isBusEvent = LogEvent.isBusKind(eventKind);
-        // Find the current decl
-        let currentDecl;
-        if (isBusEvent) {
-            if (eventKind != LogEvent.MessageRequest && eventKind != LogEvent.ReplyRequest) {
-                currentDecl = currentBusDecl ? currentBusDecl : busDecls.find((busDecl) => busDecl.id == event.busid);
-            } else {
-                // Keep track of the current bus decl
-                currentDecl = busDecls.find((busDecl) => busDecl.id == event.busid);
-                currentDecl.tocpu = event.tocpu;
-                currentDecl.fromcpu = event.fromcpu;
-            }
-            currentBusDecl = currentDecl;
-        } else {
-            currentDecl = cpuDecls.find((cpu) => cpu.id == event.cpunm);
-        }
-
-        currentDecl.isCpuDecl = !isBusEvent;
-
-        // Look back and find the decl for which the message complete is a reply to
-        if (index > 1 && logEvents[index - 1].eventKind == LogEvent.MessageCompleted) {
-            const events = logEvents.slice(0, index - 1);
-            for (let i = events.length - 1; i >= 0; i--) {
-                const prevEvent = events[i];
-                if (prevEvent.eventKind == LogEvent.MessageRequest || prevEvent.eventKind == LogEvent.ReplyRequest) {
-                    if (prevEvent.eventKind == LogEvent.ReplyRequest && prevEvent.busid == currentBusDecl.id) {
-                        const declWithOp = cpuDecls.find((cpuDecl) => cpuDecl.id == prevEvent.tocpu);
-                        if (declWithOp && declWithOp.activeThreads) {
-                            const activeThread = declWithOp.activeThreads.find((at) => prevEvent.callthr == at.id);
-                            if (activeThread) {
-                                activeThread.suspended = false;
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-
-        if (
-            eventKind == LogEvent.OpRequest &&
-            event.async == false &&
-            index + 1 < logEvents.length &&
-            logEvents[index + 1].eventKind == LogEvent.MessageRequest
-        ) {
-            if (!currentDecl.activeThreads) {
-                currentDecl.activeThreads = [];
-            }
-            const activeThread = currentDecl.activeThreads.find((at) => at.id == event.id);
-            if (activeThread) {
-                activeThread.suspended = true;
-            } else {
-                currentDecl.activeThreads.push({ eventKind: LogEvent.ThreadSwapIn, id: event.id, suspended: true });
-            }
-        } else if (LogEvent.isThreadSwapKind(eventKind)) {
-            if (currentDecl.activeThreads) {
-                if (eventKind == LogEvent.ThreadSwapOut) {
-                    currentDecl.activeThreads.splice(
-                        currentDecl.activeThreads.indexOf(currentDecl.activeThreads.find((at) => at.id == event.id)),
-                        1
-                    );
-                } else {
-                    currentDecl.activeThreads.push(event);
-                }
-            } else {
-                currentDecl.activeThreads = eventKind == LogEvent.ThreadSwapIn || eventKind == LogEvent.DelayedThreadSwapIn ? [event] : [];
-            }
-        }
-
-        if (event.time >= startTime) {
-            const eventEndPos_x = eventStartPos_x + eventLength_x;
-            decls.forEach((decl) => {
-                if (decl != currentDecl) {
-                    let color = gridLineColor;
-                    let lineDash = [1, 4];
-                    let lineWidth = gridLineWidth;
-                    const x_end = eventStartPos_x + eventLength_x;
-                    const x_start = eventStartPos_x - gridLineWidth;
-                    const y_pos = decl.y_pos;
-                    if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
-                        lineDash = decl.activeThreads.find((at) => at.suspended == true) ? [4, 4] : [];
-                        lineWidth = eventLineWidth;
-                        color = LogEvent.eventKindToColor.find((ektc) => ektc.kind == LogEvent.OpActivate).color;
-                    }
-                    drawFuncs.push(() => drawLine(graphCtx, lineWidth, lineDash, color, x_start, y_pos, x_end, y_pos));
-                }
-            });
-
-            // Generate draw function for the x-axis line
-            if (currentTime < event.time) {
-                // Add function that draws the visuals for the x-axis line
-                graphCtx.font = graphFont;
-                const txtWidth = graphCtx.measureText(event.time).width;
-                const lineEndPos_y = gridHeight;
-                const linePox_x = eventStartPos_x;
-                graphEnd_y = lineEndPos_y + txtWidth;
-                drawFuncs.push(() => {
-                    graphCtx.font = graphFont;
-                    drawLine(graphCtx, gridLineWidth, [1, 4], gridLineColor, linePox_x, graphStartPos_y, linePox_x, lineEndPos_y);
-
-                    graphCtx.save();
-                    graphCtx.translate(linePox_x, lineEndPos_y);
-                    graphCtx.rotate(Math.PI / 2);
-                    graphCtx.fillText(event.time, eventLineWidth, 0);
-                    graphCtx.restore();
-                });
-
-                // Update time
-                currentTime = event.time;
-            }
-
-            if (eventEndPos_x > 65000) {
-                // A canvas wider than ~65175 cannot be shown in VSCode so break out
-                break;
-            }
-
-            // Generate visual for event and add the draw function
-            drawFuncs.push(
-                ...generateEventDrawFuncs(
-                    graphCtx,
-                    graphFont,
-                    gridLineWidth,
-                    eventLineWidth,
-                    eventWrapperHeight,
-                    LogEvent.isThreadKind(eventKind) ? event.id : LogEvent.kindToAbb(eventKind),
-                    eventKind,
-                    eventStartPos_x,
-                    currentDecl.y_pos,
-                    eventEndPos_x,
-                    gridLineColor,
-                    gridLineColor,
-                    LogEvent.isBusKind(eventKind)
-                        ? prevDecl && (eventKind == LogEvent.MessageRequest || eventKind == LogEvent.ReplyRequest)
-                            ? prevDecl.y_pos
-                            : eventKind == LogEvent.MessageCompleted
-                            ? cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).y_pos
-                            : undefined
-                        : undefined
-                )
-            );
-
-            // Generate draw function for the event "wrapper line"
-            if (index != logEvents.length - 1 && !LogEvent.isOperationKind(eventKind)) {
-                const begin_y = currentDecl.y_pos - eventWrapperHeight / 2;
-                const end_y = currentDecl.y_pos + eventWrapperHeight / 2;
-                drawFuncs.push(() => drawLine(graphCtx, gridLineWidth, [], gridLineColor, eventEndPos_x, begin_y, eventEndPos_x, end_y));
-
-                if (
-                    !prevDecl ||
-                    currentDecl.y_pos != prevDecl.y_pos ||
-                    (index > 0 && LogEvent.isOperationKind(logEvents[index - 1].eventKind))
-                ) {
-                    const startPos_x = eventStartPos_x;
-                    drawFuncs.push(() => drawLine(graphCtx, gridLineWidth, [], gridLineColor, startPos_x, begin_y, startPos_x, end_y));
-                }
-            }
-
-            eventStartPos_x = eventEndPos_x;
-            // Keep track of the highest x-axis value
-            if (lastEventPos_x < eventEndPos_x) {
-                lastEventPos_x = eventEndPos_x;
-            }
-
-            // Keep track of which event types are present so the legend can be generated
-            if (!knownEventKinds.find((knownEventKind) => knownEventKind == eventKind)) {
-                knownEventKinds.push(eventKind);
-            }
-        }
-
-        prevDecl = currentDecl;
-    }
-
-    return {
-        drawFuncs: drawFuncs,
-        endPos_x: lastEventPos_x,
-        endPos_y: graphEnd_y,
-        eventKinds: knownEventKinds,
-        index: index < logEvents.length ? index : undefined,
-    };
-}
-
 function generateEventDrawFuncs(
     ctx,
-    graphFont,
+    font,
     gridLineWidth,
     eventLineWidth,
     eventWrapperHeight,
@@ -1187,6 +1217,7 @@ function generateEventDrawFuncs(
     targetEventPos_y
 ) {
     ctx.fillStyle = txtColor;
+    ctx.font = font;
     const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
     const drawFuncs = [];
     // Calculate and add the draw function
@@ -1207,7 +1238,7 @@ function generateEventDrawFuncs(
             const txtMetrics = eventTxt ? ctx.measureText(eventTxt) : undefined;
             drawThreadEventMarker(
                 ctx,
-                graphFont,
+                font,
                 txtMetrics ? txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent : 0,
                 eventWrapperHeight,
                 eventLineWidth,
@@ -1226,7 +1257,7 @@ function generateEventDrawFuncs(
                 let end_y = eventPos_y - eventWrapperHeight;
                 let start_y = targetEventPos_y + eventWrapperHeight;
 
-                if (eventKind == LogEvent.MessageCompleted) {
+                if (eventKind == LogEvent.messageCompleted) {
                     pos_x = eventEndPos_x;
                     end_y = targetEventPos_y + eventWrapperHeight;
                     start_y = eventPos_y - eventWrapperHeight;
@@ -1248,7 +1279,7 @@ function generateEventDrawFuncs(
 
 function drawThreadEventMarker(
     ctx,
-    graphFont,
+    font,
     txtHeight,
     eventWrapperHeight,
     eventLineWidth,
@@ -1259,14 +1290,14 @@ function drawThreadEventMarker(
     eventPos_y
 ) {
     // Draw marker for event
-    ctx.font == graphFont;
+    ctx.font == font;
     const halfEventLineWidth = Math.ceil(eventLineWidth / 2);
     const markerPos_x = eventStartPos_x + (eventEndPos_x - eventStartPos_x) / 2;
     const markerStart_y = eventPos_y - eventLineWidth - txtHeight;
     const markerEnd_y = markerStart_y - eventWrapperHeight;
     const markerWidth = eventLineWidth - 1;
     if (LogEvent.isThreadSwapKind(eventKind)) {
-        if (eventKind == LogEvent.DelayedThreadSwapIn) {
+        if (eventKind == LogEvent.delayedThreadSwapIn) {
             const lineLength = Math.abs(Math.abs(markerEnd_y) - Math.abs(markerStart_y)) / 2;
             const start_x = markerPos_x - lineLength / 2;
             const end_x = markerPos_x + lineLength / 2;
@@ -1274,7 +1305,7 @@ function drawThreadEventMarker(
         }
 
         // Adjust arrow placement and position depending on in/out
-        const isSwapIn = eventKind != LogEvent.ThreadSwapOut;
+        const isSwapIn = eventKind != LogEvent.threadSwapOut;
         drawArrow(
             ctx,
             markerPos_x,
@@ -1297,7 +1328,7 @@ function drawThreadEventMarker(
             markerEnd_y - markerStart_y + halfEventLineWidth,
             markerWidth,
             eventColor,
-            eventKind == LogEvent.ThreadCreate ? 0 : Math.PI / 4
+            eventKind == LogEvent.threadCreate ? 0 : Math.PI / 4
         );
     }
 }
@@ -1433,34 +1464,45 @@ function drawArrow(ctx, x_start, y_start, x_end, y_end, aWidth, aLength, fill, l
  *
  */
 
+function redrawViews(currentViewId) {
+    viewContainer.innerHTML = "";
+    // Remove canvas from views and rebuild and display the canvas for current view
+    views.forEach((view) => {
+        if (view.id != archViewId) {
+            view.canvas = undefined;
+        }
+        if (view.id == currentViewId) {
+            // Rebuild canvas for the current view
+            view.canvas = view.canvas ? view.canvas : buildViewCanvas(currentViewId, selectedTime);
+            viewContainer.appendChild(view.canvas);
+        }
+    });
+}
+
 function buildViewCanvas(viewId, startTime) {
-    if (viewId == archViewId) {
-        return generateArchCanvas(logData.cpuDeclEvents, logData.busDeclEvents);
-    }
-
-    if (viewId == execViewId) {
-        return generateExecCanvas(logData.cpuDeclEvents, logData.busDeclEvents, logData.executionEvents, startTime);
-    }
-
-    return generateCpuCanvas(
-        logData.cpusWithEvents.find((cwe) => cwe.id == viewId.replace(/\D/g, "")).executionEvents,
-        logData.busDeclEvents,
-        startTime
-    );
+    return viewId == execViewId
+        ? canvasDrawer.generateExecCanvas(startTime)
+        : viewId == archViewId
+        ? canvasDrawer.generateArchCanvas()
+        : generateCpuCanvas(
+              logData.cpusWithEvents.find((cwe) => cwe.id == viewId.replace(/\D/g, "")).executionEvents,
+              logData.busDeclEvents,
+              startTime
+          );
 }
 
 function setButtonColors(btns, activeBtn) {
     // There is alwasy an active (pressed) button. Change its color to secondary
     if (activeBtn) {
-        activeBtn.style.background = BtnColors.secondaryBackground;
-        activeBtn.style.color = BtnColors.secondaryForeground;
+        activeBtn.style.background = btnColors.secondaryBackground;
+        activeBtn.style.color = btnColors.secondaryForeground;
     }
 
     // Update the other buttons to primary color
     btns.forEach((btn) => {
         if (btn.id != activeBtn.id) {
-            btn.style.background = BtnColors.primaryBackground;
-            btn.style.color = BtnColors.primaryForeground;
+            btn.style.background = btnColors.primaryBackground;
+            btn.style.color = btnColors.primaryForeground;
         }
     });
 }
@@ -1468,9 +1510,9 @@ function setButtonColors(btns, activeBtn) {
 function updateFontAndColors(scaleWithFont, matchTheme) {
     const computedStyle = getComputedStyle(document.body);
     // Update font properties
-    font.size = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 15;
-    font.family = computedStyle.getPropertyValue("--vscode-editor-font-family").trim();
-    font.color = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
+    const fontSize = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 15;
+    const fontFamily = computedStyle.getPropertyValue("--vscode-editor-font-family").trim();
+    fontColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
 
     // Update background color for the graphs
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
@@ -1478,35 +1520,34 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     // Update colors for events and bus
     LogEvent.eventKindToColor.forEach((ektc) => {
         if (LogEvent.isOperationKind(ektc.kind) || LogEvent.isThreadKind(ektc.kind)) {
-            const color =
-                ektc.kind == LogEvent.ThreadCreate
+            ektc.color = matchTheme
+                ? ektc.kind == LogEvent.threadCreate
                     ? computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim()
-                    : ektc.kind == LogEvent.ThreadSwapIn
+                    : ektc.kind == LogEvent.threadSwapIn
                     ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim()
-                    : ektc.kind == LogEvent.ThreadKill
+                    : ektc.kind == LogEvent.threadKill
                     ? computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim()
-                    : ektc.kind == LogEvent.ThreadSwapOut
+                    : ektc.kind == LogEvent.threadSwapOut
                     ? computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim()
-                    : ektc.kind == LogEvent.DelayedThreadSwapIn
+                    : ektc.kind == LogEvent.delayedThreadSwapIn
                     ? computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim()
-                    : computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim();
-
-            ektc.color = matchTheme && color ? color : LogEvent.kindToStandardColor(ektc.kind);
+                    : computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()
+                : LogEvent.kindToStandardColor(ektc.kind);
         }
     });
-    busColors = [font.color];
+    busColors = [fontColor];
     busColors.push(...LogEvent.eventKindToColor.map((ektc) => ektc.color));
 
     // Update button colors
-    BtnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();
-    BtnColors.secondaryBackground = computedStyle.getPropertyValue("--vscode-button-secondaryBackground").trim();
-    BtnColors.primaryForeground = computedStyle.getPropertyValue("--vscode-button-foreground").trim();
-    BtnColors.secondaryForeground = computedStyle.getPropertyValue("--vscode-button-secondaryForeground").trim();
+    btnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();
+    btnColors.secondaryBackground = computedStyle.getPropertyValue("--vscode-button-secondaryBackground").trim();
+    btnColors.primaryForeground = computedStyle.getPropertyValue("--vscode-button-foreground").trim();
+    btnColors.secondaryForeground = computedStyle.getPropertyValue("--vscode-button-secondaryForeground").trim();
 
     // Update size of graph elements
-    declFont = `${font.size * 2}px ${font.family}`;
-    graphFont = `${font.size}px ${font.family}`;
-    gridLineWidth = font.size / 10 > 1 ? Math.floor(font.size / 10) : 1;
+    declFont = `${fontSize * 2}px ${fontFamily}`;
+    graphFont = `${fontSize}px ${fontFamily}`;
+    gridLineWidth = fontSize / 10 > 1 ? Math.floor(fontSize / 10) : 1;
     eventLineWidth = gridLineWidth * 4;
     eventWrapperHeight = eventLineWidth * 2 + eventLineWidth;
 }

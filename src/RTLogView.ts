@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
 import {
@@ -18,21 +19,36 @@ import * as Fs from "fs-extra";
 import * as Path from "path";
 
 enum LogEvent {
-    CpuDecl = "CPUdecl",
-    BusDecl = "BUSdecl",
-    ThreadCreate = "ThreadCreate",
-    ThreadSwapIn = "ThreadSwapIn",
-    DelayedThreadSwapIn = "DelayedThreadSwapIn",
-    ThreadSwapOut = "ThreadSwapOut",
-    ThreadKill = "ThreadKill",
-    MessageRequest = "MessageRequest",
-    MessageActivate = "MessageActivate",
-    MessageCompleted = "MessageCompleted",
-    OpActivate = "OpActivate",
-    OpRequest = "OpRequest",
-    OpCompleted = "OpCompleted",
-    ReplyRequest = "ReplyRequest",
-    DeployObj = "DeployObj",
+    cpuDecl = "CPUdecl",
+    busDecl = "BUSdecl",
+    threadCreate = "ThreadCreate",
+    threadSwapIn = "ThreadSwapIn",
+    delayedThreadSwapIn = "DelayedThreadSwapIn",
+    threadSwapOut = "ThreadSwapOut",
+    threadKill = "ThreadKill",
+    messageRequest = "MessageRequest",
+    messageActivate = "MessageActivate",
+    messageCompleted = "MessageCompleted",
+    opActivate = "OpActivate",
+    opRequest = "OpRequest",
+    opCompleted = "OpCompleted",
+    replyRequest = "ReplyRequest",
+    deployObj = "DeployObj",
+}
+
+interface ConjectureTarget {
+    kind: string;
+    opname: string;
+    time: number;
+    thread: number;
+}
+
+interface ValidationConjecture {
+    status: boolean;
+    name: string;
+    expression: string;
+    source: ConjectureTarget;
+    destination: ConjectureTarget;
 }
 
 export class RTLogView extends AutoDisposable {
@@ -65,6 +81,11 @@ export class RTLogView extends AutoDisposable {
 
                                 this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
                                     this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
+                                    const conjFilePath = Path.join(Path.dirname(doc.uri.fsPath), `${this._logName}.conj`);
+                                    const conjObjs: ValidationConjecture[] = Fs.existsSync(conjFilePath)
+                                        ? JSON.parse(Fs.readFileSync(conjFilePath, "utf-8"))
+                                        : [];
+
                                     if (data) {
                                         commands.executeCommand("workbench.action.closeActiveEditor");
                                         this.createWebView(
@@ -72,7 +93,8 @@ export class RTLogView extends AutoDisposable {
                                             data.cpuDecls,
                                             data.executionEvents,
                                             data.cpusWithEvents,
-                                            data.timeStamps
+                                            data.timeStamps,
+                                            conjObjs
                                         );
                                     }
                                 });
@@ -86,7 +108,9 @@ export class RTLogView extends AutoDisposable {
     dispose() {
         // Figure out how to close the editor that showed the log view
         this._panel.dispose();
-        while (this._disposables.length) this._disposables.pop().dispose();
+        while (this._disposables.length) {
+            this._disposables.pop().dispose();
+        }
     }
 
     private changesAffectsViewCheck(event: ConfigurationChangeEvent) {
@@ -129,7 +153,6 @@ export class RTLogView extends AutoDisposable {
         const stringPlaceholderSign = "-";
         const activeMsgInitEvents: any[] = [];
         const busTopos: any[] = [];
-        const decls: any[] = [];
         const timeStamps: number[] = [];
         let currrentTime: number = -1;
         logLines?.forEach((line) => {
@@ -166,7 +189,21 @@ export class RTLogView extends AutoDisposable {
 
                 // Parse the event
                 for (let i = 0; i < contentSplit.length - 1; i++) {
-                    logEventObj[contentSplit[i].slice(0, contentSplit[i].length - 1)] = this.stringValueToTypedValue(contentSplit[++i]);
+                    const property = contentSplit[i].slice(0, contentSplit[i].length - 1);
+                    // If log event is of type busdecl then the topology needs to be parsed
+                    if (property == "topo") {
+                        const values = contentSplit[++i];
+                        let to: any = this.stringValueToTypedValue(values.slice(values.indexOf(",") + 1).replace("}", ""));
+                        if (Number(to)) {
+                            to = [to];
+                        }
+                        logEventObj[property] = {
+                            from: this.stringValueToTypedValue(values.slice(0, values.indexOf(",")).replace("{", "")),
+                            to: to,
+                        };
+                    } else {
+                        logEventObj[property] = this.stringValueToTypedValue(contentSplit[++i]);
+                    }
                 }
 
                 if (logEventObj.time > currrentTime) {
@@ -174,11 +211,13 @@ export class RTLogView extends AutoDisposable {
                     timeStamps.push(currrentTime);
                 }
 
-                if (logEventObj.eventKind == LogEvent.CpuDecl || logEventObj.eventKind == LogEvent.BusDecl) {
-                    decls.push({ eventKind: logEventObj.eventKind, name: logEventObj.name, id: logEventObj.id });
-                } else if (logEventObj.eventKind != LogEvent.DeployObj) {
-                    if (logEventObj.eventKind != LogEvent.MessageActivate) {
-                        if (logEventObj.eventKind == LogEvent.MessageCompleted) {
+                if (logEventObj.eventKind == LogEvent.busDecl) {
+                    busDecls.push(logEventObj);
+                } else if (logEventObj.eventKind == LogEvent.cpuDecl) {
+                    cpuDecls.push(logEventObj);
+                } else if (logEventObj.eventKind != LogEvent.deployObj) {
+                    if (logEventObj.eventKind != LogEvent.messageActivate) {
+                        if (logEventObj.eventKind == LogEvent.messageCompleted) {
                             const msgInitEvent: any = activeMsgInitEvents.splice(
                                 activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
                                 1
@@ -187,7 +226,7 @@ export class RTLogView extends AutoDisposable {
                             logEventObj.busid = msgInitEvent.busid;
                             logEventObj.callthr = msgInitEvent.callthr;
                             logEventObj.tocpu = msgInitEvent.tocpu;
-                            if (msgInitEvent.eventKind == LogEvent.MessageRequest) {
+                            if (msgInitEvent.eventKind == LogEvent.messageRequest) {
                                 logEventObj.opname = msgInitEvent.opname;
                                 logEventObj.objref = msgInitEvent.objref;
                                 logEventObj.clnm = msgInitEvent.clnm;
@@ -213,11 +252,11 @@ export class RTLogView extends AutoDisposable {
                             cpusWithEvents.push(cpuWithEvents);
                         }
 
-                        if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {
+                        if (logEventObj.eventKind == LogEvent.messageRequest || logEventObj.eventKind == LogEvent.replyRequest) {
                             activeMsgInitEvents.push(logEventObj);
                         }
 
-                        if (logEventObj.eventKind == LogEvent.CpuDecl) {
+                        if (logEventObj.eventKind == LogEvent.cpuDecl) {
                             cpuWithEvents.name = logEventObj.name;
                         } else {
                             cpuWithEvents.executionEvents.push(logEventObj);
@@ -234,7 +273,7 @@ export class RTLogView extends AutoDisposable {
                     cpuWithDeploy.deployEvents.push(logEventObj);
                 }
 
-                if (logEventObj.eventKind == LogEvent.MessageRequest || logEventObj.eventKind == LogEvent.ReplyRequest) {
+                if (logEventObj.eventKind == LogEvent.messageRequest || logEventObj.eventKind == LogEvent.replyRequest) {
                     const existingBusTopo = busTopos.find((topo: any) => topo.id == logEventObj.busid);
                     if (!existingBusTopo) {
                         busTopos.push({ id: logEventObj.busid, topo: { from: logEventObj.fromcpu, to: [logEventObj.tocpu] } });
@@ -252,23 +291,32 @@ export class RTLogView extends AutoDisposable {
             const cpuWithDeployEvents = cpusWithDeployEvents.find((cwde) => cwde.id == cpuWithEvent.id);
             cpuWithEvent.deployEvents = cpuWithDeployEvents ? cpuWithDeployEvents.deployEvents : [];
 
-            const name: string =
-                decls.find((decl) => decl.eventKind == LogEvent.CpuDecl && decl.id == cpuWithEvent.id)?.name ??
-                (cpuWithEvent.id == 0 ? "vCPU" : `CPU ${cpuWithEvent.id}`);
-            cpuDecls.push({ eventKind: LogEvent.CpuDecl, id: cpuWithEvent.id, expl: false, sys: "", name: name, time: 0 });
+            let name: string = cpuDecls.find((decl) => decl.id == cpuWithEvent.id)?.name;
+            if (!name) {
+                name = cpuWithEvent.id == 0 ? "vCPU" : `CPU ${cpuWithEvent.id}`;
+                cpuDecls.push({
+                    eventKind: LogEvent.cpuDecl,
+                    id: cpuWithEvent.id,
+                    expl: false,
+                    sys: "",
+                    name: name,
+                    time: 0,
+                });
+            }
+
             cpuWithEvent.name = name;
         });
 
         busTopos.forEach((bt) => {
-            busDecls.push({
-                eventKind: LogEvent.BusDecl,
-                id: bt.id,
-                topo: bt.topo,
-                name:
-                    decls.find((decl) => decl.eventKind == LogEvent.BusDecl && decl.id == bt.id)?.name ??
-                    (bt.id == 0 ? "vBUS" : `BUS ${bt.id}`),
-                time: 0,
-            });
+            if (!busDecls.find((decl) => decl.id == bt.id)) {
+                busDecls.push({
+                    eventKind: LogEvent.busDecl,
+                    id: bt.id,
+                    topo: bt.topo,
+                    name: bt.id == 0 ? "vBUS" : `BUS ${bt.id}`,
+                    time: 0,
+                });
+            }
         });
 
         return {
@@ -308,7 +356,14 @@ export class RTLogView extends AutoDisposable {
         return value.replace('"', "").replace('"', "");
     }
 
-    private createWebView(busDecls: any[], cpuDecls: any[], executionEvents: any[], cpusWithEvents: any[], timeStamps: number[]) {
+    private createWebView(
+        busDecls: any[],
+        cpuDecls: any[],
+        executionEvents: any[],
+        cpusWithEvents: any[],
+        timeStamps: number[],
+        conjObjs: ValidationConjecture[]
+    ) {
         if (!this._wsFolder) {
             return;
         }
@@ -348,6 +403,7 @@ export class RTLogView extends AutoDisposable {
                     returnObj.timeStamps = timeStamps;
                     returnObj.scaleWithFont = config.get("scaleWithFont");
                     returnObj.matchTheme = config.get("matchTheme");
+                    returnObj.conjObjs = conjObjs;
                 }
 
                 this._panel.webview.postMessage(returnObj);
