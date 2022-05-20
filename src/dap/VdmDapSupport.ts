@@ -4,10 +4,6 @@ import * as vscode from "vscode";
 import { ClientManager } from "../ClientManager";
 import { CompletedParsingParams, CompletedParsingNotification } from "../server/ServerNotifications";
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
-import { guessDialect, vdmDialects } from "../util/DialectUtil";
-import * as Util from "../util/Util";
-import * as Path from "path";
-import * as Fs from "fs-extra";
 import AutoDisposable from "../helper/AutoDisposable";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
@@ -42,7 +38,9 @@ export namespace VdmDapSupport {
     }
 
     export function addPort(folder: vscode.WorkspaceFolder, port: number) {
-        if (factory) factory.addPort(folder, port);
+        if (factory) {
+            factory.addPort(folder, port);
+        }
     }
 
     export class VdmConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -59,8 +57,9 @@ export namespace VdmDapSupport {
                 createDebugAdapterTracker(session: vscode.DebugSession) {
                     return {
                         onError: (m) => {
-                            if ((m.message = "connection closed"))
+                            if ((m.message = "connection closed")) {
                                 sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                            }
                         },
                     };
                 },
@@ -106,62 +105,8 @@ export namespace VdmDapSupport {
 
     export class VdmDebugAdapterDescriptorFactory extends AutoDisposable implements vscode.DebugAdapterDescriptorFactory {
         private dapPorts: Map<vscode.Uri, number> = new Map();
-        private _session: vscode.DebugSession;
         constructor(private _clientManager: ClientManager) {
             super();
-            this._disposables.push(
-                vscode.commands.registerCommand("vdm-vscode.debug.rtlog.start", async () => {
-                    // Ask the user for the name of the log file
-                    const logName: string = await vscode.window.showInputBox({
-                        prompt: "Input log name",
-                        placeHolder: "Name of the log file",
-                    });
-                    if (!logName) {
-                        return;
-                    }
-
-                    const logPath: string = Path.join(Util.generatedDataPath(this._session.workspaceFolder).fsPath, "rtlogs");
-                    // Ensure that the log file is created overwriting existing log file
-                    Fs.ensureDir(logPath).then(() => {
-                        const fullPath: string = Path.join(logPath, `${logName}.rtlog`);
-                        Fs.writeFile(fullPath, "").then(() => {
-                            // Toggle the button from start to stop
-                            vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.stop", true);
-                            vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.start", false);
-
-                            // Send the command to start logging
-                            this._session.customRequest("sdap/log", fullPath);
-                        });
-                    });
-                })
-            );
-            this._disposables.push(
-                vscode.commands.registerCommand("vdm-vscode.debug.rtlog.stop", () => {
-                    // Toggle the button from stop to start
-                    vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.stop", false);
-                    vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.start", true);
-
-                    // Send the command to stop logging
-                    this._session.customRequest("sdap/log", "stop");
-                })
-            );
-
-            this._disposables.push(
-                vscode.debug.onDidTerminateDebugSession(() => {
-                    // Disable the buttons for starting and stopping logging
-                    vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.stop", false);
-                    vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.start", false);
-                })
-            );
-
-            this._disposables.push(
-                vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
-                    // If the dialect is VDM-RT then show the the start logging button in the debug toolbar
-                    guessDialect(session.workspaceFolder).then((dialect: vdmDialects) =>
-                        vscode.commands.executeCommand("setContext", "vdm-vscode.debug.rtlog.start", dialect == vdmDialects.VDMRT)
-                    );
-                })
-            );
         }
 
         addPort(folder: vscode.WorkspaceFolder, dapPort: number) {
@@ -172,7 +117,6 @@ export namespace VdmDapSupport {
             session: vscode.DebugSession,
             _executable: vscode.DebugAdapterExecutable | undefined
         ): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
-            this._session = session;
             let dapPort: number = this.dapPorts.get(session.workspaceFolder.uri);
             // Check if server has not been launched
             if (!dapPort) {

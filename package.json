@@ -303,24 +303,6 @@
                 }
             },
             {
-                "command": "vdm-vscode.debug.rtlog.start",
-                "title": "Start Tealtime Logging",
-                "category": "VDM",
-                "icon": {
-                    "light": "/resources/icons/light/coverage_overlay_light.svg",
-                    "dark": "/resources/icons/dark/coverage_overlay_dark.svg"
-                }
-            },
-            {
-                "command": "vdm-vscode.debug.rtlog.stop",
-                "title": "Stop Tealtime Logging",
-                "category": "VDM",
-                "icon": {
-                    "light": "/resources/icons/coverage_overlay_enabled.svg",
-                    "dark": "/resources/icons/coverage_overlay_enabled.svg"
-                }
-            },
-            {
                 "command": "vdm-vscode.pog.run",
                 "title": "Run Proof Obligation Generation",
                 "category": "VDM",
@@ -646,18 +628,6 @@
                     "group": "navigation"
                 }
             ],
-            "debug/toolBar": [
-                {
-                    "command": "vdm-vscode.debug.rtlog.start",
-                    "when": "vdm-vscode.debug.rtlog.start == true",
-                    "group": "navigation"
-                },
-                {
-                    "command": "vdm-vscode.debug.rtlog.stop",
-                    "when": "vdm-vscode.debug.rtlog.stop == true",
-                    "group": "navigation"
-                }
-            ],
             "editor/context": [
                 {
                     "submenu": "vdm-vscode.vdmsubmenu",
@@ -666,14 +636,6 @@
                 }
             ],
             "commandPalette": [
-                {
-                    "command": "vdm-vscode.debug.rtlog.start",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.debug.rtlog.stop",
-                    "when": "false"
-                },
                 {
                     "command": "vdm-vscode.changeVdmjProperties",
                     "when": "vdm-vscode.changeVdmjProperties"
@@ -1178,10 +1140,10 @@
                                         "description": "Precision level if using high precision (ignored for regular precision).",
                                         "default": 100
                                     },
-                                    "enableLogging": {
-                                        "type": "boolean",
-                                        "description": "Log real-time events.",
-                                        "default": false
+                                    "logging": {
+                                        "type": "string",
+                                        "description": "A path to the logfile (must end with .rtlog). If specified the real-time events will be logged",
+                                        "default": ""
                                     },
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
