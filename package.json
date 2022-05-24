@@ -1049,6 +1049,12 @@
                     "scope": "resource",
                     "description": "Enable/disable code lenses"
                 },
+                "vdm-vscode.trace.debug": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enables tracing DAP protocol messages",
+                    "scope": "window"
+                },
                 "vdm-vscode.trace.server": {
                     "type": "string",
                     "enum": [
