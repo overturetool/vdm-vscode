@@ -5,6 +5,66 @@ import { ClientManager } from "../ClientManager";
 import { CompletedParsingParams, CompletedParsingNotification } from "../server/ServerNotifications";
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 
+class IdentifierNameHandler {
+    private static unicodeCategories: Array<any> = [
+        require("unicode/category/Cc"), // CONTROL
+        require("unicode/category/Zl"), // LINE_SEPARATOR
+        require("unicode/category/Zp"), // PARAGRAPH_SEPARATOR
+        require("unicode/category/Zs"), // SPACE_SEPARATOR
+        require("unicode/category/Cs"), // SURROGATE
+        //require("unicode/category/Cn"), // UNASSIGNED
+        require("unicode/category/Nd"), // DECIMAL_DIGIT_NUMBER
+        require("unicode/category/Pc"), // CONNECTOR_PUNCTUATION
+        require("unicode/category/Lu"), // UPPER-CASE LETTER
+        require("unicode/category/Ll"), // LOWER-CASE LETTER
+        require("unicode/category/Lt"), // TITLE-CASE LETTER
+        require("unicode/category/Lm"), // MODIFIER LETTER
+        require("unicode/category/Lo"), // OTHER LETTER
+    ];
+    private static illegalCategories: Set<string> = new Set(["Cc", "Zl", "Zp", "Zs", "Cs", "Cn"]);
+    private static illegalStartCategories: Set<string> = new Set(...this.illegalCategories, ["Nd", "Pc"]);
+    private static letterCategories: Set<string> = new Set(["Lu", "Ll", "Lt", "Lt", "Lm", "Lo"]);
+
+    public static isValidIdentifier(identifier: string): boolean {
+        let isValid: boolean =
+            identifier[0] == "$" ||
+            this.validFirstLetter(identifier.charCodeAt(0), this.getUnicodeCategory(identifier.charCodeAt(0))?.category);
+        if (isValid) {
+            for (let i = 1; i < identifier.length; i++) {
+                const uniCodeChar: number = identifier.charCodeAt(i);
+                const category: any = this.getUnicodeCategory(uniCodeChar);
+                isValid =
+                    uniCodeChar < 256
+                        ? identifier[i] == "$" ||
+                          identifier[i] == "_" ||
+                          identifier[i] == "'" ||
+                          (category && (this.letterCategories.has(category.category) || category.category == "Nd"))
+                        : category && !this.illegalCategories.has(category.category);
+                if (!isValid) {
+                    break;
+                }
+            }
+        }
+
+        return isValid;
+    }
+
+    private static validFirstLetter(uniCodeChar: number, category: any): boolean {
+        return category && (uniCodeChar < 256 ? this.letterCategories.has(category) : !this.illegalStartCategories.has(category));
+    }
+
+    private static getUnicodeCategory(uniCode: number): any {
+        for (let i = 0; i < this.unicodeCategories.length; i++) {
+            const category = this.unicodeCategories.at(i)[uniCode];
+            if (category) {
+                return category;
+            }
+        }
+
+        return undefined;
+    }
+}
+
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
     dynamicTypeChecks?: boolean;
@@ -25,14 +85,25 @@ export namespace VdmDapSupport {
     export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
         if (!initialized) {
             initialized = true;
-            // register a configuration provider for 'vdm' debug type
+            // Register a configuration provider for 'vdm' debug type
             const provider = new VdmConfigurationProvider();
             context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("vdm", provider));
 
-            // run the debug adapter as a server inside the extension and communicating via a socket
+            // Run the debug adapter as a server inside the extension and communicating via a socket
             factory = new VdmDebugAdapterDescriptorFactory(clientManager);
 
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
+
+            // Register evaluatable expression provider to handle cases where the user hovers over variables with characters in their names that are allowed in VDM. E.g.: y'
+            vscode.languages.registerEvaluatableExpressionProvider("vdmsl", {
+                provideEvaluatableExpression(
+                    document: vscode.TextDocument,
+                    position: vscode.Position
+                ): vscode.ProviderResult<vscode.EvaluatableExpression> {
+                    const wordRange = document.getWordRangeAtPosition(position, /[^ ;,]+/);
+                    return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
+                },
+            });
         }
     }
 
