@@ -142,7 +142,7 @@ export class ClientManager extends AutoDisposable {
             documentSelector: [{ scheme: "file", language: dialect, pattern: `${wsFolder.uri.fsPath}/**/*` }],
             diagnosticCollectionName: "vdm-vscode",
             workspaceFolder: wsFolder,
-            traceOutputChannel: window.createOutputChannel(`vdm-vscode: ${wsFolder.name}`),
+            traceOutputChannel: window.createOutputChannel(`vdm-vscode LSP: ${wsFolder.name}`),
             middleware: new VdmMiddleware(),
         };
 
