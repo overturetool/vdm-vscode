@@ -35,6 +35,8 @@ import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHand
 import * as Util from "./util/Util";
 import { FMUHandler } from "./handlers/FMUHandler";
 
+let clientManager: ClientManager;
+
 export async function activate(context: ExtensionContext) {
     // Setup server factory
     let serverFactory: ServerFactory;
@@ -51,7 +53,7 @@ export async function activate(context: ExtensionContext) {
     });
 
     // Setup client manager
-    const clientManager: ClientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
+    clientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
     context.subscriptions.push(clientManager);
 
     // Keep track of VDM workspace folders
@@ -128,11 +130,12 @@ function didChangeConfigurationCheck(event: ConfigurationChangeEvent) {
     }
 }
 
-export function deactivate(): Thenable<void> | undefined {
-    let promises: Thenable<void>[] = [];
+export async function deactivate() {
+    // Make sure that the extension sends the client/shutDown message to the server before deactivation
+    for (const client of clientManager.getAllClients()) {
+        await client.stop();
+    }
 
-    // Hide VDM VS Code buttons
-    promises.push(commands.executeCommand("setContext", "vdm-submenus-show", false));
-
-    return Promise.all(promises).then(() => undefined);
+    // Hide VDM buttons
+    await commands.executeCommand("setContext", "vdm-submenus-show", false);
 }

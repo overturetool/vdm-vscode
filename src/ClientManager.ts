@@ -49,6 +49,10 @@ export class ClientManager extends AutoDisposable {
         }
     }
 
+    getAllClients(): SpecificationLanguageClient[] {
+        return Array.from(this._clients.values());
+    }
+
     stopClients(wsFolders: readonly WorkspaceFolder[]) {
         for (const wsFolder of wsFolders) {
             const client = this.get(wsFolder);
