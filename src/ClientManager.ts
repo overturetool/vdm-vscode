@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { commands, Disposable, RelativePattern, TextDocument, Uri, window, workspace, WorkspaceFolder } from "vscode";
@@ -14,10 +15,11 @@ export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
     private _wsDisposables: Map<string, Disposable[]> = new Map();
     private _restartOnCrash: boolean = true;
+    private _highPrecisionClients: Set<SpecificationLanguageClient> = new Set();
 
     constructor(
         private _serverFactory: ServerFactory,
-        private _acceptedLanguageIds: string[],
+        private _acceptedLanguageIds: Set<string>,
         private _languageIdFilePatternFunc: (fsPath: string) => RelativePattern
     ) {
         super();
@@ -26,6 +28,10 @@ export class ClientManager extends AutoDisposable {
 
     get name(): string {
         return this.constructor["name"];
+    }
+
+    isHighPrecisionClient(client: SpecificationLanguageClient): boolean {
+        return this._highPrecisionClients.has(client);
     }
 
     has(wsFolder: WorkspaceFolder): boolean {
@@ -37,8 +43,16 @@ export class ClientManager extends AutoDisposable {
     }
 
     delete(wsFolder: WorkspaceFolder): boolean {
+        if (!this._clients.has(ClientManager.getKey(wsFolder))) {
+            return false;
+        }
         this.getDisposables(wsFolder).forEach((d) => d.dispose());
-        return this._clients.delete(ClientManager.getKey(wsFolder));
+        const client: SpecificationLanguageClient = this._clients.get(ClientManager.getKey(wsFolder));
+        this._clients.delete(ClientManager.getKey(wsFolder));
+        if (this._highPrecisionClients.has(client)) {
+            this._highPrecisionClients.delete(client);
+        }
+        return true;
     }
 
     restart(wsFolder: WorkspaceFolder): void {
@@ -106,7 +120,7 @@ export class ClientManager extends AutoDisposable {
 
     launchClient(document: TextDocument) {
         // Only accept documents with accepted language ids.
-        if (!this._acceptedLanguageIds.find((languageId) => languageId == document.languageId)) {
+        if (!this._acceptedLanguageIds.has(document.languageId)) {
             return;
         }
         // Check that the document encoding matches the encoding setting
@@ -124,8 +138,9 @@ export class ClientManager extends AutoDisposable {
     }
 
     private addClient(wsFolder: WorkspaceFolder, client: SpecificationLanguageClient): void {
-        if (this._clients.has(ClientManager.getKey(wsFolder)))
+        if (this._clients.has(ClientManager.getKey(wsFolder))) {
             console.info(`[${this.name}] Overwriting client for workspace folder: ${wsFolder.name}`);
+        }
 
         this._clients.set(ClientManager.getKey(wsFolder), client);
     }
@@ -156,6 +171,9 @@ export class ClientManager extends AutoDisposable {
 
         // Save client
         this.addClient(wsFolder, client);
+        if (workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision == true ?? false) {
+            this._highPrecisionClients.add(client);
+        }
 
         // Setup listener for un-intentional stop of the client, which requires a client restart
         // XXX Look here if unexpected client restart behaviour starts to happen
@@ -167,8 +185,11 @@ export class ClientManager extends AutoDisposable {
         // Setup DAP
         client.onReady().then(() => {
             const port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
-            if (port) dapSupport.addPort(wsFolder, port);
-            else console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
+            if (port) {
+                dapSupport.addPort(wsFolder, port);
+            } else {
+                console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
+            }
         });
 
         // Start the client
@@ -185,7 +206,9 @@ export class ClientManager extends AutoDisposable {
                 let m = `Client stopped unexpectantly, restarting client..`;
                 console.warn(`[${this.name}] ${m}`);
                 window.showWarningMessage(m, "Don't restart again", "Ok").then((press) => {
-                    if (press == "Don't restart again") this._restartOnCrash = false;
+                    if (press == "Don't restart again") {
+                        this._restartOnCrash = false;
+                    }
                 });
 
                 this.delete(wsFolder);
