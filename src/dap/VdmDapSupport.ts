@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as vscode from "vscode";
@@ -36,6 +37,7 @@ export namespace VdmDapSupport {
     let initialized: boolean = false;
     let factory: VdmDebugAdapterDescriptorFactory;
     let sessions: string[] = new Array(); // Array of running sessions
+    let outputChannel: any;
 
     export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
         if (!initialized) {
@@ -66,16 +68,30 @@ export namespace VdmDapSupport {
                 }
             });
 
-            // When a session terminates, remove it from the array of running sessions
             vscode.debug.registerDebugAdapterTrackerFactory("vdm", {
                 createDebugAdapterTracker(session: vscode.DebugSession) {
-                    return {
+                    const debugAdapterTracker: vscode.ProviderResult<vscode.DebugAdapterTracker> = {
+                        // When a session terminates, remove it from the array of running sessions
                         onError: (m) => {
                             if ((m.message = "connection closed")) {
                                 sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
                             }
                         },
                     };
+
+                    if (vscode.workspace.getConfiguration("vdm-vscode.trace", session.workspaceFolder)?.debug ?? false) {
+                        // If tracing is enabled create a new output channel and log to it
+                        if (outputChannel) {
+                            outputChannel.dispose();
+                        }
+                        outputChannel = vscode.window.createOutputChannel(`vdm-vscode DAP: ${session.name}`);
+                        debugAdapterTracker.onWillReceiveMessage = (m) =>
+                            outputChannel.appendLine(`[${new Date().toLocaleTimeString()}]:\n${JSON.stringify(m, undefined, 2)}\n`);
+                        debugAdapterTracker.onDidSendMessage = (m) =>
+                            outputChannel.appendLine(`[${new Date().toLocaleTimeString()}]:\n${JSON.stringify(m, undefined, 2)}\n`);
+                    }
+
+                    return debugAdapterTracker;
                 },
             });
         }

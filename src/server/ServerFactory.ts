@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as net from "net";
@@ -16,15 +17,15 @@ import { ensureDirectoryExistence, recursivePathSearch } from "../util/Directori
 
 export class ServerFactory implements Disposable {
     private _jarPath: string;
-    private _jarPath_vdmj: string;
-    private _jarPath_vdmj_hp: string;
+    private _jarPathVdmj: string;
+    private _jarPathVdmjHp: string;
     private _javaPath: string;
 
     constructor(private _log: ServerLog) {
         // Setup jar paths
         this._jarPath = path.resolve(getExtensionPath(), "resources", "jars");
-        this._jarPath_vdmj = path.resolve(this._jarPath, "vdmj");
-        this._jarPath_vdmj_hp = path.resolve(this._jarPath, "vdmj_hp");
+        this._jarPathVdmj = path.resolve(this._jarPath, "vdmj");
+        this._jarPathVdmjHp = path.resolve(this._jarPath, "vdmj_hp");
 
         // Make sure that there is a java executable
         this._javaPath = util.findJavaExecutable("java");
@@ -35,7 +36,7 @@ export class ServerFactory implements Disposable {
         }
 
         // Make sure that the VDMJ and LSP jars are present
-        if (!recursivePathSearch(this._jarPath_vdmj, /vdmj.*jar/i) || !recursivePathSearch(this._jarPath_vdmj, /lsp.*jar/i)) {
+        if (!recursivePathSearch(this._jarPathVdmj, /vdmj.*jar/i) || !recursivePathSearch(this._jarPathVdmj, /lsp.*jar/i)) {
             let m = "Server jars not found!";
             console.error("[ServerFactory] " + m);
             throw new Error(m);
@@ -67,8 +68,11 @@ export class ServerFactory implements Disposable {
                     // Select a random port
                     server.listen(0, "localhost", null, () => {
                         let address = server.address();
-                        if (address && typeof address != "string") this.launchServer(wsFolder, dialect, address.port);
-                        else reject("Could not get port");
+                        if (address && typeof address != "string") {
+                            this.launchServer(wsFolder, dialect, address.port);
+                        } else {
+                            reject("Could not get port");
+                        }
                     });
                 }
             });
@@ -87,9 +91,9 @@ export class ServerFactory implements Disposable {
 
         // Setup server arguments
         let args: string[] = [];
-        let JVMArguments: string = serverConfig.JVMArguments;
-        if (JVMArguments != "") {
-            let split = JVMArguments.split(" ").filter((v) => v != "");
+        let JVM_ARGS: string = serverConfig.JVMArguments;
+        if (JVM_ARGS != "") {
+            let split = JVM_ARGS.split(" ").filter((v) => v != "");
             let i = 0;
             while (i < split.length - 1) {
                 if (split[i].includes('"')) {
@@ -103,7 +107,9 @@ export class ServerFactory implements Disposable {
 
         // Add Plugin related JVM args
         const pluginArgs = Plugins.getJvmAdditions(wsFolder, dialect);
-        if (pluginArgs) args.push(pluginArgs);
+        if (pluginArgs) {
+            args.push(pluginArgs);
+        }
 
         // Activate server log
         const logLevel = serverConfig.get("logLevel", "off");
@@ -118,11 +124,13 @@ export class ServerFactory implements Disposable {
         // Set encoding
         const encodingSetting = workspace.getConfiguration("files", wsFolder).get("encoding", "utf8");
         const javaEncoding = encoding.toJavaName(encodingSetting);
-        if (javaEncoding) args.push(`-Dlsp.encoding=${javaEncoding}`);
-        else
+        if (javaEncoding) {
+            args.push(`-Dlsp.encoding=${javaEncoding}`);
+        } else {
             console.warn(
                 `[Extension] Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`
             );
+        }
 
         // Construct class path.
         let classPath: string = "";
@@ -154,15 +162,20 @@ export class ServerFactory implements Disposable {
 
         // Add vdmj jars folders
         // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
-        classPath += path.resolve(serverConfig?.highPrecision === true ? this._jarPath_vdmj_hp : this._jarPath_vdmj, "*") + path.delimiter;
+        classPath +=
+            path.resolve(serverConfig?.highPrecision === true ?? false ? this._jarPathVdmjHp : this._jarPathVdmj, "*") + path.delimiter;
 
         // Set strict
         const setStrict = serverConfig.get("strict", false);
-        if (setStrict) args.push(`-Dvdmj.strict=true`);
+        if (setStrict) {
+            args.push(`-Dvdmj.strict=true`);
+        }
 
         // Set strict
         const setVerbose = serverConfig.get("verbose", false);
-        if (setVerbose) args.push(`-Dvdmj.verbose=true`);
+        if (setVerbose) {
+            args.push(`-Dvdmj.verbose=true`);
+        }
 
         // Construct java launch arguments
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);

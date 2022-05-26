@@ -10,7 +10,8 @@ import {
     TextDocument,
     WorkspaceFolder,
     WorkspaceFoldersChangeEvent,
-    ConfigurationChangeEvent,
+    StatusBarAlignment,
+    StatusBarItem,
 } from "vscode";
 import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
@@ -36,6 +37,8 @@ import * as Util from "./util/Util";
 import { RTLogView } from "./RTLogView";
 import { FMUHandler } from "./handlers/FMUHandler";
 
+let clientManager: ClientManager;
+
 export async function activate(context: ExtensionContext) {
     // Setup server factory
     let serverFactory: ServerFactory;
@@ -47,12 +50,14 @@ export async function activate(context: ExtensionContext) {
     }
 
     // File extension types aka language ids that can be handled
-    const acceptedLanguageIds: string[] = Array.from(dialectToExtensions.values()).reduce((prev, cur) => {
-        return prev.concat(cur);
-    });
+    const acceptedLanguageIds: Set<string> = new Set(
+        Array.from(dialectToExtensions.values()).reduce((prev, cur) => {
+            return prev.concat(cur);
+        })
+    );
 
     // Setup client manager
-    const clientManager: ClientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
+    clientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
     context.subscriptions.push(clientManager);
 
     // Keep track of VDM workspace folders
@@ -112,6 +117,28 @@ export async function activate(context: ExtensionContext) {
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
 
+    // Create a new status bar item
+    const hpStatusBarItem: StatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
+    hpStatusBarItem.text = `HP`;
+    hpStatusBarItem.tooltip = "High precision mode is active for this project";
+    // Go to the setting on click
+    hpStatusBarItem.command = {
+        command: "workbench.action.openSettings",
+        arguments: ["vdm-vscode.server.highPrecision"],
+        title: "Go to settings",
+    };
+    context.subscriptions.push(hpStatusBarItem);
+
+    // Monitor if the active server for the active client is spawned with high precision jar to display the high precision inidcator for the project.
+    context.subscriptions.push(
+        window.onDidChangeActiveTextEditor((editor) => {
+            if (editor) {
+                const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(editor.document.uri);
+                setHighPrecisionStatus(hpStatusBarItem, wsFolder && clientManager.isHighPrecisionClient(clientManager.get(wsFolder)));
+            }
+        })
+    );
+
     // Register commands and event handlers
     context.subscriptions.push(workspace.onDidOpenTextDocument((document: TextDocument) => clientManager.launchClient(document)));
     workspace.textDocuments.forEach((document: TextDocument) => clientManager.launchClient(document));
@@ -119,22 +146,39 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
 
     // Add settings watch
-    workspace.onDidChangeConfiguration((e) => didChangeConfigurationCheck(e), this, context.subscriptions);
-}
+    workspace.onDidChangeConfiguration(
+        (event) => {
+            // Restart the extension if changes has been made to the server settings
+            if (event.affectsConfiguration("vdm-vscode.server") || event.affectsConfiguration("files.encoding")) {
+                // Ask the user to restart the extension if setting requires a restart
+                Util.showRestartMsg("Configurations changed. Please reload VS Code to enable it.");
+            }
+        },
+        this,
+        context.subscriptions
+    );
 
-function didChangeConfigurationCheck(event: ConfigurationChangeEvent) {
-    // Restart the extension if changes has been made to the server settings
-    if (event.affectsConfiguration("vdm-vscode.server") || event.affectsConfiguration("files.encoding")) {
-        // Ask the user to restart the extension if setting requires a restart
-        Util.showRestartMsg("Configurations changed. Please reload VS Code to enable it.");
+    // Set high precision inidcator for any project that opens emidiatly with VS Code.
+    if (window.activeTextEditor) {
+        const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+        setHighPrecisionStatus(hpStatusBarItem, wsFolder && clientManager.isHighPrecisionClient(clientManager.get(wsFolder)));
     }
 }
 
-export function deactivate(): Thenable<void> | undefined {
-    let promises: Thenable<void>[] = [];
+function setHighPrecisionStatus(statusBarItem: StatusBarItem, isHighPrecision: boolean) {
+    if (isHighPrecision) {
+        statusBarItem.show();
+    } else {
+        statusBarItem.hide();
+    }
+}
 
-    // Hide VDM VS Code buttons
-    promises.push(commands.executeCommand("setContext", "vdm-submenus-show", false));
+export async function deactivate() {
+    // Make sure that the extension sends the client/shutDown message to the server before deactivation
+    for (const client of clientManager.getAllClients()) {
+        await client.stop();
+    }
 
-    return Promise.all(promises).then(() => undefined);
+    // Hide VDM buttons
+    await commands.executeCommand("setContext", "vdm-submenus-show", false);
 }
