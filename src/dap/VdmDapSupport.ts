@@ -5,6 +5,9 @@ import { ClientManager } from "../ClientManager";
 import { CompletedParsingParams, CompletedParsingNotification } from "../server/ServerNotifications";
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 import AutoDisposable from "../helper/AutoDisposable";
+import * as Util from "../util/Util";
+import * as Path from "path";
+import * as Fs from "fs-extra";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
@@ -16,6 +19,17 @@ export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     defaultName?: string | null;
     command?: string | null;
     remoteControl?: string | null;
+    settings?: {
+        logging?: string | null;
+        precision?: number | null;
+        enableLogging?: boolean | null;
+        dynamicTypeChecks?: boolean | null;
+        invariantsChecks?: boolean | null;
+        preConditionChecks?: boolean | null;
+        postConditionChecks?: boolean | null;
+        measureChecks?: boolean | null;
+    } | null;
+    logging?: string | null;
 }
 
 export namespace VdmDapSupport {
@@ -97,6 +111,12 @@ export namespace VdmDapSupport {
                 config.request = "launch";
                 config.stopOnEntry = true;
                 config.noDebug = false;
+            }
+
+            if (config?.settings?.enableLogging == true) {
+                const logPath: string = Path.join(Util.generatedDataPath(folder).fsPath, "rtlogs");
+                const numberOfLogs: number = Fs.readdirSync(logPath).length;
+                config.settings.logging = Path.join(logPath, `test_${numberOfLogs + 1}.rtlog`);
             }
 
             return config;

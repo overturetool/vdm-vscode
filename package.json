@@ -1140,10 +1140,10 @@
                                         "description": "Precision level if using high precision (ignored for regular precision).",
                                         "default": 100
                                     },
-                                    "logging": {
-                                        "type": "string",
-                                        "description": "A path to the logfile (must end with .rtlog). If specified the real-time events will be logged",
-                                        "default": ""
+                                    "enableLogging": {
+                                        "type": "boolean",
+                                        "description": "Enable logging of VDM-RT real-time events",
+                                        "default": false
                                     },
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
