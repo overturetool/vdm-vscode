@@ -730,370 +730,390 @@
                 }
             ]
         },
-        "configuration": {
-            "title": "VDM VSCode",
-            "properties": {
-                "vdm-vscode.server.development.experimentalServer": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Use experimental server. True if client should not launch server, but connect to a server on socket connections."
-                },
-                "vdm-vscode.server.development.lspPort": {
-                    "title": "LSP Port",
-                    "type": "integer",
-                    "default": 8000,
-                    "scope": "resource",
-                    "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
-                },
-                "vdm-vscode.server.logLevel": {
-                    "type": "string",
-                    "enum": [
-                        "off",
-                        "severe",
-                        "warning",
-                        "info",
-                        "config",
-                        "fine",
-                        "finer",
-                        "finest",
-                        "all"
-                    ],
-                    "default": "off",
-                    "scope": "resource",
-                    "markdownDescription": "Enables logging of the VDMJ server to a file [in this folder](command:vdm-vscode.openServerLogFolder). This log can be used to diagnose Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
-                },
-                "vdm-vscode.server.JVMArguments": {
-                    "title": "JVM Arguments",
-                    "type": "string",
-                    "default": "",
-                    "scope": "resource",
-                    "description": "JVM arguments used when launching the server."
-                },
-                "vdm-vscode.server.classPathAdditions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
+        "configuration": [
+            {
+                "title": "Server",
+                "order": 1,
+                "type": "object",
+                "properties": {
+                    "vdm-vscode.server.JVMArguments": {
+                        "title": "JVM Arguments",
+                        "type": "string",
+                        "default": "",
+                        "scope": "resource",
+                        "description": "JVM arguments used when launching the server."
                     },
-                    "default": [],
-                    "scope": "resource",
-                    "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
-                },
-                "vdm-vscode.server.libraries.VDM-Libraries": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
+                    "vdm-vscode.server.classPathAdditions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "scope": "resource",
+                        "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
                     },
-                    "default": [],
-                    "scope": "resource",
-                    "markdownDescription": "A list containing library jar paths. Adding a folder path will load all library jars in the folder. If using a relative path it is expected to be defined at the 'folder' settings level as the path is expected to be relative to the corresponding project. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
-                },
-                "vdm-vscode.server.libraries.includeDefaultLibraries": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Include the default libraries that are packaged with the extension."
-                },
-                "vdm-vscode.server.highPrecision": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Use high precision variant of VDMJ."
-                },
-                "vdm-vscode.server.stdio.activateStdoutLogging": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Activate logging of stdout/stderr to terminal window. NOTE: This may cause performance slowdown if specifications have many annotations."
-                },
-                "vdm-vscode.server.stdio.stdioLogPath": {
-                    "type": "string",
-                    "default": "",
-                    "scope": "resource",
-                    "markdownDescription": "File path for directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
-                },
-                "vdm-vscode.server.strict": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Activate the VDMJ -strict flag that highlights (with warnings) where a specification is taking advantage of lenient parsing rule."
-                },
-                "vdm-vscode.server.plugins": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "description": "Name of the plugin"
-                            },
-                            "classname": {
-                                "type": "string",
-                                "description": "Fully qualified name of the main class"
-                            },
-                            "jar": {
-                                "type": "string",
-                                "description": "Path to the jar file containing the plugin"
-                            },
-                            "dialects": {
-                                "type": "array",
-                                "items": {
+                    "vdm-vscode.server.libraries.VDM-Libraries": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "scope": "resource",
+                        "markdownDescription": "A list containing library jar paths. Adding a folder path will load all library jars in the folder. If using a relative path it is expected to be defined at the 'folder' settings level as the path is expected to be relative to the corresponding project. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
+                    },
+                    "vdm-vscode.server.libraries.includeDefaultLibraries": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Include the default libraries that are packaged with the extension."
+                    },
+                    "vdm-vscode.server.highPrecision": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Use high precision variant of VDMJ."
+                    },
+                    "vdm-vscode.server.strict": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Activate the VDMJ -strict flag that highlights (with warnings) where a specification is taking advantage of lenient parsing rule."
+                    },
+                    "vdm-vscode.server.plugins": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
                                     "type": "string",
-                                    "enum": [
-                                        "vdmsl",
-                                        "vdmpp",
-                                        "vdmrt"
-                                    ]
+                                    "description": "Name of the plugin"
                                 },
-                                "description": "Optional: Dialects that the plugin supports. If not included, it is assumed that the plugin is available for all VDM dialects"
+                                "classname": {
+                                    "type": "string",
+                                    "description": "Fully qualified name of the main class"
+                                },
+                                "jar": {
+                                    "type": "string",
+                                    "description": "Path to the jar file containing the plugin"
+                                },
+                                "dialects": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [
+                                            "vdmsl",
+                                            "vdmpp",
+                                            "vdmrt"
+                                        ]
+                                    },
+                                    "description": "Optional: Dialects that the plugin supports. If not included, it is assumed that the plugin is available for all VDM dialects"
+                                }
                             }
-                        }
+                        },
+                        "scope": "resource",
+                        "description": "Plugins for the VDMJ language server."
+                    }
+                }
+            },
+            {
+                "title": "Java Code Generation",
+                "order": 2,
+                "type": "object",
+                "properties": {
+                    "vdm-vscode.javaCodeGen.disableCloning": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Disable cloning (may lead to code being generated that does not preserve the semantics of the input specification)"
                     },
-                    "scope": "resource",
-                    "description": "Plugins for the VDMJ language server."
-                },
-                "vdm-vscode.server.verbose": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Activate the VDMJ -verbose flag that sends detailed information to the VDMJ console."
-                },
-                "vdm-vscode.coverage.OverlayLatestCoverage": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Enabled: The latest generated coverage is utilised for overlaying. Disabled: Choose which coverage should be used for overlaying."
-                },
-                "vdm-vscode.coverage.UseHeatmapColouring": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Enabled: The number of hits (larger than zero) corresponds to a brighter green. Disabled: All sections with any number (hits larger than zero) are colored the same green."
-                },
-                "vdm-vscode.javaCodeGen.disableCloning": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Disable cloning (may lead to code being generated that does not preserve the semantics of the input specification)"
-                },
-                "vdm-vscode.javaCodeGen.sequencesAsStrings": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Generate character sequences as strings"
-                },
-                "vdm-vscode.javaCodeGen.concurrencyMechanisms": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Generate concurrency mechanisms"
-                },
-                "vdm-vscode.javaCodeGen.vdmLocationInformation": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Generate VDM location information for code generated constructs"
-                },
-                "vdm-vscode.javaCodeGen.outputPackage": {
-                    "type": "string",
-                    "default": "",
-                    "scope": "resource",
-                    "description": "Choose output package e.g : my.code"
-                },
-                "vdm-vscode.javaCodeGen.skipClassesModules": {
-                    "type": "string",
-                    "default": "",
-                    "scope": "resource",
-                    "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
-                },
-                "vdm-vscode.translate.latex.modelOnly": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Only model part will be included in the Latex translation, i.e., everything enclosed within '\\begin{vdm_al}' and '\\end{vdm_al}'"
-                },
-                "vdm-vscode.translate.latex.markCoverage": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Mark coverage in the Latex translation"
-                },
-                "vdm-vscode.translate.latex.insertCoverageTables": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Insert coverage tables in the Latex translation"
-                },
-                "vdm-vscode.translate.general.storeAllTranslations": {
-                    "type": "boolean",
-                    "default": false,
-                    "scope": "resource",
-                    "description": "Stores each translation in a timestamped folder instead of overwriting the previous content"
-                },
-                "vdm-vscode.translate.general.allowSingleFileTranslation": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "If enabled, translates only the selected file. If disabled, translate is always applied to the whole project"
-                },
-                "vdm-vscode.translate.isabelle.strict": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Strict handling of certain errors (e.g. print output or not, raise VDMJ warnings as translation errors, etc.)."
-                },
-                "vdm-vscode.translate.isabelle.maxErrors": {
-                    "type": "number",
-                    "default": 100,
-                    "scope": "resource",
-                    "description": "Maximum number (default=100) of translation errors to report. This is similar to VDMJ's maxErrors",
-                    "minimum": 10,
-                    "maximum": 10000
-                },
-                "vdm-vscode.translate.isabelle.reportVDMWarnings": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Report VDMJ warnings as part of the plugin output."
-                },
-                "vdm-vscode.translate.isabelle.linientPost": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Translate VDM source as an Isabelle comment alongside its translation."
-                },
-                "vdm-vscode.translate.isabelle.printVDMComments": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Prints VDM user comments as Isabelle comments when true, or ignore them when false."
-                },
-                "vdm-vscode.translate.isabelle.printIsaComments": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Prints Isabelle translation comments to the user (e.g., explanatory comments about translation's implicit VDM checks)."
-                },
-                "vdm-vscode.translate.isabelle.runExu": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Chooses whether to run the Exu VDM analyser prior to translation. Exu will provide information about VDM style and potential translation issues."
-                },
-                "vdm-vscode.translate.isabelle.valueAsAbbreviation": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Translate VDM values as Isabelle abbreviations when true, and as Isabelle definitions when false."
-                },
-                "vdm-vscode.translate.isabelle.translateTypeDefMinMax": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Translate VDM min_T or max_T when translating ordering predicates for type definitions."
-                },
-                "vdm-vscode.translate.isabelle.printVDMSource": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Translate VDM source as an Isabelle comment immediately before its translation."
-                },
-                "vdm-vscode.translate.isabelle.printLocations": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Translate VDM source location information as an Isabelle comment alongside its VDM source translation."
-                },
-                "vdm-vscode.translate.isabelle.runIsapog": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Translate VDM POs as a separate theory file associated with the recently translated VDM model."
-                },
-                "vdm-vscode.translate.isabelle.linientInvCheck": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Exu invariant type checks allow subtyping instead of explicit invariant/pre calls."
-                },
-                "vdm-vscode.translate.isabelle.proofStrategy": {
-                    "type": "string",
-                    "enum": [
-                        "optimistic",
-                        "hopeful",
-                        "pessimistic",
-                        "realistic",
-                        "surrender"
-                    ],
-                    "default": "surrender",
-                    "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
-                    "scope": "resource"
-                },
-                "vdm-vscode.encoding.showWarning": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
-                },
-                "vdm-vscode.combinatorialTesting.groupSize": {
-                    "type": "number",
-                    "default": 300,
-                    "scope": "application",
-                    "description": "Determine the maximum group size for tests in the combinatorial testing view",
-                    "minimum": 10,
-                    "maximum": 1000
-                },
-                "vdm-vscode.codeLenses.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Enable/disable code lenses"
-                },
-                "vdm-vscode.trace.debug": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enables tracing DAP protocol messages",
-                    "scope": "window"
-                },
-                "vdm-vscode.trace.server": {
-                    "type": "string",
-                    "enum": [
-                        "off",
-                        "messages",
-                        "verbose"
-                    ],
-                    "default": "off",
-                    "description": "Enables tracing of communication between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
-                    "scope": "window"
-                },
-                "vdm-vscode.vdmtools.path.vdmpp": {
-                    "title": "Path to VDMTools for VDM++",
-                    "type": "string",
-                    "default": "",
-                    "scope": "resource",
-                    "description": "Path to VDMTools for VDM++."
-                },
-                "vdm-vscode.vdmtools.path.vdmsl": {
-                    "title": "Path to VDMTools for VDM-SL",
-                    "type": "string",
-                    "default": "",
-                    "scope": "resource",
-                    "description": "Path to VDMTools for VDM-SL."
-                },
-                "vdm-vscode.real-timeLogViewer.scaleWithFont": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Enable scaling of the view relative to the font size"
-                },
-                "vdm-vscode.real-timeLogViewer.matchTheme": {
-                    "type": "boolean",
-                    "default": true,
-                    "scope": "resource",
-                    "description": "Enable view colors to match the selected theme"
+                    "vdm-vscode.javaCodeGen.sequencesAsStrings": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Generate character sequences as strings"
+                    },
+                    "vdm-vscode.javaCodeGen.concurrencyMechanisms": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Generate concurrency mechanisms"
+                    },
+                    "vdm-vscode.javaCodeGen.vdmLocationInformation": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Generate VDM location information for code generated constructs"
+                    },
+                    "vdm-vscode.javaCodeGen.outputPackage": {
+                        "type": "string",
+                        "default": "",
+                        "scope": "resource",
+                        "description": "Choose output package e.g : my.code"
+                    },
+                    "vdm-vscode.javaCodeGen.skipClassesModules": {
+                        "type": "string",
+                        "default": "",
+                        "scope": "resource",
+                        "description": "Skip classes/modules during the code generation process. Separate by ';' e.g : World;Env"
+                    }
+                }
+            },
+            {
+                "title": "Translations",
+                "order": 3,
+                "type": "object",
+                "properties": {
+                    "vdm-vscode.translate.latex.modelOnly": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Only model part will be included in the Latex translation, i.e., everything enclosed within '\\begin{vdm_al}' and '\\end{vdm_al}'"
+                    },
+                    "vdm-vscode.translate.latex.markCoverage": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Mark coverage in the Latex translation"
+                    },
+                    "vdm-vscode.translate.latex.insertCoverageTables": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Insert coverage tables in the Latex translation"
+                    },
+                    "vdm-vscode.translate.general.storeAllTranslations": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Stores each translation in a timestamped folder instead of overwriting the previous content"
+                    },
+                    "vdm-vscode.translate.general.allowSingleFileTranslation": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "If enabled, translates only the selected file. If disabled, translate is always applied to the whole project"
+                    },
+                    "vdm-vscode.translate.isabelle.strict": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Strict handling of certain errors (e.g. print output or not, raise VDMJ warnings as translation errors, etc.)."
+                    },
+                    "vdm-vscode.translate.isabelle.maxErrors": {
+                        "type": "number",
+                        "default": 100,
+                        "scope": "resource",
+                        "description": "Maximum number (default=100) of translation errors to report. This is similar to VDMJ's maxErrors",
+                        "minimum": 10,
+                        "maximum": 10000
+                    },
+                    "vdm-vscode.translate.isabelle.reportVDMWarnings": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Report VDMJ warnings as part of the plugin output."
+                    },
+                    "vdm-vscode.translate.isabelle.linientPost": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Translate VDM source as an Isabelle comment alongside its translation."
+                    },
+                    "vdm-vscode.translate.isabelle.printVDMComments": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Prints VDM user comments as Isabelle comments when true, or ignore them when false."
+                    },
+                    "vdm-vscode.translate.isabelle.printIsaComments": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Prints Isabelle translation comments to the user (e.g., explanatory comments about translation's implicit VDM checks)."
+                    },
+                    "vdm-vscode.translate.isabelle.runExu": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Chooses whether to run the Exu VDM analyser prior to translation. Exu will provide information about VDM style and potential translation issues."
+                    },
+                    "vdm-vscode.translate.isabelle.valueAsAbbreviation": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Translate VDM values as Isabelle abbreviations when true, and as Isabelle definitions when false."
+                    },
+                    "vdm-vscode.translate.isabelle.translateTypeDefMinMax": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Translate VDM min_T or max_T when translating ordering predicates for type definitions."
+                    },
+                    "vdm-vscode.translate.isabelle.printVDMSource": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Translate VDM source as an Isabelle comment immediately before its translation."
+                    },
+                    "vdm-vscode.translate.isabelle.printLocations": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Translate VDM source location information as an Isabelle comment alongside its VDM source translation."
+                    },
+                    "vdm-vscode.translate.isabelle.runIsapog": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Translate VDM POs as a separate theory file associated with the recently translated VDM model."
+                    },
+                    "vdm-vscode.translate.isabelle.linientInvCheck": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Exu invariant type checks allow subtyping instead of explicit invariant/pre calls."
+                    },
+                    "vdm-vscode.translate.isabelle.proofStrategy": {
+                        "type": "string",
+                        "enum": [
+                            "optimistic",
+                            "hopeful",
+                            "pessimistic",
+                            "realistic",
+                            "surrender"
+                        ],
+                        "default": "surrender",
+                        "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
+                        "scope": "resource"
+                    }
+                }
+            },
+            {
+                "title": "Other",
+                "order": 4,
+                "type": "object",
+                "properties": {
+                    "vdm-vscode.coverage.UseHeatmapColouring": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "If enabled, the number of hits (larger than zero) corresponds to a brighter green. If disabled, all sections with any number (hits larger than zero) are colored the same green."
+                    },
+                    "vdm-vscode.coverage.OverlayLatestCoverage": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "If enabled, the latest generated coverage is utilised for overlaying. If disabled, it is possible to choose which coverage should be used for overlaying."
+                    },
+                    "vdm-vscode.encoding.showWarning": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "markdownDescription": "If enabled, shows a warning if document encoding is not UTF-8"
+                    },
+                    "vdm-vscode.combinatorialTesting.groupSize": {
+                        "type": "number",
+                        "default": 300,
+                        "scope": "application",
+                        "description": "Determine the maximum group size for tests in the combinatorial testing view",
+                        "minimum": 10,
+                        "maximum": 1000
+                    },
+                    "vdm-vscode.codeLenses.enabled": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Enable/disable code lenses"
+                    },
+                    "vdm-vscode.vdmtools.path.vdmpp": {
+                        "title": "Path to VDMTools for VDM++",
+                        "type": "string",
+                        "default": "",
+                        "scope": "resource",
+                        "description": "Path to VDMTools for VDM++."
+                    },
+                    "vdm-vscode.vdmtools.path.vdmsl": {
+                        "title": "Path to VDMTools for VDM-SL",
+                        "type": "string",
+                        "default": "",
+                        "scope": "resource",
+                        "description": "Path to VDMTools for VDM-SL."
+                    }
+                }
+            },
+            {
+                "title": "Development",
+                "order": 5,
+                "type": "object",
+                "properties": {
+                    "vdm-vscode.trace.server": {
+                        "type": "string",
+                        "enum": [
+                            "off",
+                            "messages",
+                            "verbose"
+                        ],
+                        "default": "off",
+                        "description": "Enables tracing of LSP messages between VS Code and the VDMJ language server. The trace may contain file paths, source code, and other potentially sensitive information from your project",
+                        "scope": "window"
+                    },
+                    "vdm-vscode.trace.debug": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Enables tracing of DAP messages",
+                        "scope": "window"
+                    },
+                    "vdm-vscode.server.development.experimentalServer": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Use experimental server. True if the client should not launch the server, but connect to a server on a socket connection determined by `#vdm-vscode.server.development.experimentalServer#`."
+                    },
+                    "vdm-vscode.server.development.lspPort": {
+                        "title": "LSP Port",
+                        "type": "integer",
+                        "default": 8000,
+                        "scope": "resource",
+                        "markdownDescription": "Port used for LSP. NOTE: Only used when `#vdm-vscode.server.development.experimentalServer#` is active."
+                    },
+                    "vdm-vscode.server.logLevel": {
+                        "type": "string",
+                        "enum": [
+                            "off",
+                            "severe",
+                            "warning",
+                            "info",
+                            "config",
+                            "fine",
+                            "finer",
+                            "finest",
+                            "all"
+                        ],
+                        "default": "off",
+                        "scope": "resource",
+                        "markdownDescription": "Enables logging of the VDMJ server to a file [in this folder](command:vdm-vscode.openServerLogFolder). This log can be used to diagnose server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
+                    },
+                    "vdm-vscode.server.stdio.activateStdoutLogging": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Activate logging of stdout/stderr to the terminal window. NOTE: This may cause performance slowdown if specifications have many annotations."
+                    },
+                    "vdm-vscode.server.stdio.stdioLogPath": {
+                        "type": "string",
+                        "default": "",
+                        "scope": "resource",
+                        "markdownDescription": "File path for the directory that should be used to store stdout/stderr logs. NOTE: If empty, terminal logging is used instead of file logging. The setting is only used when `#vdm-vscode.server.stdio.activateStdoutLogging#` is active."
+                    },
+                    "vdm-vscode.server.verbose": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Activate the VDMJ -verbose flag that sends detailed information to the VDMJ console."
+                    }
                 }
             }
-        },
+        ],
         "debuggers": [
             {
                 "type": "vdm",
@@ -1130,11 +1150,6 @@
                                 "description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
                                 "default": ""
                             },
-                            "enableLogging": {
-                                "type": "boolean",
-                                "description": "Enable logging of VDM-RT real-time events",
-                                "default": false
-                            },
                             "settings": {
                                 "description": "Checks settings.",
                                 "type": "object",
@@ -1150,6 +1165,11 @@
                                         "type": "number",
                                         "description": "Precision level if using high precision (ignored for regular precision).",
                                         "default": 100
+                                    },
+                                    "enableLogging": {
+                                        "type": "boolean",
+                                        "description": "Log real-time events.",
+                                        "default": false
                                     },
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
