@@ -152,9 +152,10 @@ export class RTLogView extends AutoDisposable {
         const cpusWithEvents: any[] = [];
         const stringPlaceholderSign = "-";
         const activeMsgInitEvents: any[] = [];
-        const busTopos: any[] = [];
         const timeStamps: number[] = [];
         let currrentTime: number = -1;
+        const vBusDecl = { eventKind: LogEvent.busDecl, id: 0, topo: [], name: "vBUS", time: 0 };
+        const vCpuDecl = { eventKind: LogEvent.cpuDecl, id: undefined, expl: false, sys: "", name: "vCPU", time: 0 };
         logLines?.forEach((line) => {
             const lineSplit: string[] = line.split(" -> ");
             if (lineSplit.length > 1) {
@@ -191,19 +192,10 @@ export class RTLogView extends AutoDisposable {
                 for (let i = 0; i < contentSplit.length - 1; i++) {
                     const property = contentSplit[i].slice(0, contentSplit[i].length - 1);
                     // If log event is of type busdecl then the topology needs to be parsed
-                    if (property == "topo") {
-                        const values = contentSplit[++i];
-                        let to: any = this.stringValueToTypedValue(values.slice(values.indexOf(",") + 1).replace("}", ""));
-                        if (Number(to)) {
-                            to = [to];
-                        }
-                        logEventObj[property] = {
-                            from: this.stringValueToTypedValue(values.slice(0, values.indexOf(",")).replace("{", "")),
-                            to: to,
-                        };
-                    } else {
-                        logEventObj[property] = this.stringValueToTypedValue(contentSplit[++i]);
-                    }
+                    logEventObj[property] =
+                        property == "topo"
+                            ? contentSplit[++i].replace(/[{}]/g, "").split(",")
+                            : this.stringValueToTypedValue(contentSplit[++i]);
                 }
 
                 if (logEventObj.time > currrentTime) {
@@ -247,7 +239,6 @@ export class RTLogView extends AutoDisposable {
                                 id: cpunm,
                                 executionEvents: [],
                                 deployEvents: [],
-                                name: cpunm == 0 ? "vCPU" : "",
                             };
                             cpusWithEvents.push(cpuWithEvents);
                         }
@@ -256,11 +247,7 @@ export class RTLogView extends AutoDisposable {
                             activeMsgInitEvents.push(logEventObj);
                         }
 
-                        if (logEventObj.eventKind == LogEvent.cpuDecl) {
-                            cpuWithEvents.name = logEventObj.name;
-                        } else {
-                            cpuWithEvents.executionEvents.push(logEventObj);
-                        }
+                        cpuWithEvents.executionEvents.push(logEventObj);
                     }
 
                     executionEvents.push(logEventObj);
@@ -273,51 +260,42 @@ export class RTLogView extends AutoDisposable {
                     cpuWithDeploy.deployEvents.push(logEventObj);
                 }
 
-                if (logEventObj.eventKind == LogEvent.messageRequest || logEventObj.eventKind == LogEvent.replyRequest) {
-                    const existingBusTopo = busTopos.find((topo: any) => topo.id == logEventObj.busid);
-                    if (!existingBusTopo) {
-                        busTopos.push({ id: logEventObj.busid, topo: { from: logEventObj.fromcpu, to: [logEventObj.tocpu] } });
-                    } else if (
-                        existingBusTopo.topo.from != logEventObj.tocpu &&
-                        existingBusTopo.topo.to.find((toId: any) => toId == logEventObj.tocpu) == undefined
-                    ) {
-                        existingBusTopo.topo.to.push(logEventObj.tocpu);
-                    }
+                if (
+                    (logEventObj.eventKind == LogEvent.messageRequest || logEventObj.eventKind == LogEvent.replyRequest) &&
+                    logEventObj.busid == 0
+                ) {
+                    [logEventObj.fromcpu, logEventObj.tocpu].forEach((tpid) => {
+                        if (vBusDecl.topo.find((id: number) => id == tpid) == undefined) {
+                            vBusDecl.topo.push(tpid);
+                        }
+                    });
+                }
+
+                if (logEventObj?.cpunm == 0 && vCpuDecl.id == undefined) {
+                    vCpuDecl.id = logEventObj.cpunm;
+                    cpuDecls.push(vCpuDecl);
                 }
             }
         });
 
+        if (vBusDecl.topo.length > 0) {
+            busDecls.push(vBusDecl);
+        }
+
         cpusWithEvents.forEach((cpuWithEvent) => {
-            const cpuWithDeployEvents = cpusWithDeployEvents.find((cwde) => cwde.id == cpuWithEvent.id);
-            cpuWithEvent.deployEvents = cpuWithDeployEvents ? cpuWithDeployEvents.deployEvents : [];
-
-            let name: string = cpuDecls.find((decl) => decl.id == cpuWithEvent.id)?.name;
-            if (!name) {
-                name = cpuWithEvent.id == 0 ? "vCPU" : `CPU ${cpuWithEvent.id}`;
-                cpuDecls.push({
-                    eventKind: LogEvent.cpuDecl,
-                    id: cpuWithEvent.id,
-                    expl: false,
-                    sys: "",
-                    name: name,
-                    time: 0,
-                });
-            }
-
-            cpuWithEvent.name = name;
+            cpuWithEvent.deployEvents = cpusWithDeployEvents.find((cwde) => cwde.id == cpuWithEvent.id)?.deployEvents ?? [];
+            cpuWithEvent.name = cpuDecls.find((decl) => decl.id == cpuWithEvent.id).name;
         });
 
-        busTopos.forEach((bt) => {
-            if (!busDecls.find((decl) => decl.id == bt.id)) {
-                busDecls.push({
-                    eventKind: LogEvent.busDecl,
-                    id: bt.id,
-                    topo: bt.topo,
-                    name: bt.id == 0 ? "vBUS" : `BUS ${bt.id}`,
-                    time: 0,
-                });
+        // Parse conjectures if found
+        const conjecturesFilePath: string = `${logPath}.violations`;
+        if (Fs.existsSync(conjecturesFilePath)) {
+            const logContent: string = await Fs.readFile(conjecturesFilePath, "utf-8");
+            if (logContent) {
+                //TODO: parse validation conjectures
+                const conjectures: string[] = logContent.split(/[\r\n\t]+/g);
             }
-        });
+        }
 
         return {
             executionEvents: executionEvents,

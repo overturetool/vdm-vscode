@@ -20,17 +20,7 @@ export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     defaultName?: string | null;
     command?: string | null;
     remoteControl?: string | null;
-    settings?: {
-        logging?: string | null;
-        precision?: number | null;
-        enableLogging?: boolean | null;
-        dynamicTypeChecks?: boolean | null;
-        invariantsChecks?: boolean | null;
-        preConditionChecks?: boolean | null;
-        postConditionChecks?: boolean | null;
-        measureChecks?: boolean | null;
-    } | null;
-    logging?: string | null;
+    enableLogging?: boolean | null;
 }
 
 export namespace VdmDapSupport {
@@ -129,10 +119,16 @@ export namespace VdmDapSupport {
                 config.noDebug = false;
             }
 
-            if (config?.settings?.enableLogging == true) {
+            if (config?.enableLogging == true) {
+                // If logging of RT events is enabled then make sure the logging path exists and
+                // set the "logging" property on the configuration that is to be passed to the server.
                 const logPath: string = Path.join(Util.generatedDataPath(folder).fsPath, "rtlogs");
-                const numberOfLogs: number = Fs.readdirSync(logPath).length;
-                config.settings.logging = Path.join(logPath, `test_${numberOfLogs + 1}.rtlog`);
+                Fs.ensureDirSync(logPath);
+                const date = new Date();
+                config.logging = Path.join(
+                    logPath,
+                    `rt-events_${`${date.toLocaleDateString()}_${date.toLocaleTimeString()}`.replace(/[: \\/]/g, "_")}.rtlog`
+                );
             }
 
             return config;

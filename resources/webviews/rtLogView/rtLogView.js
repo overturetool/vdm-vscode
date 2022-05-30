@@ -247,7 +247,7 @@ class CanvasDrawer {
         // Concat all connections for each rectangle
         const rectConnections = [];
         this.busDeclEvents.forEach((busdecl) => {
-            [busdecl.topo.from].concat(busdecl.topo.to).forEach((id) => {
+            busdecl.topo.forEach((id) => {
                 const existingRectCon = rectConnections.find((rect) => rect.id == id);
                 if (existingRectCon) {
                     existingRectCon.connections += 1;
@@ -268,8 +268,8 @@ class CanvasDrawer {
             ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
 
             // Draw bus connections between rectangles
-            const fromRect = rects.find((rect) => rect.id == bus.topo.from);
-            const fromRectConn = rectConnections.find((rect) => rect.id == bus.topo.from);
+            const fromRect = rects.find((rect) => rect.id == bus.topo[0]);
+            const fromRectConn = rectConnections.find((rect) => rect.id == fromRect.id);
 
             // Make sure that lines are spaced evenly on the "from" rectangle
             const lineOnFromRectPos_x = (fromRect.width / (fromRectConn.connections + 1)) * ++fromRectConn.established + fromRect.start;
@@ -279,7 +279,7 @@ class CanvasDrawer {
             ctx.lineTo(lineOnFromRectPos_x, nextBusNamePos_y);
 
             // Draw the rest of the lines connecting the outgoing part
-            bus.topo.to.forEach((toId) => {
+            bus.topo.slice(1).forEach((toId) => {
                 const toRect = rects.find((rect) => rect.id == toId);
                 const toRectConn = rectConnections.find((rect) => rect.id == toId);
 
