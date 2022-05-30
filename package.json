@@ -285,7 +285,7 @@
                 "enablement": "vdm-vscode.translate.isabelle"
             },
             {
-                "command": "vdm-vscode.coverage.show",
+                "command": "vdm-vscode.coverageOverlay.enable",
                 "title": "Enable Coverage Overlay",
                 "category": "VDM",
                 "icon": {
@@ -294,7 +294,7 @@
                 }
             },
             {
-                "command": "vdm-vscode.coverage.hide",
+                "command": "vdm-vscode.coverageOverlay.disable",
                 "title": "Disable Coverage Overlay",
                 "category": "VDM",
                 "icon": {
@@ -618,13 +618,13 @@
             ],
             "editor/title": [
                 {
-                    "command": "vdm-vscode.coverage.show",
-                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverage.show",
+                    "command": "vdm-vscode.coverageOverlay.enable",
+                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverageOverlay.enable",
                     "group": "navigation"
                 },
                 {
-                    "command": "vdm-vscode.coverage.hide",
-                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverage.show == false",
+                    "command": "vdm-vscode.coverageOverlay.disable",
+                    "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverageOverlay.disable",
                     "group": "navigation"
                 }
             ],
@@ -645,11 +645,11 @@
                     "when": "vdm-vscode.OpenVDMTools"
                 },
                 {
-                    "command": "vdm-vscode.coverage.show",
+                    "command": "vdm-vscode.coverageOverlay.enable",
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.coverage.hide",
+                    "command": "vdm-vscode.coverageOverlay.disable",
                     "when": "false"
                 },
                 {
