@@ -9,10 +9,39 @@
 
 b,
 select,
-button {
+button,
+table,
+th,
+td {
     font-family: var(--vscode-editor-font-family);
     font-weight: var(--vscode-editor-font-weight);
     font-size: var(--vscode-editor-font-size);
     color: var(--vscode-editor-foreground);
     background-color: var(--vscode-editor-background);
+}
+
+table,
+td,
+th {
+    text-align: left;
+    border: 1px solid;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+table {
+    white-space: pre-wrap;
+    border-collapse: collapse;
+}
+
+.infoContainer {
+    padding-top: 10px;
+}
+
+th {
+    font-weight: 800;
+}
+
+.statuscell {
+    text-align: center;
 }

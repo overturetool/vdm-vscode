@@ -43,7 +43,7 @@ timeSelector.onchange = (event) => {
 
 // Handle button press
 buttons.forEach((btn) => {
-    views.push({ id: btn.id, canvas: undefined });
+    views.push({ id: btn.id, items: [] });
     btn.onclick = function () {
         // Update the pressed button to "pressed" color and the previous pressed button to "standard" color
         setButtonColors([document.getElementById(currentViewId)], btn);
@@ -51,10 +51,10 @@ buttons.forEach((btn) => {
         viewContainer.innerHTML = "";
         // Check if the canvas for the view has already been generated - the btn id is the view id
         const existingView = views.find((vc) => vc.id == btn.id);
-        if (!existingView.canvas) {
-            existingView.canvas = buildViewCanvas(btn.id, selectedTime);
+        if (existingView.items.length == 0) {
+            existingView.items = buildViewItems(btn.id, selectedTime);
         }
-        viewContainer.appendChild(existingView.canvas);
+        existingView.items.forEach((item) => viewContainer.appendChild(item));
         currentViewId = btn.id;
     };
 });
@@ -66,7 +66,7 @@ window.addEventListener("message", (event) => {
         // Handle parsed log data
         logData.busDeclEvents = event.data.busDecls;
         logData.cpusWithEvents = event.data.cpusWithEvents;
-        canvasDrawer = new CanvasDrawer(event.data.cpuDecls, event.data.busDecls, event.data.executionEvents, event.data.conjObjs);
+        canvasDrawer = new ViewGenerator(event.data.cpuDecls, event.data.busDecls, event.data.executionEvents, event.data.conjectures);
     }
     canvasDrawer.clearViewData();
     // Always check for changes to font and theme
@@ -89,15 +89,15 @@ document.body.onload = vscode.postMessage(initMsg);
  * Class and function definitions
  */
 
-class CanvasDrawer {
+class ViewGenerator {
     execViewDrawData = {};
     cpuViewDrawData = {};
 
-    constructor(cpuDeclEvents, busDeclEvents, executionEvents, conjObjs) {
+    constructor(cpuDeclEvents, busDeclEvents, executionEvents, conjectures) {
         this.cpuDeclEvents = cpuDeclEvents;
         this.busDeclEvents = busDeclEvents;
         this.executionEvents = executionEvents;
-        this.conjObjs = conjObjs;
+        this.conjectures = conjectures;
         this.clearViewData();
     }
 
@@ -327,10 +327,14 @@ class CanvasDrawer {
 
         const canvas = generateEmptyCanvas();
         let ctx = canvas.getContext("2d");
-
+        const legendCanvas = generateEmptyCanvas();
+        legendCanvas.style.display = "inline-block";
+        legendCanvas.style.position = "relative";
+        legendCanvas.style.float = "left";
+        let legendCtx = legendCanvas.getContext("2d");
         // Generate draw functions for the legend
         const legend = generateEventKindsLegend(
-            ctx,
+            legendCtx,
             graphFont,
             eventLineWidth,
             gridLineWidth,
@@ -338,22 +342,84 @@ class CanvasDrawer {
             this.execViewDrawData.declPadding.x,
             this.execViewDrawData.eventLength_x,
             eventWrapperHeight,
-            gridEndPos_y + this.execViewDrawData.declPadding.y,
+            this.execViewDrawData.eventLength_x / 2,
             Array.from(eventKinds)
         );
+        legendCanvas.width = legend.width + this.execViewDrawData.declPadding.x * 2;
+        legendCanvas.height = legend.endPos_y;
+        legendCtx = legendCanvas.getContext("2d");
+        legendCtx.fillStyle = fontColor;
+        legend.drawFuncs.forEach((func) => func());
 
         // Resize canvas to fit content
         canvas.width = gridPos_x + this.execViewDrawData.graphStartPos_x;
-        canvas.height = legend.endPos_y;
+        canvas.height = gridEndPos_y + this.execViewDrawData.declPadding.y;
         ctx = canvas.getContext("2d");
         ctx.fillStyle = fontColor;
 
-        // Draw visuals on canvas
+        // Draw visuals on graph canvas
         this.execViewDrawData.declDrawFuncs.forEach((func) => func(ctx));
-        legend.drawFuncs.forEach((func) => func());
         gridDrawFuncs.forEach((func) => func(ctx));
 
-        return canvas;
+        const mainContainer = document.createElement("div");
+        mainContainer.id = "graphContainer";
+        mainContainer.style.height = "70%";
+        mainContainer.style.width = "100%";
+        mainContainer.style.overflow = "scroll";
+        const bottomContainer = document.createElement("div");
+        bottomContainer.id = "infoContainer";
+        bottomContainer.style.height = "30%";
+        bottomContainer.style.width = "100%";
+        bottomContainer.classList.add("infoContainer");
+
+        mainContainer.appendChild(canvas);
+        bottomContainer.appendChild(legendCanvas);
+        bottomContainer.appendChild(this.generateConjectureTable(this.conjectures));
+
+        return [mainContainer, bottomContainer];
+    }
+
+    generateConjectureTable(conjectures) {
+        const table = document.createElement("table");
+        table.style.float = "center";
+
+        //  Build and add the headers
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        ["status", "name", "expression", "src time", "src thread", "dest time", "dest thread"].forEach((header) => {
+            const th = document.createElement("th");
+            th.appendChild(document.createTextNode(header));
+            headerRow.appendChild(th);
+        });
+
+        // Add the table body
+        let tbdy = document.createElement("tbody");
+        tbdy.id = "tbdy";
+        table.appendChild(tbdy);
+
+        // Build the rows
+        conjectures.forEach((conj) => {
+            const row = tbdy.insertRow();
+            row.classList.add("row");
+
+            // Add cells to the rows
+            [
+                conj.status,
+                conj.name,
+                conj.expression,
+                conj.source.time,
+                conj.source.thread,
+                conj.destination.time,
+                conj.destination.thread,
+            ].forEach((value) => {
+                const rowCell = row.insertCell();
+                rowCell.classList.add("statuscell");
+                // Parse a true or falls value to an icon instead
+                rowCell.appendChild(document.createTextNode(value == true ? "\u2713" : value == false ? "\u2715" : value));
+            });
+        });
+
+        return table;
     }
 
     generateGridDrawFuncs(
@@ -994,7 +1060,7 @@ function generateCpuCanvas(executionEvents, busDeclEvents, startTime) {
                               .find(
                                   (eve) =>
                                       (eve.eventKind == LogEvent.opActivate || eve.eventKind == LogEvent.messageRequest) &&
-                                      event.opname == eve.opname
+                                      event.objref == eve.objref
                               )
                         : event.eventKind == LogEvent.opActivate && LogEvent.isOperationKind(nextEvent.eventKind)
                         ? filteredEvents
@@ -1166,6 +1232,7 @@ function generateEventKindsLegend(
     const drawFuncs = [];
     const lgndTxtMetrics = ctx.measureText(eventKinds[0]);
     const txtHeight = lgndTxtMetrics.fontBoundingBoxAscent + lgndTxtMetrics.fontBoundingBoxDescent;
+    let width = lgndTxtMetrics.width;
     eventKinds
         .sort((a, b) => a.localeCompare(b))
         .forEach((eventKind) => {
@@ -1190,15 +1257,16 @@ function generateEventKindsLegend(
                     func();
                 })
             );
-
-            drawFuncs.push(() =>
-                ctx.fillText(eventKind.replace(/([A-Z])/g, " $1").trim(), elementPadding + eventLength_x + eventLineWidth, elementPos_y)
-            );
-
+            const txt = eventKind.replace(/([A-Z])/g, " $1").trim();
+            drawFuncs.push(() => ctx.fillText(txt, elementPadding + eventLength_x + eventLineWidth, elementPos_y));
+            const txtWidth = ctx.measureText(txt).width;
+            if (txtWidth > width) {
+                width = txtWidth;
+            }
             nextLegendElementPos_y += txtHeight * 2;
         });
 
-    return { endPos_y: nextLegendElementPos_y, drawFuncs: drawFuncs };
+    return { endPos_y: nextLegendElementPos_y, drawFuncs: drawFuncs, width: width + elementPadding + eventLength_x + eventLineWidth };
 }
 
 function generateEventDrawFuncs(
@@ -1469,26 +1537,28 @@ function redrawViews(currentViewId) {
     // Remove canvas from views and rebuild and display the canvas for current view
     views.forEach((view) => {
         if (view.id != archViewId) {
-            view.canvas = undefined;
+            view.items = [];
         }
         if (view.id == currentViewId) {
             // Rebuild canvas for the current view
-            view.canvas = view.canvas ? view.canvas : buildViewCanvas(currentViewId, selectedTime);
-            viewContainer.appendChild(view.canvas);
+            view.items = view.items.length > 0 ? view.items : buildViewItems(currentViewId, selectedTime);
+            view.items.forEach((item) => viewContainer.appendChild(item));
         }
     });
 }
 
-function buildViewCanvas(viewId, startTime) {
+function buildViewItems(viewId, startTime) {
     return viewId == execViewId
         ? canvasDrawer.generateExecCanvas(startTime)
         : viewId == archViewId
-        ? canvasDrawer.generateArchCanvas()
-        : generateCpuCanvas(
-              logData.cpusWithEvents.find((cwe) => cwe.id == viewId.replace(/\D/g, "")).executionEvents,
-              logData.busDeclEvents,
-              startTime
-          );
+        ? [canvasDrawer.generateArchCanvas()]
+        : [
+              generateCpuCanvas(
+                  logData.cpusWithEvents.find((cwe) => cwe.id == viewId.replace(/\D/g, "")).executionEvents,
+                  logData.busDeclEvents,
+                  startTime
+              ),
+          ];
 }
 
 function setButtonColors(btns, activeBtn) {

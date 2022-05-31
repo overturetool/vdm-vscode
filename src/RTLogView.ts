@@ -81,10 +81,6 @@ export class RTLogView extends AutoDisposable {
 
                                 this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
                                     this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
-                                    const conjFilePath = Path.join(Path.dirname(doc.uri.fsPath), `${this._logName}.conj`);
-                                    const conjObjs: ValidationConjecture[] = Fs.existsSync(conjFilePath)
-                                        ? JSON.parse(Fs.readFileSync(conjFilePath, "utf-8"))
-                                        : [];
 
                                     if (data) {
                                         commands.executeCommand("workbench.action.closeActiveEditor");
@@ -94,7 +90,7 @@ export class RTLogView extends AutoDisposable {
                                             data.executionEvents,
                                             data.cpusWithEvents,
                                             data.timeStamps,
-                                            conjObjs
+                                            data.conjectures
                                         );
                                     }
                                 });
@@ -287,23 +283,25 @@ export class RTLogView extends AutoDisposable {
             cpuWithEvent.name = cpuDecls.find((decl) => decl.id == cpuWithEvent.id).name;
         });
 
-        // Parse conjectures if found
-        const conjecturesFilePath: string = `${logPath}.violations`;
-        if (Fs.existsSync(conjecturesFilePath)) {
-            const logContent: string = await Fs.readFile(conjecturesFilePath, "utf-8");
-            if (logContent) {
-                //TODO: parse validation conjectures
-                const conjectures: string[] = logContent.split(/[\r\n\t]+/g);
-            }
-        }
-
-        return {
+        const returnObj = {
             executionEvents: executionEvents,
             cpuDecls: cpuDecls.sort((a, b) => a.id - b.id),
             busDecls: busDecls.sort((a, b) => a.id - b.id),
             cpusWithEvents: cpusWithEvents.sort((a, b) => a.id - b.id),
             timeStamps: timeStamps,
+            conjectures: [],
         };
+
+        // Parse conjectures if found
+        const conjecturesFilePath: string = `${logPath}.violations`;
+        if (Fs.existsSync(conjecturesFilePath)) {
+            const logContent: string = await Fs.readFile(conjecturesFilePath, "utf-8");
+            if (logContent) {
+                returnObj.conjectures = JSON.parse(logContent);
+            }
+        }
+
+        return returnObj;
     }
 
     private stringValueToTypedValue(value: string): any {
@@ -340,7 +338,7 @@ export class RTLogView extends AutoDisposable {
         executionEvents: any[],
         cpusWithEvents: any[],
         timeStamps: number[],
-        conjObjs: ValidationConjecture[]
+        conjectures: ValidationConjecture[]
     ) {
         if (!this._wsFolder) {
             return;
@@ -381,7 +379,7 @@ export class RTLogView extends AutoDisposable {
                     returnObj.timeStamps = timeStamps;
                     returnObj.scaleWithFont = config.get("scaleWithFont");
                     returnObj.matchTheme = config.get("matchTheme");
-                    returnObj.conjObjs = conjObjs;
+                    returnObj.conjectures = conjectures;
                 }
 
                 this._panel.webview.postMessage(returnObj);
@@ -397,19 +395,24 @@ export class RTLogView extends AutoDisposable {
     private buildHtmlForWebview(webview: Webview, cpusWithEvents: any[], timeStamps: number[]) {
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce: string = this.generateNonce();
+        const jsUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js"));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.css"));
+        const codiconsUri = webview.asWebviewUri(
+            Uri.joinPath(this._context.extensionUri, "node_modules", "@vscode/codicons", "dist", "codicon.css")
+        );
 
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
-                webview.cspSource
-            }; script-src 'nonce-${scriptNonce}';">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${
+            webview.cspSource
+        }; script-src 'nonce-${scriptNonce}';">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
-            <link href="${webview.asWebviewUri(
-                Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.css")
-            )}" rel="stylesheet">
+            <link href="${styleUri}" rel="stylesheet">
+
+            <link href="${codiconsUri}" rel="stylesheet" />
         </head>
         <body>
             <b> Start time: <b>
@@ -423,9 +426,7 @@ export class RTLogView extends AutoDisposable {
                 .map((cpu) => `<button class="button" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
                 .reduce((prev, cur) => prev + cur, "")}
             <br>
-            <script nonce="${scriptNonce}" src="${webview.asWebviewUri(
-            Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js")
-        )}"></script>
+            <script nonce="${scriptNonce}" src="${jsUri}"></script>
         </body>
         </html>`;
     }
