@@ -40,7 +40,7 @@ interface ConjectureTarget {
     kind: string;
     opname: string;
     time: number;
-    thread: number;
+    thid: number;
 }
 
 interface ValidationConjecture {
@@ -397,9 +397,6 @@ export class RTLogView extends AutoDisposable {
         const scriptNonce: string = this.generateNonce();
         const jsUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js"));
         const styleUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.css"));
-        const codiconsUri = webview.asWebviewUri(
-            Uri.joinPath(this._context.extensionUri, "node_modules", "@vscode/codicons", "dist", "codicon.css")
-        );
 
         return `<!DOCTYPE html>
         <html lang="en">
@@ -411,8 +408,6 @@ export class RTLogView extends AutoDisposable {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
             <link href="${styleUri}" rel="stylesheet">
-
-            <link href="${codiconsUri}" rel="stylesheet" />
         </head>
         <body>
             <b> Start time: <b>

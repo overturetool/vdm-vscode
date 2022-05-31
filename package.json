@@ -1162,6 +1162,11 @@
                                 "description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
                                 "default": ""
                             },
+                            "enableLogging": {
+                                "type": "boolean",
+                                "description": "Log real-time events for VDM-RT.",
+                                "default": false
+                            },
                             "settings": {
                                 "description": "Checks settings.",
                                 "type": "object",
@@ -1177,11 +1182,6 @@
                                         "type": "number",
                                         "description": "Precision level if using high precision (ignored for regular precision).",
                                         "default": 100
-                                    },
-                                    "enableLogging": {
-                                        "type": "boolean",
-                                        "description": "Log real-time events.",
-                                        "default": false
                                     },
                                     "dynamicTypeChecks": {
                                         "type": "boolean",
