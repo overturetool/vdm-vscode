@@ -144,7 +144,6 @@ export class RTLogView extends AutoDisposable {
         const executionEvents: any[] = [];
         const cpuDecls: any[] = [];
         const busDecls: any[] = [];
-        const cpusWithDeployEvents: any[] = [];
         const cpusWithEvents: any[] = [];
         const stringPlaceholderSign = "-";
         const activeMsgInitEvents: any[] = [];
@@ -234,7 +233,6 @@ export class RTLogView extends AutoDisposable {
                             cpuWithEvents = {
                                 id: cpunm,
                                 executionEvents: [],
-                                deployEvents: [],
                             };
                             cpusWithEvents.push(cpuWithEvents);
                         }
@@ -247,13 +245,6 @@ export class RTLogView extends AutoDisposable {
                     }
 
                     executionEvents.push(logEventObj);
-                } else {
-                    let cpuWithDeploy = cpusWithDeployEvents.find((cpu) => cpu.id == logEventObj.cpunm);
-                    if (!cpuWithDeploy) {
-                        cpuWithDeploy = { id: logEventObj.cpunm, deployEvents: [] };
-                        cpusWithDeployEvents.push(cpuWithDeploy);
-                    }
-                    cpuWithDeploy.deployEvents.push(logEventObj);
                 }
 
                 if (
@@ -278,12 +269,27 @@ export class RTLogView extends AutoDisposable {
             busDecls.push(vBusDecl);
         }
 
-        cpusWithEvents.forEach((cpuWithEvent) => {
-            cpuWithEvent.deployEvents = cpusWithDeployEvents.find((cwde) => cwde.id == cpuWithEvent.id)?.deployEvents ?? [];
-            cpuWithEvent.name = cpuDecls.find((decl) => decl.id == cpuWithEvent.id).name;
+        cpuDecls.forEach((decl) => {
+            const cpuWithEvent = cpusWithEvents.find((cwe) => cwe.id == decl.id);
+            if (cpuWithEvent) {
+                cpuWithEvent.name = decl.name;
+            } else {
+                cpusWithEvents.push({
+                    id: decl.id,
+                    executionEvents: [],
+                    name: decl.name,
+                });
+            }
         });
 
-        const returnObj = {
+        const returnObj: {
+            executionEvents: any[];
+            cpuDecls: any[];
+            busDecls: any[];
+            cpusWithEvents: any[];
+            timeStamps: number[];
+            conjectures: ValidationConjecture[];
+        } = {
             executionEvents: executionEvents,
             cpuDecls: cpuDecls.sort((a, b) => a.id - b.id),
             busDecls: busDecls.sort((a, b) => a.id - b.id),
@@ -297,7 +303,16 @@ export class RTLogView extends AutoDisposable {
         if (Fs.existsSync(conjecturesFilePath)) {
             const logContent: string = await Fs.readFile(conjecturesFilePath, "utf-8");
             if (logContent) {
-                returnObj.conjectures = JSON.parse(logContent);
+                try {
+                    logContent
+                        .trim()
+                        .split(/[\r\n\t]+/g)
+                        .forEach((line) => returnObj.conjectures.push(JSON.parse(line)));
+                } catch (ex) {
+                    const msg = "Encountered an ereror when parsing validation conjectures!";
+                    window.showWarningMessage(msg);
+                    console.log(`${msg} - ${ex}`);
+                }
             }
         }
 
@@ -389,10 +404,10 @@ export class RTLogView extends AutoDisposable {
         );
 
         // Generate the html for the webview
-        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpusWithEvents, timeStamps);
+        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpuDecls, timeStamps);
     }
 
-    private buildHtmlForWebview(webview: Webview, cpusWithEvents: any[], timeStamps: number[]) {
+    private buildHtmlForWebview(webview: Webview, cpuDecls: any[], timeStamps: number[]) {
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce: string = this.generateNonce();
         const jsUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js"));
@@ -417,7 +432,7 @@ export class RTLogView extends AutoDisposable {
            
             <button class="button" id="arch">Architecture overview</button>
             <button class="button" id="exec">Execution overview</button>
-            ${cpusWithEvents
+            ${cpuDecls
                 .map((cpu) => `<button class="button" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
                 .reduce((prev, cur) => prev + cur, "")}
             <br>

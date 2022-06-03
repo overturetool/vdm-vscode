@@ -12,12 +12,17 @@ select,
 button,
 table,
 th,
-td {
+td,
+h1 {
     font-family: var(--vscode-editor-font-family);
     font-weight: var(--vscode-editor-font-weight);
     font-size: var(--vscode-editor-font-size);
     color: var(--vscode-editor-foreground);
     background-color: var(--vscode-editor-background);
+}
+
+h1 {
+    margin: 0px;
 }
 
 table,
@@ -34,7 +39,18 @@ table {
     border-collapse: collapse;
 }
 
-.infoContainer {
+.iswarning {
+    font-family: var(--vscode-editor-font-family);
+    font-weight: var(--vscode-editor-font-weight);
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-editorWarning-foreground);
+}
+
+.clickableCell {
+    cursor: pointer;
+}
+
+.secondContainer {
     padding-top: 10px;
 }
 

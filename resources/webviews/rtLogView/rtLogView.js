@@ -24,47 +24,50 @@ const timeSelector = document.getElementById("timeStamp");
 
 // Global variables
 let backgroundColor;
+let fontSize;
 let declFont;
 let graphFont;
 let gridLineWidth;
 let eventLineWidth;
+let conjectureMarkerWidth;
 let eventWrapperHeight;
-let busColors = [];
+let themeColors = [];
 let fontColor;
 let conjectureColor;
 let canvasDrawer;
 let currentViewId = archViewId;
 let selectedTime = 0;
 
-// Handle time change
-timeSelector.onchange = (event) => {
-    selectedTime = event.target.value;
-    redrawViews(currentViewId);
-};
-
 // Handle button press
 buttons.forEach((btn) => {
-    views.push({ id: btn.id, items: [] });
+    views.push({ id: btn.id, components: [] });
     btn.onclick = function () {
         // Update the pressed button to "pressed" color and the previous pressed button to "standard" color
         setButtonColors([document.getElementById(currentViewId)], btn);
         // Clear the view container
         viewContainer.innerHTML = "";
-        // Check if items for the view has already been generated - the btn id is the view id
-        const existingView = views.find((vc) => vc.id == btn.id);
-        if (existingView.items.length == 0) {
-            existingView.items = buildViewItems(btn.id, selectedTime);
+        // Check if components for the view has already been generated - the btn id is the view id
+        const selectedView = views.find((vc) => vc.id == btn.id);
+        if (selectedView.components.length == 0) {
+            selectedView.components = buildViewComponents(btn.id, selectedTime);
         }
-        existingView.items.forEach((item) => viewContainer.appendChild(item));
+        // Display the view by appending its components to the view container
+        selectedView.components.forEach((item) => viewContainer.appendChild(item));
         currentViewId = btn.id;
     };
 });
+
+// Handle time change
+timeSelector.onchange = (event) => {
+    selectedTime = event.target.value;
+    resetViews(currentViewId, selectedTime);
+};
 
 // Handle event from extension backend
 window.addEventListener("message", (event) => {
     if (event.data.cmd == initMsg) {
         selectedTime = Math.min(...event.data.timeStamps);
-        // Handle parsed log data
+        // Initiate a canvas drawer with the data
         canvasDrawer = new ViewGenerator(
             event.data.cpuDecls,
             event.data.busDecls,
@@ -73,7 +76,7 @@ window.addEventListener("message", (event) => {
             event.data.conjectures
         );
     }
-    canvasDrawer.clearViewData();
+    canvasDrawer.clearViewCache();
     // Always check for changes to font and theme
     updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
 
@@ -84,7 +87,7 @@ window.addEventListener("message", (event) => {
     );
 
     // A message from the extension backend always results in a rebuild of the canvas
-    redrawViews(currentViewId, selectedTime);
+    resetViews(currentViewId, selectedTime);
 });
 
 // Load data and build the view
@@ -92,7 +95,7 @@ document.body.onload = vscode.postMessage(initMsg);
 
 /**
  * Class and function definitions
- */
+ **/
 
 // Class for generation view components
 class ViewGenerator {
@@ -105,25 +108,16 @@ class ViewGenerator {
         this.executionEvents = executionEvents;
         this.conjectures = conjectures;
         this.cpusWithEvents = cpusWithEvents;
-        this.clearViewData();
+        this.clearViewCache();
     }
 
-    clearViewData() {
+    clearViewCache() {
         this.execViewData = {
             declDrawFuncs: [],
-            graphStartPos_x: undefined,
             gridDrawFuncs: [],
-            declPadding: { y: undefined, x: undefined },
-            eventLength_x: undefined,
+            gridStartPos_x: undefined,
+            eventLength: undefined,
             conjectureTable: undefined,
-        };
-
-        this.cpuViewData = {
-            declDrawFuncs: [],
-            graphStartPos_x: undefined,
-            gridDrawFuncs: [],
-            declPadding: { y: undefined, x: undefined },
-            eventLength_x: undefined,
         };
     }
 
@@ -132,15 +126,15 @@ class ViewGenerator {
         const cpuDecls = [];
         const busDecls = [];
         let ctx = canvas.getContext("2d");
-        this.execViewData.eventLength_x = this.calculateEventLength(ctx);
+        this.execViewData.eventLength = this.calculateEventLength(ctx);
         ctx.font = declFont;
         const declTextMetrics = ctx.measureText("Gg");
-        this.execViewData.declPadding.y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
-        this.execViewData.declPadding.x = this.execViewData.declPadding.y / 4;
+        const declPadding_y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
+        const declPadding_x = declPadding_y / 4;
 
         // Calculate decls placement and push their draw functions
         let widestText = 0;
-        let nextDeclPos_y = this.execViewData.declPadding.y;
+        let nextDeclPos_y = declPadding_y;
         this.cpuDeclEvents
             .slice()
             .reverse()
@@ -170,28 +164,28 @@ class ViewGenerator {
                 const declTextPos_y = nextDeclPos_y;
                 this.execViewData.declDrawFuncs.push((ctx) => {
                     ctx.font = declFont;
-                    ctx.fillText(decl.name, this.execViewData.declPadding.x, declTextPos_y);
+                    ctx.fillText(decl.name, declPadding_x, declTextPos_y);
                 });
-                nextDeclPos_y += this.execViewData.declPadding.y;
+                nextDeclPos_y += declPadding_y;
             });
 
         // Calculate where events should start on the x-axis
-        this.execViewData.graphStartPos_x = widestText + this.execViewData.declPadding.x * 2;
+        this.execViewData.gridStartPos_x = widestText + declPadding_x * 2;
 
         // Generate and push draw functions for the graph
         this.execViewData.gridDrawFuncs = this.generateGridDrawFuncs(
             cpuDecls,
             busDecls,
             this.executionEvents,
-            this.execViewData.declPadding.y / 2,
-            nextDeclPos_y - this.execViewData.declPadding.y / 2,
+            declPadding_y / 2,
+            nextDeclPos_y - declPadding_y / 2,
             ctx,
             graphFont,
             gridLineWidth,
             fontColor,
             eventLineWidth,
             eventWrapperHeight,
-            this.execViewData.eventLength_x
+            this.execViewData.eventLength
         );
 
         this.execViewData.conjectureTable = this.generateConjectureTable(this.conjectures);
@@ -274,7 +268,7 @@ class ViewGenerator {
 
             // Setup color for and style for the connection line
             ctx.beginPath();
-            ctx.fillStyle = ctx.strokeStyle = i < busColors.length - 1 ? busColors[i] : fontColor;
+            ctx.fillStyle = ctx.strokeStyle = i < themeColors.length - 1 ? themeColors[i] : fontColor;
             ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
 
             // Draw bus connections between rectangles
@@ -318,28 +312,44 @@ class ViewGenerator {
         if (this.execViewData.declDrawFuncs.length == 0) {
             this.generateExecDrawData();
         }
-        // Get all grid draw functions
+        // Generate graph canvas
+        const graphCanvas = this.generateEmptyCanvas();
         let gridEndPos_y = 0;
         const eventKinds = new Set();
-        let gridPos_x = this.execViewData.graphStartPos_x;
+        let gridPos_x = this.execViewData.gridStartPos_x;
         const gridDrawFuncs = [];
-        this.execViewData.gridDrawFuncs.forEach((gdfs) => {
+        let prematureEndTime;
+        // Only use grid draw funcs from the specified time
+        for (let i = 0; i < this.execViewData.gridDrawFuncs.length; i++) {
+            const gdfs = this.execViewData.gridDrawFuncs[i];
             if (gdfs.time >= startTime) {
+                // A canvas wider than ~65175 cannot be shown in VSCode so break out if this timestamps brings the width of the canvas over that value.
+                if (gdfs.drawFuncs.length * this.execViewData.eventLength + gridPos_x > 64000) {
+                    prematureEndTime = this.execViewData.gridDrawFuncs[i - 1].time;
+                    break;
+                }
+
                 gridEndPos_y = gdfs.endPos_y > gridEndPos_y ? gdfs.endPos_y : gridEndPos_y;
                 gdfs.eventKinds.forEach((kind) => eventKinds.add(kind));
                 gdfs.drawFuncs.forEach((drawFunc) => {
                     const pos_x = gridPos_x;
+                    gridPos_x += this.execViewData.eventLength;
                     gridDrawFuncs.push((ctx) => drawFunc(ctx, pos_x));
-                    gridPos_x += this.execViewData.eventLength_x;
                 });
             }
-        });
+        }
 
+        // Resize graph canvas to fit content
+        graphCanvas.width = gridPos_x + this.execViewData.eventLength;
+        graphCanvas.height = gridEndPos_y;
+        const graphCtx = graphCanvas.getContext("2d");
+        graphCtx.fillStyle = fontColor;
+        // Draw visuals on graph canvas
+        this.execViewData.declDrawFuncs.forEach((func) => func(graphCtx));
+        gridDrawFuncs.forEach((func) => func(graphCtx));
+
+        // Generate the legend canvas
         const legendCanvas = this.generateEmptyCanvas();
-        legendCanvas.style.display = "inline-block";
-        legendCanvas.style.position = "relative";
-        legendCanvas.style.float = "left";
-        legendCanvas.style.marginRight = "30px";
         let legendCtx = legendCanvas.getContext("2d");
         legendCtx.font = graphFont;
         // Generate draw functions for the legend
@@ -350,9 +360,9 @@ class ViewGenerator {
             gridLineWidth,
             fontColor,
             0,
-            this.execViewData.eventLength_x,
+            this.execViewData.eventLength,
             eventWrapperHeight,
-            this.execViewData.eventLength_x / 2,
+            this.execViewData.eventLength * 0.7,
             Array.from(eventKinds),
             this.conjectures.length > 0
         );
@@ -362,60 +372,101 @@ class ViewGenerator {
         legendCtx.fillStyle = fontColor;
         legend.drawFuncs.forEach((func) => func());
 
-        // Resize canvas to fit content
-        const graphCanvas = this.generateEmptyCanvas();
-        graphCanvas.width = gridPos_x + this.execViewData.graphStartPos_x;
-        graphCanvas.height = gridEndPos_y + this.execViewData.declPadding.y;
-        const graphCtx = graphCanvas.getContext("2d");
-        graphCtx.fillStyle = fontColor;
-
-        // Draw visuals on graph canvas
-        this.execViewData.declDrawFuncs.forEach((func) => func(graphCtx));
-        gridDrawFuncs.forEach((func) => func(graphCtx));
-
+        // Container for the graph
         const mainContainer = document.createElement("div");
-        mainContainer.id = "graphContainer";
-        mainContainer.style.height = "auto";
-        mainContainer.style.width = "100%";
         mainContainer.style.overflow = "scroll";
-        const bottomContainer = document.createElement("div");
-        bottomContainer.id = "infoContainer";
-        bottomContainer.style.height = "auto";
-        bottomContainer.style.width = "100%";
-        bottomContainer.classList.add("infoContainer");
 
+        // Container for the information to be displayed below the graph
+        const secondContainer = document.createElement("div");
+        secondContainer.classList.add("secondContainer");
+
+        // Setup container for the legend
+        const legendContainer = document.createElement("div");
+        legendContainer.style.float = "left";
+        legendContainer.style.marginRight = "40px";
+        legendContainer.style.marginBottom = "30px";
+        const legendHeader = document.createElement("h1");
+        legendHeader.textContent = "Legend";
+        legendHeader.style.fontSize = `${fontSize * 2}px`;
+        legendHeader.style.margin = "";
+        legendContainer.appendChild(legendHeader);
+        legendContainer.appendChild(legendCanvas);
+
+        // Setup container for the table
+        const tableContainer = document.createElement("div");
+        tableContainer.style.float = "left";
+        const tableHeader = document.createElement("h1");
+        tableHeader.textContent = "Validation Conjectures";
+        tableHeader.style.fontSize = `${fontSize * 2}px`;
+        tableHeader.style.marginBottom = "5px";
+        tableContainer.appendChild(tableHeader);
+        tableContainer.appendChild(this.execViewData.conjectureTable);
+
+        // Setup containers for the secondary container
+        const informationContainer = document.createElement("div");
+        informationContainer.appendChild(legendContainer);
+        informationContainer.appendChild(tableContainer);
+
+        if (prematureEndTime) {
+            // The full graph cannot be shown. Warn about this
+            const warningContainer = document.createElement("div");
+            warningContainer.style.marginTop = "0";
+            const pElement = document.createElement("p");
+            pElement.style.marginTop = "0";
+            pElement.classList.add("iswarning");
+            pElement.textContent = `*Max graph size reached! Only displaying events until the time ${prematureEndTime}/${
+                this.execViewData.gridDrawFuncs[this.execViewData.gridDrawFuncs.length - 1].time
+            }. Choose a later start time to view later events.`;
+            warningContainer.appendChild(pElement);
+            secondContainer.appendChild(warningContainer);
+        }
+
+        // Add containers
         mainContainer.appendChild(graphCanvas);
-        bottomContainer.appendChild(legendCanvas);
-        bottomContainer.appendChild(this.execViewData.conjectureTable);
+        secondContainer.appendChild(informationContainer);
 
-        return [mainContainer, bottomContainer];
+        return [mainContainer, secondContainer];
     }
 
     generateCpuView(startTime, cpuId) {
         const executionEvents = this.cpusWithEvents.find((cwe) => cwe.id == cpuId).executionEvents;
         const canvas = this.generateEmptyCanvas();
         let ctx = canvas.getContext("2d");
-        const eventLength_y = this.calculateEventLength(ctx);
-        const drawFuncs = [];
-        const yAxisLinesDash = [1, 4];
         ctx.font = declFont;
         const txtMetrics = ctx.measureText("Gg");
         const txtHeight = txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent;
+
+        // If there is no execution events just return a canvas with text
+        if (executionEvents.length == 0) {
+            ctx.font = declFont;
+            ctx.fillStyle = fontColor;
+            ctx.fillText("No events found", eventLineWidth, txtHeight + eventLineWidth * 2);
+
+            return canvas;
+        }
+
+        const eventLength_y = this.calculateEventLength(ctx);
+        const drawFuncs = [];
+        const yAxisLinesDash = [1, 4];
         const margin = txtMetrics.width;
         const padding = margin / 2;
         ctx.font = graphFont;
         const axisStart_x = ctx.measureText(executionEvents[executionEvents.length - 1].time).width + padding;
         ctx.font = declFont;
         const rects = [];
-
-        // Each unique obj deployment that is referenced by an event should be converted to a rectangle to display. These should be pushed after the bus rectangles.
         let cpuRectId;
         const traversedEvents = [];
         const threads = [];
         const eventsToDraw = [];
         const rectIdToRectName = [];
+        const opActiveEvents = [];
+
         for (let i = 0; i < executionEvents.length; i++) {
             const event = executionEvents[i];
+            // We need to keep track of all OpActive events to later draw correct event arrows
+            if (event.eventKind == LogEvent.opActivate) {
+                opActiveEvents.unshift(event);
+            }
             traversedEvents.push(event);
             const isBusEvent = LogEvent.isBusKind(event.eventKind);
             let opComplete;
@@ -445,6 +496,7 @@ class ViewGenerator {
                 }
             } else if (event.eventKind == LogEvent.messageCompleted) {
                 if (!("opname" in event)) {
+                    // Look back through the traversed events
                     for (let ind = traversedEvents.length - 1; ind >= 0; ind--) {
                         const prevEvent = traversedEvents[ind];
                         if (ind - 1 > 0 && prevEvent.eventKind == LogEvent.messageRequest && prevEvent.callthr == event.callthr) {
@@ -503,10 +555,9 @@ class ViewGenerator {
 
             // Associate rectangle id with a rectangle name
             const rectId = isBusEvent ? this.busDeclEvents.find((bde) => bde.id == event.busid).name : cpuRectId;
-            if (!rectIdToRectName.find((ritc) => ritc.id == rectId)) {
+            if (!rectIdToRectName.find((ritrn) => ritrn.id == rectId)) {
                 rectIdToRectName.push({ id: rectId, name: !isBusEvent ? event.clnm + `(${rectId})` : rectId });
             }
-
             // Associate the event with the rectangle id
             event.rectId = rectId;
 
@@ -517,10 +568,10 @@ class ViewGenerator {
                     eventsToDraw.push(opComplete);
                 }
 
-                // Generate rectangle if it doesnt exist.
+                // Add rectangle if it doesnt exist.
                 let currentRect = rects.find((rect) => rect.rectId == rectId);
                 if (!currentRect) {
-                    const rectName = rectIdToRectName.find((ritc) => ritc.id == rectId).name;
+                    const rectName = rectIdToRectName.find((ritrn) => ritrn.id == rectId).name;
                     ctx.font = declFont;
                     currentRect = {
                         name: rectName,
@@ -533,11 +584,13 @@ class ViewGenerator {
                         pos_x: 0,
                         pos_y: txtHeight + padding + margin * 2,
                     };
+                    // Find where to insert the rect. If its a bus rect its busId determines where to place it else its rectid.
+                    // The vbus rect should always come first followed by the other bus rects and then by the rest of the rects.
                     let index = 0;
                     for (; index < rects.length; index++) {
                         const rect = rects[index];
                         if (currentRect.busId != undefined) {
-                            if (rect.busId == undefined || currentRect.busId > rect.busId) {
+                            if (rect.busId == undefined || currentRect.busId < rect.busId) {
                                 break;
                             }
                         } else {
@@ -546,6 +599,7 @@ class ViewGenerator {
                             }
                         }
                     }
+                    // Insert rect
                     rects.splice(index, 0, currentRect);
                 }
 
@@ -578,11 +632,10 @@ class ViewGenerator {
         }
 
         // Define where the rectangles end
-        const rectEndPos_y = txtHeight + padding + margin;
+        const rectsEnd_y = txtHeight + padding + margin;
 
         // Geneate draw functions for the rectangles and their text
         let graphEnd_x = axisStart_x;
-        const prevRects = [];
         for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
             const rectStartPos_x =
@@ -594,32 +647,24 @@ class ViewGenerator {
                 ctx.fillStyle = fontColor;
                 ctx.strokeStyle = fontColor;
                 ctx.lineWidth = gridLineWidth;
-                ctx.setLineDash(rect.busId ? [2, 2] : []);
+                ctx.setLineDash(rect.busId == 0 ? [2, 2] : []);
                 ctx.strokeRect(rectStartPos_x, margin, rect.width, rect.height);
-                ctx.fillText(rect.name, rectStartPos_x + padding, rectEndPos_y - (rect.height - rect.textHeight));
+                ctx.fillText(rect.name, rectStartPos_x + padding, rectsEnd_y - (rect.height - rect.textHeight));
             });
 
             rect.pos_x = rectStartPos_x + rect.width / 2;
             graphEnd_x = rectStartPos_x + rect.width + rect.margin.right;
-            prevRects.push(rect.rectId);
         }
 
         // Generate draw functions for each event
         let currentTime = -1;
         let lastEventPos_y = 0;
-        let currentPos_y = rectEndPos_y + margin;
+        let currentPos_y = rectsEnd_y + margin;
         const eventKinds = [];
-        const filteredEvents = eventsToDraw;
-        const prevOpEvents = [];
-        for (let i = 0; i < filteredEvents.length; i++) {
-            const event = filteredEvents[i];
-
-            if (LogEvent.isOperationKind(event.eventKind)) {
-                prevOpEvents.unshift(event);
-            }
-
-            const nextEvent = i < filteredEvents.length - 1 ? filteredEvents[i + 1] : undefined;
-            const prevEvent = i > 0 ? filteredEvents[i - 1] : undefined;
+        for (let i = 0; i < eventsToDraw.length; i++) {
+            const event = eventsToDraw[i];
+            const nextEvent = i < eventsToDraw.length - 1 ? eventsToDraw[i + 1] : undefined;
+            const prevEvent = i > 0 ? eventsToDraw[i - 1] : undefined;
             const eventStartPos_y = currentPos_y;
             const eventEndPos_y = eventStartPos_y + eventLength_y;
             const currentRect = rects.find((rect) => rect.rectId == event.rectId);
@@ -631,7 +676,7 @@ class ViewGenerator {
                 }
             });
 
-            // Push draw functions for graph line along the y-axis
+            // Generate draw functions for graph line along the y-axis
             if (currentTime != event.time) {
                 const pos_y = currentPos_y;
                 const axisTxt = event.time;
@@ -649,7 +694,7 @@ class ViewGenerator {
                 // Update time
                 currentTime = event.time;
             }
-            // Push draw function for the event
+            // Generate draw functions for the event
             drawFuncs.push(() => {
                 ctx.save();
                 ctx.translate(currentRect.pos_x, eventStartPos_y);
@@ -667,44 +712,36 @@ class ViewGenerator {
                     0,
                     eventLength_y,
                     fontColor,
-                    fontColor,
-                    undefined
+                    fontColor
                 ).forEach((drawFunc) => drawFunc());
 
                 ctx.restore();
             });
 
-            // Push draw function for the arrow to/from event
+            // Generate draw function for the arrow to/from the event
             let eventHasArrowWithTxt = false;
-            let isDelayedOpComplete =
-                event.eventKind == LogEvent.opCompleted &&
-                prevEvent &&
-                nextEvent &&
-                prevEvent.opname != event.opname &&
-                nextEvent.opname != event.opname;
 
             if (nextEvent) {
                 let targetRect = undefined;
                 let targetRectId = nextEvent.eventKind == LogEvent.replyRequest ? nextEvent.rectId : undefined;
                 if (!targetRectId && !(event.rectId == nextEvent.rectId && LogEvent.isOperationKind(nextEvent.eventKind))) {
+                    // Find the target for the event i.e. an event on another rect.
                     targetRect =
                         event.eventKind == LogEvent.opRequest
-                            ? filteredEvents
-                                  .slice(i + 1, filteredEvents.length)
+                            ? eventsToDraw
+                                  .slice(i + 1, eventsToDraw.length)
                                   .find(
                                       (eve) =>
                                           (eve.eventKind == LogEvent.opActivate || eve.eventKind == LogEvent.messageRequest) &&
                                           event.objref == eve.objref
                                   )
                             : event.eventKind == LogEvent.opActivate && LogEvent.isOperationKind(nextEvent.eventKind)
-                            ? filteredEvents
-                                  .slice(i + 1, filteredEvents.length)
+                            ? eventsToDraw
+                                  .slice(i + 1, eventsToDraw.length)
                                   .find((eve) => eve.eventKind == LogEvent.opCompleted && event.opname == eve.opname)
                             : event.eventKind == LogEvent.opCompleted && nextEvent.eventKind == LogEvent.opCompleted
                             ? (() => {
-                                  const prevOaRect = prevOpEvents.find(
-                                      (eve) => eve.eventKind == LogEvent.opActivate && eve.opname == nextEvent.opname
-                                  );
+                                  const prevOaRect = opActiveEvents.find((eve) => eve.opname == nextEvent.opname);
                                   return prevOaRect && prevOaRect.rectId == event.rectId
                                       ? rects.find((rect) => nextEvent.rectId == rect.rectId)
                                       : undefined;
@@ -717,7 +754,7 @@ class ViewGenerator {
                     targetRectId = targetRect ? targetRect.rectId : undefined;
                 }
 
-                // If there is another target for the event then draw the arrow
+                // If there is a target for the event then draw the arrow
                 if ((targetRectId && targetRectId != event.rectId) || event.eventKind == LogEvent.messageCompleted) {
                     const isReplyArrow =
                         !(event.eventKind == LogEvent.messageCompleted && "opname" in event) && event.eventKind != LogEvent.opRequest;
@@ -725,8 +762,8 @@ class ViewGenerator {
                     const nextRect = rects.find(
                         (rect) => rect.rectId == (targetRectId ? targetRectId : isReplyArrow ? nextEvent.rectId : event.objref)
                     );
-                    const arrwEnd_x = (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - eventWrapperHeight;
-                    const arrwStart_x = (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + eventWrapperHeight;
+                    const arrwEnd_x = (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - eventWrapperHeight / 2;
+                    const arrwStart_x = (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + eventWrapperHeight / 2;
 
                     drawFuncs.push(() => {
                         this.drawArrow(
@@ -745,6 +782,7 @@ class ViewGenerator {
                         );
                     });
 
+                    // If the arrow is not a reply arrow then draw the opname of the event on the arrow
                     if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
                         eventHasArrowWithTxt = true;
                         drawFuncs.push(() => {
@@ -760,14 +798,14 @@ class ViewGenerator {
                 }
             }
 
-            // Push draw function for the opname if needed
+            // Generate draw function for the opname next to the event if needed
             if (
                 (prevEvent &&
-                    (isDelayedOpComplete ||
-                        (!eventHasArrowWithTxt &&
-                            LogEvent.isOperationKind(event.eventKind) &&
+                    !eventHasArrowWithTxt &&
+                    ((event.eventKind == LogEvent.opCompleted && prevEvent.opname != event.opname) ||
+                        (LogEvent.isOperationKind(event.eventKind) &&
                             !(LogEvent.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))) ||
-                (!prevEvent && !eventHasArrowWithTxt && LogEvent.isOperationKind(event.eventKind))
+                (!prevEvent && LogEvent.isOperationKind(event.eventKind))
             ) {
                 drawFuncs.push(() => {
                     ctx.font = graphFont;
@@ -789,26 +827,14 @@ class ViewGenerator {
             currentPos_y = eventEndPos_y;
         }
 
-        // Push draw functions for graph lines along the x-axis
+        // Generate draw functions for graph lines between rects and the start of the graph
         rects.forEach((rect) => {
             drawFuncs.push(() =>
-                this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectEndPos_y, rect.pos_x, rectEndPos_y + margin)
-            );
-            drawFuncs.push(() =>
-                this.drawLine(
-                    ctx,
-                    gridLineWidth,
-                    yAxisLinesDash,
-                    fontColor,
-                    rect.pos_x,
-                    lastEventPos_y,
-                    rect.pos_x,
-                    lastEventPos_y + eventLength_y
-                )
+                this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectsEnd_y, rect.pos_x, rectsEnd_y + margin)
             );
         });
 
-        // Push draw functions for the legend
+        // Generate draw functions for the legend
         const legend = this.generateEventKindsLegend(
             ctx,
             graphFont,
@@ -834,54 +860,11 @@ class ViewGenerator {
         return canvas;
     }
 
-    generateConjectureTable(conjectures) {
-        const table = document.createElement("table");
-        table.style.float = "center";
-
-        //  Build and add the headers
-        const thead = table.createTHead();
-        const headerRow = thead.insertRow();
-        ["status", "name", "expression", "src time", "src thread", "dest time", "dest thread"].forEach((header) => {
-            const th = document.createElement("th");
-            th.appendChild(document.createTextNode(header));
-            headerRow.appendChild(th);
-        });
-
-        // Add the table body
-        let tbdy = document.createElement("tbody");
-        tbdy.id = "tbdy";
-        table.appendChild(tbdy);
-
-        // Build the rows
-        conjectures.forEach((conj) => {
-            const row = tbdy.insertRow();
-            row.classList.add("row");
-
-            // Add cells to the rows
-            [
-                conj.status,
-                conj.name,
-                conj.expression,
-                conj.source.time,
-                conj.source.thid,
-                conj.destination.time,
-                conj.destination.thid,
-            ].forEach((value) => {
-                const rowCell = row.insertCell();
-                rowCell.classList.add("statuscell");
-                // Parse a true or falls value to an icon instead
-                rowCell.appendChild(document.createTextNode(value == true ? "\u2713" : value == false ? "\u2715" : value));
-            });
-        });
-
-        return table;
-    }
-
     generateGridDrawFuncs(
         cpuDecls,
         busDecls,
         executionEvents,
-        graphStartPos_y,
+        gridStartPos_y,
         gridHeight,
         ctx,
         graphFont,
@@ -972,6 +955,27 @@ class ViewGenerator {
                 }
             }
 
+            // Generate draw function for the x-axis line
+            if (currentTime < event.time) {
+                // Add function that draws the visuals for the x-axis line
+                ctx.font = graphFont;
+                const txtWidth = ctx.measureText(event.time).width;
+                graphEnd_y = gridHeight + txtWidth + eventLineWidth * 2;
+                drawFuncs.push((ctx, startPos_x) => {
+                    ctx.font = graphFont;
+                    this.drawLine(ctx, gridLineWidth, [1, 4], gridLineColor, startPos_x, gridStartPos_y, startPos_x, gridHeight);
+
+                    ctx.save();
+                    ctx.translate(startPos_x, gridHeight);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.fillText(event.time, eventLineWidth, 0);
+                    ctx.restore();
+                });
+
+                // Update time
+                currentTime = event.time;
+            }
+
             decls.forEach((decl) => {
                 // Generate the draw functions for the line between events
                 if (decl != currentDecl) {
@@ -987,42 +991,18 @@ class ViewGenerator {
                     const constLineDash = lineDash;
                     const constColor = color;
                     drawFuncs.push((ctx, startPos_x) => {
-                        const x_end = startPos_x + eventLength_x;
-                        const x_start = startPos_x - gridLineWidth;
+                        const x_end = startPos_x + eventLength_x + gridLineWidth;
+                        const x_start = startPos_x;
                         this.drawLine(ctx, lineWidth, constLineDash, constColor, x_start, pos_y, x_end, pos_y);
                     });
                 }
             });
 
-            // Generate draw function for the x-axis line
-            if (currentTime < event.time) {
-                // Add function that draws the visuals for the x-axis line
-                ctx.font = graphFont;
-                const txtWidth = ctx.measureText(event.time).width;
-                graphEnd_y = gridHeight + txtWidth;
-                drawFuncs.push((ctx, startPos_x) => {
-                    ctx.font = graphFont;
-                    this.drawLine(ctx, gridLineWidth, [1, 4], gridLineColor, startPos_x, graphStartPos_y, startPos_x, gridHeight);
-
-                    ctx.save();
-                    ctx.translate(startPos_x, gridHeight);
-                    ctx.rotate(Math.PI / 2);
-                    ctx.fillText(event.time, eventLineWidth, 0);
-                    ctx.restore();
-                });
-
-                // Update time
-                currentTime = event.time;
-            }
-
             // Generate draw functions for event
-            const targetPos_y = LogEvent.isBusKind(eventKind)
-                ? prevDecl && (eventKind == LogEvent.messageRequest || eventKind == LogEvent.replyRequest)
-                    ? prevDecl.pos_y
-                    : eventKind == LogEvent.messageCompleted
-                    ? cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).pos_y
-                    : undefined
-                : undefined;
+            const hasStopLine = !LogEvent.isOperationKind(eventKind);
+            const hasStartLine =
+                hasStopLine &&
+                (!prevDecl || currentDecl.pos_y != prevDecl.pos_y || LogEvent.isOperationKind(executionEvents[index - 1].eventKind));
             drawFuncs.push((ctx, startPos_x) =>
                 this.generateEventDrawFuncs(
                     ctx,
@@ -1037,9 +1017,25 @@ class ViewGenerator {
                     startPos_x + eventLength_x,
                     gridLineColor,
                     gridLineColor,
-                    targetPos_y
+                    hasStartLine,
+                    hasStopLine
                 ).forEach((func) => func())
             );
+            // Generate draw functions for bus arrows
+            if (prevDecl && LogEvent.isBusKind(eventKind) && eventKind != LogEvent.messageActivate) {
+                const isMsgComplete = eventKind == LogEvent.messageCompleted;
+                const targetPos_y = !isMsgComplete ? prevDecl.pos_y : cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).pos_y;
+                const eventPos_y = currentDecl.pos_y;
+                const nextEventHasStartLine =
+                    isMsgComplete && index < executionEvents.length - 1 && LogEvent.isThreadKind(executionEvents[index + 1].eventKind);
+                drawFuncs.push((ctx, startPos_x) => {
+                    // Draw arrows from/to cpu and bus
+                    const end_y = eventPos_y - eventWrapperHeight;
+                    const start_y = targetPos_y + (!nextEventHasStartLine || !isMsgComplete ? eventWrapperHeight / 2 : eventWrapperHeight);
+                    const pos_x = startPos_x + (isMsgComplete ? eventLength_x : 0);
+                    this.drawArrow(ctx, pos_x, start_y, pos_x, end_y, 3, 5, false, gridLineWidth, [], gridLineColor, isMsgComplete);
+                });
+            }
 
             // Generate draw functions for conjecture indication
             if (conjectureTimestamps.has(event.time)) {
@@ -1053,68 +1049,19 @@ class ViewGenerator {
                             event.opname.toLowerCase().includes(conj.destination.opname.toLowerCase()))
                 );
                 if (conjecturesForEvent.length > 0) {
-                    const rectStart_y = currentDecl.pos_y - eventWrapperHeight * 1.5;
-                    const rectHeight = gridLineWidth + eventWrapperHeight * 2.2;
-                    const lineStart_y = rectStart_y + rectHeight;
-                    const lineEnd_y = lineStart_y + eventLineWidth;
-                    drawFuncs.push((ctx, startPos_x) => {
-                        const prevStrokeStyle = ctx.strokeStyle;
-                        ctx.strokeStyle = conjectureColor;
-                        ctx.beginPath();
-                        ctx.rect(startPos_x + gridLineWidth * 2, rectStart_y, eventLength_x - gridLineWidth * 2, rectHeight);
-                        ctx.stroke();
-                        const lineStart_x = startPos_x + eventLength_x / 2;
-
-                        this.drawLine(ctx, gridLineWidth, [], conjectureColor, lineStart_x, lineStart_y, lineStart_x, lineEnd_y);
-                        ctx.strokeStyle = prevStrokeStyle;
-                    });
-                    let nextConjPos_y = lineEnd_y + gridLineWidth;
-                    conjecturesForEvent.forEach((conjecture) => {
-                        const pos_y = nextConjPos_y;
-                        const textMeasure = ctx.measureText(conjecture.name);
-                        drawFuncs.push((ctx, startPos_x) => {
-                            const prevFillStyle = ctx.fillStyle;
-                            ctx.fillStyle = conjectureColor;
-                            ctx.fillText(
-                                conjecture.name,
-                                startPos_x + eventLength_x / 2 - textMeasure.width / 4,
-                                pos_y + textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent
-                            );
-                            ctx.fillStyle = prevFillStyle;
-                        });
-
-                        nextConjPos_y += textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent + gridLineWidth * 2;
-                    });
-                }
-            }
-
-            // Generate draw function for the event "wrapper line"
-            if (index != executionEvents.length - 1 && !LogEvent.isOperationKind(eventKind)) {
-                const begin_y = currentDecl.pos_y - eventWrapperHeight / 2;
-                const end_y = currentDecl.pos_y + eventWrapperHeight / 2;
-                drawFuncs.push((ctx, startPos_x) =>
-                    this.drawLine(
-                        ctx,
-                        gridLineWidth,
-                        [],
-                        gridLineColor,
-                        startPos_x + eventLength_x,
-                        begin_y,
-                        startPos_x + eventLength_x,
-                        end_y
-                    )
-                );
-
-                if (
-                    !prevDecl ||
-                    currentDecl.pos_y != prevDecl.pos_y ||
-                    (index > 0 && LogEvent.isOperationKind(executionEvents[index - 1].eventKind))
-                ) {
-                    drawFuncs.push((ctx, startPos_x) =>
-                        this.drawLine(ctx, gridLineWidth, [], gridLineColor, startPos_x, begin_y, startPos_x, end_y)
+                    const txtMeasure = ctx.measureText(conjecturesForEvent[0].name);
+                    drawFuncs.push(
+                        this.generateConjectureDrawFunc(
+                            currentDecl.pos_y - eventLineWidth,
+                            conjecturesForEvent.map((conj) => conj.name),
+                            ctx,
+                            eventLength_x,
+                            txtMeasure.fontBoundingBoxAscent + txtMeasure.fontBoundingBoxDescent + eventLineWidth
+                        )
                     );
                 }
             }
+
             prevDecl = currentDecl;
 
             // Add draw events to the time
@@ -1141,6 +1088,119 @@ class ViewGenerator {
      * Generate helper functions
      *
      */
+
+    generateConjectureTable(conjectures) {
+        const table = document.createElement("table");
+        table.style.float = "center";
+        const headerNames = ["status", "name", "expression", "src time", "src thread", "dest time", "dest thread"];
+
+        //  Build and add the headers
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        headerNames.forEach((header) => {
+            const th = document.createElement("th");
+            th.appendChild(document.createTextNode(header));
+            headerRow.appendChild(th);
+        });
+
+        // Add the table body
+        let tbdy = document.createElement("tbody");
+        tbdy.id = "tbdy";
+        table.appendChild(tbdy);
+
+        if (conjectures.length == 0) {
+            // Add an empty row to display an empty table
+            conjectures.push({
+                status: " ",
+                name: " ",
+                expression: " ",
+                source: { time: " ", thid: " " },
+                destination: { time: " ", thid: " " },
+            });
+        }
+        // Build the rows
+        conjectures.forEach((conj) => {
+            const row = tbdy.insertRow();
+
+            row.classList.add("row");
+            // Add cells to the rows
+            [
+                { header: headerNames[0], value: conj.status },
+                { header: headerNames[1], value: conj.name },
+                { header: headerNames[2], value: conj.expression },
+                { header: headerNames[3], value: conj.source.time },
+                { header: headerNames[4], value: conj.source.thid },
+                { header: headerNames[5], value: conj.destination.time },
+                { header: headerNames[6], value: conj.destination.thid },
+            ].forEach((content) => {
+                const rowCell = row.insertCell();
+                rowCell.classList.add("statuscell");
+                // Parse a true or falls value to an icon instead
+                rowCell.appendChild(
+                    document.createTextNode(content.value === true ? "\u2713" : content.value === false ? "\u2715" : content.value)
+                );
+                // Click listener for focusing the graph on the time of the conjecture
+                if (content.header == headerNames[3] || content.header == headerNames[5]) {
+                    rowCell.classList.add("clickableCell");
+                    rowCell.ondblclick = () => {
+                        selectedTime = content.value;
+                        timeSelector.value = selectedTime;
+                        resetViews(currentViewId, selectedTime);
+                    };
+                }
+            });
+        });
+
+        return table;
+    }
+
+    generateConjectureDrawFunc(midPos_y, conjectureNames, ctx, length, height) {
+        const rectStart_y = midPos_y - height / 2;
+        const rectHeight = height;
+        const rectWidth = length - conjectureMarkerWidth * 2;
+        const lineStart_y = rectStart_y + rectHeight;
+        const lineEnd_y = lineStart_y + eventLineWidth;
+        const drawFuncs = [];
+        drawFuncs.push((ctx, startPos_x) => {
+            const prevStrokeStyle = ctx.strokeStyle;
+            const prevLineWidth = ctx.lineWidth;
+            ctx.lineWidth = conjectureMarkerWidth;
+            ctx.strokeStyle = conjectureColor;
+            ctx.beginPath();
+            ctx.rect(startPos_x + conjectureMarkerWidth, rectStart_y, rectWidth, rectHeight);
+            ctx.stroke();
+            const lineStart_x = startPos_x + length / 2;
+
+            this.drawLine(ctx, conjectureMarkerWidth, [], conjectureColor, lineStart_x, lineStart_y, lineStart_x, lineEnd_y);
+            ctx.strokeStyle = prevStrokeStyle;
+            ctx.lineWidth = prevLineWidth;
+        });
+        let nextConjPos_y = lineEnd_y + gridLineWidth;
+        conjectureNames.forEach((name) => {
+            const pos_y = nextConjPos_y;
+            const textMeasure = ctx.measureText(name);
+            drawFuncs.push((ctx, startPos_x) => {
+                const prevFillStyle = ctx.fillStyle;
+                const prevLineWidth = ctx.lineWidth;
+                ctx.lineWidth = conjectureMarkerWidth;
+                ctx.fillStyle = conjectureColor;
+                ctx.fillText(
+                    name,
+                    startPos_x + length / 2 - textMeasure.width / 4,
+                    pos_y + textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent
+                );
+                ctx.fillStyle = prevFillStyle;
+                ctx.lineWidth = prevLineWidth;
+            });
+
+            nextConjPos_y += textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent + gridLineWidth * 2;
+        });
+
+        return (ctx, startPos_x) => {
+            drawFuncs.forEach((func) => func(ctx, startPos_x));
+        };
+    }
+
     generateEmptyCanvas() {
         const canvas = document.createElement("CANVAS");
         canvas.width = window.innerWidth;
@@ -1151,6 +1211,7 @@ class ViewGenerator {
     }
 
     calculateEventLength(ctx) {
+        // The event length is based on whatever is the widest of "9999" (to fit a high thread number) and any of the abbreviation of the event kinds.
         const prevFont = ctx.font;
         ctx.font = graphFont;
         const threadIdMetrics = ctx.measureText("9999");
@@ -1197,8 +1258,7 @@ class ViewGenerator {
                         elementPos_y,
                         elementPadding + eventLength_x - gridLineWidth * 2,
                         gridLineColor,
-                        gridLineColor,
-                        undefined
+                        gridLineColor
                     ).forEach((func) => {
                         ctx.font = font;
                         func();
@@ -1217,11 +1277,15 @@ class ViewGenerator {
             const txt = "Validation Conjecture";
             const elementPos_y = nextLegendElementPos_y;
             drawFuncs.push(() => {
+                this.generateConjectureDrawFunc(
+                    elementPos_y - txtHeight / 4,
+                    [],
+                    ctx,
+                    eventLength_x,
+                    txtHeight + eventLineWidth
+                )(ctx, -(gridLineWidth * 2));
                 const prevStrokeStyle = ctx.strokeStyle;
                 ctx.strokeStyle = conjectureColor;
-                ctx.beginPath();
-                ctx.rect(elementPadding + gridLineWidth, elementPos_y - txtHeight, eventLength_x - gridLineWidth * 3, txtHeight * 1.3);
-                ctx.stroke();
                 ctx.fillText(txt, elementPadding + eventLength_x + eventLineWidth, elementPos_y);
                 ctx.strokeStyle = prevStrokeStyle;
             });
@@ -1229,12 +1293,14 @@ class ViewGenerator {
             if (txtWidth > width) {
                 width = txtWidth;
             }
+        } else {
+            nextLegendElementPos_y -= txtHeight * 1.5 + gridLineWidth;
         }
 
         return {
             endPos_y: nextLegendElementPos_y + txtHeight,
             drawFuncs: drawFuncs,
-            width: width + elementPadding + eventLength_x + eventLineWidth,
+            width: width + elementPadding + eventLength_x + eventLineWidth + gridLineWidth,
         };
     }
 
@@ -1243,29 +1309,30 @@ class ViewGenerator {
         font,
         gridLineWidth,
         eventLineWidth,
-        eventWrapperHeight,
+        lineWrapperHeight,
         eventTxt,
         eventKind,
-        eventStartPos_x,
-        eventPos_y,
-        eventEndPos_x,
+        startPos_x,
+        pos_y,
+        endPos_x,
         gridLineColor,
         txtColor,
-        targetEventPos_y
+        startLine,
+        stopLine
     ) {
         ctx.fillStyle = txtColor;
         ctx.font = font;
         const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
         const drawFuncs = [];
-        // Calculate and add the draw function
+        // Draw the event
         drawFuncs.push(() => {
-            this.drawLine(ctx, eventLineWidth, [], eventColor, eventStartPos_x, eventPos_y, eventEndPos_x, eventPos_y);
+            this.drawLine(ctx, eventLineWidth, [], eventColor, startPos_x, pos_y, endPos_x, pos_y);
 
             if (eventTxt) {
                 const textMeasure = ctx.measureText(eventTxt);
                 const textWidth = textMeasure.width;
-                const textPos_y = eventPos_y - eventLineWidth;
-                ctx.fillText(eventTxt, eventStartPos_x + (eventEndPos_x - eventStartPos_x - textWidth) / 2, textPos_y);
+                const textPos_y = pos_y - eventLineWidth;
+                ctx.fillText(eventTxt, startPos_x + (endPos_x - startPos_x - textWidth) / 2, textPos_y);
             }
         });
 
@@ -1276,33 +1343,47 @@ class ViewGenerator {
                 this.drawThreadEventMarker(
                     ctx,
                     font,
-                    txtMetrics ? txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent : 0,
-                    eventWrapperHeight,
+                    txtMetrics ? txtMetrics.actualBoundingBoxAscent + txtMetrics.actualBoundingBoxDescent + gridLineWidth * 2 : 0,
+                    lineWrapperHeight,
                     eventLineWidth,
                     eventKind,
                     eventColor,
-                    eventStartPos_x,
-                    eventEndPos_x,
-                    eventPos_y
+                    startPos_x,
+                    endPos_x,
+                    pos_y
                 );
             });
-        } else if (LogEvent.isBusKind(eventKind)) {
-            drawFuncs.push(() => {
-                // Draw arrows from/to cpu and bus
-                if (targetEventPos_y != undefined) {
-                    let pos_x = eventStartPos_x;
-                    let end_y = eventPos_y - eventWrapperHeight;
-                    let start_y = targetEventPos_y + eventWrapperHeight;
+        }
 
-                    if (eventKind == LogEvent.messageCompleted) {
-                        pos_x = eventEndPos_x;
-                        end_y = targetEventPos_y + eventWrapperHeight;
-                        start_y = eventPos_y - eventWrapperHeight;
-                    }
+        // Draw the event "wrapper lines"
+        if (stopLine) {
+            drawFuncs.push(() =>
+                this.drawLine(
+                    ctx,
+                    gridLineWidth,
+                    [],
+                    gridLineColor,
+                    endPos_x,
+                    pos_y - lineWrapperHeight / 2,
+                    endPos_x,
+                    pos_y + lineWrapperHeight / 2
+                )
+            );
+        }
 
-                    this.drawArrow(ctx, pos_x, start_y, pos_x, end_y, 3, 5, false, gridLineWidth, undefined, gridLineColor, undefined);
-                }
-            });
+        if (startLine) {
+            drawFuncs.push(() =>
+                this.drawLine(
+                    ctx,
+                    gridLineWidth,
+                    [],
+                    gridLineColor,
+                    startPos_x,
+                    pos_y - lineWrapperHeight / 2,
+                    startPos_x,
+                    pos_y + lineWrapperHeight / 2
+                )
+            );
         }
 
         return drawFuncs;
@@ -1335,7 +1416,7 @@ class ViewGenerator {
         const markerWidth = eventLineWidth - 1;
         if (LogEvent.isThreadSwapKind(eventKind)) {
             if (eventKind == LogEvent.delayedThreadSwapIn) {
-                const lineLength = Math.abs(Math.abs(markerEnd_y) - Math.abs(markerStart_y)) / 2;
+                const lineLength = Math.abs(Math.abs(markerEnd_y) - Math.abs(markerStart_y)) / 2 + halfEventLineWidth;
                 const start_x = markerPos_x - lineLength / 2;
                 const end_x = markerPos_x + lineLength / 2;
                 this.drawLine(ctx, halfEventLineWidth, [], eventColor, start_x, markerEnd_y, end_x, markerEnd_y);
@@ -1348,9 +1429,9 @@ class ViewGenerator {
                 markerPos_x,
                 markerStart_y - (isSwapIn ? markerWidth : 0),
                 markerPos_x,
-                markerEnd_y - (isSwapIn ? markerWidth : 0),
+                markerEnd_y + (isSwapIn ? 0 : markerWidth),
                 halfEventLineWidth,
-                eventLineWidth,
+                halfEventLineWidth,
                 true,
                 markerWidth,
                 undefined,
@@ -1619,23 +1700,21 @@ class LogEvent {
  *
  */
 
-function redrawViews(currentViewId) {
+function resetViews(currentViewId, selectedTime) {
     viewContainer.innerHTML = "";
-    // Remove view items from views and rebuild and display the view items for the current view
+    // Remove view components from views and rebuild and display the view components for the current view
     views.forEach((view) => {
-        if (view.id != archViewId) {
-            view.items = [];
-        }
+        view.components = [];
         if (view.id == currentViewId) {
-            // Rebuild view items for the current view
-            view.items = view.items.length > 0 ? view.items : buildViewItems(currentViewId, selectedTime);
+            // Rebuild view components for the current view
+            view.components = buildViewComponents(currentViewId, selectedTime);
             // Display the view
-            view.items.forEach((item) => viewContainer.appendChild(item));
+            view.components.forEach((item) => viewContainer.appendChild(item));
         }
     });
 }
 
-function buildViewItems(viewId, startTime) {
+function buildViewComponents(viewId, startTime) {
     return viewId == execViewId
         ? canvasDrawer.generateExecView(startTime)
         : viewId == archViewId
@@ -1662,7 +1741,7 @@ function setButtonColors(btns, activeBtn) {
 function updateFontAndColors(scaleWithFont, matchTheme) {
     const computedStyle = getComputedStyle(document.body);
     // Update font properties
-    const fontSize = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 15;
+    fontSize = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 16;
     const fontFamily = computedStyle.getPropertyValue("--vscode-editor-font-family").trim();
     fontColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
     conjectureColor = matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000";
@@ -1671,8 +1750,11 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
 
     // Update colors for events and bus
+    themeColors = [fontColor];
+    let themeColorsHasOpColor = false;
     LogEvent.eventKindToColor.forEach((ektc) => {
-        if (LogEvent.isOperationKind(ektc.kind) || LogEvent.isThreadKind(ektc.kind)) {
+        const isOpKind = LogEvent.isOperationKind(ektc.kind);
+        if (isOpKind || LogEvent.isThreadKind(ektc.kind)) {
             ektc.color = matchTheme
                 ? ektc.kind == LogEvent.threadCreate
                     ? computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim()
@@ -1687,9 +1769,14 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
                     : computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()
                 : LogEvent.kindToStandardColor(ektc.kind);
         }
+        // Only include op color once as it is identical for all op kinds.
+        if (isOpKind && !themeColorsHasOpColor) {
+            themeColorsHasOpColor = true;
+            themeColors.push(ektc.color);
+        } else if (!isOpKind) {
+            themeColors.push(ektc.color);
+        }
     });
-    busColors = [fontColor];
-    busColors.push(...LogEvent.eventKindToColor.map((ektc) => ektc.color));
 
     // Update button colors
     btnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();
@@ -1698,9 +1785,10 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     btnColors.secondaryForeground = computedStyle.getPropertyValue("--vscode-button-secondaryForeground").trim();
 
     // Update size of graph elements
-    declFont = `${fontSize * 2}px ${fontFamily}`;
+    declFont = `${fontSize * 1.5}px ${fontFamily}`;
     graphFont = `${fontSize}px ${fontFamily}`;
-    gridLineWidth = fontSize / 10 > 1 ? Math.floor(fontSize / 10) : 1;
+    gridLineWidth = fontSize / 10 > 1 ? fontSize / 10 : 1;
     eventLineWidth = gridLineWidth * 4;
+    conjectureMarkerWidth = gridLineWidth * 2;
     eventWrapperHeight = eventLineWidth * 2 + eventLineWidth;
 }
