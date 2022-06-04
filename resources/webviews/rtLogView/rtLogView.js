@@ -14,6 +14,7 @@ document.body.appendChild(viewContainer);
 // Global const variables
 const archViewId = "arch";
 const execViewId = "exec";
+const legendViewId = "legend";
 const initMsg = "init";
 const editorSettingsChangedMsg = "editorSettingsChanged";
 const logData = { busDeclEvents: [], cpusWithEvents: [] };
@@ -26,14 +27,15 @@ const timeSelector = document.getElementById("timeStamp");
 let backgroundColor;
 let fontSize;
 let declFont;
+let conjectureViolationFont;
 let diagramFont;
 let gridLineWidth;
 let eventLineWidth;
-let conjectureMarkerWidth;
+let conjectureViolationMarkerWidth;
 let eventWrapperHeight;
 let themeColors = [];
 let fontColor;
-let conjectureColor;
+let conjectureViolationColor;
 let canvasDrawer;
 let currentViewId = archViewId;
 let selectedTime = 0;
@@ -117,7 +119,7 @@ class ViewGenerator {
             gridDrawFuncs: [],
             gridStartPos_x: undefined,
             eventLength: undefined,
-            conjectureTable: undefined,
+            conjectureViolationTable: undefined,
         };
     }
 
@@ -188,7 +190,7 @@ class ViewGenerator {
             this.execViewData.eventLength
         );
 
-        this.execViewData.conjectureTable = this.generateConjectureTable(this.conjectures);
+        this.execViewData.conjectureViolationTable = this.generateConjectureViolationTable(this.conjectures);
     }
 
     generateArchView() {
@@ -267,32 +269,37 @@ class ViewGenerator {
             ctx.fillStyle = ctx.strokeStyle = i < themeColors.length - 1 ? themeColors[i] : fontColor;
             ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
 
-            let startPos_x;
-            let endPos_x;
-            // Draw outgoing connections
-            for (let i = 0; i < bus.topo.length; i++) {
-                const cpuId = bus.topo[i];
-                const rect = rects.find((rect) => rect.id == cpuId);
+            // If the bus has any connections then draw them
+            if (bus.topo.length > 1) {
+                let startPos_x;
+                let endPos_x;
+                const sortedTopo = bus.topo.sort();
+                // Draw outgoing connections
 
-                // Make sure that lines are spaced evenly on the rectangle
-                const linePos_x = (rect.width / (rect.connections + 1)) * ++rect.established + rect.start;
+                for (let i = 0; i < sortedTopo.length; i++) {
+                    const cpuId = sortedTopo[i];
+                    const rect = rects.find((rect) => rect.id == cpuId);
 
-                // Draw outgoing part of the line
-                ctx.moveTo(linePos_x, rectBottomPos_y);
-                ctx.lineTo(linePos_x, nextBusNamePos_y);
-                ctx.stroke();
+                    // Make sure that lines are spaced evenly on the rectangle
+                    const linePos_x = (rect.width / (rect.connections + 1)) * ++rect.established + rect.start;
 
-                if (i == 0) {
-                    startPos_x = linePos_x;
-                } else if (i + 1 == bus.topo.length) {
-                    endPos_x = linePos_x;
+                    // Draw outgoing part of the line
+                    ctx.moveTo(linePos_x, rectBottomPos_y);
+                    ctx.lineTo(linePos_x, nextBusNamePos_y);
+                    ctx.stroke();
+
+                    if (i == 0) {
+                        startPos_x = linePos_x;
+                    } else if (i + 1 == sortedTopo.length) {
+                        endPos_x = linePos_x;
+                    }
                 }
-            }
 
-            // Connect outgoing connections
-            ctx.moveTo(startPos_x, nextBusNamePos_y);
-            ctx.lineTo(endPos_x, nextBusNamePos_y);
-            ctx.stroke();
+                // Connect outgoing connections
+                ctx.moveTo(startPos_x, nextBusNamePos_y);
+                ctx.lineTo(endPos_x, nextBusNamePos_y);
+                ctx.stroke();
+            }
 
             // Draw the name of the bus
             ctx.fillText(bus.name, margin, nextBusNamePos_y + textHeight / 2);
@@ -303,6 +310,35 @@ class ViewGenerator {
         return canvas;
     }
 
+    generateLegendView() {
+        // Generate the legend canvas
+        const legendCanvas = this.generateEmptyCanvas();
+        let legendCtx = legendCanvas.getContext("2d");
+        const eventLength = this.calculateEventLength(legendCtx);
+        legendCtx.font = diagramFont;
+        // Generate draw functions for the legend
+        const legend = this.generateEventKindsLegend(
+            legendCtx,
+            diagramFont,
+            eventLineWidth,
+            gridLineWidth,
+            fontColor,
+            0,
+            eventLength,
+            eventWrapperHeight,
+            eventLength * 0.7,
+            LogEvent.eventKindToColor.map((ektc) => ektc.kind),
+            true
+        );
+        legendCanvas.width = legend.width;
+        legendCanvas.height = legend.endPos_y;
+        legendCtx = legendCanvas.getContext("2d");
+        legend.drawFuncs.forEach((func) => func());
+        legendCanvas.style.marginTop = "30px";
+        legendCanvas.style.marginLeft = "30px";
+        return [legendCanvas];
+    }
+
     generateExecView(startTime) {
         if (this.execViewData.declDrawFuncs.length == 0) {
             this.generateExecDrawData();
@@ -310,7 +346,6 @@ class ViewGenerator {
         // Generate diagram canvas
         const diagramCanvas = this.generateEmptyCanvas();
         let gridEndPos_y = 0;
-        const eventKinds = new Set();
         let gridPos_x = this.execViewData.gridStartPos_x;
         const gridDrawFuncs = [];
         let prematureEndTime;
@@ -325,7 +360,6 @@ class ViewGenerator {
                 }
 
                 gridEndPos_y = gdfs.endPos_y > gridEndPos_y ? gdfs.endPos_y : gridEndPos_y;
-                gdfs.eventKinds.forEach((kind) => eventKinds.add(kind));
                 gdfs.drawFuncs.forEach((drawFunc) => {
                     const pos_x = gridPos_x;
                     gridPos_x += this.execViewData.eventLength;
@@ -343,30 +377,6 @@ class ViewGenerator {
         this.execViewData.declDrawFuncs.forEach((func) => func(diagramCtx));
         gridDrawFuncs.forEach((func) => func(diagramCtx));
 
-        // Generate the legend canvas
-        const legendCanvas = this.generateEmptyCanvas();
-        let legendCtx = legendCanvas.getContext("2d");
-        legendCtx.font = diagramFont;
-        // Generate draw functions for the legend
-        const legend = this.generateEventKindsLegend(
-            legendCtx,
-            diagramFont,
-            eventLineWidth,
-            gridLineWidth,
-            fontColor,
-            0,
-            this.execViewData.eventLength,
-            eventWrapperHeight,
-            this.execViewData.eventLength * 0.7,
-            Array.from(eventKinds),
-            this.conjectures.length > 0
-        );
-        legendCanvas.width = legend.width;
-        legendCanvas.height = legend.endPos_y;
-        legendCtx = legendCanvas.getContext("2d");
-        legendCtx.fillStyle = fontColor;
-        legend.drawFuncs.forEach((func) => func());
-
         // Container for the diagram
         const mainContainer = document.createElement("div");
         mainContainer.style.overflow = "scroll";
@@ -375,31 +385,18 @@ class ViewGenerator {
         const secondContainer = document.createElement("div");
         secondContainer.classList.add("secondContainer");
 
-        // Setup container for the legend
-        const legendContainer = document.createElement("div");
-        legendContainer.style.float = "left";
-        legendContainer.style.marginRight = "40px";
-        legendContainer.style.marginBottom = "30px";
-        const legendHeader = document.createElement("h1");
-        legendHeader.textContent = "Legend";
-        legendHeader.style.fontSize = `${fontSize * 2}px`;
-        legendHeader.style.margin = "";
-        legendContainer.appendChild(legendHeader);
-        legendContainer.appendChild(legendCanvas);
-
         // Setup container for the table
         const tableContainer = document.createElement("div");
         tableContainer.style.float = "left";
         const tableHeader = document.createElement("h1");
-        tableHeader.textContent = "Validation Conjectures";
+        tableHeader.textContent = "Validation Conjecture Violations";
         tableHeader.style.fontSize = `${fontSize * 2}px`;
         tableHeader.style.marginBottom = "5px";
         tableContainer.appendChild(tableHeader);
-        tableContainer.appendChild(this.execViewData.conjectureTable);
+        tableContainer.appendChild(this.execViewData.conjectureViolationTable);
 
         // Setup containers for the secondary container
         const informationContainer = document.createElement("div");
-        informationContainer.appendChild(legendContainer);
         informationContainer.appendChild(tableContainer);
 
         if (prematureEndTime) {
@@ -658,7 +655,6 @@ class ViewGenerator {
         let currentTime = -1;
         let lastEventPos_y = 0;
         let currentPos_y = rectsEnd_y + margin;
-        const eventKinds = [];
         for (let i = 0; i < eventsToDraw.length; i++) {
             const event = eventsToDraw[i];
             const nextEvent = i < eventsToDraw.length - 1 ? eventsToDraw[i + 1] : undefined;
@@ -818,10 +814,7 @@ class ViewGenerator {
             if (lastEventPos_y < eventEndPos_y) {
                 lastEventPos_y = eventEndPos_y;
             }
-            // Keep track of which event types are present so the legend can be generated
-            if (!eventKinds.find((eventKind) => eventKind == event.eventKind)) {
-                eventKinds.push(event.eventKind);
-            }
+
             currentPos_y = eventEndPos_y;
         }
 
@@ -832,24 +825,9 @@ class ViewGenerator {
             );
         });
 
-        // Generate draw functions for the legend
-        const legend = this.generateEventKindsLegend(
-            ctx,
-            diagramFont,
-            eventLineWidth,
-            gridLineWidth,
-            fontColor,
-            (txtHeight * 2) / 4,
-            eventLength_y,
-            eventWrapperHeight,
-            lastEventPos_y + eventLength_y * 2 + margin,
-            eventKinds
-        );
-        drawFuncs.push(...legend.drawFuncs);
-
         // Resize canvas to fit content
         canvas.width = diagramEnd_x + margin;
-        canvas.height = legend.endPos_y;
+        canvas.height = lastEventPos_y + eventLength_y * 2 + margin;
         ctx = canvas.getContext("2d");
 
         // Draw on canvas
@@ -876,7 +854,7 @@ class ViewGenerator {
         let currentBusDecl = undefined;
         let currentTime = -1;
         let prevDecl;
-        const conjectureTimestamps = new Set(this.conjectures.flatMap((conj) => [conj.source.time, conj.destination.time]));
+        const conjectureViolationTimestamps = new Set(this.conjectures.flatMap((conj) => [conj.source.time, conj.destination.time]));
         const decls = cpuDecls.concat(busDecls);
         const drawFuncsForTime = [];
         for (let index = 0; index < executionEvents.length; index++) {
@@ -996,6 +974,18 @@ class ViewGenerator {
                 }
             });
 
+            const conjectureViolationsForEvent = conjectureViolationTimestamps.has(event.time)
+                ? this.conjectures.filter(
+                      (conj) =>
+                          (conj.source.time == event.time &&
+                              event.eventKind.toLowerCase() == conj.source.kind.toLowerCase() &&
+                              event.opname.toLowerCase().includes(conj.source.opname.toLowerCase())) ||
+                          (conj.destination.time == event.time &&
+                              event.eventKind.toLowerCase() == conj.destination.kind.toLowerCase() &&
+                              event.opname.toLowerCase().includes(conj.destination.opname.toLowerCase()))
+                  )
+                : [];
+
             // Generate draw functions for event
             const hasStopLine = !LogEvent.isOperationKind(eventKind);
             const hasStartLine =
@@ -1016,9 +1006,11 @@ class ViewGenerator {
                     gridLineColor,
                     gridLineColor,
                     hasStartLine,
-                    hasStopLine
+                    hasStopLine,
+                    conjectureViolationsForEvent.length > 0
                 ).forEach((func) => func())
             );
+
             // Generate draw functions for bus arrows
             if (prevDecl && LogEvent.isBusKind(eventKind) && eventKind != LogEvent.messageActivate) {
                 const isMsgComplete = eventKind == LogEvent.messageCompleted;
@@ -1035,29 +1027,18 @@ class ViewGenerator {
                 });
             }
 
-            // Generate draw functions for conjecture indication
-            if (conjectureTimestamps.has(event.time)) {
-                const conjecturesForEvent = this.conjectures.filter(
-                    (conj) =>
-                        (conj.source.time == event.time &&
-                            event.eventKind.toLowerCase() == conj.source.kind.toLowerCase() &&
-                            event.opname.toLowerCase().includes(conj.source.opname.toLowerCase())) ||
-                        (conj.destination.time == event.time &&
-                            event.eventKind.toLowerCase() == conj.destination.kind.toLowerCase() &&
-                            event.opname.toLowerCase().includes(conj.destination.opname.toLowerCase()))
+            // Generate draw functions for conjecture violation indication
+            if (conjectureViolationsForEvent.length > 0) {
+                const txtMeasure = ctx.measureText(conjectureViolationsForEvent[0].name);
+                drawFuncs.push(
+                    this.generateConjectureViolationDrawFunc(
+                        currentDecl.pos_y - eventLineWidth,
+                        conjectureViolationsForEvent.map((conj) => conj.name),
+                        ctx,
+                        eventLength_x,
+                        txtMeasure.fontBoundingBoxAscent + txtMeasure.fontBoundingBoxDescent + eventLineWidth
+                    )
                 );
-                if (conjecturesForEvent.length > 0) {
-                    const txtMeasure = ctx.measureText(conjecturesForEvent[0].name);
-                    drawFuncs.push(
-                        this.generateConjectureDrawFunc(
-                            currentDecl.pos_y - eventLineWidth,
-                            conjecturesForEvent.map((conj) => conj.name),
-                            ctx,
-                            eventLength_x,
-                            txtMeasure.fontBoundingBoxAscent + txtMeasure.fontBoundingBoxDescent + eventLineWidth
-                        )
-                    );
-                }
             }
 
             prevDecl = currentDecl;
@@ -1069,12 +1050,10 @@ class ViewGenerator {
                     time: currentTime,
                     drawFuncs: [],
                     endPos_y: diagramEnd_y,
-                    eventKinds: new Set(),
                 };
 
                 drawFuncsForTime.push(dfft);
             }
-            dfft.eventKinds.add(eventKind);
             dfft.drawFuncs.push((ctx, startPos_x) => drawFuncs.forEach((func) => func(ctx, startPos_x)));
         }
 
@@ -1087,7 +1066,7 @@ class ViewGenerator {
      *
      */
 
-    generateConjectureTable(conjectures) {
+    generateConjectureViolationTable(conjectureViolations) {
         const table = document.createElement("table");
         table.style.float = "center";
         const headerNames = ["status", "name", "expression", "src time", "src thread", "dest time", "dest thread"];
@@ -1106,9 +1085,9 @@ class ViewGenerator {
         tbdy.id = "tbdy";
         table.appendChild(tbdy);
 
-        if (conjectures.length == 0) {
+        if (conjectureViolations.length == 0) {
             // Add an empty row to display an empty table
-            conjectures.push({
+            conjectureViolations.push({
                 status: " ",
                 name: " ",
                 expression: " ",
@@ -1117,7 +1096,7 @@ class ViewGenerator {
             });
         }
         // Build the rows
-        conjectures.forEach((conj) => {
+        conjectureViolations.forEach((conj) => {
             const row = tbdy.insertRow();
 
             row.classList.add("row");
@@ -1137,7 +1116,7 @@ class ViewGenerator {
                 rowCell.appendChild(
                     document.createTextNode(content.value === true ? "\u2713" : content.value === false ? "\u2715" : content.value)
                 );
-                // Click listener for focusing the diagram on the time of the conjecture
+                // Click listener for focusing the diagram on the time of the conjecture violation
                 if (content.header == headerNames[3] || content.header == headerNames[5]) {
                     rowCell.classList.add("clickableCell");
                     rowCell.ondblclick = () => {
@@ -1152,36 +1131,47 @@ class ViewGenerator {
         return table;
     }
 
-    generateConjectureDrawFunc(midPos_y, conjectureNames, ctx, length, height) {
+    generateConjectureViolationDrawFunc(midPos_y, conjectureViolationNames, ctx, length, height) {
         const rectStart_y = midPos_y - height / 2;
         const rectHeight = height;
-        const rectWidth = length - conjectureMarkerWidth * 2;
+        const rectWidth = length - conjectureViolationMarkerWidth * 2 + gridLineWidth * 2;
         const lineStart_y = rectStart_y + rectHeight;
         const lineEnd_y = lineStart_y + eventLineWidth;
         const drawFuncs = [];
         drawFuncs.push((ctx, startPos_x) => {
             const prevStrokeStyle = ctx.strokeStyle;
             const prevLineWidth = ctx.lineWidth;
-            ctx.lineWidth = conjectureMarkerWidth;
-            ctx.strokeStyle = conjectureColor;
+            ctx.lineWidth = conjectureViolationMarkerWidth;
+            ctx.strokeStyle = conjectureViolationColor;
             ctx.beginPath();
-            ctx.rect(startPos_x + conjectureMarkerWidth, rectStart_y, rectWidth, rectHeight);
+            ctx.rect(startPos_x + conjectureViolationMarkerWidth - gridLineWidth, rectStart_y, rectWidth, rectHeight);
             ctx.stroke();
             const lineStart_x = startPos_x + length / 2;
 
-            this.drawLine(ctx, conjectureMarkerWidth, [], conjectureColor, lineStart_x, lineStart_y, lineStart_x, lineEnd_y);
+            this.drawLine(
+                ctx,
+                conjectureViolationMarkerWidth,
+                [],
+                conjectureViolationColor,
+                lineStart_x,
+                lineStart_y,
+                lineStart_x,
+                lineEnd_y
+            );
             ctx.strokeStyle = prevStrokeStyle;
             ctx.lineWidth = prevLineWidth;
         });
         let nextConjPos_y = lineEnd_y + gridLineWidth;
-        conjectureNames.forEach((name) => {
+        conjectureViolationNames.forEach((name) => {
             const pos_y = nextConjPos_y;
             const textMeasure = ctx.measureText(name);
             drawFuncs.push((ctx, startPos_x) => {
                 const prevFillStyle = ctx.fillStyle;
                 const prevLineWidth = ctx.lineWidth;
-                ctx.lineWidth = conjectureMarkerWidth;
-                ctx.fillStyle = conjectureColor;
+                const prevFont = ctx.font;
+                ctx.lineWidth = conjectureViolationMarkerWidth;
+                ctx.fillStyle = conjectureViolationColor;
+                ctx.font = conjectureViolationFont;
                 ctx.fillText(
                     name,
                     startPos_x + length / 2 - textMeasure.width / 4,
@@ -1189,6 +1179,7 @@ class ViewGenerator {
                 );
                 ctx.fillStyle = prevFillStyle;
                 ctx.lineWidth = prevLineWidth;
+                ctx.font = prevFont;
             });
 
             nextConjPos_y += textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent + gridLineWidth * 2;
@@ -1230,7 +1221,7 @@ class ViewGenerator {
         eventWrapperHeight,
         startPos_y,
         eventKinds,
-        addConjectureLegend
+        addConjectureViolationLegend
     ) {
         // Calculate draw functions for elements in the legend
         let nextLegendElementPos_y = startPos_y;
@@ -1270,12 +1261,12 @@ class ViewGenerator {
                 nextLegendElementPos_y += txtHeight * 1.5 + gridLineWidth;
             });
 
-        // Add draw function for the validation conjecture legend
-        if (addConjectureLegend) {
-            const txt = "Validation Conjecture";
+        // Add draw function for the validation conjecture violation legend
+        if (addConjectureViolationLegend) {
+            const txt = "Validation Conjecture Violation";
             const elementPos_y = nextLegendElementPos_y;
             drawFuncs.push(() => {
-                this.generateConjectureDrawFunc(
+                this.generateConjectureViolationDrawFunc(
                     elementPos_y - txtHeight / 4,
                     [],
                     ctx,
@@ -1283,7 +1274,7 @@ class ViewGenerator {
                     txtHeight + eventLineWidth
                 )(ctx, -(gridLineWidth * 2));
                 const prevStrokeStyle = ctx.strokeStyle;
-                ctx.strokeStyle = conjectureColor;
+                ctx.strokeStyle = conjectureViolationColor;
                 ctx.fillText(txt, elementPadding + eventLength_x + eventLineWidth, elementPos_y);
                 ctx.strokeStyle = prevStrokeStyle;
             });
@@ -1316,11 +1307,14 @@ class ViewGenerator {
         gridLineColor,
         txtColor,
         startLine,
-        stopLine
+        stopLine,
+        hasConjectureViolationViolation
     ) {
         ctx.fillStyle = txtColor;
         ctx.font = font;
-        const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
+        const eventColor = hasConjectureViolationViolation
+            ? conjectureViolationColor
+            : LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
         const drawFuncs = [];
         // Draw the event
         drawFuncs.push(() => {
@@ -1717,6 +1711,8 @@ function buildViewComponents(viewId, startTime) {
         ? canvasDrawer.generateExecView(startTime)
         : viewId == archViewId
         ? [canvasDrawer.generateArchView()]
+        : viewId == legendViewId
+        ? canvasDrawer.generateLegendView()
         : [canvasDrawer.generateCpuView(startTime, viewId.replace(/\D/g, ""))];
 }
 
@@ -1742,7 +1738,7 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     fontSize = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 16;
     const fontFamily = computedStyle.getPropertyValue("--vscode-editor-font-family").trim();
     fontColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
-    conjectureColor = matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000";
+    conjectureViolationColor = matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000";
 
     // Update background color for the diagrams
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
@@ -1785,8 +1781,9 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     // Update size of diagram elements
     declFont = `${fontSize * 1.5}px ${fontFamily}`;
     diagramFont = `${fontSize}px ${fontFamily}`;
+    conjectureViolationFont = `900 ${fontSize * 1.1}px ${fontFamily}`;
     gridLineWidth = fontSize / 10 > 1 ? fontSize / 10 : 1;
     eventLineWidth = gridLineWidth * 4;
-    conjectureMarkerWidth = gridLineWidth * 2;
+    conjectureViolationMarkerWidth = gridLineWidth * 3;
     eventWrapperHeight = eventLineWidth * 2 + eventLineWidth;
 }

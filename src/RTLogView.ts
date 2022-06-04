@@ -199,11 +199,11 @@ export class RTLogView extends AutoDisposable {
                 }
 
                 // Remove object accessor from opname
-                if (logEventObj.opname) {
-                    const opnameSplit: string[] = logEventObj.opname.split("`");
-                    logEventObj.opname =
-                        opnameSplit.length > 1 ? opnameSplit.slice(1).reduce((prev, curr) => prev + curr, "") : opnameSplit[0].trim();
-                }
+                // if (logEventObj.opname) {
+                //     const opnameSplit: string[] = logEventObj.opname.split("`");
+                //     logEventObj.opname =
+                //         opnameSplit.length > 1 ? opnameSplit.slice(1).reduce((prev, curr) => prev + curr, "") : opnameSplit[0].trim();
+                // }
 
                 if (logEventObj.eventKind == LogEvent.busDecl) {
                     busDecls.push(logEventObj);
@@ -343,13 +343,6 @@ export class RTLogView extends AutoDisposable {
         if (value == '""') {
             return "";
         }
-        if (value.includes("[") && value.includes("]")) {
-            const values = value
-                .replace(" ", "")
-                .slice(1, value.length - 1)
-                .split(",");
-            return values.map((val) => Number(val));
-        }
 
         return value.replace('"', "").replace('"', "");
     }
@@ -442,6 +435,7 @@ export class RTLogView extends AutoDisposable {
             ${cpuDecls
                 .map((cpu) => `<button class="button" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
                 .reduce((prev, cur) => prev + cur, "")}
+            <button class="button" id="legend">Diagrams legend</button>
             <br>
             <script nonce="${scriptNonce}" src="${jsUri}"></script>
         </body>
