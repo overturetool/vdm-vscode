@@ -198,6 +198,13 @@ export class RTLogView extends AutoDisposable {
                     timeStamps.push(currrentTime);
                 }
 
+                // Remove object accessor from opname
+                if (logEventObj.opname) {
+                    const opnameSplit: string[] = logEventObj.opname.split("`");
+                    logEventObj.opname =
+                        opnameSplit.length > 1 ? opnameSplit.slice(1).reduce((prev, curr) => prev + curr, "") : opnameSplit[0].trim();
+                }
+
                 if (logEventObj.eventKind == LogEvent.busDecl) {
                     busDecls.push(logEventObj);
                 } else if (logEventObj.eventKind == LogEvent.cpuDecl) {

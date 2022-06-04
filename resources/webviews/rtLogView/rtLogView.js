@@ -26,7 +26,7 @@ const timeSelector = document.getElementById("timeStamp");
 let backgroundColor;
 let fontSize;
 let declFont;
-let graphFont;
+let diagramFont;
 let gridLineWidth;
 let eventLineWidth;
 let conjectureMarkerWidth;
@@ -172,7 +172,7 @@ class ViewGenerator {
         // Calculate where events should start on the x-axis
         this.execViewData.gridStartPos_x = widestText + declPadding_x * 2;
 
-        // Generate and push draw functions for the graph
+        // Generate and push draw functions for the diagram
         this.execViewData.gridDrawFuncs = this.generateGridDrawFuncs(
             cpuDecls,
             busDecls,
@@ -180,7 +180,7 @@ class ViewGenerator {
             declPadding_y / 2,
             nextDeclPos_y - declPadding_y / 2,
             ctx,
-            graphFont,
+            diagramFont,
             gridLineWidth,
             fontColor,
             eventLineWidth,
@@ -202,7 +202,8 @@ class ViewGenerator {
         const textHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
         const margin = txtMeasure.width;
         const padding = margin / 2;
-        const rectBottomPos_y = textHeight + padding * 2 + margin;
+        const rectBottomPos_y = textHeight + padding * 2 + margin + gridLineWidth;
+        const rects = [];
         let maxBusTxtWidth = margin;
         this.busDeclEvents.forEach((busdecl) => {
             // The startig position for the rectangle on the x-axis should be max text width + predefined margin
@@ -211,27 +212,35 @@ class ViewGenerator {
             if (totalWidth > maxBusTxtWidth) {
                 maxBusTxtWidth = totalWidth;
             }
+            // Concat all connections for each rectangle
+            busdecl.topo.forEach((id) => {
+                const rect = rects.find((rect) => rect.id == id);
+                if (rect) {
+                    rect.connections += 1;
+                } else {
+                    rects.push({ id: id, connections: 1, established: 0 });
+                }
+            });
         });
-        const busTextPosInc_y = textHeight * 2;
 
         // Calculate position for the rectangles and the text inside
         let nextRectPos_x = maxBusTxtWidth;
-        const rects = this.cpuDeclEvents.map((cpud) => {
-            const rectWidth = ctx.measureText(cpud.name).width + padding * 2;
-
-            const rect = {
-                text: cpud.name,
-                id: cpud.id,
-                start: nextRectPos_x,
-                width: rectWidth,
-                height: textHeight + padding * 2,
-                textHeight: textHeight,
-            };
-            nextRectPos_x += rectWidth + margin;
+        this.cpuDeclEvents.forEach((cpud) => {
+            const rect = rects.find((rc) => rc.id == cpud.id);
+            const minWidth = rect.connections * (margin / 2);
+            const txtWidth = ctx.measureText(cpud.name).width;
+            rect.text = cpud.name;
+            rect.start = nextRectPos_x;
+            rect.width = (txtWidth > minWidth ? txtWidth : minWidth) + padding * 2;
+            rect.height = textHeight + padding * 2;
+            rect.textHeight = textHeight;
+            rect.txtStart = nextRectPos_x + (txtWidth > minWidth ? 0 : (minWidth - txtWidth) / 2) + padding;
+            nextRectPos_x += rect.width + margin;
             return rect;
         });
 
         // Resize canvas to fit content
+        const busTextPosInc_y = textHeight * 2;
         canvas.height = rectBottomPos_y + busTextPosInc_y * this.busDeclEvents.length + textHeight + margin;
         canvas.width = nextRectPos_x;
 
@@ -245,20 +254,7 @@ class ViewGenerator {
         rects.forEach((rect) => {
             ctx.setLineDash(rect.id == 0 ? [2, 2] : []);
             ctx.strokeRect(rect.start, margin, rect.width, rect.height);
-            ctx.fillText(rect.text, rect.start + padding, rectBottomPos_y - padding);
-        });
-
-        // Concat all connections for each rectangle
-        const rectConnections = [];
-        this.busDeclEvents.forEach((busdecl) => {
-            busdecl.topo.forEach((id) => {
-                const existingRectCon = rectConnections.find((rect) => rect.id == id);
-                if (existingRectCon) {
-                    existingRectCon.connections += 1;
-                } else {
-                    rectConnections.push({ id: id, connections: 1, established: 0 });
-                }
-            });
+            ctx.fillText(rect.text, rect.txtStart, rectBottomPos_y - padding);
         });
 
         // Draw the connections between rectangles and place the name for each bus
@@ -266,38 +262,37 @@ class ViewGenerator {
         for (let i = 0; i < this.busDeclEvents.length; i++) {
             const bus = this.busDeclEvents[i];
 
-            // Setup color for and style for the connection line
+            // Setup color and style for the connection line
             ctx.beginPath();
             ctx.fillStyle = ctx.strokeStyle = i < themeColors.length - 1 ? themeColors[i] : fontColor;
             ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
 
-            // Draw bus connections between rectangles
-            const fromRect = rects.find((rect) => rect.id == bus.topo[0]);
-            const fromRectConn = rectConnections.find((rect) => rect.id == fromRect.id);
+            let startPos_x;
+            let endPos_x;
+            // Draw outgoing connections
+            for (let i = 0; i < bus.topo.length; i++) {
+                const cpuId = bus.topo[i];
+                const rect = rects.find((rect) => rect.id == cpuId);
 
-            // Make sure that lines are spaced evenly on the "from" rectangle
-            const lineOnFromRectPos_x = (fromRect.width / (fromRectConn.connections + 1)) * ++fromRectConn.established + fromRect.start;
+                // Make sure that lines are spaced evenly on the rectangle
+                const linePos_x = (rect.width / (rect.connections + 1)) * ++rect.established + rect.start;
 
-            // Draw outgoing part of the line
-            ctx.moveTo(lineOnFromRectPos_x, rectBottomPos_y);
-            ctx.lineTo(lineOnFromRectPos_x, nextBusNamePos_y);
-
-            // Draw the rest of the lines connecting the outgoing part
-            bus.topo.slice(1).forEach((toId) => {
-                const toRect = rects.find((rect) => rect.id == toId);
-                const toRectConn = rectConnections.find((rect) => rect.id == toId);
-
-                // Make sure that lines are spaced evenly on the "to" rectangle
-                const lineOnToRectPos_x = (toRect.width / (toRectConn.connections + 1)) * ++toRectConn.established + toRect.start;
-
-                // Draw the line from the latest "lineTo" position
-                ctx.lineTo(lineOnToRectPos_x, nextBusNamePos_y);
-                ctx.lineTo(lineOnToRectPos_x, rectBottomPos_y);
+                // Draw outgoing part of the line
+                ctx.moveTo(linePos_x, rectBottomPos_y);
+                ctx.lineTo(linePos_x, nextBusNamePos_y);
                 ctx.stroke();
 
-                // Reset to the outgoing line from this rectangle
-                ctx.moveTo(lineOnToRectPos_x, nextBusNamePos_y);
-            });
+                if (i == 0) {
+                    startPos_x = linePos_x;
+                } else if (i + 1 == bus.topo.length) {
+                    endPos_x = linePos_x;
+                }
+            }
+
+            // Connect outgoing connections
+            ctx.moveTo(startPos_x, nextBusNamePos_y);
+            ctx.lineTo(endPos_x, nextBusNamePos_y);
+            ctx.stroke();
 
             // Draw the name of the bus
             ctx.fillText(bus.name, margin, nextBusNamePos_y + textHeight / 2);
@@ -312,8 +307,8 @@ class ViewGenerator {
         if (this.execViewData.declDrawFuncs.length == 0) {
             this.generateExecDrawData();
         }
-        // Generate graph canvas
-        const graphCanvas = this.generateEmptyCanvas();
+        // Generate diagram canvas
+        const diagramCanvas = this.generateEmptyCanvas();
         let gridEndPos_y = 0;
         const eventKinds = new Set();
         let gridPos_x = this.execViewData.gridStartPos_x;
@@ -339,23 +334,23 @@ class ViewGenerator {
             }
         }
 
-        // Resize graph canvas to fit content
-        graphCanvas.width = gridPos_x + this.execViewData.eventLength;
-        graphCanvas.height = gridEndPos_y;
-        const graphCtx = graphCanvas.getContext("2d");
-        graphCtx.fillStyle = fontColor;
-        // Draw visuals on graph canvas
-        this.execViewData.declDrawFuncs.forEach((func) => func(graphCtx));
-        gridDrawFuncs.forEach((func) => func(graphCtx));
+        // Resize diagram canvas to fit content
+        diagramCanvas.width = gridPos_x + this.execViewData.eventLength;
+        diagramCanvas.height = gridEndPos_y;
+        const diagramCtx = diagramCanvas.getContext("2d");
+        diagramCtx.fillStyle = fontColor;
+        // Draw visuals on diagram canvas
+        this.execViewData.declDrawFuncs.forEach((func) => func(diagramCtx));
+        gridDrawFuncs.forEach((func) => func(diagramCtx));
 
         // Generate the legend canvas
         const legendCanvas = this.generateEmptyCanvas();
         let legendCtx = legendCanvas.getContext("2d");
-        legendCtx.font = graphFont;
+        legendCtx.font = diagramFont;
         // Generate draw functions for the legend
         const legend = this.generateEventKindsLegend(
             legendCtx,
-            graphFont,
+            diagramFont,
             eventLineWidth,
             gridLineWidth,
             fontColor,
@@ -372,11 +367,11 @@ class ViewGenerator {
         legendCtx.fillStyle = fontColor;
         legend.drawFuncs.forEach((func) => func());
 
-        // Container for the graph
+        // Container for the diagram
         const mainContainer = document.createElement("div");
         mainContainer.style.overflow = "scroll";
 
-        // Container for the information to be displayed below the graph
+        // Container for the information to be displayed below the diagram
         const secondContainer = document.createElement("div");
         secondContainer.classList.add("secondContainer");
 
@@ -408,13 +403,13 @@ class ViewGenerator {
         informationContainer.appendChild(tableContainer);
 
         if (prematureEndTime) {
-            // The full graph cannot be shown. Warn about this
+            // The full diagram cannot be shown. Warn about this
             const warningContainer = document.createElement("div");
             warningContainer.style.marginTop = "0";
             const pElement = document.createElement("p");
             pElement.style.marginTop = "0";
             pElement.classList.add("iswarning");
-            pElement.textContent = `*Max graph size reached! Only displaying events until the time ${prematureEndTime}/${
+            pElement.textContent = `*Max diagram size reached! Only displaying events until the time ${prematureEndTime}/${
                 this.execViewData.gridDrawFuncs[this.execViewData.gridDrawFuncs.length - 1].time
             }. Choose a later start time to view later events.`;
             warningContainer.appendChild(pElement);
@@ -422,7 +417,7 @@ class ViewGenerator {
         }
 
         // Add containers
-        mainContainer.appendChild(graphCanvas);
+        mainContainer.appendChild(diagramCanvas);
         secondContainer.appendChild(informationContainer);
 
         return [mainContainer, secondContainer];
@@ -450,7 +445,7 @@ class ViewGenerator {
         const yAxisLinesDash = [1, 4];
         const margin = txtMetrics.width;
         const padding = margin / 2;
-        ctx.font = graphFont;
+        ctx.font = diagramFont;
         const axisStart_x = ctx.measureText(executionEvents[executionEvents.length - 1].time).width + padding;
         ctx.font = declFont;
         const rects = [];
@@ -608,6 +603,7 @@ class ViewGenerator {
                     (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.messageCompleted && "opname" in event)) &&
                     i < executionEvents.length - 1
                 ) {
+                    //TODO: why doesnt this work as expected??
                     const targetRectIndex = rects.indexOf(
                         rects.find(
                             (rect) =>
@@ -617,15 +613,18 @@ class ViewGenerator {
                                     : event.objref)
                         )
                     );
-                    ctx.font = graphFont;
-                    const rectMargin = ctx.measureText(event.opname).width - currentRect.width / 2;
-                    if (
-                        (rects.indexOf(currentRect) + 1 == targetRectIndex || rects.indexOf(currentRect) == targetRectIndex) &&
-                        currentRect.margin.right < rectMargin
-                    ) {
-                        currentRect.margin.right = rectMargin;
-                    } else if (rects.indexOf(currentRect) - 1 == targetRectIndex && currentRect.margin.left < rectMargin) {
-                        currentRect.margin.left = rectMargin;
+                    const isSelf = targetRectIndex > -1 && rects.indexOf(currentRect) == targetRectIndex;
+                    ctx.font = diagramFont;
+                    const newMargin = ctx.measureText(event.opname).width - currentRect.width / 2 - (isSelf ? eventLength_y * 1.5 : 0);
+
+                    if (isSelf && currentRect.margin.right < newMargin) {
+                        currentRect.margin.right = newMargin;
+                    } else if (targetRectIndex > -1) {
+                        if (rects.indexOf(currentRect) + 1 == targetRectIndex && newMargin > currentRect.margin.right) {
+                            currentRect.margin.right = newMargin;
+                        } else if (rects.indexOf(currentRect) - 1 == targetRectIndex && newMargin > currentRect.margin.left) {
+                            currentRect.margin.left = newMargin;
+                        }
                     }
                 }
             }
@@ -635,13 +634,12 @@ class ViewGenerator {
         const rectsEnd_y = txtHeight + padding + margin;
 
         // Geneate draw functions for the rectangles and their text
-        let graphEnd_x = axisStart_x;
+        let diagramEnd_x = axisStart_x;
         for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
             const rectStartPos_x =
-                graphEnd_x +
-                eventLength_y +
-                (i == 0 ? 0 : rects[i - 1].margin.right > rect.margin.left ? 0 : rect.margin.left - rects[i - 1].margin.right);
+                diagramEnd_x +
+                (i == 0 ? 0 : rects[i - 1].margin.right >= rect.margin.left ? 0 : rect.margin.left - rects[i - 1].margin.right);
             drawFuncs.push(() => {
                 ctx.font = declFont;
                 ctx.fillStyle = fontColor;
@@ -653,7 +651,7 @@ class ViewGenerator {
             });
 
             rect.pos_x = rectStartPos_x + rect.width / 2;
-            graphEnd_x = rectStartPos_x + rect.width + rect.margin.right;
+            diagramEnd_x = rectStartPos_x + rect.width + rect.margin.right;
         }
 
         // Generate draw functions for each event
@@ -676,14 +674,14 @@ class ViewGenerator {
                 }
             });
 
-            // Generate draw functions for graph line along the y-axis
+            // Generate draw functions for diagram line along the y-axis
             if (currentTime != event.time) {
                 const pos_y = currentPos_y;
                 const axisTxt = event.time;
                 drawFuncs.push(() => {
-                    ctx.font = graphFont;
+                    ctx.font = diagramFont;
                     const txtMeasure = ctx.measureText(axisTxt);
-                    this.drawLine(ctx, gridLineWidth, [1, 4], fontColor, axisStart_x, pos_y, graphEnd_x + margin, pos_y);
+                    this.drawLine(ctx, gridLineWidth, [1, 4], fontColor, axisStart_x, pos_y, diagramEnd_x + margin, pos_y);
                     ctx.fillText(
                         axisTxt,
                         axisStart_x - txtMeasure.width - eventLineWidth,
@@ -702,7 +700,7 @@ class ViewGenerator {
 
                 this.generateEventDrawFuncs(
                     ctx,
-                    graphFont,
+                    diagramFont,
                     gridLineWidth,
                     eventLineWidth,
                     eventWrapperHeight,
@@ -786,7 +784,7 @@ class ViewGenerator {
                     if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
                         eventHasArrowWithTxt = true;
                         drawFuncs.push(() => {
-                            ctx.font = graphFont;
+                            ctx.font = diagramFont;
                             const txtWidth = ctx.measureText(event.opname).width;
                             ctx.fillText(
                                 event.opname,
@@ -808,7 +806,7 @@ class ViewGenerator {
                 (!prevEvent && LogEvent.isOperationKind(event.eventKind))
             ) {
                 drawFuncs.push(() => {
-                    ctx.font = graphFont;
+                    ctx.font = diagramFont;
                     const txtMeasure = ctx.measureText("Gg");
                     const txtHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
                     const txtStart_x = currentRect.pos_x + eventWrapperHeight + txtHeight;
@@ -827,7 +825,7 @@ class ViewGenerator {
             currentPos_y = eventEndPos_y;
         }
 
-        // Generate draw functions for graph lines between rects and the start of the graph
+        // Generate draw functions for diagram lines between rects and the start of the diagram
         rects.forEach((rect) => {
             drawFuncs.push(() =>
                 this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectsEnd_y, rect.pos_x, rectsEnd_y + margin)
@@ -837,7 +835,7 @@ class ViewGenerator {
         // Generate draw functions for the legend
         const legend = this.generateEventKindsLegend(
             ctx,
-            graphFont,
+            diagramFont,
             eventLineWidth,
             gridLineWidth,
             fontColor,
@@ -850,7 +848,7 @@ class ViewGenerator {
         drawFuncs.push(...legend.drawFuncs);
 
         // Resize canvas to fit content
-        canvas.width = graphEnd_x + margin;
+        canvas.width = diagramEnd_x + margin;
         canvas.height = legend.endPos_y;
         ctx = canvas.getContext("2d");
 
@@ -867,7 +865,7 @@ class ViewGenerator {
         gridStartPos_y,
         gridHeight,
         ctx,
-        graphFont,
+        diagramFont,
         gridLineWidth,
         gridLineColor,
         eventLineWidth,
@@ -882,7 +880,7 @@ class ViewGenerator {
         const decls = cpuDecls.concat(busDecls);
         const drawFuncsForTime = [];
         for (let index = 0; index < executionEvents.length; index++) {
-            let graphEnd_y = gridHeight;
+            let diagramEnd_y = gridHeight;
             const drawFuncs = [];
             const event = executionEvents[index];
             const eventKind = event.eventKind;
@@ -958,11 +956,11 @@ class ViewGenerator {
             // Generate draw function for the x-axis line
             if (currentTime < event.time) {
                 // Add function that draws the visuals for the x-axis line
-                ctx.font = graphFont;
+                ctx.font = diagramFont;
                 const txtWidth = ctx.measureText(event.time).width;
-                graphEnd_y = gridHeight + txtWidth + eventLineWidth * 2;
+                diagramEnd_y = gridHeight + txtWidth + eventLineWidth * 2;
                 drawFuncs.push((ctx, startPos_x) => {
-                    ctx.font = graphFont;
+                    ctx.font = diagramFont;
                     this.drawLine(ctx, gridLineWidth, [1, 4], gridLineColor, startPos_x, gridStartPos_y, startPos_x, gridHeight);
 
                     ctx.save();
@@ -1006,7 +1004,7 @@ class ViewGenerator {
             drawFuncs.push((ctx, startPos_x) =>
                 this.generateEventDrawFuncs(
                     ctx,
-                    graphFont,
+                    diagramFont,
                     gridLineWidth,
                     eventLineWidth,
                     eventWrapperHeight,
@@ -1070,7 +1068,7 @@ class ViewGenerator {
                 dfft = {
                     time: currentTime,
                     drawFuncs: [],
-                    endPos_y: graphEnd_y,
+                    endPos_y: diagramEnd_y,
                     eventKinds: new Set(),
                 };
 
@@ -1139,7 +1137,7 @@ class ViewGenerator {
                 rowCell.appendChild(
                     document.createTextNode(content.value === true ? "\u2713" : content.value === false ? "\u2715" : content.value)
                 );
-                // Click listener for focusing the graph on the time of the conjecture
+                // Click listener for focusing the diagram on the time of the conjecture
                 if (content.header == headerNames[3] || content.header == headerNames[5]) {
                     rowCell.classList.add("clickableCell");
                     rowCell.ondblclick = () => {
@@ -1213,7 +1211,7 @@ class ViewGenerator {
     calculateEventLength(ctx) {
         // The event length is based on whatever is the widest of "9999" (to fit a high thread number) and any of the abbreviation of the event kinds.
         const prevFont = ctx.font;
-        ctx.font = graphFont;
+        ctx.font = diagramFont;
         const threadIdMetrics = ctx.measureText("9999");
         const msgAbbMetrics = ctx.measureText(LogEvent.getKindsAbbs().reduce((prev, curr) => (prev.size > curr.size ? prev : curr)));
         const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
@@ -1746,7 +1744,7 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     fontColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
     conjectureColor = matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000";
 
-    // Update background color for the graphs
+    // Update background color for the diagrams
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
 
     // Update colors for events and bus
@@ -1784,9 +1782,9 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     btnColors.primaryForeground = computedStyle.getPropertyValue("--vscode-button-foreground").trim();
     btnColors.secondaryForeground = computedStyle.getPropertyValue("--vscode-button-secondaryForeground").trim();
 
-    // Update size of graph elements
+    // Update size of diagram elements
     declFont = `${fontSize * 1.5}px ${fontFamily}`;
-    graphFont = `${fontSize}px ${fontFamily}`;
+    diagramFont = `${fontSize}px ${fontFamily}`;
     gridLineWidth = fontSize / 10 > 1 ? fontSize / 10 : 1;
     eventLineWidth = gridLineWidth * 4;
     conjectureMarkerWidth = gridLineWidth * 2;
