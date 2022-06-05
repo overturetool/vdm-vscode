@@ -190,7 +190,8 @@ class ViewGenerator {
             this.execViewData.eventLength
         );
 
-        this.execViewData.conjectureViolationTable = this.generateConjectureViolationTable(this.conjectures);
+        this.execViewData.conjectureViolationTable =
+            this.conjectures.length > 0 ? this.generateConjectureViolationTable(this.conjectures) : undefined;
     }
 
     generateArchView() {
@@ -380,24 +381,11 @@ class ViewGenerator {
         // Container for the diagram
         const mainContainer = document.createElement("div");
         mainContainer.style.overflow = "scroll";
+        mainContainer.appendChild(diagramCanvas);
 
         // Container for the information to be displayed below the diagram
         const secondContainer = document.createElement("div");
         secondContainer.classList.add("secondContainer");
-
-        // Setup container for the table
-        const tableContainer = document.createElement("div");
-        tableContainer.style.float = "left";
-        const tableHeader = document.createElement("h1");
-        tableHeader.textContent = "Validation Conjecture Violations";
-        tableHeader.style.fontSize = `${fontSize * 2}px`;
-        tableHeader.style.marginBottom = "5px";
-        tableContainer.appendChild(tableHeader);
-        tableContainer.appendChild(this.execViewData.conjectureViolationTable);
-
-        // Setup containers for the secondary container
-        const informationContainer = document.createElement("div");
-        informationContainer.appendChild(tableContainer);
 
         if (prematureEndTime) {
             // The full diagram cannot be shown. Warn about this
@@ -413,9 +401,19 @@ class ViewGenerator {
             secondContainer.appendChild(warningContainer);
         }
 
-        // Add containers
-        mainContainer.appendChild(diagramCanvas);
-        secondContainer.appendChild(informationContainer);
+        // Setup containers for the secondary container
+        if (this.execViewData.conjectureViolationTable) {
+            // Setup container for the table
+            const tableContainer = document.createElement("div");
+            tableContainer.style.float = "left";
+            const tableHeader = document.createElement("h1");
+            tableHeader.textContent = "Validation Conjecture Violations";
+            tableHeader.style.fontSize = `${fontSize * 1.5}px`;
+            tableHeader.style.marginBottom = "5px";
+            tableContainer.appendChild(tableHeader);
+            tableContainer.appendChild(this.execViewData.conjectureViolationTable);
+            secondContainer.appendChild(tableContainer);
+        }
 
         return [mainContainer, secondContainer];
     }
@@ -594,33 +592,38 @@ class ViewGenerator {
                     // Insert rect
                     rects.splice(index, 0, currentRect);
                 }
-
+                const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
+                const prevRect = prevEvent ? rects.find((rect) => rect.rectId == prevEvent.rectId) : undefined;
                 // Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
                 if (
-                    (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.messageCompleted && "opname" in event)) &&
+                    prevEvent &&
+                    prevRect &&
+                    (LogEvent.isOperationKind(prevEvent.eventKind) ||
+                        (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent)) &&
                     i < executionEvents.length - 1
                 ) {
+                    //TODO: Fíx clipping op names to the right of the right most rectangle. Propably and OpCompleted that is inserted?
                     const targetRectIndex = rects.indexOf(
                         rects.find(
                             (rect) =>
                                 rect.rectId ==
-                                (LogEvent.isBusKind(executionEvents[i + 1].eventKind)
-                                    ? this.busDeclEvents.find((bde) => bde.id == executionEvents[i + 1].busid).name
-                                    : event.objref)
+                                (LogEvent.isBusKind(event.eventKind)
+                                    ? this.busDeclEvents.find((bde) => bde.id == event.busid).name
+                                    : prevEvent.eventKind == LogEvent.opRequest
+                                    ? prevEvent.objref
+                                    : prevEvent.rectId)
                         )
                     );
-                    const isSelf = targetRectIndex > -1 && rects.indexOf(currentRect) == targetRectIndex;
+                    const isSelf = targetRectIndex > -1 && rects.indexOf(prevRect) == targetRectIndex;
                     ctx.font = diagramFont;
-                    const newMargin = ctx.measureText(event.opname).width - currentRect.width / 2 - (isSelf ? eventLength_y * 1.5 : 0);
+                    const newMargin = ctx.measureText(prevEvent.opname).width - prevRect.width / 2 + margin / 2;
 
-                    if (isSelf && currentRect.margin.right < newMargin) {
-                        currentRect.margin.right = newMargin;
-                    } else if (targetRectIndex > -1) {
-                        if (rects.indexOf(currentRect) + 1 == targetRectIndex && newMargin > currentRect.margin.right) {
-                            currentRect.margin.right = newMargin;
-                        } else if (rects.indexOf(currentRect) - 1 == targetRectIndex && newMargin > currentRect.margin.left) {
-                            currentRect.margin.left = newMargin;
-                        }
+                    if (isSelf && prevRect.margin.right < newMargin) {
+                        prevRect.margin.right = newMargin;
+                    } else if (rects.indexOf(prevRect) + 1 == targetRectIndex && newMargin > prevRect.margin.right) {
+                        prevRect.margin.right = newMargin;
+                    } else if (rects.indexOf(prevRect) - 1 == targetRectIndex && newMargin > prevRect.margin.left) {
+                        prevRect.margin.left = newMargin;
                     }
                 }
             }
@@ -793,12 +796,12 @@ class ViewGenerator {
 
             // Generate draw function for the opname next to the event if needed
             if (
-                (prevEvent &&
-                    !eventHasArrowWithTxt &&
+                !eventHasArrowWithTxt &&
+                ((prevEvent &&
                     ((event.eventKind == LogEvent.opCompleted && prevEvent.opname != event.opname) ||
                         (LogEvent.isOperationKind(event.eventKind) &&
                             !(LogEvent.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))) ||
-                (!prevEvent && LogEvent.isOperationKind(event.eventKind))
+                    (!prevEvent && LogEvent.isOperationKind(event.eventKind)))
             ) {
                 drawFuncs.push(() => {
                     ctx.font = diagramFont;
