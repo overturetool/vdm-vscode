@@ -600,7 +600,6 @@ class ViewGenerator {
                     (LogEvent.isOperationKind(event.eventKind) || (event.eventKind == LogEvent.messageCompleted && "opname" in event)) &&
                     i < executionEvents.length - 1
                 ) {
-                    //TODO: why doesnt this work as expected??
                     const targetRectIndex = rects.indexOf(
                         rects.find(
                             (rect) =>
@@ -1029,14 +1028,13 @@ class ViewGenerator {
 
             // Generate draw functions for conjecture violation indication
             if (conjectureViolationsForEvent.length > 0) {
-                const txtMeasure = ctx.measureText(conjectureViolationsForEvent[0].name);
                 drawFuncs.push(
                     this.generateConjectureViolationDrawFunc(
                         currentDecl.pos_y - eventLineWidth,
+                        eventLength_x / 2,
                         conjectureViolationsForEvent.map((conj) => conj.name),
                         ctx,
-                        eventLength_x,
-                        txtMeasure.fontBoundingBoxAscent + txtMeasure.fontBoundingBoxDescent + eventLineWidth
+                        eventLength_x / 2.3
                     )
                 );
             }
@@ -1131,37 +1129,35 @@ class ViewGenerator {
         return table;
     }
 
-    generateConjectureViolationDrawFunc(midPos_y, conjectureViolationNames, ctx, length, height) {
-        const rectStart_y = midPos_y - height / 2;
-        const rectHeight = height;
-        const rectWidth = length - conjectureViolationMarkerWidth * 2 + gridLineWidth * 2;
-        const lineStart_y = rectStart_y + rectHeight;
+    generateConjectureViolationDrawFunc(midPos_y, relMidPos_x, conjectureViolationNames, ctx, radi) {
+        const lineStart_y = midPos_y + radi;
         const lineEnd_y = lineStart_y + eventLineWidth;
-        const drawFuncs = [];
-        drawFuncs.push((ctx, startPos_x) => {
-            const prevStrokeStyle = ctx.strokeStyle;
-            const prevLineWidth = ctx.lineWidth;
-            ctx.lineWidth = conjectureViolationMarkerWidth;
-            ctx.strokeStyle = conjectureViolationColor;
-            ctx.beginPath();
-            ctx.rect(startPos_x + conjectureViolationMarkerWidth - gridLineWidth, rectStart_y, rectWidth, rectHeight);
-            ctx.stroke();
-            const lineStart_x = startPos_x + length / 2;
+        const drawFuncs = [
+            (ctx, startPos_x) => {
+                const prevStrokeStyle = ctx.strokeStyle;
+                const prevLineWidth = ctx.lineWidth;
+                ctx.lineWidth = conjectureViolationMarkerWidth;
+                ctx.strokeStyle = conjectureViolationColor;
+                ctx.beginPath();
+                ctx.arc(startPos_x + relMidPos_x, midPos_y, radi, 0, 2 * Math.PI);
+                ctx.stroke();
+                const lineStart_x = startPos_x + relMidPos_x;
 
-            this.drawLine(
-                ctx,
-                conjectureViolationMarkerWidth,
-                [],
-                conjectureViolationColor,
-                lineStart_x,
-                lineStart_y,
-                lineStart_x,
-                lineEnd_y
-            );
-            ctx.strokeStyle = prevStrokeStyle;
-            ctx.lineWidth = prevLineWidth;
-        });
-        let nextConjPos_y = lineEnd_y + gridLineWidth;
+                this.drawLine(
+                    ctx,
+                    conjectureViolationMarkerWidth,
+                    [],
+                    conjectureViolationColor,
+                    lineStart_x,
+                    lineStart_y,
+                    lineStart_x,
+                    lineEnd_y
+                );
+                ctx.strokeStyle = prevStrokeStyle;
+                ctx.lineWidth = prevLineWidth;
+            },
+        ];
+        let nextConjPos_y = lineEnd_y + gridLineWidth * 2;
         conjectureViolationNames.forEach((name) => {
             const pos_y = nextConjPos_y;
             const textMeasure = ctx.measureText(name);
@@ -1174,7 +1170,7 @@ class ViewGenerator {
                 ctx.font = conjectureViolationFont;
                 ctx.fillText(
                     name,
-                    startPos_x + length / 2 - textMeasure.width / 4,
+                    startPos_x + relMidPos_x - textMeasure.width / 4,
                     pos_y + textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent
                 );
                 ctx.fillStyle = prevFillStyle;
@@ -1268,11 +1264,11 @@ class ViewGenerator {
             drawFuncs.push(() => {
                 this.generateConjectureViolationDrawFunc(
                     elementPos_y - txtHeight / 4,
+                    eventLength_x / 2,
                     [],
                     ctx,
-                    eventLength_x,
-                    txtHeight + eventLineWidth
-                )(ctx, -(gridLineWidth * 2));
+                    eventLength_x / 3
+                )(ctx, 0);
                 const prevStrokeStyle = ctx.strokeStyle;
                 ctx.strokeStyle = conjectureViolationColor;
                 ctx.fillText(txt, elementPadding + eventLength_x + eventLineWidth, elementPos_y);
