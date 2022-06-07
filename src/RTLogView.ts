@@ -198,13 +198,6 @@ export class RTLogView extends AutoDisposable {
                     timeStamps.push(currrentTime);
                 }
 
-                // Remove object accessor from opname
-                // if (logEventObj.opname) {
-                //     const opnameSplit: string[] = logEventObj.opname.split("`");
-                //     logEventObj.opname =
-                //         opnameSplit.length > 1 ? opnameSplit.slice(1).reduce((prev, curr) => prev + curr, "") : opnameSplit[0].trim();
-                // }
-
                 if (logEventObj.eventKind == LogEvent.busDecl) {
                     busDecls.push(logEventObj);
                 } else if (logEventObj.eventKind == LogEvent.cpuDecl) {
@@ -371,7 +364,7 @@ export class RTLogView extends AutoDisposable {
                 },
                 {
                     enableScripts: true, // Enable javascript in the webview
-                    localResourceRoots: [this.getResourcesUri()], // Restrict the webview to only load content from the extension's `resources` directory.
+                    localResourceRoots: [this._context.extensionUri], // Restrict the webview to only load content from the extensions directory.
                     retainContextWhenHidden: true, // Retain state when view goes into the background
                 }
             );
@@ -417,6 +410,7 @@ export class RTLogView extends AutoDisposable {
         <html lang="en">
         <head>
             <meta charset="UTF-8">
+            
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${
             webview.cspSource
         }; script-src 'nonce-${scriptNonce}';">
@@ -435,9 +429,9 @@ export class RTLogView extends AutoDisposable {
             ${cpuDecls
                 .map((cpu) => `<button class="button" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
                 .reduce((prev, cur) => prev + cur, "")}
-            <button class="button" id="legend">Diagrams legend</button>
-            <br>
+            <button class="button" id="legend">Diagram legend</button>
             <script nonce="${scriptNonce}" src="${jsUri}"></script>
+
         </body>
         </html>`;
     }

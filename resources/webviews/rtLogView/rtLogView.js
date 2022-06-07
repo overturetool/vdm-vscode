@@ -2,6 +2,7 @@
 
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable eqeqeq */
+
 const vscode = acquireVsCodeApi();
 
 // Create view container
@@ -16,12 +17,14 @@ const archViewId = "arch";
 const execViewId = "exec";
 const legendViewId = "legend";
 const initMsg = "init";
-const editorSettingsChangedMsg = "editorSettingsChanged";
-const logData = { busDeclEvents: [], cpusWithEvents: [] };
 const btnColors = {};
 const views = [];
 const buttons = Array.from(document.getElementsByClassName("button"));
 const timeSelector = document.getElementById("timeStamp");
+//A canvas with an area larger than 268,435,456 cannot be displayed in VSCode
+const canvasMaxArea = 268435450;
+//A canvas wider/higher than 65,535 cannot be displayed in VSCode
+const canvasMaxSize = 65530;
 
 // Global variables
 let backgroundColor;
@@ -274,7 +277,7 @@ class ViewGenerator {
             if (bus.topo.length > 1) {
                 let startPos_x;
                 let endPos_x;
-                const sortedTopo = bus.topo.sort();
+                const sortedTopo = bus.topo.sort((a, b) => Number(a) - Number(b));
                 // Draw outgoing connections
 
                 for (let i = 0; i < sortedTopo.length; i++) {
@@ -291,9 +294,8 @@ class ViewGenerator {
 
                     if (i == 0) {
                         startPos_x = linePos_x;
-                    } else if (i + 1 == sortedTopo.length) {
-                        endPos_x = linePos_x;
                     }
+                    endPos_x = linePos_x;
                 }
 
                 // Connect outgoing connections
@@ -349,18 +351,25 @@ class ViewGenerator {
         let gridEndPos_y = 0;
         let gridPos_x = this.execViewData.gridStartPos_x;
         const gridDrawFuncs = [];
-        let prematureEndTime;
+        let timeOfExceededWidth;
         // Only use grid draw funcs from the specified time
         for (let i = 0; i < this.execViewData.gridDrawFuncs.length; i++) {
             const gdfs = this.execViewData.gridDrawFuncs[i];
             if (gdfs.time >= startTime) {
-                // A canvas wider than ~65175 cannot be shown in VSCode so break out if this timestamps brings the width of the canvas over that value.
-                if (gdfs.drawFuncs.length * this.execViewData.eventLength + gridPos_x > 64000) {
-                    prematureEndTime = this.execViewData.gridDrawFuncs[i - 1].time;
+                const newGridEndPos_y = gdfs.endPos_y > gridEndPos_y ? gdfs.endPos_y : gridEndPos_y;
+                const resultingCanvasWidth =
+                    gdfs.drawFuncs.length * this.execViewData.eventLength + gridPos_x + this.execViewData.eventLength;
+                // Break out if the size of the canvas exceeds the size that can be displayed
+                if (
+                    resultingCanvasWidth > canvasMaxSize ||
+                    newGridEndPos_y > canvasMaxSize ||
+                    resultingCanvasWidth * newGridEndPos_y > canvasMaxArea
+                ) {
+                    timeOfExceededWidth = this.execViewData.gridDrawFuncs[i - 1].time;
                     break;
                 }
 
-                gridEndPos_y = gdfs.endPos_y > gridEndPos_y ? gdfs.endPos_y : gridEndPos_y;
+                gridEndPos_y = newGridEndPos_y;
                 gdfs.drawFuncs.forEach((drawFunc) => {
                     const pos_x = gridPos_x;
                     gridPos_x += this.execViewData.eventLength;
@@ -387,14 +396,14 @@ class ViewGenerator {
         const secondContainer = document.createElement("div");
         secondContainer.classList.add("secondContainer");
 
-        if (prematureEndTime) {
+        if (timeOfExceededWidth) {
             // The full diagram cannot be shown. Warn about this
             const warningContainer = document.createElement("div");
             warningContainer.style.marginTop = "0";
             const pElement = document.createElement("p");
             pElement.style.marginTop = "0";
             pElement.classList.add("iswarning");
-            pElement.textContent = `*Max diagram size reached! Only displaying events until the time ${prematureEndTime}/${
+            pElement.textContent = `*Max diagram size reached! Only displaying events until the time ${timeOfExceededWidth}/${
                 this.execViewData.gridDrawFuncs[this.execViewData.gridDrawFuncs.length - 1].time
             }. Choose a later start time to view later events.`;
             warningContainer.appendChild(pElement);
@@ -437,7 +446,7 @@ class ViewGenerator {
 
         const eventLength_y = this.calculateEventLength(ctx);
         const drawFuncs = [];
-        const yAxisLinesDash = [1, 4];
+        const yAxisLinesDash = [gridLineWidth, gridLineWidth * 4];
         const margin = txtMetrics.width;
         const padding = margin / 2;
         ctx.font = diagramFont;
@@ -450,7 +459,6 @@ class ViewGenerator {
         const eventsToDraw = [];
         const rectIdToRectName = [];
         const opActiveEvents = [];
-
         for (let i = 0; i < executionEvents.length; i++) {
             const event = executionEvents[i];
             // We need to keep track of all OpActive events to later draw correct event arrows
@@ -523,6 +531,7 @@ class ViewGenerator {
                             }
                         }
                         if (targetEvent) {
+                            event.objref = targetEvent.objref;
                             opComplete = {
                                 eventKind: LogEvent.opCompleted,
                                 id: event.callthr,
@@ -532,9 +541,12 @@ class ViewGenerator {
                                 cpunm: targetEvent.cpunm,
                                 async: undefined,
                                 time: event.time,
-                                rectId: targetEvent.objref,
+                                rectId: event.objref,
                             };
-                            event.objref = targetEvent.objref;
+
+                            if (!rectIdToRectName.find((ritrn) => ritrn.id == event.objref)) {
+                                rectIdToRectName.push({ id: event.objref, name: targetEvent.clnm });
+                            }
                         }
                     }
                 }
@@ -551,79 +563,85 @@ class ViewGenerator {
             // Associate the event with the rectangle id
             event.rectId = rectId;
 
+            // Only draw events from the start time
             if (event.time >= startTime) {
                 // Push events to draw
                 eventsToDraw.push(event);
                 if (opComplete) {
                     eventsToDraw.push(opComplete);
                 }
-
-                // Add rectangle if it doesnt exist.
-                let currentRect = rects.find((rect) => rect.rectId == rectId);
-                if (!currentRect) {
-                    const rectName = rectIdToRectName.find((ritrn) => ritrn.id == rectId).name;
-                    ctx.font = declFont;
-                    currentRect = {
-                        name: rectName,
-                        margin: { right: margin, left: margin },
-                        width: ctx.measureText(rectName).width + padding * 2,
-                        height: txtHeight + padding,
-                        textHeight: txtHeight,
-                        busId: isBusEvent ? event.busid : undefined,
-                        rectId: rectId,
-                        pos_x: 0,
-                        pos_y: txtHeight + padding + margin * 2,
-                    };
-                    // Find where to insert the rect. If its a bus rect its busId determines where to place it else its rectid.
-                    // The vbus rect should always come first followed by the other bus rects and then by the rest of the rects.
-                    let index = 0;
-                    for (; index < rects.length; index++) {
-                        const rect = rects[index];
-                        if (currentRect.busId != undefined) {
-                            if (rect.busId == undefined || currentRect.busId < rect.busId) {
-                                break;
-                            }
-                        } else {
-                            if (rect.busId == undefined && (currentRect.rectId > rect.rectId || isNaN(currentRect.rectId))) {
-                                break;
+                // Ensure that the rect(s) exists
+                [event, opComplete].forEach((event) => {
+                    if (event && !rects.find((rect) => rect.rectId == event.rectId)) {
+                        const rectName = rectIdToRectName.find((ritrn) => ritrn.id == event.rectId).name;
+                        ctx.font = declFont;
+                        const rect = {
+                            name: rectName,
+                            margin: { right: margin, left: margin },
+                            width: ctx.measureText(rectName).width + padding * 2,
+                            height: txtHeight + padding,
+                            textHeight: txtHeight,
+                            busId: isBusEvent ? event.busid : undefined,
+                            rectId: event.rectId,
+                            pos_x: 0,
+                            pos_y: txtHeight + padding + margin * 2,
+                        };
+                        // Find where to insert the rect. If its a bus rect its busId determines where to place it else its rectid.
+                        // The vbus rect should always come first followed by the other bus rects and then by the rest of the rects.
+                        let index = 0;
+                        for (; index < rects.length; index++) {
+                            const existingRect = rects[index];
+                            if (rect.busId != undefined) {
+                                if (existingRect.busId == undefined || rect.busId < existingRect.busId) {
+                                    break;
+                                }
+                            } else {
+                                if (existingRect.busId == undefined && (rect.rectId > existingRect.rectId || isNaN(rect.rectId))) {
+                                    break;
+                                }
                             }
                         }
+                        // Insert rect
+                        rects.splice(index, 0, rect);
                     }
-                    // Insert rect
-                    rects.splice(index, 0, currentRect);
-                }
+                });
+
+                //Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
                 const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
                 const prevRect = prevEvent ? rects.find((rect) => rect.rectId == prevEvent.rectId) : undefined;
-                // Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
                 if (
-                    prevEvent &&
-                    prevRect &&
-                    (LogEvent.isOperationKind(prevEvent.eventKind) ||
-                        (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent)) &&
-                    i < executionEvents.length - 1
+                    (prevRect &&
+                        (LogEvent.isOperationKind(prevEvent.eventKind) ||
+                            (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent))) ||
+                    opComplete
                 ) {
-                    //TODO: Fíx clipping op names to the right of the right most rectangle. Propably and OpCompleted that is inserted?
-                    const targetRectIndex = rects.indexOf(
-                        rects.find(
-                            (rect) =>
-                                rect.rectId ==
-                                (LogEvent.isBusKind(event.eventKind)
-                                    ? this.busDeclEvents.find((bde) => bde.id == event.busid).name
-                                    : prevEvent.eventKind == LogEvent.opRequest
-                                    ? prevEvent.objref
-                                    : prevEvent.rectId)
-                        )
+                    const targetRect = rects.find(
+                        (rect) =>
+                            rect.rectId ==
+                            (opComplete
+                                ? opComplete.rectId
+                                : LogEvent.isBusKind(event.eventKind)
+                                ? this.busDeclEvents.find((bde) => bde.id == event.busid).name
+                                : prevEvent.eventKind == LogEvent.opRequest || prevEvent.eventKind == LogEvent.messageCompleted
+                                ? prevEvent.objref
+                                : prevEvent.rectId)
                     );
-                    const isSelf = targetRectIndex > -1 && rects.indexOf(prevRect) == targetRectIndex;
+                    const targetRectIndex = rects.indexOf(targetRect);
+                    const isSelf = opComplete || targetRect.rectId == prevRect.rectId;
                     ctx.font = diagramFont;
-                    const newMargin = ctx.measureText(prevEvent.opname).width - prevRect.width / 2 + margin / 2;
+                    const newMargin =
+                        ctx.measureText(opComplete ? opComplete.opname : prevEvent.opname).width -
+                        (isSelf ? targetRect.width : prevRect.width) / 2 +
+                        margin * 2;
 
-                    if (isSelf && prevRect.margin.right < newMargin) {
-                        prevRect.margin.right = newMargin;
-                    } else if (rects.indexOf(prevRect) + 1 == targetRectIndex && newMargin > prevRect.margin.right) {
-                        prevRect.margin.right = newMargin;
-                    } else if (rects.indexOf(prevRect) - 1 == targetRectIndex && newMargin > prevRect.margin.left) {
-                        prevRect.margin.left = newMargin;
+                    const rectToMarginAdjust = opComplete ? targetRect : prevRect;
+
+                    if (isSelf && rectToMarginAdjust.margin.right < newMargin) {
+                        rectToMarginAdjust.margin.right = newMargin;
+                    } else if (rects.indexOf(rectToMarginAdjust) + 1 == targetRectIndex && newMargin > rectToMarginAdjust.margin.right) {
+                        rectToMarginAdjust.margin.right = newMargin;
+                    } else if (rects.indexOf(rectToMarginAdjust) - 1 == targetRectIndex && newMargin > rectToMarginAdjust.margin.left) {
+                        rectToMarginAdjust.margin.left = newMargin;
                     }
                 }
             }
@@ -633,12 +651,18 @@ class ViewGenerator {
         const rectsEnd_y = txtHeight + padding + margin;
 
         // Geneate draw functions for the rectangles and their text
+        let timeOfExceededHeight;
         let diagramEnd_x = axisStart_x;
         for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
             const rectStartPos_x =
                 diagramEnd_x +
-                (i == 0 ? 0 : rects[i - 1].margin.right >= rect.margin.left ? 0 : rect.margin.left - rects[i - 1].margin.right);
+                (i == 0
+                    ? margin
+                    : i > 0 && rects[i - 1].margin.right < rect.margin.left
+                    ? rect.margin.left - rects[i - 1].margin.right
+                    : -(rects[i - 1].margin.right - margin < rect.width / 2 ? rects[i - 1].margin.right - margin : rect.width / 2));
+
             drawFuncs.push(() => {
                 ctx.font = declFont;
                 ctx.fillStyle = fontColor;
@@ -657,6 +681,7 @@ class ViewGenerator {
         let currentTime = -1;
         let lastEventPos_y = 0;
         let currentPos_y = rectsEnd_y + margin;
+        const diagramWidth = diagramEnd_x;
         for (let i = 0; i < eventsToDraw.length; i++) {
             const event = eventsToDraw[i];
             const nextEvent = i < eventsToDraw.length - 1 ? eventsToDraw[i + 1] : undefined;
@@ -674,6 +699,22 @@ class ViewGenerator {
 
             // Generate draw functions for diagram line along the y-axis
             if (currentTime != event.time) {
+                // Validate that all events from the new timestamps fits does not cause the diagram to exceeds its max area
+                let diagramHeight = eventEndPos_y + eventLength_y;
+
+                for (let k = i + 1; k < eventsToDraw.length; k++) {
+                    const nextEvent = eventsToDraw[k];
+                    if (nextEvent.time != event.time) {
+                        break;
+                    } else {
+                        diagramHeight += eventLength_y;
+                    }
+                }
+                if (diagramHeight > canvasMaxSize || diagramHeight * diagramWidth > canvasMaxArea) {
+                    timeOfExceededHeight = currentTime;
+                    break;
+                }
+
                 const pos_y = currentPos_y;
                 const axisTxt = event.time;
                 drawFuncs.push(() => {
@@ -828,12 +869,15 @@ class ViewGenerator {
         });
 
         // Resize canvas to fit content
-        canvas.width = diagramEnd_x + margin;
-        canvas.height = lastEventPos_y + eventLength_y * 2 + margin;
+        canvas.width = diagramWidth;
+        canvas.height = lastEventPos_y + eventLength_y;
         ctx = canvas.getContext("2d");
 
         // Draw on canvas
         drawFuncs.forEach((drawFunc) => drawFunc());
+        if (timeOfExceededHeight) {
+            console.log("CPU VIEW EXCEEDED HEIGHT AT TIME: " + timeOfExceededHeight);
+        }
 
         return canvas;
     }
@@ -933,7 +977,7 @@ class ViewGenerator {
                 }
             }
 
-            // Generate draw function for the x-axis line
+            // Generate draw function to mark time on the x-axis line
             if (currentTime < event.time) {
                 // Add function that draws the visuals for the x-axis line
                 ctx.font = diagramFont;
@@ -941,7 +985,16 @@ class ViewGenerator {
                 diagramEnd_y = gridHeight + txtWidth + eventLineWidth * 2;
                 drawFuncs.push((ctx, startPos_x) => {
                     ctx.font = diagramFont;
-                    this.drawLine(ctx, gridLineWidth, [1, 4], gridLineColor, startPos_x, gridStartPos_y, startPos_x, gridHeight);
+                    this.drawLine(
+                        ctx,
+                        gridLineWidth,
+                        [gridLineWidth, gridLineWidth * 4],
+                        gridLineColor,
+                        startPos_x,
+                        gridStartPos_y,
+                        startPos_x,
+                        gridHeight
+                    );
 
                     ctx.save();
                     ctx.translate(startPos_x, gridHeight);
@@ -958,19 +1011,20 @@ class ViewGenerator {
                 // Generate the draw functions for the line between events
                 if (decl != currentDecl) {
                     let color = gridLineColor;
-                    let lineDash = [1, 4];
+                    let lineDash = [gridLineWidth, gridLineWidth * 4];
                     let lineWidth = gridLineWidth;
                     const pos_y = decl.pos_y;
                     if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
-                        lineDash = decl.activeThreads.find((at) => at.suspended == true) ? [4, 4] : [];
+                        lineDash = decl.activeThreads.find((at) => at.suspended == true) ? [eventLineWidth * 1.1, eventLineWidth] : [];
                         lineWidth = eventLineWidth;
                         color = LogEvent.eventKindToColor.find((ektc) => ektc.kind == LogEvent.opActivate).color;
                     }
                     const constLineDash = lineDash;
                     const constColor = color;
+                    const isOdd = index % 2 > 0;
                     drawFuncs.push((ctx, startPos_x) => {
                         const x_end = startPos_x + eventLength_x + gridLineWidth;
-                        const x_start = startPos_x;
+                        const x_start = startPos_x + (isOdd ? gridLineWidth / 2 : 0);
                         this.drawLine(ctx, lineWidth, constLineDash, constColor, x_start, pos_y, x_end, pos_y);
                     });
                 }
