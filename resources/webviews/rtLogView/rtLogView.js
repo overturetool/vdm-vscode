@@ -1,16 +1,14 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-laterbuttons
 
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable eqeqeq */
 
 const vscode = acquireVsCodeApi();
 
-// Create view container
-const viewContainer = document.createElement("div");
-viewContainer.id = "viewContainer";
-viewContainer.style.height = "100%";
-viewContainer.style.width = "100%";
-document.body.appendChild(viewContainer);
+// Get the view container
+const viewContainer = document.getElementById("viewContainer");
+const btnContainer = document.getElementById("btnsContainer");
+viewContainer.style.height = `${window.innerHeight - btnContainer.clientHeight}px`;
 
 // Global const variables
 const archViewId = "arch";
@@ -35,11 +33,12 @@ let diagramFont;
 let gridLineWidth;
 let eventLineWidth;
 let conjectureViolationMarkerWidth;
+let lineDashSize;
 let eventWrapperHeight;
 let themeColors = [];
 let fontColor;
 let conjectureViolationColor;
-let canvasDrawer;
+let viewGenerator;
 let currentViewId = archViewId;
 let selectedTime = 0;
 
@@ -57,7 +56,7 @@ buttons.forEach((btn) => {
             selectedView.components = buildViewComponents(btn.id, selectedTime);
         }
         // Display the view by appending its components to the view container
-        selectedView.components.forEach((item) => viewContainer.appendChild(item));
+        displayView(selectedView.id);
         currentViewId = btn.id;
     };
 });
@@ -71,9 +70,20 @@ timeSelector.onchange = (event) => {
 // Handle event from extension backend
 window.addEventListener("message", (event) => {
     if (event.data.cmd == initMsg) {
-        selectedTime = Math.min(...event.data.timeStamps);
+        let minTimeStamp = event.data.timeStamps[0];
+
+        event.data.timeStamps.forEach((timestamp) => {
+            const opt = document.createElement("option");
+            opt.value = timestamp;
+            opt.innerHTML = timestamp;
+            timeSelector.appendChild(opt);
+            if (minTimeStamp > timestamp) {
+                minTimeStamp = timestamp;
+            }
+        });
+        selectedTime = minTimeStamp;
         // Initiate a canvas drawer with the data
-        canvasDrawer = new ViewGenerator(
+        viewGenerator = new ViewGenerator(
             event.data.cpuDecls,
             event.data.busDecls,
             event.data.executionEvents,
@@ -81,7 +91,7 @@ window.addEventListener("message", (event) => {
             event.data.conjectures
         );
     }
-    canvasDrawer.clearViewCache();
+    viewGenerator.clearViewCache();
     // Always check for changes to font and theme
     updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
 
@@ -94,6 +104,10 @@ window.addEventListener("message", (event) => {
     // A message from the extension backend always results in a rebuild of the canvas
     resetViews(currentViewId, selectedTime);
 });
+
+window.onresize = () => {
+    viewContainer.style.height = `${window.innerHeight - btnContainer.clientHeight}px`;
+};
 
 // Load data and build the view
 document.body.onload = vscode.postMessage(initMsg);
@@ -310,7 +324,7 @@ class ViewGenerator {
             // Increment y position for next bus name
             nextBusNamePos_y += busTextPosInc_y;
         }
-        return canvas;
+        return [canvas];
     }
 
     generateLegendView() {
@@ -394,20 +408,16 @@ class ViewGenerator {
 
         // Container for the information to be displayed below the diagram
         const secondContainer = document.createElement("div");
-        secondContainer.classList.add("secondContainer");
-
+        secondContainer.style.overflow = "scroll";
         if (timeOfExceededWidth) {
             // The full diagram cannot be shown. Warn about this
-            const warningContainer = document.createElement("div");
-            warningContainer.style.marginTop = "0";
             const pElement = document.createElement("p");
             pElement.style.marginTop = "0";
             pElement.classList.add("iswarning");
             pElement.textContent = `*Max diagram size reached! Only displaying events until the time ${timeOfExceededWidth}/${
                 this.execViewData.gridDrawFuncs[this.execViewData.gridDrawFuncs.length - 1].time
             }. Choose a later start time to view later events.`;
-            warningContainer.appendChild(pElement);
-            secondContainer.appendChild(warningContainer);
+            secondContainer.appendChild(pElement);
         }
 
         // Setup containers for the secondary container
@@ -446,7 +456,7 @@ class ViewGenerator {
 
         const eventLength_y = this.calculateEventLength(ctx);
         const drawFuncs = [];
-        const yAxisLinesDash = [gridLineWidth, gridLineWidth * 4];
+        const yAxisLinesDash = [lineDashSize, lineDashSize * 4];
         const margin = txtMetrics.width;
         const padding = margin / 2;
         ctx.font = diagramFont;
@@ -651,7 +661,7 @@ class ViewGenerator {
         const rectsEnd_y = txtHeight + padding + margin;
 
         // Geneate draw functions for the rectangles and their text
-        let timeOfExceededHeight;
+        let timeOfExceededSize;
         let diagramEnd_x = axisStart_x;
         for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
@@ -682,6 +692,13 @@ class ViewGenerator {
         let lastEventPos_y = 0;
         let currentPos_y = rectsEnd_y + margin;
         const diagramWidth = diagramEnd_x;
+        const diagramEndMax = eventsToDraw.length * eventLength_y + rectsEnd_y + margin;
+        rects.forEach((rect) => {
+            drawFuncs.push(() =>
+                this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectsEnd_y + margin, rect.pos_x, diagramEndMax)
+            );
+        });
+
         for (let i = 0; i < eventsToDraw.length; i++) {
             const event = eventsToDraw[i];
             const nextEvent = i < eventsToDraw.length - 1 ? eventsToDraw[i + 1] : undefined;
@@ -689,13 +706,6 @@ class ViewGenerator {
             const eventStartPos_y = currentPos_y;
             const eventEndPos_y = eventStartPos_y + eventLength_y;
             const currentRect = rects.find((rect) => rect.rectId == event.rectId);
-            rects.forEach((rect) => {
-                if (rect.rectId != currentRect.rectId) {
-                    drawFuncs.push(() =>
-                        this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, eventStartPos_y, rect.pos_x, eventEndPos_y)
-                    );
-                }
-            });
 
             // Generate draw functions for diagram line along the y-axis
             if (currentTime != event.time) {
@@ -711,7 +721,7 @@ class ViewGenerator {
                     }
                 }
                 if (diagramHeight > canvasMaxSize || diagramHeight * diagramWidth > canvasMaxArea) {
-                    timeOfExceededHeight = currentTime;
+                    timeOfExceededSize = currentTime;
                     break;
                 }
 
@@ -872,14 +882,29 @@ class ViewGenerator {
         canvas.width = diagramWidth;
         canvas.height = lastEventPos_y + eventLength_y;
         ctx = canvas.getContext("2d");
-
         // Draw on canvas
         drawFuncs.forEach((drawFunc) => drawFunc());
-        if (timeOfExceededHeight) {
-            console.log("CPU VIEW EXCEEDED HEIGHT AT TIME: " + timeOfExceededHeight);
+
+        // Container for the diagram
+        const mainContainer = document.createElement("div");
+        mainContainer.classList.add("cpuMainContainer");
+        mainContainer.appendChild(canvas);
+
+        // Container for the information to be displayed below the diagram
+        const secondContainer = document.createElement("div");
+        secondContainer.classList.add("cpuSecondContainer");
+        if (timeOfExceededSize) {
+            // The full diagram cannot be shown. Warn about this
+            const pElement = document.createElement("p");
+            pElement.style.marginTop = "0";
+            pElement.classList.add("iswarning");
+            pElement.textContent = `*Max diagram size reached! Only displaying events until the time ${timeOfExceededSize}/${
+                eventsToDraw[eventsToDraw.length - 1].time
+            }. Choose a later start time to view later events.`;
+            secondContainer.appendChild(pElement);
         }
 
-        return canvas;
+        return [mainContainer, secondContainer];
     }
 
     generateGridDrawFuncs(
@@ -988,7 +1013,7 @@ class ViewGenerator {
                     this.drawLine(
                         ctx,
                         gridLineWidth,
-                        [gridLineWidth, gridLineWidth * 4],
+                        [lineDashSize, lineDashSize * 4],
                         gridLineColor,
                         startPos_x,
                         gridStartPos_y,
@@ -1011,7 +1036,7 @@ class ViewGenerator {
                 // Generate the draw functions for the line between events
                 if (decl != currentDecl) {
                     let color = gridLineColor;
-                    let lineDash = [gridLineWidth, gridLineWidth * 4];
+                    let lineDash = [lineDashSize, lineDashSize * 4];
                     let lineWidth = gridLineWidth;
                     const pos_y = decl.pos_y;
                     if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
@@ -1062,8 +1087,7 @@ class ViewGenerator {
                     gridLineColor,
                     gridLineColor,
                     hasStartLine,
-                    hasStopLine,
-                    conjectureViolationsForEvent.length > 0
+                    hasStopLine
                 ).forEach((func) => func())
             );
 
@@ -1360,14 +1384,11 @@ class ViewGenerator {
         gridLineColor,
         txtColor,
         startLine,
-        stopLine,
-        hasConjectureViolationViolation
+        stopLine
     ) {
         ctx.fillStyle = txtColor;
         ctx.font = font;
-        const eventColor = hasConjectureViolationViolation
-            ? conjectureViolationColor
-            : LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
+        const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
         const drawFuncs = [];
         // Draw the event
         drawFuncs.push(() => {
@@ -1745,6 +1766,20 @@ class LogEvent {
  *
  */
 
+function displayView(viewId) {
+    const components = views.find((view) => view.id == viewId).components;
+    viewContainer.innerHTML = "";
+    components.forEach((component) => {
+        viewContainer.appendChild(component);
+    });
+
+    if (viewId != archViewId && viewId != execViewId && viewId != legendViewId) {
+        viewContainer.classList.add("cpuViewContainer");
+    } else {
+        viewContainer.classList.remove("cpuViewContainer");
+    }
+}
+
 function resetViews(currentViewId, selectedTime) {
     viewContainer.innerHTML = "";
     // Remove view components from views and rebuild and display the view components for the current view
@@ -1754,19 +1789,19 @@ function resetViews(currentViewId, selectedTime) {
             // Rebuild view components for the current view
             view.components = buildViewComponents(currentViewId, selectedTime);
             // Display the view
-            view.components.forEach((item) => viewContainer.appendChild(item));
+            displayView(view.id);
         }
     });
 }
 
 function buildViewComponents(viewId, startTime) {
     return viewId == execViewId
-        ? canvasDrawer.generateExecView(startTime)
+        ? viewGenerator.generateExecView(startTime)
         : viewId == archViewId
-        ? [canvasDrawer.generateArchView()]
+        ? viewGenerator.generateArchView()
         : viewId == legendViewId
-        ? canvasDrawer.generateLegendView()
-        : [canvasDrawer.generateCpuView(startTime, viewId.replace(/\D/g, ""))];
+        ? viewGenerator.generateLegendView()
+        : viewGenerator.generateCpuView(startTime, viewId.replace(/\D/g, ""));
 }
 
 function setButtonColors(btns, activeBtn) {
@@ -1839,4 +1874,5 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     eventLineWidth = gridLineWidth * 4;
     conjectureViolationMarkerWidth = gridLineWidth * 3;
     eventWrapperHeight = eventLineWidth * 2 + eventLineWidth;
+    lineDashSize = gridLineWidth * 0.7;
 }

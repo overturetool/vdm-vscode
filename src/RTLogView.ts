@@ -397,15 +397,14 @@ export class RTLogView extends AutoDisposable {
         );
 
         // Generate the html for the webview
-        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpuDecls, timeStamps);
+        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpuDecls);
     }
 
-    private buildHtmlForWebview(webview: Webview, cpuDecls: any[], timeStamps: number[]) {
+    private buildHtmlForWebview(webview: Webview, cpuDecls: any[]) {
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce: string = this.generateNonce();
         const jsUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js"));
         const styleUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.css"));
-
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -414,15 +413,14 @@ export class RTLogView extends AutoDisposable {
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${
             webview.cspSource
         }; script-src 'nonce-${scriptNonce}';">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
             
             <link href="${styleUri}" rel="stylesheet">
         </head>
         <body>
-            <b> Start time: <b>
-            <select id = "timeStamp" >
-            ${timeStamps.map((t) => `<option> ${t}</option>`)}
-            </select>
+        <div class="btnsContainer", id="btnsContainer">
+            <b> Start time: </b>
+            <select id = "timeStamp"></select>
            
             <button class="button" id="arch">Architecture overview</button>
             <button class="button" id="exec">Execution overview</button>
@@ -430,8 +428,12 @@ export class RTLogView extends AutoDisposable {
                 .map((cpu) => `<button class="button" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
                 .reduce((prev, cur) => prev + cur, "")}
             <button class="button" id="legend">Diagram legend</button>
-            <script nonce="${scriptNonce}" src="${jsUri}"></script>
+        </div>
 
+        <div class="viewContainer", id="viewContainer">
+        </div>
+            
+        <script nonce="${scriptNonce}" src="${jsUri}"></script>
         </body>
         </html>`;
     }
