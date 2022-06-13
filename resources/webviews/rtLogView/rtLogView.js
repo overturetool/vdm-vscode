@@ -21,8 +21,7 @@ const btnColors = {};
 const views = [];
 const buttons = Array.from(document.getElementsByClassName("button"));
 const timeSelector = document.getElementById("timeStamp");
-const workerSource = document.currentScript.getAttribute('src').replace('rtLogView.js', 'diagramWorker.js'); 
-
+const workerSource = document.currentScript.getAttribute("src").replace("rtLogView.js", "diagramWorker.js");
 
 // Global variables
 let fontSize;
@@ -30,25 +29,30 @@ let backgroundColor;
 let currentViewId = archViewId;
 let selectedTime = 0;
 let hasConjectures = false;
-let diagramWorker;
 let conjectures;
+
+// Offload the canvas generation logic to a webworker so that the main thread is not being blocked
+let diagramWorker;
 fetch(workerSource)
-  .then(result => result.blob())
-  .then(blob => {
-    const blobUrl = URL.createObjectURL(blob);
-    diagramWorker = new Worker(blobUrl);
-    diagramWorker.onmessage = handleWorkerResponse;
-    vscode.postMessage(initMsg);
-    window.onbeforeunload = () => {
-        diagramWorker.terminate();
-    };
-    
-  });
+    .then((result) => result.blob())
+    .then((blob) => {
+        // Start the webworker
+        const blobUrl = URL.createObjectURL(blob);
+        diagramWorker = new Worker(blobUrl);
+        // Handle responses from the worker i.e. when it has created a canvas.
+        diagramWorker.onmessage = handleWorkerResponse;
+        // Post init msg to the ts backend which in turn returns the log data
+        vscode.postMessage(initMsg);
+        // Make sure that the worker terminates before closing the window
+        window.onbeforeunload = () => {
+            diagramWorker.terminate();
+        };
+    });
 
 function handleWorkerResponse(event) {
     const res = event.data;
-    const view = views.find(view => view.id == res.msg);
-    const isCpuView = (view.id != archViewId && view.id != execViewId && view.id != legendViewId);
+    const view = views.find((view) => view.id == res.msg);
+    const isCpuView = view.id != archViewId && view.id != execViewId && view.id != legendViewId;
     view.diagramHeight = res.height;
     // Container for the diagram
     const mainContainer = document.createElement("div");
@@ -59,20 +63,24 @@ function handleWorkerResponse(event) {
     mainContainer.style.flex = isCpuView ? 1 : "";
     view.containers = [mainContainer];
 
-    // Container for the information to be displayed below the diagram
+    // Container for the information to be displayed below the diagram, e.g. conjecture table or warning msg.
     const secondContainer = document.createElement("div");
     secondContainer.style.overflow = "scroll";
     secondContainer.classList.add("secondaryContainer");
-    if(res.msg == execViewId) {
+
+    // Add element to display warning if all events cannot fit onto the canvas.
+    if (res.exceedTime) {
+        const pElement = generateWarningElement(
+            `*Max diagram size reached! Only displaying events until the time ${res.exceedTime}. Choose a later start time to view later events.`
+        );
+        secondContainer.appendChild(pElement);
+    }
+
+    // Append view components as necessary
+    if (res.msg == execViewId) {
         mainContainer.appendChild(bitmapToCanvas(res.width, res.height, res.bitmap));
 
-        // Add element to display warning if all events cannot fit onto the canvas.
-        if(res.exceedTime) {
-            const pElement = generateWarningElement(`*Max diagram size reached! Only displaying events until the time ${res.exceedTime}. Choose a later start time to view later events.`);
-            secondContainer.appendChild(pElement);
-        }
-
-        if(conjectures && conjectures.length > 0) {
+        if (conjectures && conjectures.length > 0) {
             // Setup container for the table
             const tableContainer = document.createElement("div");
             tableContainer.style.float = "left";
@@ -83,45 +91,37 @@ function handleWorkerResponse(event) {
             tableContainer.appendChild(tableHeader);
             tableContainer.appendChild(generateConjectureTable(conjectures));
             secondContainer.appendChild(tableContainer);
-            
         }
-
-        if(secondContainer.children.length > 0) {
-            view.containers.push(secondContainer);
-        }
-    } else if(res.msg == archViewId || res.msg == legendViewId) {
-        mainContainer.appendChild(bitmapToCanvas(res.width, res.height, res.bitmap));
     } else {
-        // Container for the diagram
-        
         mainContainer.appendChild(bitmapToCanvas(res.width, res.height, res.bitmap));
-        // Add element to display warning if all events cannot fit onto the canvas.
-        if(res.exceedTime) {
-            const pElement = generateWarningElement(`*Max diagram size reached! Only displaying events until the time ${res.exceedTime}. Choose a later start time to view later events.`);
-            secondContainer.appendChild(pElement);
-            view.containers.push(secondContainer);
-        }
-        
     }
+
+    if (secondContainer.children.length > 0) {
+        view.containers.push(secondContainer);
+    }
+
+    // Clear the view container and add the new elements
     viewContainer.innerHTML = "";
-    view.containers.forEach(container => viewContainer.appendChild(container));
+    view.containers.forEach((container) => viewContainer.appendChild(container));
+
     // Reset the cursor to default style
-    document.body.style.cursor='default';
-};
+    document.body.style.cursor = "default";
+}
 
 // Handle button press
 buttons.forEach((btn) => {
     // Each button corresponds to a view
-    views.push({ id: btn.id, containers: []});
+    views.push({ id: btn.id, containers: [] });
     btn.onclick = function () {
-        // Update the pressed button to "pressed" color and the previous pressed button to "standard" color
-        setButtonColors([document.getElementById(currentViewId)], btn);
-        // Clear the view container
-        viewContainer.innerHTML = "";
-        // Check if components for the view has already been generated - the btn id is the view id
-        const selectedView = views.find((vc) => vc.id == btn.id);
-        displayView(selectedView.id, selectedTime);
-        currentViewId = btn.id;
+        if (btn.id != currentViewId) {
+            // Update the pressed button to "pressed" color and the previous pressed button to "standard" color
+            setButtonColors([document.getElementById(currentViewId)], btn);
+            // Clear the view container
+            viewContainer.innerHTML = "";
+            // Display the selected view and set the current view id - the btn id is the view id
+            currentViewId = btn.id;
+            displayView(currentViewId, selectedTime);
+        }
     };
 });
 
@@ -137,7 +137,7 @@ window.addEventListener("message", (event) => {
         let minTimeStamp = event.data.timeStamps[0];
 
         event.data.timeStamps.forEach((timestamp) => {
-            // Setup time options
+            // Setup timestamp options to be selected by the user
             const opt = document.createElement("option");
             opt.value = timestamp;
             opt.innerHTML = timestamp;
@@ -149,14 +149,22 @@ window.addEventListener("message", (event) => {
         selectedTime = minTimeStamp;
         hasConjectures = event.data.conjectures.length > 0;
         conjectures = event.data.conjectures;
-        // Setup the diagram worker
+
+        // Trigger the initiate logic in the diagram worker
         const osCanvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-        diagramWorker.postMessage({msg: initMsg, cpuDecls: event.data.cpuDecls,
-            busDecls: event.data.busDecls,
-            executionEvents: event.data.executionEvents,
-            cpusWithEvents: event.data.cpusWithEvents,
-            conjectures: conjectures,
-        canvas: osCanvas}, [osCanvas]);
+        diagramWorker.postMessage(
+            {
+                msg: initMsg,
+                cpuDecls: event.data.cpuDecls,
+                busDecls: event.data.busDecls,
+                executionEvents: event.data.executionEvents,
+                cpusWithEvents: event.data.cpusWithEvents,
+                conjectures: conjectures,
+                canvas: osCanvas,
+                screenWidth: screen.width,
+            },
+            [osCanvas]
+        );
     }
 
     // Check for changes to font and theme and update the settings in the diagram worker
@@ -178,14 +186,14 @@ window.onresize = () => {
     viewContainer.style.height = `${viewAreaHeight}px`;
 };
 
-
 function generateCanvas(viewId, startTime) {
     // Generating the CPU canvas can take some time so set a wait curser
-    if(viewId != execViewId && viewId != archViewId && viewId != legendViewId) {
-        document.body.style.cursor='wait';
+    if (viewId != execViewId && viewId != archViewId && viewId != legendViewId) {
+        document.body.style.cursor = "wait";
     }
     const offscreen = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-    diagramWorker.postMessage({msg: viewId, canvas: offscreen, startTime: startTime}, [offscreen]);
+    // Post message to the webworker to initiate the canvas generation
+    diagramWorker.postMessage({ msg: viewId, canvas: offscreen, startTime: startTime }, [offscreen]);
 }
 
 function generateConjectureTable(conjectures) {
@@ -242,16 +250,11 @@ function generateConjectureTable(conjectures) {
     return table;
 }
 
-function generateSingleViewComponent(viewId) {
-}
+function generateSingleViewComponent(viewId) {}
 
-function generateCpuViewComponents(startTime, msg) {
-   
-}
+function generateCpuViewComponents(startTime, msg) {}
 
-function generateExecutionViewComponents(startTime) {
-   
-}
+function generateExecutionViewComponents(startTime) {}
 
 function generateWarningElement(txt) {
     // Generate p element to display warning if all events cannot fit onto the canvas.
@@ -262,15 +265,15 @@ function generateWarningElement(txt) {
 }
 
 function displayView(viewId, timeStamp) {
-    const view = views.find(view => view.id == viewId);
-    if(view.containers.length == 0) {
+    const view = views.find((view) => view.id == viewId);
+    // Check if components for the view have already been generated for the timestamp and if they exist then reuse them
+    if (view.containers.length == 0) {
         generateCanvas(viewId, timeStamp);
-    }
-    else if(view.time != timeStamp && viewId != archViewId && viewId != legendViewId) {
+    } else if (view.time != timeStamp && viewId != archViewId && viewId != legendViewId) {
         generateCanvas(viewId, timeStamp);
     } else {
         viewContainer.innerHTML = "";
-        view.containers.forEach(container =>  viewContainer.appendChild(container));
+        view.containers.forEach((container) => viewContainer.appendChild(container));
     }
     view.time = timeStamp;
 }
@@ -282,7 +285,7 @@ function bitmapToCanvas(width, height, bitmap) {
     canvas.style.background = backgroundColor;
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('bitmaprenderer');
+    const ctx = canvas.getContext("bitmaprenderer");
     ctx.transferFromImageBitmap(bitmap);
     return canvas;
 }
@@ -326,16 +329,15 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
 
     // Update colors for events and bus
-   const themeColors = [
-        fontColor, 
-        computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim(), 
-        computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim(), 
+    const themeColors = [
+        fontColor,
+        computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim(),
+        computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim(),
         computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim(),
         computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim(),
         computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim(),
-        computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()
+        computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim(),
     ];
-    
 
     // Update button colors
     btnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();
@@ -345,7 +347,9 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     const gridLineWidth = fontSize / 10 > 1 ? fontSize / 10 : 1;
     const eventLineWidth = gridLineWidth * 4;
 
-    diagramWorker.postMessage({msg: settingsChangedMsg, lineDashSize: gridLineWidth * 0.7,
+    diagramWorker.postMessage({
+        msg: settingsChangedMsg,
+        lineDashSize: gridLineWidth * 0.7,
         eventWrapperHeight: eventLineWidth * 2 + eventLineWidth,
         conjectureViolationMarkerWidth: gridLineWidth * 3,
         eventLineWidth: eventLineWidth,
@@ -357,6 +361,6 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
         backgroundColor: backgroundColor,
         conjectureViolationColor: matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000",
         fontColor: fontColor,
-        fontSize: fontSize
+        fontSize: fontSize,
     });
 }
