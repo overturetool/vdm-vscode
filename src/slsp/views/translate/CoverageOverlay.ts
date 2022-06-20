@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import {
@@ -21,7 +22,7 @@ import { generatedDataPath } from "../../../util/Util";
 export class CoverageOverlay {
     private _visibleEditorsChangedDisposable: Disposable;
     private _disposables: Disposable[] = [];
-    private _displayCoverage: boolean = false;
+    private _isDisplayingCoverage: boolean = false;
 
     // Keep track of visible editors
     private _visibleEditors: TextEditor[] = [];
@@ -31,36 +32,48 @@ export class CoverageOverlay {
     // It is needed to keep calculated decorations in memory when switching between documents.
     private _coverageFolderToDocumentsToDecorationWithRanges: Map<string, Map<Uri, Map<TextEditorDecorationType, Range[]>>> = new Map();
 
-    constructor(eventEmitter: any, private _languageIdsOfInterest: string[]) {
+    constructor(eventEmitter: any, private _languageIdsOfInterest: Set<string>) {
         eventEmitter.on(GenerateCoverageButton.translationDoneId, (coverage: GeneratedCoverage) =>
             this.handleNewCoverageGenerated(coverage)
         );
-        commands.executeCommand("setContext", "vdm-vscode.coverage.show", true);
+
+        // Only display the coverage overlay button if the file type can be handled by the extension.
+        window.onDidChangeActiveTextEditor((editor) => {
+            const showBtns: boolean = this._languageIdsOfInterest.has(editor?.document?.languageId);
+            commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.enable", showBtns ? !this._isDisplayingCoverage : false);
+            commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.disable", showBtns ? this._isDisplayingCoverage : false);
+        });
+        if (window.activeTextEditor) {
+            commands.executeCommand(
+                "setContext",
+                "vdm-vscode.coverageOverlay.enable",
+                this._languageIdsOfInterest.has(window.activeTextEditor.document.languageId)
+            );
+        }
 
         // Register the show coverage overlay button and its action
         this._disposables.push(
             commands.registerCommand(
-                "vdm-vscode.coverage.show",
+                "vdm-vscode.coverageOverlay.enable",
                 async () => {
-                    this._displayCoverage = true;
+                    this._isDisplayingCoverage = true;
                     // Only look at visible editors with language id of interest
                     window.visibleTextEditors
-                        .filter((visibleEditor) =>
-                            this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
-                        )
+                        .filter((visibleEditor) => this._languageIdsOfInterest.has(visibleEditor.document.languageId))
                         .forEach((visibleTextEditor) => this._visibleEditors.push(visibleTextEditor));
 
                     // Decorate all visible editors when the user enables coverage overlay
                     this.overlayCoverageOnTextEditors(this._visibleEditors);
 
-                    // Hide this button. This also displays the "hide coverage" button.
-                    commands.executeCommand("setContext", "vdm-vscode.coverage.show", false);
+                    // Display the "disable coverage" button.
+                    commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.enable", false);
+                    commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.disable", true);
 
                     // When the user switches to a document it needs to be decorated if show coverage is enabled
                     this._visibleEditorsChangedDisposable = window.onDidChangeVisibleTextEditors((visibleEditors: TextEditor[]) => {
                         // Only handle visible text editors with language id of interest
                         const visibleEditorsOfInterest: TextEditor[] = visibleEditors.filter((visibleEditor) =>
-                            this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
+                            this._languageIdsOfInterest.has(visibleEditor.document.languageId)
                         );
 
                         // Find new visible text editors.
@@ -79,12 +92,12 @@ export class CoverageOverlay {
             )
         );
 
-        // Register the hide coverage overlay button and its action
+        // Register the disable coverage overlay button and its action
         this._disposables.push(
             commands.registerCommand(
-                "vdm-vscode.coverage.hide",
+                "vdm-vscode.coverageOverlay.disable",
                 () => {
-                    this._displayCoverage = false;
+                    this._isDisplayingCoverage = false;
 
                     // Remove coverage decorations from visible documents foreach workspace.
                     this._wsFolderToCoverageFolder.forEach((covFold, wsFolder) =>
@@ -103,8 +116,9 @@ export class CoverageOverlay {
                     // Dispose subscription as we no longer want to react to changes to visible editors
                     this._visibleEditorsChangedDisposable.dispose();
 
-                    // Show the "display corage" button. This also hides this button.
-                    commands.executeCommand("setContext", "vdm-vscode.coverage.show", true);
+                    // Show the "enable" button.
+                    commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.enable", true);
+                    commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.disable", false);
                 },
                 this
             )
@@ -140,7 +154,7 @@ export class CoverageOverlay {
                     window.visibleTextEditors.filter(
                         (visibleEditor) =>
                             workspace.getWorkspaceFolder(visibleEditor.document.uri) == wsFolder &&
-                            this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
+                            this._languageIdsOfInterest.has(visibleEditor.document.languageId)
                     )
                 );
             }
@@ -195,7 +209,9 @@ export class CoverageOverlay {
                     // No coverage folders can be located. Inform the user and suggest to generate the coverage
                     const btnName = "Generate coverage";
                     window.showInformationMessage(err, ...[btnName]).then((ans) => {
-                        if (ans == btnName) commands.executeCommand(`vdm-vscode.translate.${LanguageId.coverage}`, wsFolder.uri);
+                        if (ans == btnName) {
+                            commands.executeCommand(`vdm-vscode.translate.${LanguageId.coverage}`, wsFolder.uri);
+                        }
                     });
                     console.log(err);
                 });
@@ -204,15 +220,17 @@ export class CoverageOverlay {
 
     private handleNewCoverageGenerated(generatedCoverage: GeneratedCoverage) {
         // If the user wants to use a specific coverage folder then do nothing.
-        if (!workspace.getConfiguration("vdm-vscode.coverage", generatedCoverage.wsFolder).get("OverlayLatestCoverage")) return;
+        if (!workspace.getConfiguration("vdm-vscode.coverage", generatedCoverage.wsFolder).get("OverlayLatestCoverage")) {
+            return;
+        }
 
         // Only udpate coverage if _displayCoverage is true.
-        if (this._displayCoverage) {
+        if (this._isDisplayingCoverage) {
             // Get visible text editors for the workspace with language id of interest
             const textEditors: TextEditor[] = window.visibleTextEditors.filter(
                 (visibleEditor) =>
                     workspace.getWorkspaceFolder(visibleEditor.document.uri) == generatedCoverage.wsFolder &&
-                    this._languageIdsOfInterest.find((languageId) => languageId == visibleEditor.document.languageId)
+                    this._languageIdsOfInterest.has(visibleEditor.document.languageId)
             );
 
             // Remove coverage decorations from text editors
@@ -378,7 +396,9 @@ export class CoverageOverlay {
         coverageRanges: CoverageRange[],
         heatMapColouring: boolean
     ): Map<TextEditorDecorationType, Range[]> {
-        if (coverageRanges.length < 1) return new Map();
+        if (coverageRanges.length < 1) {
+            return new Map();
+        }
         // Get all non zero hits to later find min and max
         const hits: number[] = coverageRanges
             .map((coverageRange) => coverageRange.hits)
@@ -432,11 +452,21 @@ export class CoverageOverlay {
             r = g = b = l; // achromatic
         } else {
             const hue2rgb = function hue2rgb(p: number, q: number, t: number) {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1 / 6) return p + (q - p) * 6 * t;
-                if (t < 1 / 2) return q;
-                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                if (t < 0) {
+                    t += 1;
+                }
+                if (t > 1) {
+                    t -= 1;
+                }
+                if (t < 1 / 6) {
+                    return p + (q - p) * 6 * t;
+                }
+                if (t < 1 / 2) {
+                    return q;
+                }
+                if (t < 2 / 3) {
+                    return p + (q - p) * (2 / 3 - t) * 6;
+                }
                 return p;
             };
 
