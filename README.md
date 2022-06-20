@@ -36,6 +36,8 @@ Thus, most feature contributions relates to the desktop version of the extension
 
 ## Features
 
+Following is a select number of features. For the full up to date list see the [wiki](https://github.com/overturetool/vdm-vscode/wiki/Developer#Feature-Matrix).
+
 -   Syntax Highlighting
 -   Syntax- and type-checking
 -   Smart navigation
