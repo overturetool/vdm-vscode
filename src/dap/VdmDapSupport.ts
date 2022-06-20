@@ -42,9 +42,10 @@ export namespace VdmDapSupport {
                     document: vscode.TextDocument,
                     position: vscode.Position
                 ): vscode.ProviderResult<vscode.EvaluatableExpression> {
-                    // This regex looks for anything except whitespace, ';' and ','. This works as VDMJ will show an error if the variable name is not valid.
-                    const wordRange = document.getWordRangeAtPosition(position, /[^ ;,]+/);
-                    return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
+                    // This regex captures anything until: a whitespace, ';', ',' or ':'. This works as VDMJ will show an error if the variable name is not valid.
+                    const wordRange = document.getWordRangeAtPosition(position, /[^ ;,:]+/);
+                    const ev = wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
+                    return ev;
                 },
             });
         }
