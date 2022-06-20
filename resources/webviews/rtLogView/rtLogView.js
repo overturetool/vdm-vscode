@@ -30,6 +30,8 @@ let currentViewId = archViewId;
 let selectedTime = 0;
 let hasConjectures = false;
 let conjectures;
+let cpusWithEvents = [];
+let timeStamps = [];
 
 // Offload the canvas generation logic to a webworker so that the main thread is not being blocked
 let diagramWorker;
@@ -53,7 +55,7 @@ function handleWorkerResponse(event) {
     const res = event.data;
     const view = views.find((view) => view.id == res.msg);
     const isCpuView = view.id != archViewId && view.id != execViewId && view.id != legendViewId;
-    view.diagramHeight = res.height;
+    view.diagramHeight = res.bitmap.height;
     // Container for the diagram
     const mainContainer = document.createElement("div");
     mainContainer.style.overflow = "scroll";
@@ -61,6 +63,7 @@ function handleWorkerResponse(event) {
     // Handle vertical overflow on cpu diagram. If the diagram overflows a scrollbar should appear but only for the diagram. This is realised by using flex box.
     mainContainer.style.height = isCpuView ? "100vh" : "fit-content";
     mainContainer.style.flex = isCpuView ? 1 : "";
+    mainContainer.appendChild(bitmapToCanvas(res.bitmap));
     view.containers = [mainContainer];
 
     // Container for the information to be displayed below the diagram, e.g. conjecture table or warning msg.
@@ -69,31 +72,25 @@ function handleWorkerResponse(event) {
     secondContainer.classList.add("secondaryContainer");
 
     // Add element to display warning if all events cannot fit onto the canvas.
-    if (res.exceedTime) {
+    if (res.exceedTime != undefined) {
         const pElement = generateWarningElement(
             `*Max diagram size reached! Only displaying events until the time ${res.exceedTime}. Choose a later start time to view later events.`
         );
         secondContainer.appendChild(pElement);
     }
 
-    // Append view components as necessary
-    if (res.msg == execViewId) {
-        mainContainer.appendChild(bitmapToCanvas(res.width, res.height, res.bitmap));
-
-        if (conjectures && conjectures.length > 0) {
-            // Setup container for the table
-            const tableContainer = document.createElement("div");
-            tableContainer.style.float = "left";
-            const tableHeader = document.createElement("h1");
-            tableHeader.textContent = "Validation Conjecture Violations";
-            tableHeader.style.fontSize = `${fontSize * 1.5}px`;
-            tableHeader.style.marginBottom = "5px";
-            tableContainer.appendChild(tableHeader);
-            tableContainer.appendChild(generateConjectureTable(conjectures));
-            secondContainer.appendChild(tableContainer);
-        }
-    } else {
-        mainContainer.appendChild(bitmapToCanvas(res.width, res.height, res.bitmap));
+    // Append table
+    if (res.msg == execViewId && conjectures && conjectures.length > 0) {
+        // Setup container for the table
+        const tableContainer = document.createElement("div");
+        tableContainer.style.float = "left";
+        const tableHeader = document.createElement("h1");
+        tableHeader.textContent = "Validation Conjecture Violations";
+        tableHeader.style.fontSize = `${fontSize * 1.5}px`;
+        tableHeader.style.marginBottom = "5px";
+        tableContainer.appendChild(tableHeader);
+        tableContainer.appendChild(generateConjectureTable(conjectures));
+        secondContainer.appendChild(tableContainer);
     }
 
     if (secondContainer.children.length > 0) {
@@ -121,6 +118,8 @@ buttons.forEach((btn) => {
             // Display the selected view and set the current view id - the btn id is the view id
             currentViewId = btn.id;
             displayView(currentViewId, selectedTime);
+
+            //TODO: Populate time select with timestamps for view
         }
     };
 });
@@ -146,12 +145,13 @@ window.addEventListener("message", (event) => {
                 minTimeStamp = timestamp;
             }
         });
+        timeStamps = event.data.timeStamps;
         selectedTime = minTimeStamp;
         hasConjectures = event.data.conjectures.length > 0;
         conjectures = event.data.conjectures;
-
         // Trigger the initiate logic in the diagram worker
         const osCanvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
+        cpusWithEvents = event.data.cpusWithEvents;
         diagramWorker.postMessage(
             {
                 msg: initMsg,
@@ -161,7 +161,7 @@ window.addEventListener("message", (event) => {
                 cpusWithEvents: event.data.cpusWithEvents,
                 conjectures: conjectures,
                 canvas: osCanvas,
-                screenWidth: screen.width,
+                maxWidth: Math.round(screen.width * 0.9),
             },
             [osCanvas]
         );
@@ -250,12 +250,6 @@ function generateConjectureTable(conjectures) {
     return table;
 }
 
-function generateSingleViewComponent(viewId) {}
-
-function generateCpuViewComponents(startTime, msg) {}
-
-function generateExecutionViewComponents(startTime) {}
-
 function generateWarningElement(txt) {
     // Generate p element to display warning if all events cannot fit onto the canvas.
     const pElement = document.createElement("p");
@@ -278,13 +272,13 @@ function displayView(viewId, timeStamp) {
     view.time = timeStamp;
 }
 
-function bitmapToCanvas(width, height, bitmap) {
+function bitmapToCanvas(bitmap) {
     const canvas = document.createElement("CANVAS");
     canvas.style.marginTop = "15px";
     canvas.style.marginLeft = "15px";
     canvas.style.background = backgroundColor;
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
     const ctx = canvas.getContext("bitmaprenderer");
     ctx.transferFromImageBitmap(bitmap);
     return canvas;

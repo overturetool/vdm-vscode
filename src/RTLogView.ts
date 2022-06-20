@@ -233,6 +233,7 @@ export class RTLogView extends AutoDisposable {
                             cpuWithEvents = {
                                 id: cpunm,
                                 executionEvents: [],
+                                timeStamps: [],
                             };
                             cpusWithEvents.push(cpuWithEvents);
                         }
@@ -242,6 +243,13 @@ export class RTLogView extends AutoDisposable {
                         }
 
                         cpuWithEvents.executionEvents.push(logEventObj);
+
+                        if (
+                            cpuWithEvents.timeStamps.length == 0 ||
+                            cpuWithEvents.timeStamps[cpuWithEvents.timeStamps.length - 1].time < logEventObj.time
+                        ) {
+                            cpuWithEvents.timeStamps.push(logEventObj.time);
+                        }
                     }
 
                     executionEvents.push(logEventObj);
@@ -376,7 +384,6 @@ export class RTLogView extends AutoDisposable {
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             async (cmd: string) => {
-                console.log("Received command from view: " + cmd);
                 const returnObj: any = { cmd: cmd };
                 if (cmd == "init") {
                     const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);

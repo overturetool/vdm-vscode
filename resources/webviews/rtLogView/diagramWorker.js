@@ -39,7 +39,7 @@ self.onmessage = function (e) {
             e.data.cpusWithEvents,
             e.data.conjectures,
             e.data.canvas,
-            e.data.screenWidth
+            e.data.maxWidth
         );
     } else if (msg == archViewId) {
         canvasGenerator.drawArchCanvas(e.data.canvas);
@@ -69,7 +69,7 @@ self.onmessage = function (e) {
 
 // Class for generation view components
 class CanvasGenerator {
-    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, screenWidth) {
+    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, maxWidth) {
         this.cpuDeclEvents = cpuDeclEvents;
         this.busDeclEvents = busDeclEvents;
         this.executionEvents = executionEvents;
@@ -86,7 +86,9 @@ class CanvasGenerator {
             conjectureViolationTable: undefined,
         };
         // Screen width is used as the max width for the cpu view
-        this.screenWidth = screenWidth;
+        this.maxWidth = maxWidth;
+        this.lastKnownStartTime = -1;
+        this.cpuViewTimeOfExceededSize = -1;
     }
 
     resetViewDataCache() {
@@ -279,7 +281,7 @@ class CanvasGenerator {
         }
 
         const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: archViewId, bitmap: bitmap, width: canvas.width, height: canvas.height });
+        self.postMessage({ msg: archViewId, bitmap: bitmap });
     }
 
     drawLegendCanvas(canvas) {
@@ -307,7 +309,7 @@ class CanvasGenerator {
         legend.drawFuncs.forEach((func) => func());
 
         const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: legendViewId, bitmap: bitmap, width: canvas.width, height: canvas.height });
+        self.postMessage({ msg: legendViewId, bitmap: bitmap });
     }
 
     drawExecutionCanvas(canvas, startTime) {
@@ -354,9 +356,9 @@ class CanvasGenerator {
         // Draw visuals on diagram canvas
         this.execDrawData.declDrawFuncs.forEach((func) => func(diagramCtx));
         gridDrawFuncs.forEach((func) => func(diagramCtx));
-
+        this.lastKnownStartTime = startTime;
         const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: execViewId, bitmap: bitmap, width: canvas.width, height: canvas.height, exceedTime: timeOfExceededSize });
+        self.postMessage({ msg: execViewId, bitmap: bitmap, exceedTime: timeOfExceededSize });
     }
 
     drawCpuCanvas(canvas, startTime, msg) {
@@ -371,14 +373,13 @@ class CanvasGenerator {
         if (executionEvents.length == 0) {
             ctx.font = declFont;
             ctx.fillStyle = fontColor;
-            const msg = "No events found";
-            ctx.fillText(msg, eventLineWidth, txtHeight + eventLineWidth * 2);
-            const txtMetrics = ctx.measureText(msg);
+            const txt = "No events found";
+            ctx.fillText(txt, eventLineWidth, txtHeight + eventLineWidth * 2);
+            const txtMetrics = ctx.measureText(txt);
+            const bitmap = canvas.transferToImageBitmap();
             self.postMessage({
                 msg: msg,
-                bitmap: canvas.transferToImageBitmap(),
-                width: txtMetrics.width,
-                height: txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent,
+                bitmap: bitmap,
                 exceedTime: undefined,
             });
             return;
@@ -401,9 +402,9 @@ class CanvasGenerator {
         const opActiveEvents = [];
         let currentEventPos_y = txtHeight + padding + margin * 2;
         let diagramHeight = currentEventPos_y + eventLength;
-        let timeOfExceededSize;
         let diagramWidth = axisStart_x;
         let firstTimestampAfterStartTime;
+        const rollback = { eventsIndex: 0, rects: [], diagramWidth: 0 };
         // Find which obj refs (rects) needs to be displayed and which events for the given time. To properly display this it needs to be calculated from the beginning.
         for (let i = 0; i < executionEvents.length; i++) {
             const event = executionEvents[i];
@@ -515,6 +516,25 @@ class CanvasGenerator {
                 if (firstTimestampAfterStartTime == undefined) {
                     firstTimestampAfterStartTime = event.time;
                 }
+                if (i > 0 && executionEvents[i - 1].time < event.time) {
+                    rollback.rects = [
+                        ...rects.map((rect) => ({
+                            name: rect.name,
+                            margin: rect.margin,
+                            width: rect.width,
+                            height: rect.height,
+                            textHeight: rect.textHeight,
+                            busId: rect.busId,
+                            rectId: rect.rectId,
+                            pos_x: rect.pos_x,
+                            pos_y: rect.pos_y,
+                            startPos_x: rect.startPos_x,
+                        })),
+                    ];
+                    rollback.eventsIndex = eventsToDraw.length - 1;
+                    rollback.diagramWidth = diagramWidth;
+                    rollback.time = executionEvents[i - 1].time;
+                }
                 // Push to events to draw
                 eventsToDraw.push(event);
                 if (opComplete) {
@@ -536,6 +556,7 @@ class CanvasGenerator {
                             rectId: event.rectId,
                             pos_x: 0,
                             pos_y: txtHeight + padding + margin * 2,
+                            startPos_x: 0,
                         };
                         newRects.push(rect);
                         // Find where to insert the rect. If its a bus rect its busId determines where to place it else its rectid.
@@ -555,54 +576,106 @@ class CanvasGenerator {
                         }
                         // Insert rect
                         rects.splice(index, 0, rect);
+
+                        //TODO: Make it possible to roll back both the ordering of the rects but also any possible new margin sizes, start positions and mid positions
+                        // Also calculating the margins need some tuning
                     }
                 });
 
                 //Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
-                const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
-                const prevRect = prevEvent ? rects.find((rect) => rect.rectId == prevEvent.rectId) : undefined;
-                const previousMarginsForRect = { rectId: undefined, margin: {} };
-                if (
-                    (prevRect &&
-                        (LogEvent.isOperationKind(prevEvent.eventKind) ||
-                            (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent))) ||
-                    opComplete
-                ) {
-                    const targetRect = rects.find(
-                        (rect) =>
-                            rect.rectId ==
-                            (opComplete
-                                ? opComplete.rectId
-                                : LogEvent.isBusKind(event.eventKind)
-                                ? this.busDeclEvents.find((bde) => bde.id == event.busid).name
-                                : prevEvent.eventKind == LogEvent.opRequest || prevEvent.eventKind == LogEvent.messageCompleted
-                                ? prevEvent.objref
-                                : prevEvent.rectId)
-                    );
-                    const targetRectIndex = rects.indexOf(targetRect);
-                    const isSelf = opComplete || targetRect.rectId == prevRect.rectId;
-                    ctx.font = diagramFont;
-                    const newMargin =
-                        ctx.measureText(opComplete ? opComplete.opname : prevEvent.opname).width -
-                        (isSelf ? targetRect.width : prevRect.width) / 2 +
-                        margin * 2;
 
-                    const rectToMarginAdjust = opComplete || prevEvent.eventKind == LogEvent.messageCompleted ? targetRect : prevRect;
-                    previousMarginsForRect.rectId = rectToMarginAdjust.rectId;
-                    if (
-                        (isSelf || rects.indexOf(rectToMarginAdjust) + 1 == targetRectIndex) &&
-                        newMargin > rectToMarginAdjust.margin.right
+                let didChangeMargins = false;
+                const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
+                if (
+                    i > 0 &&
+                    i + 1 < executionEvents.length &&
+                    (LogEvent.isOperationKind(prevEvent.eventKind) ||
+                        (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent) ||
+                        prevEvent.eventKind == LogEvent.messageRequest)
+                ) {
+                    let targetRect;
+
+                    if (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent) {
+                        targetRect = rects.find((rect) => rect.rectId == event.rectId);
+                    } else if (prevEvent.eventKind == LogEvent.messageRequest) {
+                        targetRect = rects.find((rect) => rect.rectId == executionEvents[i - 2].rectId);
+                    } else if (
+                        prevEvent.eventKind != LogEvent.opRequest &&
+                        (!("opname" in executionEvents[i - 2]) || prevEvent.opname != prevEvent.opname)
                     ) {
-                        previousMarginsForRect.margin.right = rectToMarginAdjust.margin.right;
-                        rectToMarginAdjust.margin.right = newMargin;
-                    } else if (rects.indexOf(rectToMarginAdjust) - 1 == targetRectIndex && newMargin > rectToMarginAdjust.margin.left) {
-                        previousMarginsForRect.margin.left = rectToMarginAdjust.margin.left;
-                        rectToMarginAdjust.margin.left = newMargin;
+                        targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
+                    } else if (prevEvent.eventKind == LogEvent.opRequest) {
+                        targetRect = rects.find(
+                            (rect) => rect.rectId == (event.rectId != prevEvent.rectId ? event.rectId : prevEvent.rectId)
+                        );
+                    } else {
+                        targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
+                    }
+
+                    const isSelf = targetRect.rectId == prevEvent.rectId;
+                    const rectForEvent = rects.find((rect) => rect.rectId == targetRect.rectId);
+                    ctx.font = diagramFont;
+                    const newMargin = ctx.measureText(this.opnameToShortName(prevEvent.opname)).width - rectForEvent.width / 2 + margin * 2;
+                    const targetRectIndex = rects.indexOf(targetRect);
+
+                    if ((isSelf || rects.indexOf(rectForEvent) + 1 == targetRectIndex) && newMargin > rectForEvent.margin.right) {
+                        console.log(
+                            `Found new RIGHT margin for rect ${targetRect.name}: ${prevEvent.opname} -> ${newMargin}. Old margin: ${rectForEvent.margin.right}`
+                        );
+                        rectForEvent.margin.right = newMargin;
+                        didChangeMargins = true;
+                    } else if (rects.indexOf(rectForEvent) - 1 == targetRectIndex && newMargin > rectForEvent.margin.left) {
+                        console.log(
+                            `Found new LEFT margin for rect ${targetRect.name}: ${prevEvent.opname} -> ${newMargin}. Old margin: ${rectForEvent.margin.left}`
+                        );
+                        rectForEvent.margin.left = newMargin;
+                        didChangeMargins = true;
                     }
                 }
 
+                // const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
+                // const prevRect = prevEvent ? rects.find((rect) => rect.rectId == prevEvent.rectId) : undefined;
+                // if (
+                //     (prevRect &&
+                //         (LogEvent.isOperationKind(prevEvent.eventKind) ||
+                //             (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent))) ||
+                //     opComplete
+                // ) {
+                //     const targetRect = rects.find(
+                //         (rect) =>
+                //             rect.rectId ==
+                //             (opComplete
+                //                 ? opComplete.rectId
+                //                 : LogEvent.isBusKind(event.eventKind)
+                //                 ? this.busDeclEvents.find((bde) => bde.id == event.busid).name
+                //                 : prevEvent.eventKind == LogEvent.opRequest || prevEvent.eventKind == LogEvent.messageCompleted
+                //                 ? prevEvent.objref
+                //                 : prevEvent.rectId)
+                //     );
+                //     const targetRectIndex = rects.indexOf(targetRect);
+                //     const isSelf = opComplete || targetRect.rectId == prevRect.rectId;
+                //     ctx.font = diagramFont;
+                //     const newMargin =
+                //         ctx.measureText(opComplete ? opComplete.opname : prevEvent.opname).width -
+                //         (isSelf ? targetRect.width : prevRect.width) / 2 +
+                //         margin * 2;
+                //     const rectToMarginAdjust = opComplete || prevEvent.eventKind == LogEvent.messageCompleted ? targetRect : prevRect;
+                //     previousMarginsForRect.rectId = rectToMarginAdjust.rectId;
+                //     if (
+                //         (isSelf || rects.indexOf(rectToMarginAdjust) + 1 == targetRectIndex) &&
+                //         newMargin > rectToMarginAdjust.margin.right
+                //     ) {
+                //         previousMarginsForRect.margin.right = rectToMarginAdjust.margin.right;
+                //         rectToMarginAdjust.margin.right = newMargin;
+                //     } else if (rects.indexOf(rectToMarginAdjust) - 1 == targetRectIndex && newMargin > rectToMarginAdjust.margin.left) {
+                //         previousMarginsForRect.margin.left = rectToMarginAdjust.margin.left;
+                //         rectToMarginAdjust.margin.left = newMargin;
+                //     }
+                // }
+
                 // Update rect positions based on their margins if they have been updated
-                if (previousMarginsForRect.rectId) {
+                if (newRects.length > 0 || didChangeMargins) {
+                    //previousMarginsForRect.rectId
                     diagramWidth = axisStart_x;
                     for (let i = 0; i < rects.length; i++) {
                         const rect = rects[i];
@@ -626,31 +699,23 @@ class CanvasGenerator {
                 let breakOut = false;
                 if (
                     event.time > firstTimestampAfterStartTime &&
-                    (diagramHeight > canvasMaxSize || diagramHeight * diagramWidth > canvasMaxArea || diagramWidth > this.screenWidth)
+                    (diagramHeight > canvasMaxSize ||
+                        diagramHeight * diagramWidth > canvasMaxArea ||
+                        ((Number(this.lastKnownStartTime) < Number(startTime)
+                            ? this.cpuViewTimeOfExceededSize < rollback.time
+                            : this.cpuViewTimeOfExceededSize == executionEvents[i + 1].time) &&
+                            diagramWidth > this.maxWidth))
                 ) {
-                    for (let k = eventsToDraw.length - 2; k >= 0; k--) {
-                        const prevEvent = eventsToDraw[k];
-                        if (prevEvent.time != event.time) {
-                            timeOfExceededSize = prevEvent.time;
-                            eventsToDraw.splice(k + 1);
-                            breakOut = true;
-                            if (diagramWidth > this.screenWidth) {
-                                // Rollback rects
-                                const rectWithAdjustedMargins = rects.find((rect) => rect.rectId == previousMarginsForRect.rectId);
-                                if (previousMarginsForRect.margin.right) {
-                                    rectWithAdjustedMargins.margin.right = previousMarginsForRect.margin.right;
-                                } else if (previousMarginsForRect.margin.left) {
-                                    rectWithAdjustedMargins.margin.left = previousMarginsForRect.margin.left;
-                                }
-
-                                newRects.forEach((rect) => {
-                                    const rectIndex = rects.indexOf(rect);
-                                    rects.splice(rectIndex, 1);
-                                });
-                            }
-                            break;
-                        }
+                    eventsToDraw.splice(rollback.eventsIndex + 1);
+                    this.cpuViewTimeOfExceededSize = rollback.time;
+                    breakOut = true;
+                    if (diagramWidth > this.maxWidth) {
+                        // Rollback rects
+                        rects.splice(0);
+                        rollback.rects.forEach((rect) => rects.push(rect));
+                        diagramWidth = rollback.diagramWidth;
                     }
+                    break;
                 }
                 // Later events cannot fit on the canvas so break out and generate the draw functions
                 if (breakOut) {
@@ -787,38 +852,43 @@ class CanvasGenerator {
                     const nextRect = rects.find(
                         (rect) => rect.rectId == (targetRectId ? targetRectId : isReplyArrow ? nextEvent.rectId : event.objref)
                     );
-                    const arrwEnd_x = (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - eventWrapperHeight / 2;
-                    const arrwStart_x = (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + eventWrapperHeight / 2;
+                    if (nextRect) {
+                        const arrwEnd_x =
+                            (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - eventWrapperHeight / 2;
+                        const arrwStart_x =
+                            (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + eventWrapperHeight / 2;
 
-                    drawFuncs.push(() => {
-                        this.drawArrow(
-                            ctx,
-                            arrwStart_x,
-                            eventEndPos_y,
-                            arrwEnd_x,
-                            eventEndPos_y,
-                            3,
-                            5,
-                            false,
-                            gridLineWidth,
-                            isReplyArrow ? [5, 2] : undefined,
-                            fontColor,
-                            nextRect.pos_x < currentRect.pos_x
-                        );
-                    });
-
-                    // If the arrow is not a reply arrow then draw the opname of the event on the arrow
-                    if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
-                        eventHasArrowWithTxt = true;
                         drawFuncs.push(() => {
-                            ctx.font = diagramFont;
-                            const txtWidth = ctx.measureText(event.opname).width;
-                            ctx.fillText(
-                                event.opname,
-                                arrwStart_x + (arrwEnd_x - arrwStart_x - txtWidth) / 2,
-                                eventEndPos_y - gridLineWidth - 3
+                            this.drawArrow(
+                                ctx,
+                                arrwStart_x,
+                                eventEndPos_y,
+                                arrwEnd_x,
+                                eventEndPos_y,
+                                3,
+                                5,
+                                false,
+                                gridLineWidth,
+                                isReplyArrow ? [5, 2] : undefined,
+                                fontColor,
+                                nextRect.pos_x < currentRect.pos_x
                             );
                         });
+
+                        // If the arrow is not a reply arrow then draw the opname of the event on the arrow
+                        if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
+                            eventHasArrowWithTxt = true;
+                            drawFuncs.push(() => {
+                                ctx.font = diagramFont;
+                                const txt = this.opnameToShortName(event.opname);
+                                const txtWidth = ctx.measureText(txt).width;
+                                ctx.fillText(
+                                    txt,
+                                    arrwStart_x + (arrwEnd_x - arrwStart_x - txtWidth) / 2,
+                                    eventEndPos_y - gridLineWidth - 3
+                                );
+                            });
+                        }
                     }
                 }
             }
@@ -837,7 +907,7 @@ class CanvasGenerator {
                     const txtMeasure = ctx.measureText("Gg");
                     const txtHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
                     const txtStart_x = currentRect.pos_x + eventWrapperHeight + txtHeight;
-                    ctx.fillText(event.opname, txtStart_x, eventEndPos_y - (eventLength - txtHeight) / 2);
+                    ctx.fillText(this.opnameToShortName(event.opname), txtStart_x, eventEndPos_y - (eventLength - txtHeight) / 2);
                 });
             }
 
@@ -862,9 +932,13 @@ class CanvasGenerator {
         ctx = canvas.getContext("2d");
         // Draw on canvas
         drawFuncs.forEach((drawFunc) => drawFunc());
-
+        this.lastKnownStartTime = startTime;
         const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: msg, bitmap: bitmap, width: canvas.width, height: canvas.height, exceedTime: timeOfExceededSize });
+        self.postMessage({ msg: msg, bitmap: bitmap, exceedTime: this.cpuViewTimeOfExceededSize });
+    }
+
+    opnameToShortName(opname) {
+        return opname.substring(opname.indexOf("`") + 1);
     }
 
     generateGridDrawFuncs(
