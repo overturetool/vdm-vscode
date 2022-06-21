@@ -39,7 +39,7 @@ self.onmessage = function (e) {
             e.data.cpusWithEvents,
             e.data.conjectures,
             e.data.canvas,
-            e.data.maxWidth
+            e.data.diagramSize
         );
     } else if (msg == archViewId) {
         canvasGenerator.drawArchCanvas(e.data.canvas);
@@ -63,13 +63,13 @@ self.onmessage = function (e) {
     } else if (msg == legendViewId) {
         canvasGenerator.drawLegendCanvas(e.data.canvas);
     } else if (msg.toLowerCase().includes("cpu")) {
-        canvasGenerator.drawCpuCanvas(e.data.canvas, e.data.startTime, msg);
+        canvasGenerator.drawCpuCanvas(e.data.canvas, Number(e.data.startTime), msg, false);
     }
 };
 
 // Class for generation view components
 class CanvasGenerator {
-    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, maxWidth) {
+    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, diagramSize) {
         this.cpuDeclEvents = cpuDeclEvents;
         this.busDeclEvents = busDeclEvents;
         this.executionEvents = executionEvents;
@@ -78,29 +78,36 @@ class CanvasGenerator {
         this.defaultCanvas = canvas;
         this.queuedExecDrawCall = undefined;
         this.isGeneratingExecDrawwData = false;
-        this.execDrawData = {
+        // Keep state for the execution view. This includes the draw functions so these does not have to be recalculated each time.
+        this.execucionViewData = {
             declDrawFuncs: [],
             gridDrawFuncs: [],
             gridStartPos_x: undefined,
             eventLength: undefined,
             conjectureViolationTable: undefined,
         };
-        // Screen width is used as the max width for the cpu view
-        this.maxWidth = maxWidth;
-        this.lastKnownStartTime = -1;
-        this.cpuViewTimeOfExceededSize = -1;
+        this.cpuViewData = new Map();
+        cpusWithEvents.forEach((cwe) => {
+            this.cpuViewData.set(cwe.id + "", {
+                startTimesToEndTimes: new Map(),
+                executionEvents: cwe.executionEvents,
+            });
+        });
+
+        // Screen diagram size is used to keep the size of the cpu view within the size of the users screen.
+        this.diagramSize = diagramSize;
     }
 
     resetViewDataCache() {
-        this.generateExecDrawData(this.defaultCanvas);
+        this.generateExecutionViewData(this.defaultCanvas);
     }
 
-    generateExecDrawData(canvas) {
+    generateExecutionViewData(canvas) {
         this.isGeneratingExecDrawwData = true;
         const cpuDecls = [];
         const busDecls = [];
         let ctx = canvas.getContext("2d");
-        this.execDrawData.eventLength = this.calculateEventLength(ctx);
+        this.execucionViewData.eventLength = this.calculateEventLength(ctx);
         ctx.font = declFont;
         const declTextMetrics = ctx.measureText("Gg");
         const declPadding_y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
@@ -136,7 +143,7 @@ class CanvasGenerator {
                     cpuDecls.push(newDecl);
                 }
                 const declTextPos_y = nextDeclPos_y;
-                this.execDrawData.declDrawFuncs.push((ctx) => {
+                this.execucionViewData.declDrawFuncs.push((ctx) => {
                     ctx.font = declFont;
                     ctx.fillText(decl.name, declPadding_x, declTextPos_y);
                 });
@@ -144,10 +151,10 @@ class CanvasGenerator {
             });
 
         // Calculate where events should start on the x-axis
-        this.execDrawData.gridStartPos_x = widestText + declPadding_x * 2;
+        this.execucionViewData.gridStartPos_x = widestText + declPadding_x * 2;
 
         // Generate and push draw functions for the diagram
-        this.execDrawData.gridDrawFuncs = this.generateGridDrawFuncs(
+        this.execucionViewData.gridDrawFuncs = this.generateGridDrawFuncs(
             cpuDecls,
             busDecls,
             this.executionEvents,
@@ -159,7 +166,7 @@ class CanvasGenerator {
             fontColor,
             eventLineWidth,
             eventWrapperHeight,
-            this.execDrawData.eventLength
+            this.execucionViewData.eventLength
         );
 
         this.isGeneratingExecDrawwData = false;
@@ -178,7 +185,7 @@ class CanvasGenerator {
         const margin = txtMeasure.width;
         const padding = margin / 2;
         const rectBottomPos_y = textHeight + padding * 2 + margin + gridLineWidth;
-        const rects = [];
+        const rects = this.cpuDeclEvents.map((cde) => ({ id: cde.id, connections: 0, established: 0 }));
         let maxBusTxtWidth = margin;
         this.busDeclEvents.forEach((busdecl) => {
             // The startig position for the rectangle on the x-axis should be max text width + predefined margin
@@ -192,8 +199,6 @@ class CanvasGenerator {
                 const rect = rects.find((rect) => rect.id == id);
                 if (rect) {
                     rect.connections += 1;
-                } else {
-                    rects.push({ id: id, connections: 1, established: 0 });
                 }
             });
         });
@@ -288,28 +293,75 @@ class CanvasGenerator {
         // Generate the legend canvas
         let legendCtx = canvas.getContext("2d");
         const eventLength = this.calculateEventLength(legendCtx);
+        const elementPadding = eventLength;
         legendCtx.font = diagramFont;
-        // Generate draw functions for the legend
-        const legend = this.generateEventKindsLegend(
-            legendCtx,
-            diagramFont,
-            eventLineWidth,
-            gridLineWidth,
-            fontColor,
-            0,
-            eventLength,
-            eventWrapperHeight,
-            eventLength * 0.7,
-            LogEvent.eventKindToColor.map((ektc) => ektc.kind),
-            true
-        );
-        canvas.width = legend.width;
-        canvas.height = legend.endPos_y;
-        legendCtx = canvas.getContext("2d");
-        legend.drawFuncs.forEach((func) => func());
+        let nextLegendElementPos_y = eventLength * 1.5;
+        const drawFuncs = [];
+        const eventKinds = LogEvent.eventKindToColor.map((ektc) => ektc.kind);
+        const firstTxtMetrics = legendCtx.measureText(eventKinds[0]);
 
-        const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: legendViewId, bitmap: bitmap });
+        const txtHeight = firstTxtMetrics.fontBoundingBoxAscent + firstTxtMetrics.fontBoundingBoxDescent;
+        let maxTxtWidth = firstTxtMetrics.width;
+        // Add draw function for the event kinds
+        eventKinds
+            .sort((a, b) => a.localeCompare(b))
+            .forEach((eventKind) => {
+                const txt = eventKind.replace(/([A-Z])/g, " $1").trim();
+                const elementPos_y = nextLegendElementPos_y;
+                drawFuncs.push(() => {
+                    this.generateEventDrawFuncs(
+                        legendCtx,
+                        diagramFont,
+                        gridLineWidth,
+                        eventLineWidth,
+                        eventWrapperHeight,
+                        LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
+                        eventKind,
+                        elementPadding,
+                        elementPos_y,
+                        elementPadding + eventLength - gridLineWidth * 2,
+                        fontColor,
+                        fontColor
+                    ).forEach((func) => {
+                        legendCtx.font = diagramFont;
+                        func();
+                    });
+                    legendCtx.fillText(txt, elementPadding + eventLength + eventLineWidth, elementPos_y);
+                });
+                const txtWidth = legendCtx.measureText(txt).width;
+                if (txtWidth > maxTxtWidth) {
+                    maxTxtWidth = txtWidth;
+                }
+                nextLegendElementPos_y += txtHeight * 1.5 + gridLineWidth;
+            });
+
+        // Add draw function for the validation conjecture violation legend
+        const conjTxt = "Validation Conjecture Violation";
+        const elementPos_y = nextLegendElementPos_y;
+        drawFuncs.push(() => {
+            this.generateConjectureViolationDrawFunc(
+                elementPos_y - txtHeight / 4,
+                elementPadding * 1.5,
+                [],
+                legendCtx,
+                eventLength / 3
+            )(legendCtx, 0);
+            const prevStrokeStyle = legendCtx.strokeStyle;
+            legendCtx.strokeStyle = conjectureViolationColor;
+            legendCtx.fillText(conjTxt, elementPadding + eventLength + eventLineWidth, elementPos_y);
+            legendCtx.strokeStyle = prevStrokeStyle;
+        });
+        const txtWidth = legendCtx.measureText(conjTxt).width;
+        if (txtWidth > maxTxtWidth) {
+            maxTxtWidth = txtWidth;
+        }
+
+        canvas.width = maxTxtWidth + elementPadding + eventLength + eventLineWidth + gridLineWidth;
+        canvas.height = nextLegendElementPos_y + txtHeight;
+        legendCtx = canvas.getContext("2d");
+        drawFuncs.forEach((func) => func());
+
+        self.postMessage({ msg: legendViewId, bitmap: canvas.transferToImageBitmap() });
     }
 
     drawExecutionCanvas(canvas, startTime) {
@@ -319,51 +371,50 @@ class CanvasGenerator {
         }
         // Generate diagram canvas
         let gridEndPos_y = 0;
-        let gridPos_x = this.execDrawData.gridStartPos_x;
+        let gridPos_x = this.execucionViewData.gridStartPos_x;
         const gridDrawFuncs = [];
         let timeOfExceededSize;
         // Only use grid draw funcs from the specified time
-        for (let i = 0; i < this.execDrawData.gridDrawFuncs.length; i++) {
-            const gdfs = this.execDrawData.gridDrawFuncs[i];
+        for (let i = 0; i < this.execucionViewData.gridDrawFuncs.length; i++) {
+            const gdfs = this.execucionViewData.gridDrawFuncs[i];
             if (gdfs.time >= startTime) {
                 const newGridEndPos_y = gdfs.endPos_y > gridEndPos_y ? gdfs.endPos_y : gridEndPos_y;
                 const resultingCanvasWidth =
-                    gdfs.drawFuncs.length * this.execDrawData.eventLength + gridPos_x + this.execDrawData.eventLength;
+                    gdfs.drawFuncs.length * this.execucionViewData.eventLength + gridPos_x + this.execucionViewData.eventLength;
                 // Break out if the size of the canvas exceeds the size that can be displayed
                 if (
                     resultingCanvasWidth > canvasMaxSize ||
                     newGridEndPos_y > canvasMaxSize ||
                     resultingCanvasWidth * newGridEndPos_y > canvasMaxArea
                 ) {
-                    timeOfExceededSize = this.execDrawData.gridDrawFuncs[i - 1].time;
+                    timeOfExceededSize = this.execucionViewData.gridDrawFuncs[i - 1].time;
                     break;
                 }
 
                 gridEndPos_y = newGridEndPos_y;
                 gdfs.drawFuncs.forEach((drawFunc) => {
                     const pos_x = gridPos_x;
-                    gridPos_x += this.execDrawData.eventLength;
+                    gridPos_x += this.execucionViewData.eventLength;
                     gridDrawFuncs.push((ctx) => drawFunc(ctx, pos_x));
                 });
             }
         }
 
         // Resize diagram canvas to fit content
-        canvas.width = gridPos_x + this.execDrawData.eventLength;
+        canvas.width = gridPos_x + this.execucionViewData.eventLength;
         canvas.height = gridEndPos_y;
         const diagramCtx = canvas.getContext("2d");
         diagramCtx.fillStyle = fontColor;
         // Draw visuals on diagram canvas
-        this.execDrawData.declDrawFuncs.forEach((func) => func(diagramCtx));
+        this.execucionViewData.declDrawFuncs.forEach((func) => func(diagramCtx));
         gridDrawFuncs.forEach((func) => func(diagramCtx));
-        this.lastKnownStartTime = startTime;
-        const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: execViewId, bitmap: bitmap, exceedTime: timeOfExceededSize });
+
+        self.postMessage({ msg: execViewId, bitmap: canvas.transferToImageBitmap(), exceedTime: timeOfExceededSize });
     }
 
-    drawCpuCanvas(canvas, startTime, msg) {
-        const cpuId = msg.replace(/\D/g, "");
-        const executionEvents = this.cpusWithEvents.find((cwe) => cwe.id == cpuId).executionEvents;
+    drawCpuCanvas(canvas, startTime, msg, disableMargins) {
+        const viewData = this.cpuViewData.get(msg.replace(/\D/g, ""));
+        const executionEvents = viewData.executionEvents;
         let ctx = canvas.getContext("2d");
         ctx.font = declFont;
         const txtMetrics = ctx.measureText("Gg");
@@ -371,17 +422,7 @@ class CanvasGenerator {
 
         // If there is no execution events just return a canvas with text
         if (executionEvents.length == 0) {
-            ctx.font = declFont;
-            ctx.fillStyle = fontColor;
-            const txt = "No events found";
-            ctx.fillText(txt, eventLineWidth, txtHeight + eventLineWidth * 2);
-            const txtMetrics = ctx.measureText(txt);
-            const bitmap = canvas.transferToImageBitmap();
-            self.postMessage({
-                msg: msg,
-                bitmap: bitmap,
-                exceedTime: undefined,
-            });
+            this.postErrorCanvas(canvas, "No events found", msg);
             return;
         }
 
@@ -403,8 +444,9 @@ class CanvasGenerator {
         let currentEventPos_y = txtHeight + padding + margin * 2;
         let diagramHeight = currentEventPos_y + eventLength;
         let diagramWidth = axisStart_x;
-        let firstTimestampAfterStartTime;
-        const rollback = { eventsIndex: 0, rects: [], diagramWidth: 0 };
+        const rectsEnd_y = txtHeight + padding + margin;
+        const rollback = { eventsIndex: 0, rects: [], diagramWidth: 0, diagramHeight: 0, time: undefined };
+        let diagramSizeExceededTimestamp;
         // Find which obj refs (rects) needs to be displayed and which events for the given time. To properly display this it needs to be calculated from the beginning.
         for (let i = 0; i < executionEvents.length; i++) {
             const event = executionEvents[i];
@@ -512,10 +554,7 @@ class CanvasGenerator {
             event.rectId = rectId;
 
             // Only generate draw functions for the events from the chosen start time
-            if (event.time >= startTime) {
-                if (firstTimestampAfterStartTime == undefined) {
-                    firstTimestampAfterStartTime = event.time;
-                }
+            if (Number(event.time) >= startTime) {
                 if (i > 0 && executionEvents[i - 1].time < event.time) {
                     rollback.rects = [
                         ...rects.map((rect) => ({
@@ -533,6 +572,7 @@ class CanvasGenerator {
                     ];
                     rollback.eventsIndex = eventsToDraw.length - 1;
                     rollback.diagramWidth = diagramWidth;
+                    rollback.diagramHeight = diagramHeight;
                     rollback.time = executionEvents[i - 1].time;
                 }
                 // Push to events to draw
@@ -576,106 +616,57 @@ class CanvasGenerator {
                         }
                         // Insert rect
                         rects.splice(index, 0, rect);
-
-                        //TODO: Make it possible to roll back both the ordering of the rects but also any possible new margin sizes, start positions and mid positions
-                        // Also calculating the margins need some tuning
                     }
                 });
 
-                //Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
-
                 let didChangeMargins = false;
-                const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
-                if (
-                    i > 0 &&
-                    i + 1 < executionEvents.length &&
-                    (LogEvent.isOperationKind(prevEvent.eventKind) ||
-                        (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent) ||
-                        prevEvent.eventKind == LogEvent.messageRequest)
-                ) {
-                    let targetRect;
-
-                    if (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent) {
-                        targetRect = rects.find((rect) => rect.rectId == event.rectId);
-                    } else if (prevEvent.eventKind == LogEvent.messageRequest) {
-                        targetRect = rects.find((rect) => rect.rectId == executionEvents[i - 2].rectId);
-                    } else if (
-                        prevEvent.eventKind != LogEvent.opRequest &&
-                        (!("opname" in executionEvents[i - 2]) || prevEvent.opname != prevEvent.opname)
+                if (!disableMargins) {
+                    //Calculate the margin that is needed to the right and left side of the rectangle so that opnames does not clash into other visuals.
+                    const prevEvent = eventsToDraw.length > 0 ? eventsToDraw[eventsToDraw.length - 2] : undefined;
+                    if (
+                        eventsToDraw.length > 1 &&
+                        (LogEvent.isOperationKind(prevEvent.eventKind) ||
+                            (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent) ||
+                            prevEvent.eventKind == LogEvent.messageRequest)
                     ) {
-                        targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
-                    } else if (prevEvent.eventKind == LogEvent.opRequest) {
-                        targetRect = rects.find(
-                            (rect) => rect.rectId == (event.rectId != prevEvent.rectId ? event.rectId : prevEvent.rectId)
-                        );
-                    } else {
-                        targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
-                    }
+                        let targetRect;
 
-                    const isSelf = targetRect.rectId == prevEvent.rectId;
-                    const rectForEvent = rects.find((rect) => rect.rectId == targetRect.rectId);
-                    ctx.font = diagramFont;
-                    const newMargin = ctx.measureText(this.opnameToShortName(prevEvent.opname)).width - rectForEvent.width / 2 + margin * 2;
-                    const targetRectIndex = rects.indexOf(targetRect);
+                        if (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent) {
+                            targetRect = rects.find((rect) => rect.rectId == event.rectId);
+                        } else if (prevEvent.eventKind == LogEvent.messageRequest) {
+                            targetRect = rects.find((rect) => rect.rectId == eventsToDraw[eventsToDraw.length - 2].rectId);
+                        } else if (
+                            prevEvent.eventKind != LogEvent.opRequest &&
+                            (!("opname" in eventsToDraw[eventsToDraw.length - 2]) || prevEvent.opname != prevEvent.opname)
+                        ) {
+                            targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
+                        } else if (prevEvent.eventKind == LogEvent.opRequest) {
+                            targetRect = rects.find(
+                                (rect) => rect.rectId == (event.rectId != prevEvent.rectId ? event.rectId : prevEvent.rectId)
+                            );
+                        } else {
+                            targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
+                        }
 
-                    if ((isSelf || rects.indexOf(rectForEvent) + 1 == targetRectIndex) && newMargin > rectForEvent.margin.right) {
-                        console.log(
-                            `Found new RIGHT margin for rect ${targetRect.name}: ${prevEvent.opname} -> ${newMargin}. Old margin: ${rectForEvent.margin.right}`
-                        );
-                        rectForEvent.margin.right = newMargin;
-                        didChangeMargins = true;
-                    } else if (rects.indexOf(rectForEvent) - 1 == targetRectIndex && newMargin > rectForEvent.margin.left) {
-                        console.log(
-                            `Found new LEFT margin for rect ${targetRect.name}: ${prevEvent.opname} -> ${newMargin}. Old margin: ${rectForEvent.margin.left}`
-                        );
-                        rectForEvent.margin.left = newMargin;
-                        didChangeMargins = true;
+                        const isSelf = targetRect.rectId == prevEvent.rectId;
+                        const rectForEvent = rects.find((rect) => rect.rectId == prevEvent.rectId);
+                        ctx.font = diagramFont;
+                        const newMargin =
+                            ctx.measureText(this.opnameToShortName(prevEvent.opname)).width - rectForEvent.width / 2 + margin * 2;
+                        const targetRectIndex = rects.indexOf(targetRect);
+
+                        if ((isSelf || rects.indexOf(rectForEvent) + 1 == targetRectIndex) && newMargin > rectForEvent.margin.right) {
+                            rectForEvent.margin.right = newMargin;
+                            didChangeMargins = true;
+                        } else if (rects.indexOf(rectForEvent) - 1 == targetRectIndex && newMargin > rectForEvent.margin.left) {
+                            rectForEvent.margin.left = newMargin;
+                            didChangeMargins = true;
+                        }
                     }
                 }
 
-                // const prevEvent = i > 0 ? executionEvents[i - 1] : undefined;
-                // const prevRect = prevEvent ? rects.find((rect) => rect.rectId == prevEvent.rectId) : undefined;
-                // if (
-                //     (prevRect &&
-                //         (LogEvent.isOperationKind(prevEvent.eventKind) ||
-                //             (prevEvent.eventKind == LogEvent.messageCompleted && "opname" in prevEvent))) ||
-                //     opComplete
-                // ) {
-                //     const targetRect = rects.find(
-                //         (rect) =>
-                //             rect.rectId ==
-                //             (opComplete
-                //                 ? opComplete.rectId
-                //                 : LogEvent.isBusKind(event.eventKind)
-                //                 ? this.busDeclEvents.find((bde) => bde.id == event.busid).name
-                //                 : prevEvent.eventKind == LogEvent.opRequest || prevEvent.eventKind == LogEvent.messageCompleted
-                //                 ? prevEvent.objref
-                //                 : prevEvent.rectId)
-                //     );
-                //     const targetRectIndex = rects.indexOf(targetRect);
-                //     const isSelf = opComplete || targetRect.rectId == prevRect.rectId;
-                //     ctx.font = diagramFont;
-                //     const newMargin =
-                //         ctx.measureText(opComplete ? opComplete.opname : prevEvent.opname).width -
-                //         (isSelf ? targetRect.width : prevRect.width) / 2 +
-                //         margin * 2;
-                //     const rectToMarginAdjust = opComplete || prevEvent.eventKind == LogEvent.messageCompleted ? targetRect : prevRect;
-                //     previousMarginsForRect.rectId = rectToMarginAdjust.rectId;
-                //     if (
-                //         (isSelf || rects.indexOf(rectToMarginAdjust) + 1 == targetRectIndex) &&
-                //         newMargin > rectToMarginAdjust.margin.right
-                //     ) {
-                //         previousMarginsForRect.margin.right = rectToMarginAdjust.margin.right;
-                //         rectToMarginAdjust.margin.right = newMargin;
-                //     } else if (rects.indexOf(rectToMarginAdjust) - 1 == targetRectIndex && newMargin > rectToMarginAdjust.margin.left) {
-                //         previousMarginsForRect.margin.left = rectToMarginAdjust.margin.left;
-                //         rectToMarginAdjust.margin.left = newMargin;
-                //     }
-                // }
-
                 // Update rect positions based on their margins if they have been updated
                 if (newRects.length > 0 || didChangeMargins) {
-                    //previousMarginsForRect.rectId
                     diagramWidth = axisStart_x;
                     for (let i = 0; i < rects.length; i++) {
                         const rect = rects[i];
@@ -694,31 +685,51 @@ class CanvasGenerator {
                     }
                 }
 
-                // Validate that events until the current timestamp does not cause the diagram to exceeds its max area or the screen width.
-                // If not then rollback to the previous timestamp
-                let breakOut = false;
+                // Validate that events until the current timestamp does not cause the diagram to exceeds its max area or the screen width or height.
+                // If it does then rollback to the previous timestamp
+                let existingRollbackForTimestamp =
+                    rollback.time != undefined &&
+                    viewData.startTimesToEndTimes.has(startTime) &&
+                    viewData.startTimesToEndTimes.get(startTime).time == rollback.time
+                        ? viewData.startTimesToEndTimes.get(startTime)
+                        : undefined;
+
+                const rollbackExceedsDiagramSize =
+                    rollback.diagramWidth > this.diagramSize.width || rollback.diagramHeight > this.diagramSize.height;
+
+                // It is okay for the diagram to exceed canvas size restrictions as long as atleast one timestamp can be displayed.
+                const diagramExceedsCanvasSizeRestrictions =
+                    diagramHeight > canvasMaxSize || diagramWidth > canvasMaxSize || diagramHeight * diagramWidth > canvasMaxArea;
+
                 if (
-                    event.time > firstTimestampAfterStartTime &&
-                    (diagramHeight > canvasMaxSize ||
-                        diagramHeight * diagramWidth > canvasMaxArea ||
-                        ((Number(this.lastKnownStartTime) < Number(startTime)
-                            ? this.cpuViewTimeOfExceededSize < rollback.time
-                            : this.cpuViewTimeOfExceededSize == executionEvents[i + 1].time) &&
-                            diagramWidth > this.maxWidth))
+                    diagramExceedsCanvasSizeRestrictions ||
+                    existingRollbackForTimestamp ||
+                    (rollback.time != undefined && rollback.time >= startTime && rollbackExceedsDiagramSize)
                 ) {
-                    eventsToDraw.splice(rollback.eventsIndex + 1);
-                    this.cpuViewTimeOfExceededSize = rollback.time;
-                    breakOut = true;
-                    if (diagramWidth > this.maxWidth) {
-                        // Rollback rects
-                        rects.splice(0);
-                        rollback.rects.forEach((rect) => rects.push(rect));
-                        diagramWidth = rollback.diagramWidth;
+                    if (!existingRollbackForTimestamp) {
+                        viewData.startTimesToEndTimes.set(startTime, rollback);
+                        existingRollbackForTimestamp = rollback;
                     }
-                    break;
-                }
-                // Later events cannot fit on the canvas so break out and generate the draw functions
-                if (breakOut) {
+
+                    // If there is no time defined for the rollback the events for the timestamp cannot fit within the size restrictions of the canvas!
+                    //TODO: In this case the diagram needs to be displayed across multiple canvas
+                    if (existingRollbackForTimestamp.time == undefined) {
+                        if (disableMargins) {
+                            this.postErrorCanvas(canvas, `Events for time ${event.time} cannot fit onto the diagram`, msg);
+                        } else {
+                            // Call the drawCpuCanvas again but disable margins between obj deployments and let opnames clash. However, the size restrictions can still be violated. So this cannot be a permanent fix.
+                            this.drawCpuCanvas(canvas, startTime, msg, true);
+                        }
+                        return;
+                    }
+
+                    // Rollback
+                    eventsToDraw.splice(existingRollbackForTimestamp.eventsIndex + 1);
+                    diagramSizeExceededTimestamp = existingRollbackForTimestamp.time;
+                    rects.splice(0);
+                    existingRollbackForTimestamp.rects.forEach((rect) => rects.push(rect));
+                    diagramWidth = existingRollbackForTimestamp.diagramWidth;
+                    diagramHeight = existingRollbackForTimestamp.diagramHeight;
                     break;
                 }
 
@@ -726,9 +737,6 @@ class CanvasGenerator {
                 currentEventPos_y += eventLength;
             }
         }
-
-        // Define where the rectangles end
-        const rectsEnd_y = txtHeight + padding + margin;
 
         // Geneate draw functions for the rectangles and their text.
         rects.forEach((rect) =>
@@ -743,20 +751,25 @@ class CanvasGenerator {
             })
         );
 
-        // Generate draw functions for each event
-        let currentTime = -1;
-        let lastEventPos_y = 0;
-
-        // Reset the current event pos.
-        currentEventPos_y = rectsEnd_y + margin;
-        const diagramEndMax = eventsToDraw.length * eventLength + rectsEnd_y + margin;
-
         // Generate draw funcs for x-axis dashed lines
         rects.forEach((rect) => {
             drawFuncs.push(() =>
-                this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectsEnd_y + margin, rect.pos_x, diagramEndMax)
+                this.drawLine(
+                    ctx,
+                    gridLineWidth,
+                    yAxisLinesDash,
+                    fontColor,
+                    rect.pos_x,
+                    rectsEnd_y + margin,
+                    rect.pos_x,
+                    eventsToDraw.length * eventLength + rectsEnd_y + margin
+                )
             );
         });
+
+        // Generate draw functions for each event
+        let currentTime = -1;
+        currentEventPos_y = rectsEnd_y + margin;
 
         for (let i = 0; i < eventsToDraw.length; i++) {
             const event = eventsToDraw[i];
@@ -784,6 +797,7 @@ class CanvasGenerator {
                 // Update time
                 currentTime = event.time;
             }
+
             // Generate draw functions for the event
             drawFuncs.push(() => {
                 ctx.save();
@@ -810,7 +824,6 @@ class CanvasGenerator {
 
             // Generate draw function for the arrow to/from the event
             let eventHasArrowWithTxt = false;
-
             if (nextEvent) {
                 let targetRect = undefined;
                 let targetRectId = nextEvent.eventKind == LogEvent.replyRequest ? nextEvent.rectId : undefined;
@@ -831,8 +844,7 @@ class CanvasGenerator {
                                   .find((eve) => eve.eventKind == LogEvent.opCompleted && event.opname == eve.opname)
                             : event.eventKind == LogEvent.opCompleted && nextEvent.eventKind == LogEvent.opCompleted
                             ? (() => {
-                                  const prevOaRect = opActiveEvents.find((eve) => eve.opname == nextEvent.opname);
-                                  return prevOaRect && prevOaRect.rectId == event.rectId
+                                  return opActiveEvents.find((eve) => eve.opname == nextEvent.opname && eve.rectId == event.rectId)
                                       ? rects.find((rect) => nextEvent.rectId == rect.rectId)
                                       : undefined;
                               }).apply()
@@ -911,11 +923,6 @@ class CanvasGenerator {
                 });
             }
 
-            // Keep track of the highest x-axis value
-            if (lastEventPos_y < eventEndPos_y) {
-                lastEventPos_y = eventEndPos_y;
-            }
-
             currentEventPos_y = eventEndPos_y;
         }
 
@@ -928,17 +935,32 @@ class CanvasGenerator {
 
         // Resize canvas to fit content
         canvas.width = diagramWidth;
-        canvas.height = lastEventPos_y;
+        canvas.height = diagramHeight;
         ctx = canvas.getContext("2d");
         // Draw on canvas
         drawFuncs.forEach((drawFunc) => drawFunc());
-        this.lastKnownStartTime = startTime;
-        const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: msg, bitmap: bitmap, exceedTime: this.cpuViewTimeOfExceededSize });
+
+        self.postMessage({ msg: msg, bitmap: canvas.transferToImageBitmap(), exceedTime: diagramSizeExceededTimestamp });
     }
 
-    opnameToShortName(opname) {
-        return opname.substring(opname.indexOf("`") + 1);
+    /**
+     *
+     * Helper functions
+     *
+     */
+
+    postErrorCanvas(canvas, errMsg, msgId) {
+        const ctx = canvas.getContext("2d");
+        ctx.font = declFont;
+        ctx.fillStyle = fontColor;
+        const txtMeasure = ctx.measureText(errMsg);
+        const txtHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
+        ctx.fillText(errMsg, eventLineWidth, txtHeight + eventLineWidth * 2);
+        self.postMessage({
+            msg: msgId,
+            bitmap: canvas.transferToImageBitmap(),
+            exceedTime: undefined,
+        });
     }
 
     generateGridDrawFuncs(
@@ -1173,13 +1195,7 @@ class CanvasGenerator {
         return drawFuncsForTime;
     }
 
-    /**
-     *
-     * Generate helper functions
-     *
-     */
-
-    generateConjectureViolationDrawFunc(midPos_y, relMidPos_x, conjectureViolationNames, ctx, radi) {
+    generateConjectureViolationDrawFunc(midPos_y, midPos_x, conjectureViolationNames, ctx, radi) {
         const lineStart_y = midPos_y + radi;
         const lineEnd_y = lineStart_y + eventLineWidth;
         const drawFuncs = [
@@ -1189,9 +1205,9 @@ class CanvasGenerator {
                 ctx.lineWidth = conjectureViolationMarkerWidth;
                 ctx.strokeStyle = conjectureViolationColor;
                 ctx.beginPath();
-                ctx.arc(startPos_x + relMidPos_x, midPos_y, radi, 0, 2 * Math.PI);
+                ctx.arc(startPos_x + midPos_x, midPos_y, radi, 0, 2 * Math.PI);
                 ctx.stroke();
-                const lineStart_x = startPos_x + relMidPos_x;
+                const lineStart_x = startPos_x + midPos_x;
 
                 this.drawLine(
                     ctx,
@@ -1220,7 +1236,7 @@ class CanvasGenerator {
                 ctx.font = conjectureViolationFont;
                 ctx.fillText(
                     name,
-                    startPos_x + relMidPos_x - textMeasure.width / 4,
+                    startPos_x + midPos_x - textMeasure.width / 4,
                     pos_y + textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent
                 );
                 ctx.fillStyle = prevFillStyle;
@@ -1233,100 +1249,6 @@ class CanvasGenerator {
 
         return (ctx, startPos_x) => {
             drawFuncs.forEach((func) => func(ctx, startPos_x));
-        };
-    }
-
-    calculateEventLength(ctx) {
-        // The event length is based on whatever is the widest of "9999" (to fit a high thread number) and any of the abbreviation of the event kinds.
-        const prevFont = ctx.font;
-        ctx.font = diagramFont;
-        const threadIdMetrics = ctx.measureText("9999");
-        const msgAbbMetrics = ctx.measureText(LogEvent.getKindsAbbs().reduce((prev, curr) => (prev.size > curr.size ? prev : curr)));
-        const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
-        ctx.font = prevFont;
-        return txtWidth + gridLineWidth * 2 > eventWrapperHeight * 2 ? txtWidth + gridLineWidth * 2 : eventWrapperHeight * 2;
-    }
-
-    generateEventKindsLegend(
-        ctx,
-        font,
-        eventLineWidth,
-        gridLineWidth,
-        gridLineColor,
-        elementPadding,
-        eventLength_x,
-        eventWrapperHeight,
-        startPos_y,
-        eventKinds,
-        addConjectureViolationLegend
-    ) {
-        // Calculate draw functions for elements in the legend
-        let nextLegendElementPos_y = startPos_y;
-        const drawFuncs = [];
-        const lgndTxtMetrics = ctx.measureText(eventKinds[0]);
-        const txtHeight = lgndTxtMetrics.fontBoundingBoxAscent + lgndTxtMetrics.fontBoundingBoxDescent;
-        let width = lgndTxtMetrics.width;
-        eventKinds
-            .sort((a, b) => a.localeCompare(b))
-            .forEach((eventKind) => {
-                const txt = eventKind.replace(/([A-Z])/g, " $1").trim();
-                const elementPos_y = nextLegendElementPos_y;
-                drawFuncs.push(() => {
-                    this.generateEventDrawFuncs(
-                        ctx,
-                        font,
-                        gridLineWidth,
-                        eventLineWidth,
-                        eventWrapperHeight,
-                        LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
-                        eventKind,
-                        elementPadding,
-                        elementPos_y,
-                        elementPadding + eventLength_x - gridLineWidth * 2,
-                        gridLineColor,
-                        gridLineColor
-                    ).forEach((func) => {
-                        ctx.font = font;
-                        func();
-                    });
-                    ctx.fillText(txt, elementPadding + eventLength_x + eventLineWidth, elementPos_y);
-                });
-                const txtWidth = ctx.measureText(txt).width;
-                if (txtWidth > width) {
-                    width = txtWidth;
-                }
-                nextLegendElementPos_y += txtHeight * 1.5 + gridLineWidth;
-            });
-
-        // Add draw function for the validation conjecture violation legend
-        if (addConjectureViolationLegend) {
-            const txt = "Validation Conjecture Violation";
-            const elementPos_y = nextLegendElementPos_y;
-            drawFuncs.push(() => {
-                this.generateConjectureViolationDrawFunc(
-                    elementPos_y - txtHeight / 4,
-                    eventLength_x / 2,
-                    [],
-                    ctx,
-                    eventLength_x / 3
-                )(ctx, 0);
-                const prevStrokeStyle = ctx.strokeStyle;
-                ctx.strokeStyle = conjectureViolationColor;
-                ctx.fillText(txt, elementPadding + eventLength_x + eventLineWidth, elementPos_y);
-                ctx.strokeStyle = prevStrokeStyle;
-            });
-            const txtWidth = ctx.measureText(txt).width;
-            if (txtWidth > width) {
-                width = txtWidth;
-            }
-        } else {
-            nextLegendElementPos_y -= txtHeight * 1.5 + gridLineWidth;
-        }
-
-        return {
-            endPos_y: nextLegendElementPos_y + txtHeight,
-            drawFuncs: drawFuncs,
-            width: width + elementPadding + eventLength_x + eventLineWidth + gridLineWidth,
         };
     }
 
@@ -1413,6 +1335,21 @@ class CanvasGenerator {
         }
 
         return drawFuncs;
+    }
+
+    calculateEventLength(ctx) {
+        // The event length is based on whatever is the widest of "9999" (to fit a high thread number) and any of the abbreviation of the event kinds.
+        const prevFont = ctx.font;
+        ctx.font = diagramFont;
+        const threadIdMetrics = ctx.measureText("9999");
+        const msgAbbMetrics = ctx.measureText(LogEvent.getKindsAbbs().reduce((prev, curr) => (prev.size > curr.size ? prev : curr)));
+        const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
+        ctx.font = prevFont;
+        return txtWidth + gridLineWidth * 2 > eventWrapperHeight * 2 ? txtWidth + gridLineWidth * 2 : eventWrapperHeight * 2;
+    }
+
+    opnameToShortName(opname) {
+        return opname.substring(opname.indexOf("`") + 1);
     }
 
     /**

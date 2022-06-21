@@ -127,7 +127,10 @@ export namespace VdmDapSupport {
                 const date = new Date();
                 config.logging = Path.join(
                     logPath,
-                    `rt-events_${`${date.toLocaleDateString()}_${date.toLocaleTimeString()}`.replace(/[: \\/]/g, "_")}.rtlog`
+                    `${config.name.replace(/\W+/g, "_")}_${`${date.toLocaleDateString()}_${date.toLocaleTimeString()}`.replace(
+                        /[: \\/]/g,
+                        "_"
+                    )}.rtlog`
                 );
             }
 

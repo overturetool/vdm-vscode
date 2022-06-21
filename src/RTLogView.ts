@@ -81,7 +81,6 @@ export class RTLogView extends AutoDisposable {
 
                                 this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
                                     this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
-
                                     if (data) {
                                         commands.executeCommand("workbench.action.closeActiveEditor");
                                         this.createWebView(
@@ -89,7 +88,7 @@ export class RTLogView extends AutoDisposable {
                                             data.cpuDecls,
                                             data.executionEvents,
                                             data.cpusWithEvents,
-                                            data.timeStamps,
+                                            data.timestamps,
                                             data.conjectures
                                         );
                                     }
@@ -147,7 +146,7 @@ export class RTLogView extends AutoDisposable {
         const cpusWithEvents: any[] = [];
         const stringPlaceholderSign = "-";
         const activeMsgInitEvents: any[] = [];
-        const timeStamps: number[] = [];
+        const timestamps: number[] = [];
         let currrentTime: number = -1;
         const vBusDecl = { eventKind: LogEvent.busDecl, id: 0, topo: [], name: "vBUS", time: 0 };
         const vCpuDecl = { eventKind: LogEvent.cpuDecl, id: undefined, expl: false, sys: "", name: "vCPU", time: 0 };
@@ -195,7 +194,7 @@ export class RTLogView extends AutoDisposable {
 
                 if (logEventObj.time > currrentTime) {
                     currrentTime = logEventObj.time;
-                    timeStamps.push(currrentTime);
+                    timestamps.push(currrentTime);
                 }
 
                 if (logEventObj.eventKind == LogEvent.busDecl) {
@@ -233,7 +232,7 @@ export class RTLogView extends AutoDisposable {
                             cpuWithEvents = {
                                 id: cpunm,
                                 executionEvents: [],
-                                timeStamps: [],
+                                timestamps: [],
                             };
                             cpusWithEvents.push(cpuWithEvents);
                         }
@@ -245,10 +244,10 @@ export class RTLogView extends AutoDisposable {
                         cpuWithEvents.executionEvents.push(logEventObj);
 
                         if (
-                            cpuWithEvents.timeStamps.length == 0 ||
-                            cpuWithEvents.timeStamps[cpuWithEvents.timeStamps.length - 1].time < logEventObj.time
+                            cpuWithEvents.timestamps.length == 0 ||
+                            cpuWithEvents.timestamps[cpuWithEvents.timestamps.length - 1] < logEventObj.time
                         ) {
-                            cpuWithEvents.timeStamps.push(logEventObj.time);
+                            cpuWithEvents.timestamps.push(logEventObj.time);
                         }
                     }
 
@@ -286,6 +285,7 @@ export class RTLogView extends AutoDisposable {
                     id: decl.id,
                     executionEvents: [],
                     name: decl.name,
+                    timestamps: [],
                 });
             }
         });
@@ -295,14 +295,14 @@ export class RTLogView extends AutoDisposable {
             cpuDecls: any[];
             busDecls: any[];
             cpusWithEvents: any[];
-            timeStamps: number[];
+            timestamps: number[];
             conjectures: ValidationConjecture[];
         } = {
             executionEvents: executionEvents,
             cpuDecls: cpuDecls.sort((a, b) => a.id - b.id),
             busDecls: busDecls.sort((a, b) => a.id - b.id),
             cpusWithEvents: cpusWithEvents.sort((a, b) => a.id - b.id),
-            timeStamps: timeStamps,
+            timestamps: timestamps,
             conjectures: [],
         };
 
@@ -353,7 +353,7 @@ export class RTLogView extends AutoDisposable {
         cpuDecls: any[],
         executionEvents: any[],
         cpusWithEvents: any[],
-        timeStamps: number[],
+        timestamps: number[],
         conjectures: ValidationConjecture[]
     ) {
         if (!this._wsFolder) {
@@ -391,7 +391,7 @@ export class RTLogView extends AutoDisposable {
                     returnObj.cpuDecls = cpuDecls;
                     returnObj.executionEvents = executionEvents;
                     returnObj.cpusWithEvents = cpusWithEvents;
-                    returnObj.timeStamps = timeStamps;
+                    returnObj.timestamps = timestamps;
                     returnObj.scaleWithFont = config.get("scaleWithFont");
                     returnObj.matchTheme = config.get("matchTheme");
                     returnObj.conjectures = conjectures;
@@ -416,29 +416,29 @@ export class RTLogView extends AutoDisposable {
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            
-
             <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
-            
             <link href="${styleUri}" rel="stylesheet">
         </head>
         <body>
-        <div class="btnsContainer", id="btnsContainer">
-            <b> Start time: </b>
-            <select id = "timeStamp"></select>
-           
-            <button class="button" id="arch">Architecture overview</button>
-            <button class="button" id="exec">Execution overview</button>
-            ${cpuDecls
-                .map((cpu) => `<button class="button" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
-                .reduce((prev, cur) => prev + cur, "")}
-            <button class="button" id="legend">Diagram legend</button>
-        </div>
+            <div class="btnsContainer", id="btnsContainer">
+                <button class="button btnsContainerItem" id="arch">Architecture overview</button>
+                <button class="button btnsContainerItem" id="exec">Execution overview</button>
+                ${cpuDecls
+                    .map((cpu) => `<button class="button btnsContainerItem" id="CPU_${cpu.id}">${cpu.name}</button>\n`)
+                    .reduce((prev, cur) => prev + cur, "")}
+                <button class="button btnsContainerItem" id="legend">Diagram legend</button>
+                <div class="btnsContainerItem timeSelector" id="timeSelector">
+                    <b> Start time: </b>
+                    <select id="timeOptions"></select>
+                    <button class="button arrwBtn" id="tup">\u25B2</button>
+                    <button class="button arrwBtn" id="tdown">\u25BC</i></button>
+                </div>
+            </div>
 
-        <div class="viewContainer", id="viewContainer">
-        </div>
-            
-        <script nonce="${scriptNonce}" src="${jsUri}"></script>
+            <div class="viewContainer", id="viewContainer">
+            </div>
+                
+            <script nonce="${scriptNonce}" src="${jsUri}"></script>
         </body>
         </html>`;
     }

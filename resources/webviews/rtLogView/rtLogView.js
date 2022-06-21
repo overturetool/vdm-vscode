@@ -9,7 +9,6 @@ const vscode = acquireVsCodeApi();
 const viewContainer = document.getElementById("viewContainer");
 viewContainer.classList.add("viewContainer");
 const btnContainer = document.getElementById("btnsContainer");
-viewContainer.style.height = `${window.innerHeight - btnContainer.clientHeight}px`;
 
 // Global const variables
 const archViewId = "arch";
@@ -19,8 +18,12 @@ const settingsChangedMsg = "settingsChanged";
 const initMsg = "init";
 const btnColors = {};
 const views = [];
-const buttons = Array.from(document.getElementsByClassName("button"));
-const timeSelector = document.getElementById("timeStamp");
+const viewButtons = Array.from(document.getElementsByClassName("button")).filter((btn) => btn.id != "tup" && btn.id != "tdown");
+const timeUpBtn = document.getElementById("tup");
+const timeDownBtn = document.getElementById("tdown");
+const timeOptions = document.getElementById("timeOptions");
+const timeSelectorElement = document.getElementById("timeSelector");
+timeSelectorElement.style.visibility = "hidden";
 const workerSource = document.currentScript.getAttribute("src").replace("rtLogView.js", "diagramWorker.js");
 
 // Global variables
@@ -31,7 +34,7 @@ let selectedTime = 0;
 let hasConjectures = false;
 let conjectures;
 let cpusWithEvents = [];
-let timeStamps = [];
+let timestamps = [];
 
 // Offload the canvas generation logic to a webworker so that the main thread is not being blocked
 let diagramWorker;
@@ -51,62 +54,8 @@ fetch(workerSource)
         };
     });
 
-function handleWorkerResponse(event) {
-    const res = event.data;
-    const view = views.find((view) => view.id == res.msg);
-    const isCpuView = view.id != archViewId && view.id != execViewId && view.id != legendViewId;
-    view.diagramHeight = res.bitmap.height;
-    // Container for the diagram
-    const mainContainer = document.createElement("div");
-    mainContainer.style.overflow = "scroll";
-    mainContainer.style.width = "100%";
-    // Handle vertical overflow on cpu diagram. If the diagram overflows a scrollbar should appear but only for the diagram. This is realised by using flex box.
-    mainContainer.style.height = isCpuView ? "100vh" : "fit-content";
-    mainContainer.style.flex = isCpuView ? 1 : "";
-    mainContainer.appendChild(bitmapToCanvas(res.bitmap));
-    view.containers = [mainContainer];
-
-    // Container for the information to be displayed below the diagram, e.g. conjecture table or warning msg.
-    const secondContainer = document.createElement("div");
-    secondContainer.style.overflow = "scroll";
-    secondContainer.classList.add("secondaryContainer");
-
-    // Add element to display warning if all events cannot fit onto the canvas.
-    if (res.exceedTime != undefined) {
-        const pElement = generateWarningElement(
-            `*Max diagram size reached! Only displaying events until the time ${res.exceedTime}. Choose a later start time to view later events.`
-        );
-        secondContainer.appendChild(pElement);
-    }
-
-    // Append table
-    if (res.msg == execViewId && conjectures && conjectures.length > 0) {
-        // Setup container for the table
-        const tableContainer = document.createElement("div");
-        tableContainer.style.float = "left";
-        const tableHeader = document.createElement("h1");
-        tableHeader.textContent = "Validation Conjecture Violations";
-        tableHeader.style.fontSize = `${fontSize * 1.5}px`;
-        tableHeader.style.marginBottom = "5px";
-        tableContainer.appendChild(tableHeader);
-        tableContainer.appendChild(generateConjectureTable(conjectures));
-        secondContainer.appendChild(tableContainer);
-    }
-
-    if (secondContainer.children.length > 0) {
-        view.containers.push(secondContainer);
-    }
-
-    // Clear the view container and add the new elements
-    viewContainer.innerHTML = "";
-    view.containers.forEach((container) => viewContainer.appendChild(container));
-
-    // Reset the cursor to default style
-    document.body.style.cursor = "default";
-}
-
 // Handle button press
-buttons.forEach((btn) => {
+viewButtons.forEach((btn) => {
     // Each button corresponds to a view
     views.push({ id: btn.id, containers: [] });
     btn.onclick = function () {
@@ -115,43 +64,69 @@ buttons.forEach((btn) => {
             setButtonColors([document.getElementById(currentViewId)], btn);
             // Clear the view container
             viewContainer.innerHTML = "";
-            // Display the selected view and set the current view id - the btn id is the view id
             currentViewId = btn.id;
-            displayView(currentViewId, selectedTime);
 
-            //TODO: Populate time select with timestamps for view
+            // Populate the time selector with the timestamps for the view. Cpu views does not have all timestamps.
+            if (currentViewId != archViewId && currentViewId != legendViewId) {
+                let newtimestamps = undefined;
+                if (currentViewId != archViewId && currentViewId != execViewId && currentViewId != legendViewId) {
+                    const cpuId = currentViewId.replace(/\D/g, "");
+                    newtimestamps = cpusWithEvents.find((cwe) => cwe.id == cpuId).timestamps;
+                } else {
+                    newtimestamps = timestamps;
+                }
+
+                timeOptions.innerHTML = "";
+                // Setup timestamp options to be selected by the user
+                newtimestamps.forEach((timestamp) => {
+                    const opt = document.createElement("option");
+                    opt.value = timestamp;
+                    opt.innerHTML = timestamp;
+                    timeOptions.appendChild(opt);
+                });
+                // Reset selectedTime
+                selectedTime = newtimestamps[0];
+                // Display the time selector
+                timeSelectorElement.style.visibility = "visible";
+            } else {
+                // Hide the time selector
+                timeSelectorElement.style.visibility = "hidden";
+            }
+
+            // Display the selected view and set the current view id - the btn id is the view id
+            displayView(currentViewId, selectedTime);
         }
     };
 });
 
 // Handle time change
-timeSelector.onchange = (event) => {
-    selectedTime = event.target.value;
-    displayView(currentViewId, selectedTime);
+timeOptions.onchange = (event) => handleSelectedTimeChanged(event.target.value);
+
+timeUpBtn.onclick = () => {
+    if (timeOptions.selectedIndex - 1 > -1) {
+        timeOptions.selectedIndex--;
+        handleSelectedTimeChanged(timeOptions.value);
+    }
+};
+
+timeDownBtn.onclick = () => {
+    if (timeOptions.length != timeOptions.selectedIndex + 1) {
+        timeOptions.selectedIndex++;
+        handleSelectedTimeChanged(timeOptions.value);
+    }
 };
 
 // Handle event from extension backend
 window.addEventListener("message", (event) => {
     if (event.data.cmd == initMsg) {
-        let minTimeStamp = event.data.timeStamps[0];
-
-        event.data.timeStamps.forEach((timestamp) => {
-            // Setup timestamp options to be selected by the user
-            const opt = document.createElement("option");
-            opt.value = timestamp;
-            opt.innerHTML = timestamp;
-            timeSelector.appendChild(opt);
-            if (minTimeStamp > timestamp) {
-                minTimeStamp = timestamp;
-            }
-        });
-        timeStamps = event.data.timeStamps;
-        selectedTime = minTimeStamp;
+        timestamps = event.data.timestamps;
+        selectedTime = timestamps[0];
         hasConjectures = event.data.conjectures.length > 0;
         conjectures = event.data.conjectures;
+        cpusWithEvents = event.data.cpusWithEvents;
+
         // Trigger the initiate logic in the diagram worker
         const osCanvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-        cpusWithEvents = event.data.cpusWithEvents;
         diagramWorker.postMessage(
             {
                 msg: initMsg,
@@ -161,7 +136,7 @@ window.addEventListener("message", (event) => {
                 cpusWithEvents: event.data.cpusWithEvents,
                 conjectures: conjectures,
                 canvas: osCanvas,
-                maxWidth: Math.round(screen.width * 0.9),
+                diagramSize: { width: Math.round(screen.width * 0.9), height: Math.round(screen.height * 0.9) },
             },
             [osCanvas]
         );
@@ -172,7 +147,7 @@ window.addEventListener("message", (event) => {
 
     // Set button colors
     setButtonColors(
-        buttons.filter((btn) => btn.id != currentViewId),
+        viewButtons.filter((btn) => btn.id != currentViewId),
         document.getElementById(currentViewId)
     );
 
@@ -180,17 +155,11 @@ window.addEventListener("message", (event) => {
 });
 
 window.onresize = () => {
-    // Handle vertical overflow. If the diagram overflows, i.e. is larger than the visible area
-    // a scrollbar should appear but only for the diagram. This is realised by using flex box.
-    const viewAreaHeight = window.innerHeight - btnContainer.clientHeight;
-    viewContainer.style.height = `${viewAreaHeight}px`;
+    // Handle vertical overflow. If the diagram overflows, i.e. is larger than the visible area a scrollbar should appear but only for the diagram.
+    viewContainer.style.height = `${getViewContainerHeight()}px`;
 };
 
 function generateCanvas(viewId, startTime) {
-    // Generating the CPU canvas can take some time so set a wait curser
-    if (viewId != execViewId && viewId != archViewId && viewId != legendViewId) {
-        document.body.style.cursor = "wait";
-    }
     const offscreen = new OffscreenCanvas(window.innerWidth, window.innerHeight);
     // Post message to the webworker to initiate the canvas generation
     diagramWorker.postMessage({ msg: viewId, canvas: offscreen, startTime: startTime }, [offscreen]);
@@ -198,7 +167,6 @@ function generateCanvas(viewId, startTime) {
 
 function generateConjectureTable(conjectures) {
     const table = document.createElement("table");
-    table.style.float = "center";
     const headerNames = ["status", "name", "expression", "src time", "src thread", "dest time", "dest thread"];
 
     //  Build and add the headers
@@ -239,9 +207,8 @@ function generateConjectureTable(conjectures) {
             if (content.header == headerNames[3] || content.header == headerNames[5]) {
                 rowCell.classList.add("clickableCell");
                 rowCell.ondblclick = () => {
-                    selectedTime = content.value;
-                    timeSelector.value = selectedTime;
-                    displayView(currentViewId, selectedTime);
+                    handleSelectedTimeChanged(content.value);
+                    timeOptions.value = selectedTime;
                 };
             }
         });
@@ -250,12 +217,9 @@ function generateConjectureTable(conjectures) {
     return table;
 }
 
-function generateWarningElement(txt) {
-    // Generate p element to display warning if all events cannot fit onto the canvas.
-    const pElement = document.createElement("p");
-    pElement.classList.add("iswarning");
-    pElement.textContent = txt;
-    return pElement;
+function handleSelectedTimeChanged(newTime) {
+    selectedTime = newTime;
+    displayView(currentViewId, selectedTime);
 }
 
 function displayView(viewId, timeStamp) {
@@ -274,8 +238,6 @@ function displayView(viewId, timeStamp) {
 
 function bitmapToCanvas(bitmap) {
     const canvas = document.createElement("CANVAS");
-    canvas.style.marginTop = "15px";
-    canvas.style.marginLeft = "15px";
     canvas.style.background = backgroundColor;
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
@@ -310,6 +272,54 @@ function setButtonColors(btns, activeBtn) {
             btn.style.color = btnColors.primaryForeground;
         }
     });
+}
+
+function handleWorkerResponse(event) {
+    const res = event.data;
+    const view = views.find((view) => view.id == res.msg);
+    view.diagramHeight = res.bitmap.height;
+
+    // Container for the diagram
+    const mainContainer = document.createElement("div");
+    mainContainer.classList.add("mainContainer");
+
+    // Append the canvas
+    mainContainer.appendChild(bitmapToCanvas(res.bitmap));
+    view.containers = [mainContainer];
+
+    // Container for the information to be displayed below the diagram, i.e. conjecture table.
+    const secondContainer = document.createElement("div");
+    secondContainer.classList.add("secondaryContainer");
+
+    // Append table
+    if (res.msg == execViewId && conjectures && conjectures.length > 0) {
+        // Setup container for the table
+        const tableContainer = document.createElement("div");
+        tableContainer.classList.add("tableContainer");
+        const tableHeader = document.createElement("h1");
+        tableHeader.textContent = "Validation Conjecture Violations";
+        tableHeader.style.fontSize = `${fontSize * 1.5}px`;
+        tableContainer.appendChild(tableHeader);
+        tableContainer.appendChild(generateConjectureTable(conjectures));
+        secondContainer.appendChild(tableContainer);
+    }
+
+    if (secondContainer.children.length > 0) {
+        view.containers.push(secondContainer);
+    }
+
+    // Clear the view container and add the new elements
+    viewContainer.innerHTML = "";
+    viewContainer.style.height = `${getViewContainerHeight()}px`;
+    view.containers.forEach((container) => viewContainer.appendChild(container));
+}
+
+function getViewContainerHeight() {
+    const computedStyle = window.getComputedStyle(btnContainer);
+    return (
+        window.innerHeight -
+        Math.ceil(btnContainer.offsetHeight + parseFloat(computedStyle["marginTop"]) + parseFloat(computedStyle["marginBottom"]))
+    );
 }
 
 function updateFontAndColors(scaleWithFont, matchTheme) {
