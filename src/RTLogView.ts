@@ -410,8 +410,9 @@ export class RTLogView extends AutoDisposable {
     private buildHtmlForWebview(webview: Webview, cpuDecls: any[]) {
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce: string = this.generateNonce();
-        const jsUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.js"));
-        const styleUri = webview.asWebviewUri(Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView", "rtLogView.css"));
+        const viewContentUri: Uri = Uri.joinPath(this.getResourcesUri(), "webviews", "rtLogView");
+        const rtLogViewUri = webview.asWebviewUri(Uri.joinPath(viewContentUri, "rtLogView.js"));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(viewContentUri, "rtLogView.css"));
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -436,9 +437,8 @@ export class RTLogView extends AutoDisposable {
             </div>
 
             <div class="viewContainer", id="viewContainer">
-            </div>
-                
-            <script nonce="${scriptNonce}" src="${jsUri}"></script>
+            </div> 
+            <script nonce="${scriptNonce}" src="${rtLogViewUri}"></script>
         </body>
         </html>`;
     }

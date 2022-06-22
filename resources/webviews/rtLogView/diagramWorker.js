@@ -54,9 +54,27 @@ self.onmessage = function (e) {
         conjectureViolationMarkerWidth = e.data.conjectureViolationMarkerWidth;
         lineDashSize = e.data.lineDashSize;
         eventWrapperHeight = e.data.eventWrapperHeight;
-        themeColors = e.data.themeColors;
         fontColor = e.data.fontColor;
         conjectureViolationColor = e.data.conjectureViolationColor;
+
+        if (e.data.eventKindsToColors) {
+            LogEvent.eventKindsToColors = new Map([...LogEvent.eventKindsToColors, ...e.data.eventKindsToColors]);
+        } else {
+            for (const key of LogEvent.eventKindsToColors.keys()) {
+                LogEvent.eventKindsToColors.set(key, LogEvent.kindToStandardColor(key));
+            }
+        }
+
+        themeColors = [];
+        if (e.data.themeColors) {
+            themeColors = e.data.themeColors;
+        } else {
+            themeColors.push("#000000");
+            for (const color of LogEvent.eventKindsToColors.values()) {
+                themeColors.push(color);
+            }
+        }
+
         canvasGenerator.resetViewDataCache();
     } else if (msg == execViewId) {
         canvasGenerator.drawExecutionCanvas(e.data.canvas, e.data.startTime);
@@ -67,7 +85,7 @@ self.onmessage = function (e) {
     }
 };
 
-// Class for generation view components
+// Class for generating diagrams as canvas
 class CanvasGenerator {
     constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, diagramSize) {
         this.cpuDeclEvents = cpuDeclEvents;
@@ -99,6 +117,13 @@ class CanvasGenerator {
     }
 
     resetViewDataCache() {
+        this.execucionViewData = {
+            declDrawFuncs: [],
+            gridDrawFuncs: [],
+            gridStartPos_x: undefined,
+            eventLength: undefined,
+            conjectureViolationTable: undefined,
+        };
         this.generateExecutionViewData(this.defaultCanvas);
     }
 
@@ -244,7 +269,7 @@ class CanvasGenerator {
 
             // Setup color and style for the connection line
             ctx.beginPath();
-            ctx.fillStyle = ctx.strokeStyle = i < themeColors.length - 1 ? themeColors[i] : fontColor;
+            ctx.fillStyle = ctx.strokeStyle = i < themeColors.length ? themeColors[i] : fontColor;
             ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
 
             // If the bus has any connections then draw them
@@ -297,7 +322,7 @@ class CanvasGenerator {
         legendCtx.font = diagramFont;
         let nextLegendElementPos_y = eventLength * 1.5;
         const drawFuncs = [];
-        const eventKinds = LogEvent.eventKindToColor.map((ektc) => ektc.kind);
+        const eventKinds = [...LogEvent.eventKindsToColors.keys()];
         const firstTxtMetrics = legendCtx.measureText(eventKinds[0]);
 
         const txtHeight = firstTxtMetrics.fontBoundingBoxAscent + firstTxtMetrics.fontBoundingBoxDescent;
@@ -1098,7 +1123,7 @@ class CanvasGenerator {
                     if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
                         lineDash = decl.activeThreads.find((at) => at.suspended == true) ? [eventLineWidth * 1.1, eventLineWidth] : [];
                         lineWidth = eventLineWidth;
-                        color = LogEvent.eventKindToColor.find((ektc) => ektc.kind == LogEvent.opActivate).color;
+                        color = LogEvent.eventKindsToColors.get(LogEvent.opActivate);
                     }
                     const constLineDash = lineDash;
                     const constColor = color;
@@ -1270,7 +1295,7 @@ class CanvasGenerator {
     ) {
         ctx.fillStyle = txtColor;
         ctx.font = font;
-        const eventColor = LogEvent.eventKindToColor.find((ektc) => ektc.kind == eventKind).color;
+        const eventColor = LogEvent.eventKindsToColors.get(eventKind);
         const drawFuncs = [];
         // Draw the event
         drawFuncs.push(() => {
@@ -1342,7 +1367,11 @@ class CanvasGenerator {
         const prevFont = ctx.font;
         ctx.font = diagramFont;
         const threadIdMetrics = ctx.measureText("9999");
-        const msgAbbMetrics = ctx.measureText(LogEvent.getKindsAbbs().reduce((prev, curr) => (prev.size > curr.size ? prev : curr)));
+        const msgAbbMetrics = ctx.measureText(
+            [...LogEvent.eventKindsToColors.keys()]
+                .map((kind) => LogEvent.kindToAbb(kind))
+                .reduce((prev, curr) => (prev.size > curr.size ? prev : curr))
+        );
         const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
         ctx.font = prevFont;
         return txtWidth + gridLineWidth * 2 > eventWrapperHeight * 2 ? txtWidth + gridLineWidth * 2 : eventWrapperHeight * 2;
@@ -1540,7 +1569,6 @@ class CanvasGenerator {
     }
 }
 
-// Class for handling log event kinds
 class LogEvent {
     // Event kinds
     static cpuDecl = "CPUdecl";
@@ -1560,20 +1588,20 @@ class LogEvent {
     static deployObj = "DeployObj";
 
     // The colors are changed based on the users theme
-    static eventKindToColor = [
-        { kind: this.threadCreate, color: this.kindToStandardColor(this.threadCreate) },
-        { kind: this.threadKill, color: this.kindToStandardColor(this.threadKill) },
-        { kind: this.opActivate, color: this.kindToStandardColor(this.opActivate) },
-        { kind: this.opRequest, color: this.kindToStandardColor(this.opRequest) },
-        { kind: this.opCompleted, color: this.kindToStandardColor(this.opCompleted) },
-        { kind: this.threadSwapOut, color: this.kindToStandardColor(this.threadSwapOut) },
-        { kind: this.threadSwapIn, color: this.kindToStandardColor(this.threadSwapIn) },
-        { kind: this.delayedThreadSwapIn, color: this.kindToStandardColor(this.delayedThreadSwapIn) },
-        { kind: this.messageRequest, color: this.kindToStandardColor(this.messageRequest) },
-        { kind: this.replyRequest, color: this.kindToStandardColor(this.replyRequest) },
-        { kind: this.messageActivate, color: this.kindToStandardColor(this.messageActivate) },
-        { kind: this.messageCompleted, color: this.kindToStandardColor(this.messageCompleted) },
-    ];
+    static eventKindsToColors = new Map([
+        [this.threadCreate, this.kindToStandardColor(this.threadCreate)],
+        [this.threadSwapIn, this.kindToStandardColor(this.threadSwapIn)],
+        [this.threadSwapOut, this.kindToStandardColor(this.threadSwapOut)],
+        [this.threadKill, this.kindToStandardColor(this.threadKill)],
+        [this.delayedThreadSwapIn, this.kindToStandardColor(this.delayedThreadSwapIn)],
+        [this.opActivate, this.kindToStandardColor(this.opActivate)],
+        [this.messageRequest, this.kindToStandardColor(this.messageRequest)],
+        [this.opRequest, this.kindToStandardColor(this.opRequest)],
+        [this.replyRequest, this.kindToStandardColor(this.replyRequest)],
+        [this.messageActivate, this.kindToStandardColor(this.messageActivate)],
+        [this.opCompleted, this.kindToStandardColor(this.opCompleted)],
+        [this.messageCompleted, this.kindToStandardColor(this.messageCompleted)],
+    ]);
 
     static kindToAbb(eventKind) {
         return eventKind == this.threadKill
@@ -1603,17 +1631,13 @@ class LogEvent {
             : "";
     }
 
-    static getKindsAbbs() {
-        return this.eventKindToColor.map((ektc) => this.kindToAbb(ektc.kind));
-    }
-
     static kindToStandardColor(eventKind) {
         return eventKind == this.threadKill
             ? "#a1260d"
             : eventKind == this.threadCreate
             ? "#388a34"
             : eventKind == this.threadSwapOut
-            ? "#be8700"
+            ? "#cc6633"
             : eventKind == this.threadSwapIn
             ? "#bf8803"
             : eventKind == this.delayedThreadSwapIn

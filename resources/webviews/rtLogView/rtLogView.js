@@ -11,6 +11,7 @@ viewContainer.classList.add("viewContainer");
 const btnContainer = document.getElementById("btnsContainer");
 
 // Global const variables
+
 const archViewId = "arch";
 const execViewId = "exec";
 const legendViewId = "legend";
@@ -46,6 +47,7 @@ fetch(workerSource)
         diagramWorker = new Worker(blobUrl);
         // Handle responses from the worker i.e. when it has created a canvas.
         diagramWorker.onmessage = handleWorkerResponse;
+
         // Post init msg to the ts backend which in turn returns the log data
         vscode.postMessage(initMsg);
         // Make sure that the worker terminates before closing the window
@@ -151,6 +153,9 @@ window.addEventListener("message", (event) => {
         document.getElementById(currentViewId)
     );
 
+    // Remove existing view containers to trigger a complete rebuild of the canvas
+    views.forEach((view) => (view.containers = []));
+
     displayView(currentViewId, selectedTime);
 });
 
@@ -225,9 +230,7 @@ function handleSelectedTimeChanged(newTime) {
 function displayView(viewId, timeStamp) {
     const view = views.find((view) => view.id == viewId);
     // Check if components for the view have already been generated for the timestamp and if they exist then reuse them
-    if (view.containers.length == 0) {
-        generateCanvas(viewId, timeStamp);
-    } else if (view.time != timeStamp && viewId != archViewId && viewId != legendViewId) {
+    if (view.containers.length == 0 || (view.time != timeStamp && viewId != archViewId && viewId != legendViewId)) {
         generateCanvas(viewId, timeStamp);
     } else {
         viewContainer.innerHTML = "";
@@ -244,18 +247,6 @@ function bitmapToCanvas(bitmap) {
     const ctx = canvas.getContext("bitmaprenderer");
     ctx.transferFromImageBitmap(bitmap);
     return canvas;
-}
-
-function resetViews(currentViewId, selectedTime) {
-    viewContainer.innerHTML = "";
-    // Remove view components from views and rebuild and display the view components for the current view
-    views.forEach((view) => {
-        view.components = [];
-        if (view.id == currentViewId) {
-            // Display the view
-            displayView(view.id, selectedTime);
-        }
-    });
 }
 
 function setButtonColors(btns, activeBtn) {
@@ -275,24 +266,23 @@ function setButtonColors(btns, activeBtn) {
 }
 
 function handleWorkerResponse(event) {
-    const res = event.data;
-    const view = views.find((view) => view.id == res.msg);
-    view.diagramHeight = res.bitmap.height;
+    // The worker responds with a diagram in form of a canvas. Add it to the view container
+    const data = event.data;
+    const view = views.find((view) => view.id == data.msg);
 
     // Container for the diagram
     const mainContainer = document.createElement("div");
     mainContainer.classList.add("mainContainer");
 
     // Append the canvas
-    mainContainer.appendChild(bitmapToCanvas(res.bitmap));
+    mainContainer.appendChild(bitmapToCanvas(data.bitmap));
     view.containers = [mainContainer];
 
-    // Container for the information to be displayed below the diagram, i.e. conjecture table.
-    const secondContainer = document.createElement("div");
-    secondContainer.classList.add("secondaryContainer");
+    // Append table if the view is the execeution view
+    if (data.msg == execViewId && conjectures && conjectures.length > 0) {
+        const secondContainer = document.createElement("div");
+        secondContainer.classList.add("secondaryContainer");
 
-    // Append table
-    if (res.msg == execViewId && conjectures && conjectures.length > 0) {
         // Setup container for the table
         const tableContainer = document.createElement("div");
         tableContainer.classList.add("tableContainer");
@@ -302,9 +292,6 @@ function handleWorkerResponse(event) {
         tableContainer.appendChild(tableHeader);
         tableContainer.appendChild(generateConjectureTable(conjectures));
         secondContainer.appendChild(tableContainer);
-    }
-
-    if (secondContainer.children.length > 0) {
         view.containers.push(secondContainer);
     }
 
@@ -331,17 +318,37 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
 
     // Update background color for the diagrams
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
+    // Update colors for events. The key must match the eventkind in the LogEvent class found in the worker.
+    let eventKindsToColors;
+    let themeColors;
+    if (matchTheme) {
+        eventKindsToColors = new Map([
+            ["ThreadCreate", computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim()],
+            ["ThreadSwapIn", computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim()],
+            ["OpActivate", computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()],
+            ["OpRequest", computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()],
+            ["OpCompleted", computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()],
+            ["ThreadSwapOut", computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim()],
+            ["ThreadKill", computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim()],
+            ["DelayedThreadSwapIn", computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim()],
+        ]);
 
-    // Update colors for events and bus
-    const themeColors = [
-        fontColor,
-        computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim(),
-        computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim(),
-        computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim(),
-        computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim(),
-        computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim(),
-        computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim(),
-    ];
+        // Update theme colors used in the architecture view
+        themeColors = [fontColor];
+        [...eventKindsToColors.values()].forEach((color) => {
+            if (!themeColors.find((tc) => tc == color)) {
+                themeColors.push(color);
+            }
+        });
+        themeColors.push(computedStyle.getPropertyValue("--vscode-debugIcon-disconnectForeground").trim());
+        themeColors.push(computedStyle.getPropertyValue("--vscode-charts-green").trim());
+        themeColors.push(computedStyle.getPropertyValue("--vscode-charts-purple").trim());
+        themeColors.forEach((color) => {
+            if (color == undefined) {
+                color = fontColor;
+            }
+        });
+    }
 
     // Update button colors
     btnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();
@@ -351,6 +358,7 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
     const gridLineWidth = fontSize / 10 > 1 ? fontSize / 10 : 1;
     const eventLineWidth = gridLineWidth * 4;
 
+    // Post updated font and size properties to the worker
     diagramWorker.postMessage({
         msg: settingsChangedMsg,
         lineDashSize: gridLineWidth * 0.7,
@@ -362,6 +370,7 @@ function updateFontAndColors(scaleWithFont, matchTheme) {
         diagramFont: `${fontSize}px ${fontFamily}`,
         declFont: `${fontSize * 1.5}px ${fontFamily}`,
         themeColors: themeColors,
+        eventKindsToColors: eventKindsToColors,
         backgroundColor: backgroundColor,
         conjectureViolationColor: matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000",
         fontColor: fontColor,
