@@ -14,22 +14,24 @@ export const dialectToPrettyFormat: Map<vdmDialects, string> = new Map([
     [vdmDialects.VDMRT, "VDM-RT"],
 ]);
 
-export const dialectToExtensions: Map<vdmDialects, string[]> = new Map([
+export const dialectToFileExtensions: Map<vdmDialects, string[]> = new Map([
     [vdmDialects.VDMSL, ["vdmsl", "vsl"]],
     [vdmDialects.VDMPP, ["vdmpp", "vpp"]],
     [vdmDialects.VDMRT, ["vdmrt", "vrt"]],
 ]);
 
-const dialectToAlias: Map<vdmDialects, string[]> = new Map([
-    [vdmDialects.VDMSL, [...dialectToExtensions.get(vdmDialects.VDMSL), "vdm-sl", "sl"]],
-    [vdmDialects.VDMPP, [...dialectToExtensions.get(vdmDialects.VDMPP), "vdm-pp", "pp", "vdm++"]],
-    [vdmDialects.VDMRT, [...dialectToExtensions.get(vdmDialects.VDMRT), "vdm-rt", "rt"]],
+export const vdmFileExtensions: Set<string> = new Set(Array.from(dialectToFileExtensions.values()).reduce((prev, cur) => prev.concat(cur)));
+
+export const dialectToAlias: Map<vdmDialects, string[]> = new Map([
+    [vdmDialects.VDMSL, [...dialectToFileExtensions.get(vdmDialects.VDMSL), "vdm-sl", "sl"]],
+    [vdmDialects.VDMPP, [...dialectToFileExtensions.get(vdmDialects.VDMPP), "vdm-pp", "pp", "vdm++"]],
+    [vdmDialects.VDMRT, [...dialectToFileExtensions.get(vdmDialects.VDMRT), "vdm-rt", "rt"]],
 ]);
 
 export function vdmFilePattern(fsPath: string): RelativePattern {
     return new RelativePattern(
         fsPath,
-        `*.{${Array.from(dialectToExtensions.values())
+        `*.{${Array.from(dialectToFileExtensions.values())
             .map((dialects) => dialects.reduce((prev, cur) => `${prev},${cur}`))
             .reduce((prev, cur) => `${prev},${cur}`)}}`
     );
@@ -37,7 +39,7 @@ export function vdmFilePattern(fsPath: string): RelativePattern {
 
 export async function guessDialect(wsFolder: WorkspaceFolder): Promise<vdmDialects> {
     return new Promise(async (resolve, reject) => {
-        for await (const [dialect, extensions] of dialectToExtensions) {
+        for await (const [dialect, extensions] of dialectToFileExtensions) {
             const pattern: RelativePattern = new RelativePattern(
                 wsFolder.uri.path,
                 `*.{${extensions.reduce((prev, cur) => `${prev},${cur}`)}}`
