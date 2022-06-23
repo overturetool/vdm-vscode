@@ -101,7 +101,7 @@ viewButtons.forEach((btn) => {
     };
 });
 
-// Handle time change
+// Handle user choosing a new start time
 timeOptions.onchange = (event) => handleSelectedTimeChanged(event.target.value);
 
 timeUpBtn.onclick = () => {
@@ -127,6 +127,9 @@ window.addEventListener("message", (event) => {
         conjectures = event.data.conjectures;
         cpusWithEvents = event.data.cpusWithEvents;
 
+        // Set the font and theme settings in the diagram worker
+        updateFontAndColorsForDiagramWorker(event.data.scaleWithFont, event.data.matchTheme);
+
         // Trigger the initiate logic in the diagram worker
         const osCanvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
         diagramWorker.postMessage(
@@ -142,10 +145,10 @@ window.addEventListener("message", (event) => {
             },
             [osCanvas]
         );
+    } else if (event.data.cmd == settingsChangedMsg) {
+        // Check for changes to font and theme and update the settings in the diagram worker
+        updateFontAndColorsForDiagramWorker(event.data.scaleWithFont, event.data.matchTheme);
     }
-
-    // Check for changes to font and theme and update the settings in the diagram worker
-    updateFontAndColors(event.data.scaleWithFont, event.data.matchTheme);
 
     // Set button colors
     setButtonColors(
@@ -266,7 +269,7 @@ function setButtonColors(btns, activeBtn) {
 }
 
 function handleWorkerResponse(event) {
-    // The worker responds with a diagram in form of a canvas. Add it to the view container
+    // The worker responds with a diagram in form of a bitmap. Add it to the view container as a canvas
     const data = event.data;
     const view = views.find((view) => view.id == data.msg);
 
@@ -278,7 +281,7 @@ function handleWorkerResponse(event) {
     mainContainer.appendChild(bitmapToCanvas(data.bitmap));
     view.containers = [mainContainer];
 
-    // Append table if the view is the execeution view
+    // Add conjeture table if the view is the execeution view and it has conjectures
     if (data.msg == execViewId && conjectures && conjectures.length > 0) {
         const secondContainer = document.createElement("div");
         secondContainer.classList.add("secondaryContainer");
@@ -309,7 +312,7 @@ function getViewContainerHeight() {
     );
 }
 
-function updateFontAndColors(scaleWithFont, matchTheme) {
+function updateFontAndColorsForDiagramWorker(scaleWithFont, matchTheme) {
     const computedStyle = getComputedStyle(document.body);
     // Update font properties
     fontSize = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 16;

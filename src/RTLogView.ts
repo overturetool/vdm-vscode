@@ -55,6 +55,10 @@ export class RTLogView extends AutoDisposable {
     private _panel: WebviewPanel;
     private _wsFolder: WorkspaceFolder = undefined;
     private _logName: string = "";
+    // These messages must match the names in the webview
+    private readonly _settingsChangedMsg = "settingsChanged";
+    private readonly _initMsg = "init";
+
     constructor(private readonly _context: ExtensionContext) {
         super();
         // Add settings watch
@@ -120,7 +124,7 @@ export class RTLogView extends AutoDisposable {
         ) {
             const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);
             this._panel.webview.postMessage({
-                cmd: "editorSettingsChanged",
+                cmd: this._settingsChangedMsg,
                 scaleWithFont: config.get("scaleWithFont"),
                 matchTheme: config.get("matchTheme"),
             });
@@ -385,7 +389,7 @@ export class RTLogView extends AutoDisposable {
         this._panel.webview.onDidReceiveMessage(
             async (cmd: string) => {
                 const returnObj: any = { cmd: cmd };
-                if (cmd == "init") {
+                if (cmd == this._initMsg) {
                     const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);
                     returnObj.busDecls = busDecls;
                     returnObj.cpuDecls = cpuDecls;
