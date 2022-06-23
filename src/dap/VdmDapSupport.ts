@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import { ClientManager } from "../ClientManager";
 import { CompletedParsingParams, CompletedParsingNotification } from "../server/ServerNotifications";
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
+import { vdmFileExtensions } from "../util/DialectUtil";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
@@ -37,15 +38,14 @@ export namespace VdmDapSupport {
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
 
             // Register evaluatable expression provider to handle cases where the user hovers over variables with characters in their names that are allowed in VDM. E.g.: y'
-            vscode.languages.registerEvaluatableExpressionProvider("vdmsl", {
+            vscode.languages.registerEvaluatableExpressionProvider([...vdmFileExtensions], {
                 provideEvaluatableExpression(
                     document: vscode.TextDocument,
                     position: vscode.Position
                 ): vscode.ProviderResult<vscode.EvaluatableExpression> {
-                    // This regex captures anything until: a whitespace, ';', ',' or ':'. This works as VDMJ will show an error if the variable name is not valid.
-                    const wordRange = document.getWordRangeAtPosition(position, /[^ ;,:]+/);
-                    const ev = wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
-                    return ev;
+                    // This regex captures anything until: a whitespace, ';', ',' '=' or ':'. This works as VDMJ will show an error if the variable name is not valid.
+                    const wordRange = document.getWordRangeAtPosition(position, /[^ ;,:=]+/);
+                    return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
                 },
             });
         }
