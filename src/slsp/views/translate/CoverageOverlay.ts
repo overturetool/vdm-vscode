@@ -39,7 +39,7 @@ export class CoverageOverlay {
 
         // Only display the coverage overlay button if the file type can be handled by the extension.
         window.onDidChangeActiveTextEditor((editor) => {
-            const showBtns: boolean = editor && this._languageIdsOfInterest.has(editor.document.languageId);
+            const showBtns: boolean = this._languageIdsOfInterest.has(editor?.document?.languageId);
             commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.enable", showBtns ? !this._isDisplayingCoverage : false);
             commands.executeCommand("setContext", "vdm-vscode.coverageOverlay.disable", showBtns ? this._isDisplayingCoverage : false);
         });

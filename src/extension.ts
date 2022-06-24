@@ -28,7 +28,7 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { dialectToExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
+import { vdmFileExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
@@ -49,15 +49,8 @@ export async function activate(context: ExtensionContext) {
         return; // Can't create servers -> no reason to continue
     }
 
-    // File extension types aka language ids that can be handled
-    const acceptedLanguageIds: Set<string> = new Set(
-        Array.from(dialectToExtensions.values()).reduce((prev, cur) => {
-            return prev.concat(cur);
-        })
-    );
-
     // Setup client manager
-    clientManager = new ClientManager(serverFactory, acceptedLanguageIds, vdmFilePattern);
+    clientManager = new ClientManager(serverFactory, vdmFileExtensions, vdmFilePattern);
     context.subscriptions.push(clientManager);
 
     // Keep track of VDM workspace folders
@@ -101,8 +94,8 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name, clientManager));
     const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
-    context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, acceptedLanguageIds));
     context.subscriptions.push(new RTLogView(context));
+    context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, vdmFileExtensions));
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clientManager));

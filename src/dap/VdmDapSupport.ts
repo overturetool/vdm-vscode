@@ -9,6 +9,7 @@ import AutoDisposable from "../helper/AutoDisposable";
 import * as Util from "../util/Util";
 import * as Path from "path";
 import * as Fs from "fs-extra";
+import { vdmFileExtensions } from "../util/DialectUtil";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
@@ -32,14 +33,26 @@ export namespace VdmDapSupport {
     export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
         if (!initialized) {
             initialized = true;
-            // register a configuration provider for 'vdm' debug type
+            // Register a configuration provider for 'vdm' debug type
             const provider = new VdmConfigurationProvider();
             context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("vdm", provider));
 
-            // run the debug adapter as a server inside the extension and communicating via a socket
+            // Run the debug adapter as a server inside the extension and communicating via a socket
             factory = new VdmDebugAdapterDescriptorFactory(clientManager);
 
             context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("vdm", factory));
+
+            // Register evaluatable expression provider to handle cases where the user hovers over variables with characters in their names that are allowed in VDM. E.g.: y'
+            vscode.languages.registerEvaluatableExpressionProvider([...vdmFileExtensions], {
+                provideEvaluatableExpression(
+                    document: vscode.TextDocument,
+                    position: vscode.Position
+                ): vscode.ProviderResult<vscode.EvaluatableExpression> {
+                    // This regex captures anything until: a whitespace, ';', ',' '=' or ':'. This works as VDMJ will show an error if the variable name is not valid.
+                    const wordRange = document.getWordRangeAtPosition(position, /[^ ;,:=]+/);
+                    return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
+                },
+            });
         }
     }
 
