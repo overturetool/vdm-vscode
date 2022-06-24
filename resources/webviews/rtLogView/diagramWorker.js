@@ -6,59 +6,27 @@ const execViewId = "exec";
 const legendViewId = "legend";
 const initMsg = "init";
 const settingsChangedMsg = "settingsChanged";
-// A canvas with a total area larger than 268435456 and/or wider/higher than 65535 cannot be displayed in VSCode.
-//However, the context of a web worker on windows seems to be based on IE 11 where the max area size is 67108864 and max width/height is 16384
-const canvasMaxArea = 67108864;
-const canvasMaxSize = 16384;
 
-const opnameIdentifier = "opname";
-
-// Global variables
-let backgroundColor;
-let fontSize;
-let declFont;
-let conjectureViolationFont;
-let diagramFont;
-let gridLineWidth;
-let eventLineWidth;
-let conjectureViolationMarkerWidth;
-let lineDashSize;
-let eventWrapperHeight;
-let themeColors = [];
-let fontColor;
-let conjectureViolationColor;
-let canvasGenerator;
+let diagramGenerator;
 
 // Handle messages
 self.onmessage = function (e) {
     const msg = e.data.msg;
 
     if (msg == initMsg) {
-        canvasGenerator = new CanvasGenerator(
+        diagramGenerator = new DiagramGenerator(
             e.data.cpuDecls,
             e.data.busDecls,
             e.data.executionEvents,
             e.data.cpusWithEvents,
             e.data.conjectures,
             e.data.canvas,
-            e.data.diagramSize
+            e.data.diagramSize,
+            e.data.styling
         );
     } else if (msg == archViewId) {
-        canvasGenerator.drawArchCanvas(e.data.canvas);
+        diagramGenerator.drawArchCanvas(e.data.canvas);
     } else if (msg == settingsChangedMsg) {
-        backgroundColor = e.data.backgroundColor;
-        fontSize = e.data.fontSize;
-        declFont = e.data.declFont;
-        conjectureViolationFont = e.data.conjectureViolationFont;
-        diagramFont = e.data.diagramFont;
-        gridLineWidth = e.data.gridLineWidth;
-        eventLineWidth = e.data.eventLineWidth;
-        conjectureViolationMarkerWidth = e.data.conjectureViolationMarkerWidth;
-        lineDashSize = e.data.lineDashSize;
-        eventWrapperHeight = e.data.eventWrapperHeight;
-        fontColor = e.data.fontColor;
-        conjectureViolationColor = e.data.conjectureViolationColor;
-
         if (e.data.eventKindsToColors) {
             LogEvent.eventKindsToColors = new Map([...LogEvent.eventKindsToColors, ...e.data.eventKindsToColors]);
         } else {
@@ -67,37 +35,83 @@ self.onmessage = function (e) {
             }
         }
 
-        themeColors = [];
-        if (e.data.themeColors) {
-            themeColors = e.data.themeColors;
-        } else {
-            themeColors.push("#000000");
+        if (!e.data.themeColors) {
+            e.data.themeColors = ["#000000"];
             for (const color of LogEvent.eventKindsToColors.values()) {
-                themeColors.push(color);
+                e.data.themeColors.push(color);
             }
         }
-        if (canvasGenerator) {
-            // The draw functions for the execution canvas are cached with the old settings so they need to be cleared
-            canvasGenerator.resetViewDataCache();
-        }
+
+        diagramGenerator.updateDiagramStyling(
+            e.data.fontSize,
+            e.data.fontFamily,
+            e.data.declFont,
+            e.data.conjectureViolationFont,
+            e.data.diagramFont,
+            e.data.gridLineWidth,
+            e.data.eventLineWidth,
+            e.data.conjectureViolationMarkerWidth,
+            e.data.lineDashSize,
+            e.data.eventWrapperHeight,
+            e.data.fontColor,
+            e.data.conjectureViolationColor,
+            e.data.themeColors
+        );
     } else if (msg == execViewId) {
-        canvasGenerator.drawExecutionCanvas(e.data.canvas, e.data.startTime);
+        diagramGenerator.drawExecutionCanvas(e.data.canvas, e.data.startTime);
     } else if (msg == legendViewId) {
-        canvasGenerator.drawLegendCanvas(e.data.canvas);
+        diagramGenerator.drawLegendCanvas(e.data.canvas);
     } else if (msg.toLowerCase().includes("cpu")) {
-        canvasGenerator.drawCpuCanvas(e.data.canvas, Number(e.data.startTime), msg, false);
+        diagramGenerator.drawCpuCanvas(e.data.canvas, Number(e.data.startTime), msg, false);
     }
 };
 
 // Class for generating diagrams as canvas
-class CanvasGenerator {
-    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, diagramSize) {
+class DiagramGenerator {
+    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, diagramSize, styling) {
+        // Log data
         this.cpuDeclEvents = cpuDeclEvents;
         this.busDeclEvents = busDeclEvents;
         this.executionEvents = executionEvents;
         this.conjectures = conjectures;
         this.cpusWithEvents = cpusWithEvents;
+
+        // Canvas styling
         this.defaultCanvas = canvas;
+        this.gridLineWidth;
+        this.eventLineWidth;
+        this.themeColors;
+        this.fontColor;
+        this.conjectureViolationColor;
+        this.conjectureViolationMarkerWidth;
+        this.lineDashSize;
+        this.eventWrapperHeight;
+        this.declFont;
+        this.conjectureViolationFont;
+        this.diagramFont;
+
+        this.updateDiagramStyling(
+            styling.fontSize,
+            styling.fontFamily,
+            styling.declFont,
+            styling.conjectureViolationFont,
+            styling.diagramFont,
+            styling.gridLineWidth,
+            styling.eventLineWidth,
+            styling.conjectureViolationMarkerWidth,
+            styling.lineDashSize,
+            styling.eventWrapperHeight,
+            styling.fontColor,
+            styling.conjectureViolationColor,
+            styling.themeColors
+        );
+
+        // A canvas with a total area larger than 268435456 and/or wider/higher than 65535 cannot be displayed in VSCode.
+        //However, the context of a web worker on windows seems to be based on IE 11 where the max area size is 67108864 and max width/height is 16384
+        this.canvasMaxArea = 67108864;
+        this.canvasMaxSize = 16384;
+        this.opnameIdentifier = "opname";
+
         // Keep state for the execution view. This includes the draw functions so these does not have to be recalculated each time.
         this.execucionViewData = {
             declDrawFuncs: [],
@@ -117,7 +131,7 @@ class CanvasGenerator {
         // Screen diagram size is used to keep the size of the cpu view within a reasonable size of the users screen.
         this.diagramSize = diagramSize;
 
-        this.generateExecutionViewData(this.defaultCanvas);
+        //this.generateExecutionViewData(this.defaultCanvas);
     }
 
     resetViewDataCache() {
@@ -133,13 +147,13 @@ class CanvasGenerator {
     drawArchCanvas(canvas) {
         // Set text style to calculate text sizes
         let ctx = canvas.getContext("2d");
-        ctx.font = declFont;
+        ctx.font = this.declFont;
 
         const txtMeasure = ctx.measureText("Gg");
         const textHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
         const margin = txtMeasure.width;
         const padding = margin / 2;
-        const rectBottomPos_y = textHeight + padding * 2 + margin + gridLineWidth;
+        const rectBottomPos_y = textHeight + padding * 2 + margin + this.gridLineWidth;
         const rects = this.cpuDeclEvents.map((cde) => ({ id: cde.id, connections: 0, established: 0 }));
         let maxBusTxtWidth = margin;
         this.busDeclEvents.forEach((busdecl) => {
@@ -181,9 +195,9 @@ class CanvasGenerator {
 
         // Get context after resize
         ctx = canvas.getContext("2d");
-        ctx.font = declFont;
-        ctx.fillStyle = ctx.strokeStyle = fontColor;
-        ctx.lineWidth = gridLineWidth;
+        ctx.font = this.declFont;
+        ctx.fillStyle = ctx.strokeStyle = this.fontColor;
+        ctx.lineWidth = this.gridLineWidth;
 
         // Draw the rectangles and text
         rects.forEach((rect) => {
@@ -199,7 +213,7 @@ class CanvasGenerator {
 
             // Setup color and style for the connection line
             ctx.beginPath();
-            ctx.fillStyle = ctx.strokeStyle = i < themeColors.length ? themeColors[i] : fontColor;
+            ctx.fillStyle = ctx.strokeStyle = i < this.themeColors.length ? this.themeColors[i] : this.fontColor;
             ctx.setLineDash(bus.id == 0 ? [2, 2] : []);
 
             // If the bus has any connections then draw them
@@ -249,7 +263,7 @@ class CanvasGenerator {
         let legendCtx = canvas.getContext("2d");
         const eventLength = this.calculateEventLength(legendCtx);
         const elementPadding = eventLength;
-        legendCtx.font = diagramFont;
+        legendCtx.font = this.diagramFont;
         let nextLegendElementPos_y = eventLength * 1.5;
         const drawFuncs = [];
         const eventKinds = [...LogEvent.eventKindsToColors.keys()];
@@ -266,28 +280,28 @@ class CanvasGenerator {
                 drawFuncs.push(() => {
                     this.generateEventDrawFuncs(
                         legendCtx,
-                        diagramFont,
-                        gridLineWidth,
-                        eventLineWidth,
-                        eventWrapperHeight,
+                        this.diagramFont,
+                        this.gridLineWidth,
+                        this.eventLineWidth,
+                        this.eventWrapperHeight,
                         LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
                         eventKind,
                         elementPadding,
                         elementPos_y,
-                        elementPadding + eventLength - gridLineWidth * 2,
-                        fontColor,
-                        fontColor
+                        elementPadding + eventLength - this.gridLineWidth * 2,
+                        this.fontColor,
+                        this.fontColor
                     ).forEach((func) => {
-                        legendCtx.font = diagramFont;
+                        legendCtx.font = this.diagramFont;
                         func();
                     });
-                    legendCtx.fillText(txt, elementPadding + eventLength + eventLineWidth, elementPos_y);
+                    legendCtx.fillText(txt, elementPadding + eventLength + this.eventLineWidth, elementPos_y);
                 });
                 const txtWidth = legendCtx.measureText(txt).width;
                 if (txtWidth > maxTxtWidth) {
                     maxTxtWidth = txtWidth;
                 }
-                nextLegendElementPos_y += txtHeight * 1.5 + gridLineWidth;
+                nextLegendElementPos_y += txtHeight * 1.5 + this.gridLineWidth;
             });
 
         // Add draw function for the validation conjecture violation legend
@@ -302,8 +316,8 @@ class CanvasGenerator {
                 eventLength / 3
             )(legendCtx, 0);
             const prevStrokeStyle = legendCtx.strokeStyle;
-            legendCtx.strokeStyle = conjectureViolationColor;
-            legendCtx.fillText(conjTxt, elementPadding + eventLength + eventLineWidth, elementPos_y);
+            legendCtx.strokeStyle = this.conjectureViolationColor;
+            legendCtx.fillText(conjTxt, elementPadding + eventLength + this.eventLineWidth, elementPos_y);
             legendCtx.strokeStyle = prevStrokeStyle;
         });
         const txtWidth = legendCtx.measureText(conjTxt).width;
@@ -311,7 +325,7 @@ class CanvasGenerator {
             maxTxtWidth = txtWidth;
         }
 
-        canvas.width = maxTxtWidth + elementPadding + eventLength + eventLineWidth + gridLineWidth;
+        canvas.width = maxTxtWidth + elementPadding + eventLength + this.eventLineWidth + this.gridLineWidth;
         canvas.height = nextLegendElementPos_y + txtHeight;
         legendCtx = canvas.getContext("2d");
         drawFuncs.forEach((func) => func());
@@ -321,7 +335,7 @@ class CanvasGenerator {
 
     drawExecutionCanvas(canvas, startTime) {
         if (this.execucionViewData.gridDrawFuncs.length == 0) {
-            this.generateExecutionViewData(this.defaultCanvas);
+            this.generateExecutionViewData(canvas);
         }
         // Generate diagram canvas
         let gridEndPos_y = 0;
@@ -339,13 +353,13 @@ class CanvasGenerator {
                 gdfs.drawFuncs.length * this.execucionViewData.eventLength + gridPos_x + this.execucionViewData.eventLength;
             // Break out if the size of the canvas exceeds the size that can be displayed
             if (
-                resultingCanvasWidth > canvasMaxSize ||
-                newGridEndPos_y > canvasMaxSize ||
-                resultingCanvasWidth * newGridEndPos_y > canvasMaxArea
+                resultingCanvasWidth > this.canvasMaxSize ||
+                newGridEndPos_y > this.canvasMaxSize ||
+                resultingCanvasWidth * newGridEndPos_y > this.canvasMaxArea
             ) {
-                //TODO: If the canvas dimension exceeds the restricted size for the first timestamp, then it cannot be displayed on a single canvas and should be split into multiple canvases
+                //TODO: If the canvas dimension exceeds the restricted size for the first timestamp then it cannot be displayed on a single canvas and should be split into multiple canvases
                 if (i == 0) {
-                    this.postErrorCanvas(canvas, `Events for time ${gdfs.time} cannot fit onto the diagram`, msg);
+                    this.postErrorCanvas(canvas, `Events for time ${gdfs.time} cannot fit onto the diagram`, execViewId);
                     return;
                 }
                 timeOfExceededSize = gridDrawFunctionsForTime[i - 1].time;
@@ -364,7 +378,7 @@ class CanvasGenerator {
         canvas.width = gridPos_x + this.execucionViewData.eventLength;
         canvas.height = gridEndPos_y;
         const diagramCtx = canvas.getContext("2d");
-        diagramCtx.fillStyle = fontColor;
+        diagramCtx.fillStyle = this.fontColor;
         // Draw visuals on diagram canvas
         this.execucionViewData.declDrawFuncs.forEach((func) => func(diagramCtx));
         drawFunctions.forEach((func) => func(diagramCtx));
@@ -376,7 +390,7 @@ class CanvasGenerator {
         const viewData = this.cpuViewData.get(msg.replace(/\D/g, ""));
         const executionEvents = viewData.executionEvents;
         let ctx = canvas.getContext("2d");
-        ctx.font = declFont;
+        ctx.font = this.declFont;
         const txtMetrics = ctx.measureText("Gg");
         const txtHeight = txtMetrics.fontBoundingBoxAscent + txtMetrics.fontBoundingBoxDescent;
 
@@ -388,12 +402,12 @@ class CanvasGenerator {
 
         const eventLength = this.calculateEventLength(ctx);
         const drawFuncs = [];
-        const yAxisLinesDash = [lineDashSize, lineDashSize * 4];
+        const yAxisLinesDash = [this.lineDashSize, this.lineDashSize * 4];
         const margin = txtMetrics.width;
         const padding = margin / 2;
-        ctx.font = diagramFont;
+        ctx.font = this.diagramFont;
         const axisStart_x = ctx.measureText(executionEvents[executionEvents.length - 1].time).width + padding;
-        ctx.font = declFont;
+        ctx.font = this.declFont;
         const rects = [];
         let cpuRectId;
         const traversedEvents = [];
@@ -442,7 +456,7 @@ class CanvasGenerator {
                     threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [] });
                 }
             } else if (event.eventKind == LogEvent.messageCompleted) {
-                if (!(opnameIdentifier in event)) {
+                if (!(this.opnameIdentifier in event)) {
                     // Look back through the traversed events
                     for (let ind = traversedEvents.length - 1; ind >= 0; ind--) {
                         const prevEvent = traversedEvents[ind];
@@ -545,7 +559,7 @@ class CanvasGenerator {
                 [event, opComplete].forEach((event) => {
                     if (event && !rects.find((rect) => rect.rectId == event.rectId)) {
                         const rectName = rectIdToRectName.find((ritrn) => ritrn.id == event.rectId).name;
-                        ctx.font = declFont;
+                        ctx.font = this.declFont;
                         const rect = {
                             name: rectName,
                             margin: { right: margin, left: margin },
@@ -586,18 +600,18 @@ class CanvasGenerator {
                     if (
                         eventsToDraw.length > 1 &&
                         (LogEvent.isOperationKind(prevEvent.eventKind) ||
-                            (prevEvent.eventKind == LogEvent.messageCompleted && opnameIdentifier in prevEvent) ||
+                            (prevEvent.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in prevEvent) ||
                             prevEvent.eventKind == LogEvent.messageRequest)
                     ) {
                         let targetRect;
 
-                        if (prevEvent.eventKind == LogEvent.messageCompleted && opnameIdentifier in prevEvent) {
+                        if (prevEvent.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in prevEvent) {
                             targetRect = rects.find((rect) => rect.rectId == event.rectId);
                         } else if (prevEvent.eventKind == LogEvent.messageRequest) {
                             targetRect = rects.find((rect) => rect.rectId == eventsToDraw[eventsToDraw.length - 2].rectId);
                         } else if (
                             prevEvent.eventKind != LogEvent.opRequest &&
-                            (!(opnameIdentifier in eventsToDraw[eventsToDraw.length - 2]) || prevEvent.opname != prevEvent.opname)
+                            (!(this.opnameIdentifier in eventsToDraw[eventsToDraw.length - 2]) || prevEvent.opname != prevEvent.opname)
                         ) {
                             targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
                         } else if (prevEvent.eventKind == LogEvent.opRequest) {
@@ -610,7 +624,7 @@ class CanvasGenerator {
 
                         const isSelf = targetRect.rectId == prevEvent.rectId;
                         const rectForEvent = rects.find((rect) => rect.rectId == prevEvent.rectId);
-                        ctx.font = diagramFont;
+                        ctx.font = this.diagramFont;
                         const newMargin =
                             ctx.measureText(this.opnameToShortName(prevEvent.opname)).width - rectForEvent.width / 2 + margin * 2;
                         const targetRectIndex = rects.indexOf(targetRect);
@@ -659,7 +673,9 @@ class CanvasGenerator {
 
                 // It is okay for the diagram to exceed canvas size restrictions as long as atleast one timestamp can be displayed.
                 const diagramExceedsCanvasSizeRestrictions =
-                    diagramHeight > canvasMaxSize || diagramWidth > canvasMaxSize || diagramHeight * diagramWidth > canvasMaxArea;
+                    diagramHeight > this.canvasMaxSize ||
+                    diagramWidth > this.canvasMaxSize ||
+                    diagramHeight * diagramWidth > this.canvasMaxArea;
 
                 if (
                     diagramExceedsCanvasSizeRestrictions ||
@@ -671,13 +687,12 @@ class CanvasGenerator {
                         existingRollbackForTimestamp = rollback;
                     }
 
-                    // If there is no time defined for the rollback the events for the timestamp cannot fit within the size restrictions of the canvas!
-                    //TODO: In this case the diagram needs to be displayed across multiple canvases
+                    //TODO: If there is no time defined for the rollback the events for the timestamp cannot fit within the size restrictions of the canvas so the diagram needs to be displayed across multiple canvases
                     if (existingRollbackForTimestamp.time == undefined) {
                         if (disableMargins) {
                             this.postErrorCanvas(canvas, `Events for time ${event.time} cannot fit onto the diagram`, msg);
                         } else {
-                            // Call the drawCpuCanvas again but disable margins between obj deployments and let opnames clash. However, the size restrictions can still be violated. So this cannot be a permanent fix.
+                            // Temporary mitigation is to call the drawCpuCanvas again but disable margins between obj deployments and let opnames clash to attempt to fit the events within the canvas size restricitons.
                             this.drawCpuCanvas(canvas, startTime, msg, true);
                         }
                         return;
@@ -701,10 +716,10 @@ class CanvasGenerator {
         // Geneate draw functions for the rectangles and their text.
         rects.forEach((rect) =>
             drawFuncs.push(() => {
-                ctx.font = declFont;
-                ctx.fillStyle = fontColor;
-                ctx.strokeStyle = fontColor;
-                ctx.lineWidth = gridLineWidth;
+                ctx.font = this.declFont;
+                ctx.fillStyle = this.fontColor;
+                ctx.strokeStyle = this.fontColor;
+                ctx.lineWidth = this.gridLineWidth;
                 ctx.setLineDash(rect.busId == 0 ? [2, 2] : []);
                 ctx.strokeRect(rect.startPos_x, margin, rect.width, rect.height);
                 ctx.fillText(rect.name, rect.startPos_x + padding, rectsEnd_y - (rect.height - rect.textHeight));
@@ -716,9 +731,9 @@ class CanvasGenerator {
             drawFuncs.push(() =>
                 this.drawLine(
                     ctx,
-                    gridLineWidth,
+                    this.gridLineWidth,
                     yAxisLinesDash,
-                    fontColor,
+                    this.fontColor,
                     rect.pos_x,
                     rectsEnd_y + margin,
                     rect.pos_x,
@@ -744,12 +759,12 @@ class CanvasGenerator {
                 const pos_y = eventStartPos_y;
                 const axisTxt = event.time;
                 drawFuncs.push(() => {
-                    ctx.font = diagramFont;
+                    ctx.font = this.diagramFont;
                     const txtMeasure = ctx.measureText(axisTxt);
-                    this.drawLine(ctx, gridLineWidth, [1, 4], fontColor, axisStart_x, pos_y, diagramWidth + margin, pos_y);
+                    this.drawLine(ctx, this.gridLineWidth, [1, 4], this.fontColor, axisStart_x, pos_y, diagramWidth + margin, pos_y);
                     ctx.fillText(
                         axisTxt,
-                        axisStart_x - txtMeasure.width - eventLineWidth,
+                        axisStart_x - txtMeasure.width - this.eventLineWidth,
                         pos_y + (txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent) / 2
                     );
                 });
@@ -766,17 +781,17 @@ class CanvasGenerator {
 
                 this.generateEventDrawFuncs(
                     ctx,
-                    diagramFont,
-                    gridLineWidth,
-                    eventLineWidth,
-                    eventWrapperHeight,
+                    this.diagramFont,
+                    this.gridLineWidth,
+                    this.eventLineWidth,
+                    this.eventWrapperHeight,
                     LogEvent.isThreadKind(event.eventKind) ? event.id : LogEvent.kindToAbb(event.eventKind),
                     event.eventKind,
                     0,
                     0,
                     eventLength,
-                    fontColor,
-                    fontColor
+                    this.fontColor,
+                    this.fontColor
                 ).forEach((drawFunc) => drawFunc());
 
                 ctx.restore();
@@ -819,7 +834,7 @@ class CanvasGenerator {
                 // If there is a target for the event then draw the arrow
                 if ((targetRectId && targetRectId != event.rectId) || event.eventKind == LogEvent.messageCompleted) {
                     const isReplyArrow =
-                        !(event.eventKind == LogEvent.messageCompleted && opnameIdentifier in event) &&
+                        !(event.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in event) &&
                         event.eventKind != LogEvent.opRequest;
 
                     const nextRect = rects.find(
@@ -827,9 +842,9 @@ class CanvasGenerator {
                     );
                     if (nextRect) {
                         const arrwEnd_x =
-                            (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - eventWrapperHeight / 2;
+                            (nextRect.pos_x < currentRect.pos_x ? currentRect.pos_x : nextRect.pos_x) - this.eventWrapperHeight / 2;
                         const arrwStart_x =
-                            (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + eventWrapperHeight / 2;
+                            (nextRect.pos_x < currentRect.pos_x ? nextRect.pos_x : currentRect.pos_x) + this.eventWrapperHeight / 2;
 
                         drawFuncs.push(() => {
                             this.drawArrow(
@@ -841,9 +856,9 @@ class CanvasGenerator {
                                 3,
                                 5,
                                 false,
-                                gridLineWidth,
+                                this.gridLineWidth,
                                 isReplyArrow ? [5, 2] : undefined,
-                                fontColor,
+                                this.fontColor,
                                 nextRect.pos_x < currentRect.pos_x
                             );
                         });
@@ -852,13 +867,13 @@ class CanvasGenerator {
                         if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
                             eventHasArrowWithTxt = true;
                             drawFuncs.push(() => {
-                                ctx.font = diagramFont;
+                                ctx.font = this.diagramFont;
                                 const txt = this.opnameToShortName(event.opname);
                                 const txtWidth = ctx.measureText(txt).width;
                                 ctx.fillText(
                                     txt,
                                     arrwStart_x + (arrwEnd_x - arrwStart_x - txtWidth) / 2,
-                                    eventEndPos_y - gridLineWidth - 3
+                                    eventEndPos_y - this.gridLineWidth - 3
                                 );
                             });
                         }
@@ -876,10 +891,10 @@ class CanvasGenerator {
                     (!prevEvent && LogEvent.isOperationKind(event.eventKind)))
             ) {
                 drawFuncs.push(() => {
-                    ctx.font = diagramFont;
+                    ctx.font = this.diagramFont;
                     const txtMeasure = ctx.measureText("Gg");
                     const txtHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
-                    const txtStart_x = currentRect.pos_x + eventWrapperHeight + txtHeight;
+                    const txtStart_x = currentRect.pos_x + this.eventWrapperHeight + txtHeight;
                     ctx.fillText(this.opnameToShortName(event.opname), txtStart_x, eventEndPos_y - (eventLength - txtHeight) / 2);
                 });
             }
@@ -890,7 +905,16 @@ class CanvasGenerator {
         // Generate draw functions for diagram lines between rects and the start of the diagram
         rects.forEach((rect) => {
             drawFuncs.push(() =>
-                this.drawLine(ctx, gridLineWidth, yAxisLinesDash, fontColor, rect.pos_x, rectsEnd_y, rect.pos_x, rectsEnd_y + margin)
+                this.drawLine(
+                    ctx,
+                    this.gridLineWidth,
+                    yAxisLinesDash,
+                    this.fontColor,
+                    rect.pos_x,
+                    rectsEnd_y,
+                    rect.pos_x,
+                    rectsEnd_y + margin
+                )
             );
         });
 
@@ -910,13 +934,46 @@ class CanvasGenerator {
      *
      */
 
+    updateDiagramStyling(
+        fontSize,
+        fontFamily,
+        declFont,
+        conjectureViolationFont,
+        diagramFont,
+        gridLineWidth,
+        eventLineWidth,
+        conjectureViolationMarkerWidth,
+        lineDashSize,
+        eventWrapperHeight,
+        fontColor,
+        conjectureViolationColor,
+        themeColors
+    ) {
+        // Reset cached draw functions as these are based on the prior styling
+        this.resetViewDataCache();
+        this.gridLineWidth = gridLineWidth;
+        this.eventLineWidth = eventLineWidth;
+        this.themeColors = themeColors;
+        this.fontColor = fontColor;
+        this.conjectureViolationColor = conjectureViolationColor;
+        // Properties that by default are relative to the above properties unless specified
+        this.conjectureViolationMarkerWidth =
+            conjectureViolationMarkerWidth == undefined ? gridLineWidth * 3 : conjectureViolationMarkerWidth;
+        this.lineDashSize = lineDashSize == undefined ? gridLineWidth * 0.7 : lineDashSize;
+        this.eventWrapperHeight = eventWrapperHeight == undefined ? eventLineWidth * 2 + eventLineWidth : eventWrapperHeight;
+        this.declFont = declFont == undefined ? `${fontSize * 1.5}px ${fontFamily}` : declFont;
+        this.conjectureViolationFont =
+            conjectureViolationFont == undefined ? `900 ${fontSize * 1.1}px ${fontFamily}` : conjectureViolationFont;
+        this.diagramFont = diagramFont == undefined ? `${fontSize}px ${fontFamily}` : diagramFont;
+    }
+
     postErrorCanvas(canvas, errMsg, msgId) {
         const ctx = canvas.getContext("2d");
-        ctx.font = declFont;
-        ctx.fillStyle = fontColor;
+        ctx.font = this.declFont;
+        ctx.fillStyle = this.fontColor;
         const txtMeasure = ctx.measureText(errMsg);
         const txtHeight = txtMeasure.actualBoundingBoxAscent + txtMeasure.actualBoundingBoxDescent;
-        ctx.fillText(errMsg, eventLineWidth, txtHeight + eventLineWidth * 2);
+        ctx.fillText(errMsg, this.eventLineWidth, txtHeight + this.eventLineWidth * 2);
         self.postMessage({
             msg: msgId,
             bitmap: canvas.transferToImageBitmap(),
@@ -929,7 +986,7 @@ class CanvasGenerator {
         const busDecls = [];
         let ctx = canvas.getContext("2d");
         this.execucionViewData.eventLength = this.calculateEventLength(ctx);
-        ctx.font = declFont;
+        ctx.font = this.declFont;
         const declTextMetrics = ctx.measureText("Gg");
         const declPadding_y = (declTextMetrics.fontBoundingBoxAscent + declTextMetrics.fontBoundingBoxDescent) * 2;
         const declPadding_x = declPadding_y / 4;
@@ -951,7 +1008,7 @@ class CanvasGenerator {
                 const newDecl = {};
                 newDecl.id = decl.id;
                 newDecl.events = [];
-                newDecl.pos_y = nextDeclPos_y - txtHeight / 2 + eventLineWidth;
+                newDecl.pos_y = nextDeclPos_y - txtHeight / 2 + this.eventLineWidth;
                 newDecl.pos_x = undefined;
                 newDecl.name = decl.name;
 
@@ -965,7 +1022,7 @@ class CanvasGenerator {
                 }
                 const declTextPos_y = nextDeclPos_y;
                 this.execucionViewData.declDrawFuncs.push((ctx) => {
-                    ctx.font = declFont;
+                    ctx.font = this.declFont;
                     ctx.fillText(decl.name, declPadding_x, declTextPos_y);
                 });
                 nextDeclPos_y += declPadding_y;
@@ -982,11 +1039,11 @@ class CanvasGenerator {
             declPadding_y / 2,
             nextDeclPos_y - declPadding_y / 2,
             ctx,
-            diagramFont,
-            gridLineWidth,
-            fontColor,
-            eventLineWidth,
-            eventWrapperHeight,
+            this.diagramFont,
+            this.gridLineWidth,
+            this.fontColor,
+            this.eventLineWidth,
+            this.eventWrapperHeight,
             this.execucionViewData.eventLength
         );
     }
@@ -1097,7 +1154,7 @@ class CanvasGenerator {
                     this.drawLine(
                         ctx,
                         gridLineWidth,
-                        [lineDashSize, lineDashSize * 4],
+                        [this.lineDashSize, this.lineDashSize * 4],
                         gridLineColor,
                         startPos_x,
                         gridStartPos_y,
@@ -1121,7 +1178,7 @@ class CanvasGenerator {
                 // Generate the draw functions for the line between events
                 if (decl != currentDecl) {
                     let color = gridLineColor;
-                    let lineDash = [lineDashSize, lineDashSize * 4];
+                    let lineDash = [this.lineDashSize, this.lineDashSize * 4];
                     let lineWidth = gridLineWidth;
                     const pos_y = decl.pos_y;
                     if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
@@ -1226,13 +1283,13 @@ class CanvasGenerator {
 
     generateConjectureViolationDrawFunc(midPos_y, midPos_x, conjectureViolationNames, ctx, radi) {
         const lineStart_y = midPos_y + radi;
-        const lineEnd_y = lineStart_y + eventLineWidth;
+        const lineEnd_y = lineStart_y + this.eventLineWidth;
         const drawFuncs = [
             (ctx, startPos_x) => {
                 const prevStrokeStyle = ctx.strokeStyle;
                 const prevLineWidth = ctx.lineWidth;
-                ctx.lineWidth = conjectureViolationMarkerWidth;
-                ctx.strokeStyle = conjectureViolationColor;
+                ctx.lineWidth = this.conjectureViolationMarkerWidth;
+                ctx.strokeStyle = this.conjectureViolationColor;
                 ctx.beginPath();
                 ctx.arc(startPos_x + midPos_x, midPos_y, radi, 0, 2 * Math.PI);
                 ctx.stroke();
@@ -1240,9 +1297,9 @@ class CanvasGenerator {
 
                 this.drawLine(
                     ctx,
-                    conjectureViolationMarkerWidth,
+                    this.conjectureViolationMarkerWidth,
                     [],
-                    conjectureViolationColor,
+                    this.conjectureViolationColor,
                     lineStart_x,
                     lineStart_y,
                     lineStart_x,
@@ -1252,7 +1309,7 @@ class CanvasGenerator {
                 ctx.lineWidth = prevLineWidth;
             },
         ];
-        let nextConjPos_y = lineEnd_y + gridLineWidth * 2;
+        let nextConjPos_y = lineEnd_y + this.gridLineWidth * 2;
         conjectureViolationNames.forEach((name) => {
             const pos_y = nextConjPos_y;
             const textMeasure = ctx.measureText(name);
@@ -1260,9 +1317,9 @@ class CanvasGenerator {
                 const prevFillStyle = ctx.fillStyle;
                 const prevLineWidth = ctx.lineWidth;
                 const prevFont = ctx.font;
-                ctx.lineWidth = conjectureViolationMarkerWidth;
-                ctx.fillStyle = conjectureViolationColor;
-                ctx.font = conjectureViolationFont;
+                ctx.lineWidth = this.conjectureViolationMarkerWidth;
+                ctx.fillStyle = this.conjectureViolationColor;
+                ctx.font = this.conjectureViolationFont;
                 ctx.fillText(
                     name,
                     startPos_x + midPos_x - textMeasure.width / 4,
@@ -1273,7 +1330,7 @@ class CanvasGenerator {
                 ctx.font = prevFont;
             });
 
-            nextConjPos_y += textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent + gridLineWidth * 2;
+            nextConjPos_y += textMeasure.actualBoundingBoxAscent + textMeasure.actualBoundingBoxDescent + this.gridLineWidth * 2;
         });
 
         return (ctx, startPos_x) => {
@@ -1369,7 +1426,7 @@ class CanvasGenerator {
     calculateEventLength(ctx) {
         // The event length is based on whatever is the widest of "9999" (to fit a high thread number) and any of the abbreviation of the event kinds.
         const prevFont = ctx.font;
-        ctx.font = diagramFont;
+        ctx.font = this.diagramFont;
         const threadIdMetrics = ctx.measureText("9999");
         const msgAbbMetrics = ctx.measureText(
             [...LogEvent.eventKindsToColors.keys()]
@@ -1378,7 +1435,9 @@ class CanvasGenerator {
         );
         const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
         ctx.font = prevFont;
-        return txtWidth + gridLineWidth * 2 > eventWrapperHeight * 2 ? txtWidth + gridLineWidth * 2 : eventWrapperHeight * 2;
+        return txtWidth + this.gridLineWidth * 2 > this.eventWrapperHeight * 2
+            ? txtWidth + this.gridLineWidth * 2
+            : this.eventWrapperHeight * 2;
     }
 
     opnameToShortName(opname) {
