@@ -127,9 +127,6 @@ window.addEventListener("message", (event) => {
         conjectures = event.data.conjectures;
         cpusWithEvents = event.data.cpusWithEvents;
 
-        // Set the font and theme settings in the diagram worker
-        updateFontAndColorsForDiagramWorker(event.data.scaleWithFont, event.data.matchTheme);
-
         // Trigger the initiate logic in the diagram worker
         const osCanvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
         diagramWorker.postMessage(
@@ -142,12 +139,16 @@ window.addEventListener("message", (event) => {
                 conjectures: conjectures,
                 canvas: osCanvas,
                 diagramSize: { width: Math.round(screen.width * 0.9), height: Math.round(screen.height * 0.9) },
+                styling: getFontsAndColors(event.data.fontSize, event.data.matchTheme),
             },
             [osCanvas]
         );
     } else if (event.data.cmd == settingsChangedMsg) {
-        // Check for changes to font and theme and update the settings in the diagram worker
-        updateFontAndColorsForDiagramWorker(event.data.scaleWithFont, event.data.matchTheme);
+        // Post updated font and size properties to the worker
+        diagramWorker.postMessage({
+            msg: settingsChangedMsg,
+            ...getFontsAndColors(event.data.fontSize, event.data.matchTheme),
+        });
     }
 
     // Set button colors
@@ -312,10 +313,11 @@ function getViewContainerHeight() {
     );
 }
 
-function updateFontAndColorsForDiagramWorker(scaleWithFont, matchTheme) {
+function getFontsAndColors(baseFontSize, matchTheme) {
     const computedStyle = getComputedStyle(document.body);
     // Update font properties
-    fontSize = scaleWithFont ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : 16;
+    baseFontSize =
+        baseFontSize == undefined ? Number(computedStyle.getPropertyValue("--vscode-editor-font-size").replace(/\D/g, "")) : baseFontSize;
     const fontFamily = computedStyle.getPropertyValue("--vscode-editor-font-family").trim();
     const fontColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-foreground").trim() : "#000000";
 
@@ -358,25 +360,18 @@ function updateFontAndColorsForDiagramWorker(scaleWithFont, matchTheme) {
     btnColors.secondaryBackground = computedStyle.getPropertyValue("--vscode-button-secondaryBackground").trim();
     btnColors.primaryForeground = computedStyle.getPropertyValue("--vscode-button-foreground").trim();
     btnColors.secondaryForeground = computedStyle.getPropertyValue("--vscode-button-secondaryForeground").trim();
-    const gridLineWidth = fontSize / 10 > 1 ? fontSize / 10 : 1;
+    const gridLineWidth = baseFontSize / 10 > 1 ? baseFontSize / 10 : 1;
     const eventLineWidth = gridLineWidth * 4;
 
-    // Post updated font and size properties to the worker
-    diagramWorker.postMessage({
-        msg: settingsChangedMsg,
-        lineDashSize: gridLineWidth * 0.7,
-        eventWrapperHeight: eventLineWidth * 2 + eventLineWidth,
-        conjectureViolationMarkerWidth: gridLineWidth * 3,
+    return {
         eventLineWidth: eventLineWidth,
         gridLineWidth: gridLineWidth,
-        conjectureViolationFont: `900 ${fontSize * 1.1}px ${fontFamily}`,
-        diagramFont: `${fontSize}px ${fontFamily}`,
-        declFont: `${fontSize * 1.5}px ${fontFamily}`,
         themeColors: themeColors,
         eventKindsToColors: eventKindsToColors,
         backgroundColor: backgroundColor,
         conjectureViolationColor: matchTheme ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointForeground").trim() : "#FF0000",
         fontColor: fontColor,
-        fontSize: fontSize,
-    });
+        fontSize: baseFontSize,
+        fontFamily: fontFamily,
+    };
 }

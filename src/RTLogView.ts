@@ -55,9 +55,16 @@ export class RTLogView extends AutoDisposable {
     private _panel: WebviewPanel;
     private _wsFolder: WorkspaceFolder = undefined;
     private _logName: string = "";
+
+    // Consts
+    private readonly _scaleSetting = "scaleWithEditorFont";
+    private readonly _matchSetting = "matchTheme";
+    private readonly _configIdentifier = "vdm-vscode.real-timeLogViewer";
+    private readonly _logFileExtension = ".rtlog";
     // These messages must match the names in the webview
     private readonly _settingsChangedMsg = "settingsChanged";
     private readonly _initMsg = "init";
+    private readonly _fontSetting = "fontSize";
 
     constructor(private readonly _context: ExtensionContext) {
         super();
@@ -73,7 +80,7 @@ export class RTLogView extends AutoDisposable {
         );
         this._disposables.push(
             workspace.onDidOpenTextDocument((doc: TextDocument) => {
-                if (doc.uri.fsPath.endsWith(".rtlog")) {
+                if (doc.uri.fsPath.endsWith(this._logFileExtension)) {
                     this._logName = Path.basename(doc.uri.fsPath).split(".")[0];
                     window
                         .showInformationMessage(`Open '${this._logName}' in log viewer?`, { modal: true }, ...["Open"])
@@ -119,14 +126,15 @@ export class RTLogView extends AutoDisposable {
             (event.affectsConfiguration("editor.fontFamily") ||
                 event.affectsConfiguration("editor.fontSize") ||
                 event.affectsConfiguration("workbench.colorTheme") ||
-                event.affectsConfiguration("vdm-vscode.real-timeLogViewer.scaleWithFont") ||
-                event.affectsConfiguration("vdm-vscode.real-timeLogViewer.matchTheme"))
+                event.affectsConfiguration(`${this._configIdentifier}.${this._scaleSetting}`) ||
+                event.affectsConfiguration(`${this._configIdentifier}.${this._matchSetting}`) ||
+                event.affectsConfiguration(`${this._configIdentifier}.${this._fontSetting}`))
         ) {
-            const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);
+            const config = workspace.getConfiguration(this._configIdentifier, this._wsFolder);
             this._panel.webview.postMessage({
                 cmd: this._settingsChangedMsg,
-                scaleWithFont: config.get("scaleWithFont"),
-                matchTheme: config.get("matchTheme"),
+                fontSize: config.get(this._scaleSetting) == false ? config.get(this._fontSetting) : undefined,
+                matchTheme: config.get(this._matchSetting),
             });
         }
     }
@@ -390,14 +398,14 @@ export class RTLogView extends AutoDisposable {
             async (cmd: string) => {
                 const returnObj: any = { cmd: cmd };
                 if (cmd == this._initMsg) {
-                    const config = workspace.getConfiguration("vdm-vscode.real-timeLogViewer", this._wsFolder);
+                    const config = workspace.getConfiguration(this._configIdentifier, this._wsFolder);
                     returnObj.busDecls = busDecls;
                     returnObj.cpuDecls = cpuDecls;
                     returnObj.executionEvents = executionEvents;
                     returnObj.cpusWithEvents = cpusWithEvents;
                     returnObj.timestamps = timestamps;
-                    returnObj.scaleWithFont = config.get("scaleWithFont");
-                    returnObj.matchTheme = config.get("matchTheme");
+                    returnObj.fontSize = config.get(this._scaleSetting) == false ? config.get(this._fontSetting) : undefined;
+                    returnObj.matchTheme = config.get(this._matchSetting);
                     returnObj.conjectures = conjectures;
                 }
 
@@ -421,6 +429,9 @@ export class RTLogView extends AutoDisposable {
         <html lang="en">
         <head>
             <meta charset="UTF-8">
+            <meta http-equiv="Content-Security-Policy" content="style-src ${
+                webview.cspSource
+            }; script-src 'strict-dynamic' 'nonce-${scriptNonce}';">
             <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
         </head>

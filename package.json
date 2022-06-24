@@ -1039,17 +1039,23 @@
                         "scope": "resource",
                         "description": "Path to VDMTools for VDM-SL."
                     },
-                    "vdm-vscode.real-timeLogViewer.scaleWithFont": {
+                    "vdm-vscode.real-timeLogViewer.scaleWithEditorFont": {
                         "type": "boolean",
                         "default": true,
                         "scope": "resource",
-                        "description": "Enable scaling of the view relative to the font size"
+                        "description": "Enable scaling of the view relative to the current font size of the editor"
                     },
                     "vdm-vscode.real-timeLogViewer.matchTheme": {
                         "type": "boolean",
                         "default": true,
                         "scope": "resource",
-                        "description": "Enable view colors to match the selected theme"
+                        "description": "Enable colours of the view to match the current theme of the editor"
+                    },
+                    "vdm-vscode.real-timeLogViewer.fontSize": {
+                        "type": "number",
+                        "default": 15,
+                        "scope": "resource",
+                        "description": "Font size to use for the relative scaling of elements in the diagram. Only used if `#vdm-vscode.other.real-timeLogViewer.scaleWithEditorFont#` is disabled"
                     }
                 }
             },
