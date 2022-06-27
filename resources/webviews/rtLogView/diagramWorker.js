@@ -90,6 +90,33 @@ class DiagramGenerator {
         this.conjectureViolationFont;
         this.diagramFont;
 
+        // A canvas with a total area larger than 268435456 and/or wider/higher than 65535 cannot be displayed in VSCode.
+        //However, the context of a web worker on windows seems to be based on IE 11 where the max area size is 67108864 and max width/height is 16384
+        this.canvasMaxArea = 67108864;
+        this.canvasMaxSize = 16384;
+        this.opnameIdentifier = "opname";
+
+        // Keep state for the execution view. This includes the draw functions so these does not have to be recalculated each time.
+        this.execucionViewData = {
+            declDrawFuncs: [],
+            gridDrawFuncs: [],
+            gridStartPos_x: undefined,
+            eventLength: undefined,
+            conjectureViolationTable: undefined,
+        };
+
+        // Keep state for the CPU views. This includes the start times to canvas states so these does not have to be recalculated each time.
+        this.cpuViewData = new Map();
+        cpusWithEvents.forEach((cwe) => {
+            this.cpuViewData.set(cwe.id + "", {
+                startTimesToCanvasStates: new Map(),
+                executionEvents: cwe.executionEvents,
+            });
+        });
+
+        // Screen diagram size is used to keep the size of the cpu view within a reasonable size of the users screen.
+        this.diagramSize = diagramSize;
+
         this.updateDiagramStyling(
             styling.fontSize,
             styling.fontFamily,
@@ -106,32 +133,7 @@ class DiagramGenerator {
             styling.themeColors
         );
 
-        // A canvas with a total area larger than 268435456 and/or wider/higher than 65535 cannot be displayed in VSCode.
-        //However, the context of a web worker on windows seems to be based on IE 11 where the max area size is 67108864 and max width/height is 16384
-        this.canvasMaxArea = 67108864;
-        this.canvasMaxSize = 16384;
-        this.opnameIdentifier = "opname";
-
-        // Keep state for the execution view. This includes the draw functions so these does not have to be recalculated each time.
-        this.execucionViewData = {
-            declDrawFuncs: [],
-            gridDrawFuncs: [],
-            gridStartPos_x: undefined,
-            eventLength: undefined,
-            conjectureViolationTable: undefined,
-        };
-        this.cpuViewData = new Map();
-        cpusWithEvents.forEach((cwe) => {
-            this.cpuViewData.set(cwe.id + "", {
-                startTimesToEndTimes: new Map(),
-                executionEvents: cwe.executionEvents,
-            });
-        });
-
-        // Screen diagram size is used to keep the size of the cpu view within a reasonable size of the users screen.
-        this.diagramSize = diagramSize;
-
-        //this.generateExecutionViewData(this.defaultCanvas);
+        this.generateExecutionViewData(this.defaultCanvas);
     }
 
     resetViewDataCache() {
@@ -142,6 +144,10 @@ class DiagramGenerator {
             eventLength: undefined,
             conjectureViolationTable: undefined,
         };
+
+        for (const value of this.cpuViewData.values()) {
+            value.startTimesToCanvasStates = new Map();
+        }
     }
 
     drawArchCanvas(canvas) {
@@ -419,7 +425,7 @@ class DiagramGenerator {
         let diagramHeight = currentEventPos_y + eventLength;
         let diagramWidth = axisStart_x;
         const rectsEnd_y = txtHeight + padding + margin;
-        const rollback = { eventsIndex: 0, rects: [], diagramWidth: 0, diagramHeight: 0, time: undefined };
+        const rollback = { lastEventIndex: 0, rects: [], diagramWidth: 0, diagramHeight: 0, time: undefined };
         let diagramSizeExceededTimestamp;
         // Find which obj refs (rects) needs to be displayed and which events for the given time. To properly display this it needs to be calculated from the beginning.
         for (let i = 0; i < executionEvents.length; i++) {
@@ -519,10 +525,11 @@ class DiagramGenerator {
                 }
             }
 
-            // Associate rectangle id with a rectangle name
-            const rectId = isBusEvent ? this.busDeclEvents.find((bde) => bde.id == event.busid).name : cpuRectId;
+            // Associate rectangle id with a rectangle name so that it can be used later for events past the start time.
+            const bus = isBusEvent ? this.busDeclEvents.find((bde) => bde.id == event.busid) : undefined;
+            const rectId = bus ? `${bus.name}_${bus.id}` : cpuRectId;
             if (!rectIdToRectName.find((ritrn) => ritrn.id == rectId)) {
-                rectIdToRectName.push({ id: rectId, name: !isBusEvent ? event.clnm + `(${rectId})` : rectId });
+                rectIdToRectName.push({ id: rectId, name: !bus ? event.clnm + `(${rectId})` : bus.name });
             }
             // Associate the event with the rectangle id
             event.rectId = rectId;
@@ -530,6 +537,7 @@ class DiagramGenerator {
             // Only generate draw functions for the events from the chosen start time
             if (Number(event.time) >= startTime) {
                 if (i > 0 && executionEvents[i - 1].time < event.time) {
+                    // Save the previous state of the canvas so that it can be restored if the current time stamp exceeds the canvas size
                     rollback.rects = [
                         ...rects.map((rect) => ({
                             name: rect.name,
@@ -544,7 +552,7 @@ class DiagramGenerator {
                             startPos_x: rect.startPos_x,
                         })),
                     ];
-                    rollback.eventsIndex = eventsToDraw.length - 1;
+                    rollback.lastEventIndex = eventsToDraw.length - 1;
                     rollback.diagramWidth = diagramWidth;
                     rollback.diagramHeight = diagramHeight;
                     rollback.time = executionEvents[i - 1].time;
@@ -606,7 +614,7 @@ class DiagramGenerator {
                         let targetRect;
 
                         if (prevEvent.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in prevEvent) {
-                            targetRect = rects.find((rect) => rect.rectId == event.rectId);
+                            targetRect = rects.find((rect) => rect.rectId == prevEvent.objref);
                         } else if (prevEvent.eventKind == LogEvent.messageRequest) {
                             targetRect = rects.find((rect) => rect.rectId == eventsToDraw[eventsToDraw.length - 2].rectId);
                         } else if (
@@ -663,9 +671,9 @@ class DiagramGenerator {
                 // If it does then rollback to the previous timestamp
                 let existingRollbackForTimestamp =
                     rollback.time != undefined &&
-                    viewData.startTimesToEndTimes.has(startTime) &&
-                    viewData.startTimesToEndTimes.get(startTime).time == rollback.time
-                        ? viewData.startTimesToEndTimes.get(startTime)
+                    viewData.startTimesToCanvasStates.has(startTime) &&
+                    viewData.startTimesToCanvasStates.get(startTime).time == rollback.time
+                        ? viewData.startTimesToCanvasStates.get(startTime)
                         : undefined;
 
                 const rollbackExceedsDiagramSize =
@@ -683,7 +691,7 @@ class DiagramGenerator {
                     (rollback.time != undefined && rollback.time >= startTime && rollbackExceedsDiagramSize)
                 ) {
                     if (!existingRollbackForTimestamp) {
-                        viewData.startTimesToEndTimes.set(startTime, rollback);
+                        viewData.startTimesToCanvasStates.set(startTime, rollback);
                         existingRollbackForTimestamp = rollback;
                     }
 
@@ -694,12 +702,13 @@ class DiagramGenerator {
                         } else {
                             // Temporary mitigation is to call the drawCpuCanvas again but disable margins between obj deployments and let opnames clash to attempt to fit the events within the canvas size restricitons.
                             this.drawCpuCanvas(canvas, startTime, msg, true);
+                            console.log("Disabling margins!");
                         }
                         return;
                     }
-
+                    console.log("Rollbacking to previous timestamp!");
                     // Rollback
-                    eventsToDraw.splice(existingRollbackForTimestamp.eventsIndex + 1);
+                    eventsToDraw.splice(existingRollbackForTimestamp.lastEventIndex + 1);
                     diagramSizeExceededTimestamp = existingRollbackForTimestamp.time;
                     rects.splice(0);
                     existingRollbackForTimestamp.rects.forEach((rect) => rects.push(rect));

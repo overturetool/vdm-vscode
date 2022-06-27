@@ -14,6 +14,9 @@ instance variables
   BUS1 : BUS := new BUS (<CSMACD>, 72E3, {CPU1, CPU2, CPU3})
 
 operations
+  /* timing invariants*/
+  --@Separate(#fin(MMI`UpdateScreen), nil, #fin(MMI`UpdateScreen), 500000000, false)
+
   public RadNavSys: () ==> RadNavSys
   RadNavSys () ==
     ( -- deploy mmi on CPU1
@@ -31,9 +34,5 @@ operations
       CPU3.setPriority(Navigation`DecodeTMC, 90)
       -- starting the CPUs and BUS is implicit
     );
-    
-/* timing invariants
-separate(#fin(MMI`UpdateScreen), #fin(MMI`UpdateScreen), 500 ms);
-*/
-
+   
 end RadNavSys
