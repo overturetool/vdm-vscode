@@ -9,16 +9,6 @@ const settingsChangedMsg = "settingsChanged";
 
 let diagramGenerator;
 
-function updateEventKindColors(eventKindsToColors) {
-    if (eventKindsToColors) {
-        LogEvent.eventKindsToColors = new Map([...LogEvent.eventKindsToColors, ...eventKindsToColors]);
-    } else {
-        for (const key of LogEvent.eventKindsToColors.keys()) {
-            LogEvent.eventKindsToColors.set(key, LogEvent.kindToStandardColor(key));
-        }
-    }
-}
-
 // Handle messages
 self.onmessage = function (e) {
     const msg = e.data.msg;
@@ -32,14 +22,12 @@ self.onmessage = function (e) {
             e.data.conjectures,
             e.data.canvas,
             e.data.diagramSize,
-            e.data.styling
+            e.data.styling,
+            e.data.logEvents
         );
-        updateEventKindColors(e.data.styling.eventKindsToColors);
     } else if (msg == archViewId) {
         diagramGenerator.drawArchCanvas(e.data.canvas);
     } else if (msg == settingsChangedMsg) {
-        updateEventKindColors(e.data.eventKindsToColors);
-
         diagramGenerator.updateDiagramStyling(
             e.data.fontSize,
             e.data.fontFamily,
@@ -54,7 +42,8 @@ self.onmessage = function (e) {
             e.data.fontColor,
             e.data.conjectureViolationColor,
             e.data.themeColors,
-            e.data.backgroundColor
+            e.data.backgroundColor,
+            e.data.eventKindsToColors
         );
     } else if (msg == execViewId) {
         diagramGenerator.drawExecutionCanvas(e.data.canvas, e.data.startTime);
@@ -67,13 +56,16 @@ self.onmessage = function (e) {
 
 // Class for generating diagrams as canvas
 class DiagramGenerator {
-    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, diagramSize, styling) {
+    constructor(cpuDeclEvents, busDeclEvents, executionEvents, cpusWithEvents, conjectures, canvas, diagramSize, styling, logEvents) {
         // Log data
         this.cpuDeclEvents = cpuDeclEvents;
         this.busDeclEvents = busDeclEvents;
         this.executionEvents = executionEvents;
         this.conjectures = conjectures;
         this.cpusWithEvents = cpusWithEvents;
+        this.logEvents = logEvents;
+
+        this.eventKinds = Object.values(this.logEvents);
 
         this.defaultCanvas = canvas;
         // A canvas with a total area larger than 268435456 and/or wider/higher than 65535 cannot be displayed in VSCode.
@@ -116,7 +108,7 @@ class DiagramGenerator {
         this.conjectureViolationFont;
         this.diagramFont;
         this.backgroundColor;
-
+        this.eventKindsToColors;
         this.updateDiagramStyling(
             styling.fontSize,
             styling.fontFamily,
@@ -131,7 +123,8 @@ class DiagramGenerator {
             styling.fontColor,
             styling.conjectureViolationColor,
             styling.themeColors,
-            styling.backgroundColor
+            styling.backgroundColor,
+            styling.eventKindsToColors
         );
 
         this.generateExecutionViewData(this.defaultCanvas);
@@ -272,13 +265,13 @@ class DiagramGenerator {
         legendCtx.font = this.diagramFont;
         let nextLegendElementPos_y = eventLength * 1.5;
         const drawFuncs = [];
-        const eventKinds = [...LogEvent.eventKindsToColors.keys()];
-        const firstTxtMetrics = legendCtx.measureText(eventKinds[0]);
+        const firstTxtMetrics = legendCtx.measureText(this.eventKinds[0]);
 
         const txtHeight = firstTxtMetrics.fontBoundingBoxAscent + firstTxtMetrics.fontBoundingBoxDescent;
         let maxTxtWidth = firstTxtMetrics.width;
         // Add draw function for the event kinds
-        eventKinds
+        this.eventKinds
+            .filter((ek) => ek != this.logEvents.cpuDecl && ek != this.logEvents.busDecl && ek != this.logEvents.deployObj)
             .sort((a, b) => a.localeCompare(b))
             .forEach((eventKind) => {
                 const txt = eventKind.replace(/([A-Z])/g, " $1").trim();
@@ -290,7 +283,7 @@ class DiagramGenerator {
                         this.gridLineWidth,
                         this.eventLineWidth,
                         this.eventWrapperHeight,
-                        LogEvent.isThreadKind(eventKind) ? undefined : LogEvent.kindToAbb(eventKind),
+                        this.isThreadKind(eventKind) ? undefined : this.kindToAbb(eventKind),
                         eventKind,
                         elementPadding,
                         elementPos_y,
@@ -389,7 +382,7 @@ class DiagramGenerator {
         this.execucionViewData.declDrawFuncs.forEach((func) => func(diagramCtx));
         drawFunctions.forEach((func) => func(diagramCtx));
 
-        this.returnCanvas(execViewId, canvas, {exceedTime: timeOfExceededSize});
+        this.returnCanvas(execViewId, canvas, { exceedTime: timeOfExceededSize });
     }
 
     drawCpuCanvas(canvas, startTime, viewId, disableMargins) {
@@ -431,28 +424,28 @@ class DiagramGenerator {
         for (let i = 0; i < executionEvents.length; i++) {
             const event = executionEvents[i];
             // We need to keep track of all OpActive events to later draw correct event arrows
-            if (event.eventKind == LogEvent.opActivate) {
+            if (event.eventKind == this.logEvents.opActivate) {
                 opActiveEvents.unshift(event);
             }
             traversedEvents.push(event);
-            const isBusEvent = LogEvent.isBusKind(event.eventKind);
+            const isBusEvent = this.isBusKind(event.eventKind);
             let opComplete;
             if (!isBusEvent) {
-                const thread = LogEvent.threadCreate != event.eventKind ? threads.find((at) => at.id == event.id) : undefined;
+                const thread = this.logEvents.threadCreate != event.eventKind ? threads.find((at) => at.id == event.id) : undefined;
                 if (thread) {
-                    if (LogEvent.threadKill == event.eventKind) {
+                    if (this.logEvents.threadKill == event.eventKind) {
                         threads.splice(threads.indexOf(thread), 1);
-                    } else if (event.eventKind == LogEvent.opActivate) {
+                    } else if (event.eventKind == this.logEvents.opActivate) {
                         thread.prevRectIds.push(thread.currentRectId);
                         thread.currentRectId = event.objref;
-                    } else if (event.eventKind == LogEvent.opCompleted) {
+                    } else if (event.eventKind == this.logEvents.opCompleted) {
                         thread.currentRectId = thread.prevRectIds.length > 0 ? thread.prevRectIds.pop() : thread.currentRectId;
                     }
                 }
 
                 cpuRectId = thread
                     ? thread.currentRectId
-                    : LogEvent.threadKill == event.eventKind
+                    : this.logEvents.threadKill == event.eventKind
                     ? i == 0
                         ? executionEvents[i].rectId
                         : executionEvents[i - 1].rectId
@@ -461,15 +454,15 @@ class DiagramGenerator {
                 if (!thread) {
                     threads.push({ id: event.id, currentRectId: cpuRectId, prevRectIds: [] });
                 }
-            } else if (event.eventKind == LogEvent.messageCompleted) {
+            } else if (event.eventKind == this.logEvents.messageCompleted) {
                 if (!(this.opnameIdentifier in event)) {
                     // Look back through the traversed events
                     for (let ind = traversedEvents.length - 1; ind >= 0; ind--) {
                         const prevEvent = traversedEvents[ind];
-                        if (ind - 1 > 0 && prevEvent.eventKind == LogEvent.messageRequest && prevEvent.callthr == event.callthr) {
+                        if (ind - 1 > 0 && prevEvent.eventKind == this.logEvents.messageRequest && prevEvent.callthr == event.callthr) {
                             // An op complete event needs to be inserted
                             opComplete = {
-                                eventKind: LogEvent.opCompleted,
+                                eventKind: this.logEvents.opCompleted,
                                 id: traversedEvents[ind - 1].id,
                                 opname: traversedEvents[ind - 1].opname,
                                 objref: traversedEvents[ind - 2].objref,
@@ -490,10 +483,10 @@ class DiagramGenerator {
                         for (let ind = i; ind < executionEvents.length; ind++) {
                             const nextEvent = executionEvents[ind];
                             if (
-                                (nextEvent.eventKind == LogEvent.threadSwapIn ||
-                                    nextEvent.eventKind == LogEvent.threadCreate ||
-                                    nextEvent.eventKind == LogEvent.opActivate ||
-                                    nextEvent.eventKind == LogEvent.opCompleted) &&
+                                (nextEvent.eventKind == this.logEvents.threadSwapIn ||
+                                    nextEvent.eventKind == this.logEvents.threadCreate ||
+                                    nextEvent.eventKind == this.logEvents.opActivate ||
+                                    nextEvent.eventKind == this.logEvents.opCompleted) &&
                                 nextEvent.id == event.callthr
                             ) {
                                 targetEvent = nextEvent;
@@ -503,7 +496,7 @@ class DiagramGenerator {
                         if (targetEvent) {
                             event.objref = targetEvent.objref;
                             opComplete = {
-                                eventKind: LogEvent.opCompleted,
+                                eventKind: this.logEvents.opCompleted,
                                 id: event.callthr,
                                 opname: "",
                                 objref: targetEvent.objref,
@@ -607,22 +600,22 @@ class DiagramGenerator {
                     const prevEvent = eventsToDraw.length > 0 ? eventsToDraw[eventsToDraw.length - 2] : undefined;
                     if (
                         eventsToDraw.length > 1 &&
-                        (LogEvent.isOperationKind(prevEvent.eventKind) ||
-                            (prevEvent.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in prevEvent) ||
-                            prevEvent.eventKind == LogEvent.messageRequest)
+                        (this.isOperationKind(prevEvent.eventKind) ||
+                            (prevEvent.eventKind == this.logEvents.messageCompleted && this.opnameIdentifier in prevEvent) ||
+                            prevEvent.eventKind == this.logEvents.messageRequest)
                     ) {
                         let targetRect;
 
-                        if (prevEvent.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in prevEvent) {
+                        if (prevEvent.eventKind == this.logEvents.messageCompleted && this.opnameIdentifier in prevEvent) {
                             targetRect = rects.find((rect) => rect.rectId == prevEvent.objref);
-                        } else if (prevEvent.eventKind == LogEvent.messageRequest) {
+                        } else if (prevEvent.eventKind == this.logEvents.messageRequest) {
                             targetRect = rects.find((rect) => rect.rectId == eventsToDraw[eventsToDraw.length - 2].rectId);
                         } else if (
-                            prevEvent.eventKind != LogEvent.opRequest &&
+                            prevEvent.eventKind != this.logEvents.opRequest &&
                             (!(this.opnameIdentifier in eventsToDraw[eventsToDraw.length - 2]) || prevEvent.opname != prevEvent.opname)
                         ) {
                             targetRect = rects.find((rect) => rect.rectId == prevEvent.rectId);
-                        } else if (prevEvent.eventKind == LogEvent.opRequest) {
+                        } else if (prevEvent.eventKind == this.logEvents.opRequest) {
                             targetRect = rects.find(
                                 (rect) => rect.rectId == (event.rectId != prevEvent.rectId ? event.rectId : prevEvent.rectId)
                             );
@@ -792,7 +785,7 @@ class DiagramGenerator {
                     this.gridLineWidth,
                     this.eventLineWidth,
                     this.eventWrapperHeight,
-                    LogEvent.isThreadKind(event.eventKind) ? event.id : LogEvent.kindToAbb(event.eventKind),
+                    this.isThreadKind(event.eventKind) ? event.id : this.kindToAbb(event.eventKind),
                     event.eventKind,
                     0,
                     0,
@@ -808,30 +801,30 @@ class DiagramGenerator {
             let eventHasArrowWithTxt = false;
             if (nextEvent) {
                 let targetRect = undefined;
-                let targetRectId = nextEvent.eventKind == LogEvent.replyRequest ? nextEvent.rectId : undefined;
-                if (!targetRectId && !(event.rectId == nextEvent.rectId && LogEvent.isOperationKind(nextEvent.eventKind))) {
+                let targetRectId = nextEvent.eventKind == this.logEvents.replyRequest ? nextEvent.rectId : undefined;
+                if (!targetRectId && !(event.rectId == nextEvent.rectId && this.isOperationKind(nextEvent.eventKind))) {
                     // Find the target for the event i.e. an event on another rect.
                     targetRect =
-                        event.eventKind == LogEvent.opRequest
+                        event.eventKind == this.logEvents.opRequest
                             ? eventsToDraw
                                   .slice(i + 1, eventsToDraw.length)
                                   .find(
                                       (eve) =>
-                                          (eve.eventKind == LogEvent.opActivate || eve.eventKind == LogEvent.messageRequest) &&
+                                          (eve.eventKind == this.logEvents.opActivate || eve.eventKind == this.logEvents.messageRequest) &&
                                           event.objref == eve.objref
                                   )
-                            : event.eventKind == LogEvent.opActivate && LogEvent.isOperationKind(nextEvent.eventKind)
+                            : event.eventKind == this.logEvents.opActivate && this.isOperationKind(nextEvent.eventKind)
                             ? eventsToDraw
                                   .slice(i + 1, eventsToDraw.length)
-                                  .find((eve) => eve.eventKind == LogEvent.opCompleted && event.opname == eve.opname)
-                            : event.eventKind == LogEvent.opCompleted && nextEvent.eventKind == LogEvent.opCompleted
+                                  .find((eve) => eve.eventKind == this.logEvents.opCompleted && event.opname == eve.opname)
+                            : event.eventKind == this.logEvents.opCompleted && nextEvent.eventKind == this.logEvents.opCompleted
                             ? (() => {
                                   return opActiveEvents.find((eve) => eve.opname == nextEvent.opname && eve.rectId == event.rectId)
                                       ? rects.find((rect) => nextEvent.rectId == rect.rectId)
                                       : undefined;
                               }).apply()
                             : undefined;
-                    if (targetRect && event.eventKind == LogEvent.opActivate && targetRect.rectId != nextEvent.rectId) {
+                    if (targetRect && event.eventKind == this.logEvents.opActivate && targetRect.rectId != nextEvent.rectId) {
                         targetRect = undefined;
                     }
 
@@ -839,10 +832,10 @@ class DiagramGenerator {
                 }
 
                 // If there is a target for the event then draw the arrow
-                if ((targetRectId && targetRectId != event.rectId) || event.eventKind == LogEvent.messageCompleted) {
+                if ((targetRectId && targetRectId != event.rectId) || event.eventKind == this.logEvents.messageCompleted) {
                     const isReplyArrow =
-                        !(event.eventKind == LogEvent.messageCompleted && this.opnameIdentifier in event) &&
-                        event.eventKind != LogEvent.opRequest;
+                        !(event.eventKind == this.logEvents.messageCompleted && this.opnameIdentifier in event) &&
+                        event.eventKind != this.logEvents.opRequest;
 
                     const nextRect = rects.find(
                         (rect) => rect.rectId == (targetRectId ? targetRectId : isReplyArrow ? nextEvent.rectId : event.objref)
@@ -871,7 +864,7 @@ class DiagramGenerator {
                         });
 
                         // If the arrow is not a reply arrow then draw the opname of the event on the arrow
-                        if (!isReplyArrow && nextEvent.eventKind != LogEvent.replyRequest) {
+                        if (!isReplyArrow && nextEvent.eventKind != this.logEvents.replyRequest) {
                             eventHasArrowWithTxt = true;
                             drawFuncs.push(() => {
                                 ctx.font = this.diagramFont;
@@ -892,10 +885,10 @@ class DiagramGenerator {
             if (
                 !eventHasArrowWithTxt &&
                 ((prevEvent &&
-                    ((event.eventKind == LogEvent.opCompleted && prevEvent.opname != event.opname) ||
-                        (LogEvent.isOperationKind(event.eventKind) &&
-                            !(LogEvent.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))) ||
-                    (!prevEvent && LogEvent.isOperationKind(event.eventKind)))
+                    ((event.eventKind == this.logEvents.opCompleted && prevEvent.opname != event.opname) ||
+                        (this.isOperationKind(event.eventKind) &&
+                            !(this.isOperationKind(prevEvent.eventKind) && prevEvent.opname == event.opname)))) ||
+                    (!prevEvent && this.isOperationKind(event.eventKind)))
             ) {
                 drawFuncs.push(() => {
                     ctx.font = this.diagramFont;
@@ -932,7 +925,7 @@ class DiagramGenerator {
         // Draw on canvas
         drawFuncs.forEach((drawFunc) => drawFunc());
 
-        this.returnCanvas(viewId, canvas,{exceedTime: diagramSizeExceededTimestamp});
+        this.returnCanvas(viewId, canvas, { exceedTime: diagramSizeExceededTimestamp });
     }
 
     /**
@@ -945,17 +938,12 @@ class DiagramGenerator {
         const ctx = canvas.getContext("2d");
         // Color in the background as a rectangle as the canvas.style.background css property sometimes doesn't work on Linux
         ctx.fillStyle = this.backgroundColor;
-        ctx.globalCompositeOperation = 'destination-over';
-        ctx.fillRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-        ctx.globalCompositeOperation = 'source-over';
-        let returnObj = { msg: viewId, bitmap: canvas.transferToImageBitmap()};
-        if(properties) {
-            returnObj = {...returnObj, ...properties};
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = "source-over";
+        let returnObj = { msg: viewId, bitmap: canvas.transferToImageBitmap() };
+        if (properties) {
+            returnObj = { ...returnObj, ...properties };
         }
         self.postMessage(returnObj);
     }
@@ -974,27 +962,19 @@ class DiagramGenerator {
         fontColor,
         conjectureViolationColor,
         themeColors,
-        backgroundColor
+        backgroundColor,
+        eventKindsToColors
     ) {
         // Reset cached draw functions as these are based on the prior styling
         this.resetViewDataCache();
 
-        if (!themeColors) {
-            this.themeColors = ["#000000"];
-            for (const color of LogEvent.eventKindsToColors.values()) {
-                this.themeColors.push(color);
-            }
-        } else {
-            this.themeColors = themeColors;
-        }
-
-
         this.gridLineWidth = gridLineWidth;
         this.eventLineWidth = eventLineWidth;
-
+        this.themeColors = themeColors;
         this.fontColor = fontColor;
         this.conjectureViolationColor = conjectureViolationColor;
         this.backgroundColor = backgroundColor;
+        this.eventKindsToColors = eventKindsToColors;
         // Properties that by default are relative to the above properties unless specified
         this.conjectureViolationMarkerWidth =
             conjectureViolationMarkerWidth == undefined ? gridLineWidth * 3 : conjectureViolationMarkerWidth;
@@ -1051,7 +1031,7 @@ class DiagramGenerator {
                 newDecl.pos_x = undefined;
                 newDecl.name = decl.name;
 
-                if (decl.eventKind == LogEvent.busDecl) {
+                if (decl.eventKind == this.logEvents.busDecl) {
                     newDecl.fromcpu = undefined;
                     newDecl.tocpu = undefined;
                     busDecls.push(newDecl);
@@ -1113,11 +1093,11 @@ class DiagramGenerator {
             const drawFuncs = [];
             const event = executionEvents[index];
             const eventKind = event.eventKind;
-            const isBusEvent = LogEvent.isBusKind(eventKind);
+            const isBusEvent = this.isBusKind(eventKind);
             // Find the current decl
             let currentDecl;
             if (isBusEvent) {
-                if (eventKind != LogEvent.messageRequest && eventKind != LogEvent.replyRequest) {
+                if (eventKind != this.logEvents.messageRequest && eventKind != this.logEvents.replyRequest) {
                     currentDecl = currentBusDecl ? currentBusDecl : busDecls.find((busDecl) => busDecl.id == event.busid);
                 } else {
                     // Keep track of the current bus decl
@@ -1133,12 +1113,12 @@ class DiagramGenerator {
             currentDecl.isCpuDecl = !isBusEvent;
 
             // Look behind and find the decl for which the message complete is a reply to
-            if (index > 1 && executionEvents[index - 1].eventKind == LogEvent.messageCompleted) {
+            if (index > 1 && executionEvents[index - 1].eventKind == this.logEvents.messageCompleted) {
                 const events = executionEvents.slice(0, index - 1);
                 for (let i = events.length - 1; i >= 0; i--) {
                     const prevEvent = events[i];
-                    if (prevEvent.eventKind == LogEvent.messageRequest || prevEvent.eventKind == LogEvent.replyRequest) {
-                        if (prevEvent.eventKind == LogEvent.replyRequest && prevEvent.busid == currentBusDecl.id) {
+                    if (prevEvent.eventKind == this.logEvents.messageRequest || prevEvent.eventKind == this.logEvents.replyRequest) {
+                        if (prevEvent.eventKind == this.logEvents.replyRequest && prevEvent.busid == currentBusDecl.id) {
                             const declWithOp = cpuDecls.find((cpuDecl) => cpuDecl.id == prevEvent.tocpu);
                             if (declWithOp && declWithOp.activeThreads) {
                                 const activeThread = declWithOp.activeThreads.find((at) => prevEvent.callthr == at.id);
@@ -1152,23 +1132,23 @@ class DiagramGenerator {
                 }
             }
 
-            if (eventKind == LogEvent.opRequest && event.async == false && index + 1 < executionEvents.length) {
+            if (eventKind == this.logEvents.opRequest && event.async == false && index + 1 < executionEvents.length) {
                 if (!currentDecl.activeThreads) {
                     currentDecl.activeThreads = [];
                 }
                 const activeThread = currentDecl.activeThreads.find((at) => at.id == event.id);
                 if (activeThread) {
-                    activeThread.suspended = executionEvents[index + 1].eventKind == LogEvent.messageRequest;
+                    activeThread.suspended = executionEvents[index + 1].eventKind == this.logEvents.messageRequest;
                 } else {
                     currentDecl.activeThreads.push({
-                        eventKind: LogEvent.threadSwapIn,
+                        eventKind: this.logEvents.threadSwapIn,
                         id: event.id,
-                        suspended: executionEvents[index + 1].eventKind == LogEvent.messageRequest,
+                        suspended: executionEvents[index + 1].eventKind == this.logEvents.messageRequest,
                     });
                 }
-            } else if (LogEvent.isThreadSwapKind(eventKind)) {
+            } else if (this.isThreadSwapKind(eventKind)) {
                 if (currentDecl.activeThreads) {
-                    if (eventKind == LogEvent.threadSwapOut) {
+                    if (eventKind == this.logEvents.threadSwapOut) {
                         currentDecl.activeThreads.splice(
                             currentDecl.activeThreads.indexOf(currentDecl.activeThreads.find((at) => at.id == event.id)),
                             1
@@ -1178,7 +1158,7 @@ class DiagramGenerator {
                     }
                 } else {
                     currentDecl.activeThreads =
-                        eventKind == LogEvent.threadSwapIn || eventKind == LogEvent.delayedThreadSwapIn ? [event] : [];
+                        eventKind == this.logEvents.threadSwapIn || eventKind == this.logEvents.delayedThreadSwapIn ? [event] : [];
                 }
             }
 
@@ -1223,7 +1203,7 @@ class DiagramGenerator {
                     if (decl.isCpuDecl == true && decl.activeThreads && decl.activeThreads.length > 0) {
                         lineDash = decl.activeThreads.find((at) => at.suspended == true) ? [eventLineWidth * 1.1, eventLineWidth] : [];
                         lineWidth = eventLineWidth;
-                        color = LogEvent.eventKindsToColors.get(LogEvent.opActivate);
+                        color = this.eventKindsToColors.get(this.logEvents.opActivate);
                     }
                     const constLineDash = lineDash;
                     const constColor = color;
@@ -1249,10 +1229,10 @@ class DiagramGenerator {
                 : [];
 
             // Generate draw functions for event
-            const hasStopLine = !LogEvent.isOperationKind(eventKind);
+            const hasStopLine = !this.isOperationKind(eventKind);
             const hasStartLine =
                 hasStopLine &&
-                (!prevDecl || currentDecl.pos_y != prevDecl.pos_y || LogEvent.isOperationKind(executionEvents[index - 1].eventKind));
+                (!prevDecl || currentDecl.pos_y != prevDecl.pos_y || this.isOperationKind(executionEvents[index - 1].eventKind));
             drawFuncs.push((ctx, startPos_x) =>
                 this.generateEventDrawFuncs(
                     ctx,
@@ -1260,7 +1240,7 @@ class DiagramGenerator {
                     gridLineWidth,
                     eventLineWidth,
                     eventWrapperHeight,
-                    LogEvent.isThreadKind(eventKind) ? event.id : LogEvent.kindToAbb(eventKind),
+                    this.isThreadKind(eventKind) ? event.id : this.kindToAbb(eventKind),
                     eventKind,
                     startPos_x,
                     currentDecl.pos_y,
@@ -1273,12 +1253,12 @@ class DiagramGenerator {
             );
 
             // Generate draw function for bus arrow
-            if (prevDecl && LogEvent.isBusKind(eventKind) && eventKind != LogEvent.messageActivate) {
-                const isMsgComplete = eventKind == LogEvent.messageCompleted;
+            if (prevDecl && this.isBusKind(eventKind) && eventKind != this.logEvents.messageActivate) {
+                const isMsgComplete = eventKind == this.logEvents.messageCompleted;
                 const targetPos_y = !isMsgComplete ? prevDecl.pos_y : cpuDecls.find((cpuDecl) => cpuDecl.id == event.tocpu).pos_y;
                 const eventPos_y = currentDecl.pos_y;
                 const nextEventHasStartLine =
-                    isMsgComplete && index < executionEvents.length - 1 && LogEvent.isThreadKind(executionEvents[index + 1].eventKind);
+                    isMsgComplete && index < executionEvents.length - 1 && this.isThreadKind(executionEvents[index + 1].eventKind);
                 drawFuncs.push((ctx, startPos_x) => {
                     // Draw arrows from/to cpu and bus
                     const end_y = eventPos_y - eventWrapperHeight;
@@ -1395,7 +1375,7 @@ class DiagramGenerator {
     ) {
         ctx.fillStyle = txtColor;
         ctx.font = font;
-        const eventColor = LogEvent.eventKindsToColors.get(eventKind);
+        const eventColor = this.eventKindsToColors.get(eventKind);
         const drawFuncs = [];
         // Draw the event
         drawFuncs.push(() => {
@@ -1409,7 +1389,7 @@ class DiagramGenerator {
             }
         });
 
-        if (LogEvent.isThreadKind(eventKind)) {
+        if (this.isThreadKind(eventKind)) {
             // Draw the "marker" for the thread event
             drawFuncs.push(() => {
                 const txtMetrics = eventTxt ? ctx.measureText(eventTxt) : undefined;
@@ -1468,9 +1448,7 @@ class DiagramGenerator {
         ctx.font = this.diagramFont;
         const threadIdMetrics = ctx.measureText("9999");
         const msgAbbMetrics = ctx.measureText(
-            [...LogEvent.eventKindsToColors.keys()]
-                .map((kind) => LogEvent.kindToAbb(kind))
-                .reduce((prev, curr) => (prev.size > curr.size ? prev : curr))
+            this.eventKinds.map((kind) => this.kindToAbb(kind)).reduce((prev, curr) => (prev.size > curr.size ? prev : curr))
         );
         const txtWidth = threadIdMetrics.width > msgAbbMetrics.width ? threadIdMetrics.width : msgAbbMetrics.width;
         ctx.font = prevFont;
@@ -1508,8 +1486,8 @@ class DiagramGenerator {
         const markerStart_y = eventPos_y - eventLineWidth - txtHeight;
         const markerEnd_y = markerStart_y - eventWrapperHeight;
         const markerWidth = eventLineWidth - 1;
-        if (LogEvent.isThreadSwapKind(eventKind)) {
-            if (eventKind == LogEvent.delayedThreadSwapIn) {
+        if (this.isThreadSwapKind(eventKind)) {
+            if (eventKind == this.logEvents.delayedThreadSwapIn) {
                 const lineLength = Math.abs(Math.abs(markerEnd_y) - Math.abs(markerStart_y)) / 2 + halfEventLineWidth;
                 const start_x = markerPos_x - lineLength / 2;
                 const end_x = markerPos_x + lineLength / 2;
@@ -1517,7 +1495,7 @@ class DiagramGenerator {
             }
 
             // Adjust arrow placement and position depending on in/out
-            const isSwapIn = eventKind != LogEvent.threadSwapOut;
+            const isSwapIn = eventKind != this.logEvents.threadSwapOut;
             this.drawArrow(
                 ctx,
                 markerPos_x,
@@ -1540,7 +1518,7 @@ class DiagramGenerator {
                 markerEnd_y - markerStart_y + halfEventLineWidth,
                 markerWidth,
                 eventColor,
-                eventKind == LogEvent.threadCreate ? 0 : Math.PI / 4
+                eventKind == this.logEvents.threadCreate ? 0 : Math.PI / 4
             );
         }
     }
@@ -1669,117 +1647,63 @@ class DiagramGenerator {
             ctx.setLineDash([]);
         }
     }
-}
 
-// Utility class for event kinds found in the log file
-class LogEvent {
-    // Event kinds
-    static cpuDecl = "CPUdecl";
-    static busDecl = "BUSdecl";
-    static threadCreate = "ThreadCreate";
-    static threadSwapIn = "ThreadSwapIn";
-    static delayedThreadSwapIn = "DelayedThreadSwapIn";
-    static threadSwapOut = "ThreadSwapOut";
-    static threadKill = "ThreadKill";
-    static messageRequest = "MessageRequest";
-    static messageActivate = "MessageActivate";
-    static messageCompleted = "MessageCompleted";
-    static opActivate = "OpActivate";
-    static opRequest = "OpRequest";
-    static opCompleted = "OpCompleted";
-    static replyRequest = "ReplyRequest";
-    static deployObj = "DeployObj";
-
-    // The colors are changed based on the users theme
-    static eventKindsToColors = new Map([
-        [this.threadCreate, this.kindToStandardColor(this.threadCreate)],
-        [this.threadSwapIn, this.kindToStandardColor(this.threadSwapIn)],
-        [this.threadSwapOut, this.kindToStandardColor(this.threadSwapOut)],
-        [this.threadKill, this.kindToStandardColor(this.threadKill)],
-        [this.delayedThreadSwapIn, this.kindToStandardColor(this.delayedThreadSwapIn)],
-        [this.opActivate, this.kindToStandardColor(this.opActivate)],
-        [this.messageRequest, this.kindToStandardColor(this.messageRequest)],
-        [this.opRequest, this.kindToStandardColor(this.opRequest)],
-        [this.replyRequest, this.kindToStandardColor(this.replyRequest)],
-        [this.messageActivate, this.kindToStandardColor(this.messageActivate)],
-        [this.opCompleted, this.kindToStandardColor(this.opCompleted)],
-        [this.messageCompleted, this.kindToStandardColor(this.messageCompleted)],
-    ]);
-
-    static kindToAbb(eventKind) {
-        return eventKind == this.threadKill
+    kindToAbb(eventKind) {
+        return eventKind == this.logEvents.threadKill
             ? "tk"
-            : eventKind == this.threadCreate
+            : eventKind == this.logEvents.threadCreate
             ? "tc"
-            : eventKind == this.threadSwapOut
+            : eventKind == this.logEvents.threadSwapOut
             ? "tso"
-            : eventKind == this.threadSwapIn
+            : eventKind == this.logEvents.threadSwapIn
             ? "tsi"
-            : eventKind == this.delayedThreadSwapIn
+            : eventKind == this.logEvents.delayedThreadSwapIn
             ? "dtsi"
-            : eventKind == this.messageRequest
+            : eventKind == this.logEvents.messageRequest
             ? "mr"
-            : eventKind == this.replyRequest
+            : eventKind == this.logEvents.replyRequest
             ? "rr"
-            : eventKind == this.messageActivate
+            : eventKind == this.logEvents.messageActivate
             ? "ma"
-            : eventKind == this.messageCompleted
+            : eventKind == this.logEvents.messageCompleted
             ? "mc"
-            : eventKind == this.opRequest
+            : eventKind == this.logEvents.opRequest
             ? "or"
-            : eventKind == this.opActivate
+            : eventKind == this.logEvents.opActivate
             ? "oa"
-            : eventKind == this.opCompleted
+            : eventKind == this.logEvents.opCompleted
             ? "oc"
             : "";
     }
 
-    static kindToStandardColor(eventKind) {
-        return eventKind == this.threadKill
-            ? "#a1260d"
-            : eventKind == this.threadCreate
-            ? "#388a34"
-            : eventKind == this.threadSwapOut
-            ? "#cc6633"
-            : eventKind == this.threadSwapIn
-            ? "#bf8803"
-            : eventKind == this.delayedThreadSwapIn
-            ? "#d186167d"
-            : eventKind == this.messageRequest
-            ? "#808080"
-            : eventKind == this.replyRequest
-            ? "#737373"
-            : eventKind == this.messageActivate
-            ? "#D0D0D0"
-            : eventKind == this.messageCompleted
-            ? "#B5B5B5"
-            : "#007acc";
-    }
-
-    static isThreadKind(eventKind) {
+    isThreadKind(eventKind) {
         return (
-            eventKind == this.threadKill ||
-            eventKind == this.threadSwapOut ||
-            eventKind == this.threadSwapIn ||
-            eventKind == this.threadCreate ||
-            eventKind == this.delayedThreadSwapIn
+            eventKind == this.logEvents.threadKill ||
+            eventKind == this.logEvents.threadSwapOut ||
+            eventKind == this.logEvents.threadSwapIn ||
+            eventKind == this.logEvents.threadCreate ||
+            eventKind == this.logEvents.delayedThreadSwapIn
         );
     }
 
-    static isBusKind(eventKind) {
+    isBusKind(eventKind) {
         return (
-            eventKind == this.replyRequest ||
-            eventKind == this.messageCompleted ||
-            eventKind == this.messageActivate ||
-            eventKind == this.messageRequest
+            eventKind == this.logEvents.replyRequest ||
+            eventKind == this.logEvents.messageCompleted ||
+            eventKind == this.logEvents.messageActivate ||
+            eventKind == this.logEvents.messageRequest
         );
     }
 
-    static isThreadSwapKind(eventKind) {
-        return eventKind == this.threadSwapIn || eventKind == this.threadSwapOut || eventKind == this.delayedThreadSwapIn;
+    isThreadSwapKind(eventKind) {
+        return (
+            eventKind == this.logEvents.threadSwapIn ||
+            eventKind == this.logEvents.threadSwapOut ||
+            eventKind == this.logEvents.delayedThreadSwapIn
+        );
     }
 
-    static isOperationKind(eventKind) {
-        return eventKind == this.opRequest || eventKind == this.opActivate || eventKind == this.opCompleted;
+    isOperationKind(eventKind) {
+        return eventKind == this.logEvents.opRequest || eventKind == this.logEvents.opActivate || eventKind == this.logEvents.opCompleted;
     }
 }

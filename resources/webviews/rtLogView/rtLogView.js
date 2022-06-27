@@ -11,7 +11,6 @@ viewContainer.classList.add("viewContainer");
 const btnContainer = document.getElementById("btnsContainer");
 
 // Global const variables
-
 const archViewId = "arch";
 const execViewId = "exec";
 const legendViewId = "legend";
@@ -36,6 +35,7 @@ let hasConjectures = false;
 let conjectures;
 let cpusWithEvents = [];
 let timestamps = [];
+let logEvents;
 
 // Offload the canvas generation logic to a webworker so that the main thread is not being blocked
 let diagramWorker;
@@ -126,12 +126,14 @@ window.addEventListener("message", (event) => {
         hasConjectures = event.data.conjectures.length > 0;
         conjectures = event.data.conjectures;
         cpusWithEvents = event.data.cpusWithEvents;
+        logEvents = event.data.logEvents;
 
         // Trigger the initiate logic in the diagram worker
         const osCanvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
         diagramWorker.postMessage(
             {
                 msg: initMsg,
+                logEvents: logEvents,
                 cpuDecls: event.data.cpuDecls,
                 busDecls: event.data.busDecls,
                 executionEvents: event.data.executionEvents,
@@ -321,37 +323,77 @@ function getFontsAndColors(baseFontSize, matchTheme) {
 
     // Update background color for the diagrams
     backgroundColor = matchTheme ? computedStyle.getPropertyValue("--vscode-editor-background").trim() : "#ffffff";
-    // Update colors for events. The key must match the eventkind in the LogEvent class found in the worker.
-    let eventKindsToColors;
-    let themeColors;
-    if (matchTheme) {
-        eventKindsToColors = new Map([
-            ["ThreadCreate", computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim()],
-            ["ThreadSwapIn", computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim()],
-            ["OpActivate", computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()],
-            ["OpRequest", computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()],
-            ["OpCompleted", computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()],
-            ["ThreadSwapOut", computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim()],
-            ["ThreadKill", computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim()],
-            ["DelayedThreadSwapIn", computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim()],
-        ]);
 
-        // Update theme colors used in the architecture view
-        themeColors = [fontColor];
-        [...eventKindsToColors.values()].forEach((color) => {
-            if (!themeColors.find((tc) => tc == color)) {
-                themeColors.push(color);
-            }
-        });
-        themeColors.push(computedStyle.getPropertyValue("--vscode-debugIcon-disconnectForeground").trim());
-        themeColors.push(computedStyle.getPropertyValue("--vscode-charts-green").trim());
-        themeColors.push(computedStyle.getPropertyValue("--vscode-charts-purple").trim());
-        themeColors.forEach((color) => {
-            if (color == undefined) {
-                color = fontColor;
-            }
-        });
+    // Update colors for events.
+    let eventKindsToColors = new Map();
+    for (const eventKind of Object.values(logEvents)) {
+        const color =
+            eventKind == logEvents.threadKill
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-statusBar-debuggingBackground").trim()
+                    : "#a1260d"
+                : eventKind == logEvents.threadCreate
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-startForeground").trim()
+                    : "#388a34"
+                : eventKind == logEvents.threadSwapOut
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-stopForeground").trim()
+                    : "#cc6633"
+                : eventKind == logEvents.threadSwapIn
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-breakpointCurrentStackframeForeground").trim()
+                    : "#bf8803"
+                : eventKind == logEvents.delayedThreadSwapIn
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-editorOverviewRuler-findMatchForeground").trim()
+                    : "#d186167d"
+                : eventKind == logEvents.messageRequest
+                ? "#808080"
+                : eventKind == logEvents.replyRequest
+                ? "#737373"
+                : eventKind == logEvents.messageActivate
+                ? "#D0D0D0"
+                : eventKind == logEvents.messageCompleted
+                ? "#B5B5B5"
+                : eventKind == logEvents.opRequest
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()
+                    : "#007acc"
+                : eventKind == logEvents.opActivate
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()
+                    : "#007acc"
+                : eventKind == logEvents.opCompleted
+                ? matchTheme
+                    ? computedStyle.getPropertyValue("--vscode-debugIcon-continueForeground").trim()
+                    : "#007acc"
+                : "";
+        eventKindsToColors.set(eventKind, color);
     }
+
+    for (const key of eventKindsToColors.keys()) {
+        const color = eventKindsToColors.get(key);
+        if (!color) {
+            eventKindsToColors.set(key, fontColor);
+        }
+    }
+
+    // Update theme colors used in the architecture view
+    let themeColors = [matchTheme ? fontColor : "#000000"];
+    [...eventKindsToColors.values()].forEach((color) => {
+        if (!themeColors.find((tc) => tc == color)) {
+            themeColors.push(color);
+        }
+    });
+    themeColors.push(computedStyle.getPropertyValue("--vscode-debugIcon-disconnectForeground").trim());
+    themeColors.push(computedStyle.getPropertyValue("--vscode-charts-green").trim());
+    themeColors.push(computedStyle.getPropertyValue("--vscode-charts-purple").trim());
+    themeColors.forEach((color) => {
+        if (color == undefined) {
+            color = fontColor;
+        }
+    });
 
     // Update button colors
     btnColors.primaryBackground = computedStyle.getPropertyValue("--vscode-button-background").trim();

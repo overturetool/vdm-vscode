@@ -18,24 +18,6 @@ import AutoDisposable from "./helper/AutoDisposable";
 import * as Fs from "fs-extra";
 import * as Path from "path";
 
-enum LogEvent {
-    cpuDecl = "CPUdecl",
-    busDecl = "BUSdecl",
-    threadCreate = "ThreadCreate",
-    threadSwapIn = "ThreadSwapIn",
-    delayedThreadSwapIn = "DelayedThreadSwapIn",
-    threadSwapOut = "ThreadSwapOut",
-    threadKill = "ThreadKill",
-    messageRequest = "MessageRequest",
-    messageActivate = "MessageActivate",
-    messageCompleted = "MessageCompleted",
-    opActivate = "OpActivate",
-    opRequest = "OpRequest",
-    opCompleted = "OpCompleted",
-    replyRequest = "ReplyRequest",
-    deployObj = "DeployObj",
-}
-
 interface ConjectureTarget {
     kind: string;
     opname: string;
@@ -65,6 +47,25 @@ export class RTLogView extends AutoDisposable {
     private readonly _settingsChangedMsg = "settingsChanged";
     private readonly _initMsg = "init";
     private readonly _fontSetting = "fontSize";
+
+    // The precise object keys are expected in the javascript files.
+    private readonly _logEvents = {
+        cpuDecl: "CPUdecl",
+        busDecl: "BUSdecl",
+        threadCreate: "ThreadCreate",
+        threadSwapIn: "ThreadSwapIn",
+        delayedThreadSwapIn: "DelayedThreadSwapIn",
+        threadSwapOut: "ThreadSwapOut",
+        threadKill: "ThreadKill",
+        messageRequest: "MessageRequest",
+        messageActivate: "MessageActivate",
+        messageCompleted: "MessageCompleted",
+        opActivate: "OpActivate",
+        opRequest: "OpRequest",
+        opCompleted: "OpCompleted",
+        replyRequest: "ReplyRequest",
+        deployObj: "DeployObj",
+    };
 
     constructor(private readonly _context: ExtensionContext) {
         super();
@@ -160,8 +161,8 @@ export class RTLogView extends AutoDisposable {
         const activeMsgInitEvents: any[] = [];
         const timestamps: number[] = [];
         let currrentTime: number = -1;
-        const vBusDecl = { eventKind: LogEvent.busDecl, id: 0, topo: [], name: "vBUS", time: 0 };
-        const vCpuDecl = { eventKind: LogEvent.cpuDecl, id: undefined, expl: false, sys: "", name: "vCPU", time: 0 };
+        const vBusDecl = { eventKind: this._logEvents.busDecl, id: 0, topo: [], name: "vBUS", time: 0 };
+        const vCpuDecl = { eventKind: this._logEvents.cpuDecl, id: undefined, expl: false, sys: "", name: "vCPU", time: 0 };
         logLines?.forEach((line) => {
             const lineSplit: string[] = line.split(" -> ");
             if (lineSplit.length > 1) {
@@ -209,13 +210,13 @@ export class RTLogView extends AutoDisposable {
                     timestamps.push(currrentTime);
                 }
 
-                if (logEventObj.eventKind == LogEvent.busDecl) {
+                if (logEventObj.eventKind == this._logEvents.busDecl) {
                     busDecls.push(logEventObj);
-                } else if (logEventObj.eventKind == LogEvent.cpuDecl) {
+                } else if (logEventObj.eventKind == this._logEvents.cpuDecl) {
                     cpuDecls.push(logEventObj);
-                } else if (logEventObj.eventKind != LogEvent.deployObj) {
-                    if (logEventObj.eventKind != LogEvent.messageActivate) {
-                        if (logEventObj.eventKind == LogEvent.messageCompleted) {
+                } else if (logEventObj.eventKind != this._logEvents.deployObj) {
+                    if (logEventObj.eventKind != this._logEvents.messageActivate) {
+                        if (logEventObj.eventKind == this._logEvents.messageCompleted) {
                             const msgInitEvent: any = activeMsgInitEvents.splice(
                                 activeMsgInitEvents.indexOf(activeMsgInitEvents.find((msg) => msg.msgid == logEventObj.msgid)),
                                 1
@@ -224,7 +225,7 @@ export class RTLogView extends AutoDisposable {
                             logEventObj.busid = msgInitEvent.busid;
                             logEventObj.callthr = msgInitEvent.callthr;
                             logEventObj.tocpu = msgInitEvent.tocpu;
-                            if (msgInitEvent.eventKind == LogEvent.messageRequest) {
+                            if (msgInitEvent.eventKind == this._logEvents.messageRequest) {
                                 logEventObj.opname = msgInitEvent.opname;
                                 logEventObj.objref = msgInitEvent.objref;
                                 logEventObj.clnm = msgInitEvent.clnm;
@@ -249,7 +250,10 @@ export class RTLogView extends AutoDisposable {
                             cpusWithEvents.push(cpuWithEvents);
                         }
 
-                        if (logEventObj.eventKind == LogEvent.messageRequest || logEventObj.eventKind == LogEvent.replyRequest) {
+                        if (
+                            logEventObj.eventKind == this._logEvents.messageRequest ||
+                            logEventObj.eventKind == this._logEvents.replyRequest
+                        ) {
                             activeMsgInitEvents.push(logEventObj);
                         }
 
@@ -267,7 +271,7 @@ export class RTLogView extends AutoDisposable {
                 }
 
                 if (
-                    (logEventObj.eventKind == LogEvent.messageRequest || logEventObj.eventKind == LogEvent.replyRequest) &&
+                    (logEventObj.eventKind == this._logEvents.messageRequest || logEventObj.eventKind == this._logEvents.replyRequest) &&
                     logEventObj.busid == 0
                 ) {
                     [logEventObj.fromcpu, logEventObj.tocpu].forEach((tpid) => {
@@ -407,6 +411,7 @@ export class RTLogView extends AutoDisposable {
                     returnObj.fontSize = config.get(this._scaleSetting) == false ? config.get(this._fontSetting) : undefined;
                     returnObj.matchTheme = config.get(this._matchSetting);
                     returnObj.conjectures = conjectures;
+                    returnObj.logEvents = this._logEvents;
                 }
 
                 this._panel.webview.postMessage(returnObj);
