@@ -245,11 +245,9 @@ function displayView(viewId, timeStamp) {
 
 function bitmapToCanvas(bitmap) {
     const canvas = document.createElement("CANVAS");
-    canvas.style.background = backgroundColor;
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
-    const ctx = canvas.getContext("bitmaprenderer");
-    ctx.transferFromImageBitmap(bitmap);
+    canvas.getContext("bitmaprenderer").transferFromImageBitmap(bitmap);
     return canvas;
 }
 

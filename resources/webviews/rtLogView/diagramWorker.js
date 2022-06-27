@@ -9,6 +9,16 @@ const settingsChangedMsg = "settingsChanged";
 
 let diagramGenerator;
 
+function updateEventKindColors(eventKindsToColors) {
+    if (eventKindsToColors) {
+        LogEvent.eventKindsToColors = new Map([...LogEvent.eventKindsToColors, ...eventKindsToColors]);
+    } else {
+        for (const key of LogEvent.eventKindsToColors.keys()) {
+            LogEvent.eventKindsToColors.set(key, LogEvent.kindToStandardColor(key));
+        }
+    }
+}
+
 // Handle messages
 self.onmessage = function (e) {
     const msg = e.data.msg;
@@ -24,23 +34,11 @@ self.onmessage = function (e) {
             e.data.diagramSize,
             e.data.styling
         );
+        updateEventKindColors(e.data.styling.eventKindsToColors);
     } else if (msg == archViewId) {
         diagramGenerator.drawArchCanvas(e.data.canvas);
     } else if (msg == settingsChangedMsg) {
-        if (e.data.eventKindsToColors) {
-            LogEvent.eventKindsToColors = new Map([...LogEvent.eventKindsToColors, ...e.data.eventKindsToColors]);
-        } else {
-            for (const key of LogEvent.eventKindsToColors.keys()) {
-                LogEvent.eventKindsToColors.set(key, LogEvent.kindToStandardColor(key));
-            }
-        }
-
-        if (!e.data.themeColors) {
-            e.data.themeColors = ["#000000"];
-            for (const color of LogEvent.eventKindsToColors.values()) {
-                e.data.themeColors.push(color);
-            }
-        }
+        updateEventKindColors(e.data.eventKindsToColors);
 
         diagramGenerator.updateDiagramStyling(
             e.data.fontSize,
@@ -55,7 +53,8 @@ self.onmessage = function (e) {
             e.data.eventWrapperHeight,
             e.data.fontColor,
             e.data.conjectureViolationColor,
-            e.data.themeColors
+            e.data.themeColors,
+            e.data.backgroundColor
         );
     } else if (msg == execViewId) {
         diagramGenerator.drawExecutionCanvas(e.data.canvas, e.data.startTime);
@@ -76,25 +75,15 @@ class DiagramGenerator {
         this.conjectures = conjectures;
         this.cpusWithEvents = cpusWithEvents;
 
-        // Canvas styling
         this.defaultCanvas = canvas;
-        this.gridLineWidth;
-        this.eventLineWidth;
-        this.themeColors;
-        this.fontColor;
-        this.conjectureViolationColor;
-        this.conjectureViolationMarkerWidth;
-        this.lineDashSize;
-        this.eventWrapperHeight;
-        this.declFont;
-        this.conjectureViolationFont;
-        this.diagramFont;
-
         // A canvas with a total area larger than 268435456 and/or wider/higher than 65535 cannot be displayed in VSCode.
         //However, the context of a web worker on windows seems to be based on IE 11 where the max area size is 67108864 and max width/height is 16384
         this.canvasMaxArea = 67108864;
         this.canvasMaxSize = 16384;
         this.opnameIdentifier = "opname";
+
+        // Screen diagram size is used to keep the size of the cpu view within a reasonable size of the users screen.
+        this.diagramSize = diagramSize;
 
         // Keep state for the execution view. This includes the draw functions so these does not have to be recalculated each time.
         this.execucionViewData = {
@@ -114,8 +103,19 @@ class DiagramGenerator {
             });
         });
 
-        // Screen diagram size is used to keep the size of the cpu view within a reasonable size of the users screen.
-        this.diagramSize = diagramSize;
+        // Canvas styling
+        this.gridLineWidth;
+        this.eventLineWidth;
+        this.themeColors;
+        this.fontColor;
+        this.conjectureViolationColor;
+        this.conjectureViolationMarkerWidth;
+        this.lineDashSize;
+        this.eventWrapperHeight;
+        this.declFont;
+        this.conjectureViolationFont;
+        this.diagramFont;
+        this.backgroundColor;
 
         this.updateDiagramStyling(
             styling.fontSize,
@@ -130,7 +130,8 @@ class DiagramGenerator {
             styling.eventWrapperHeight,
             styling.fontColor,
             styling.conjectureViolationColor,
-            styling.themeColors
+            styling.themeColors,
+            styling.backgroundColor
         );
 
         this.generateExecutionViewData(this.defaultCanvas);
@@ -260,8 +261,7 @@ class DiagramGenerator {
             nextBusNamePos_y += busTextPosInc_y;
         }
 
-        const bitmap = canvas.transferToImageBitmap();
-        self.postMessage({ msg: archViewId, bitmap: bitmap });
+        this.returnCanvas(archViewId, canvas);
     }
 
     drawLegendCanvas(canvas) {
@@ -336,7 +336,7 @@ class DiagramGenerator {
         legendCtx = canvas.getContext("2d");
         drawFuncs.forEach((func) => func());
 
-        self.postMessage({ msg: legendViewId, bitmap: canvas.transferToImageBitmap() });
+        this.returnCanvas(legendViewId, canvas);
     }
 
     drawExecutionCanvas(canvas, startTime) {
@@ -389,11 +389,11 @@ class DiagramGenerator {
         this.execucionViewData.declDrawFuncs.forEach((func) => func(diagramCtx));
         drawFunctions.forEach((func) => func(diagramCtx));
 
-        self.postMessage({ msg: execViewId, bitmap: canvas.transferToImageBitmap(), exceedTime: timeOfExceededSize });
+        this.returnCanvas(execViewId, canvas, {exceedTime: timeOfExceededSize});
     }
 
-    drawCpuCanvas(canvas, startTime, msg, disableMargins) {
-        const viewData = this.cpuViewData.get(msg.replace(/\D/g, ""));
+    drawCpuCanvas(canvas, startTime, viewId, disableMargins) {
+        const viewData = this.cpuViewData.get(viewId.replace(/\D/g, ""));
         const executionEvents = viewData.executionEvents;
         let ctx = canvas.getContext("2d");
         ctx.font = this.declFont;
@@ -402,7 +402,7 @@ class DiagramGenerator {
 
         // If there is no execution events just return a canvas with text
         if (executionEvents.length == 0) {
-            this.postErrorCanvas(canvas, "No events found", msg);
+            this.postErrorCanvas(canvas, "No events found", viewId);
             return;
         }
 
@@ -698,15 +698,13 @@ class DiagramGenerator {
                     //TODO: If there is no time defined for the rollback the events for the timestamp cannot fit within the size restrictions of the canvas so the diagram needs to be displayed across multiple canvases
                     if (existingRollbackForTimestamp.time == undefined) {
                         if (disableMargins) {
-                            this.postErrorCanvas(canvas, `Events for time ${event.time} cannot fit onto the diagram`, msg);
+                            this.postErrorCanvas(canvas, `Events for time ${event.time} cannot fit onto the diagram`, viewId);
                         } else {
                             // Temporary mitigation is to call the drawCpuCanvas again but disable margins between obj deployments and let opnames clash to attempt to fit the events within the canvas size restricitons.
-                            this.drawCpuCanvas(canvas, startTime, msg, true);
-                            console.log("Disabling margins!");
+                            this.drawCpuCanvas(canvas, startTime, viewId, true);
                         }
                         return;
                     }
-                    console.log("Rollbacking to previous timestamp!");
                     // Rollback
                     eventsToDraw.splice(existingRollbackForTimestamp.lastEventIndex + 1);
                     diagramSizeExceededTimestamp = existingRollbackForTimestamp.time;
@@ -934,7 +932,7 @@ class DiagramGenerator {
         // Draw on canvas
         drawFuncs.forEach((drawFunc) => drawFunc());
 
-        self.postMessage({ msg: msg, bitmap: canvas.transferToImageBitmap(), exceedTime: diagramSizeExceededTimestamp });
+        this.returnCanvas(viewId, canvas,{exceedTime: diagramSizeExceededTimestamp});
     }
 
     /**
@@ -942,6 +940,25 @@ class DiagramGenerator {
      * Helper functions
      *
      */
+
+    returnCanvas(viewId, canvas, properties) {
+        const ctx = canvas.getContext("2d");
+        // Color in the background as a rectangle as the canvas.style.background css property sometimes doesn't work on Linux
+        ctx.fillStyle = this.backgroundColor;
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+        ctx.globalCompositeOperation = 'source-over';
+        let returnObj = { msg: viewId, bitmap: canvas.transferToImageBitmap()};
+        if(properties) {
+            returnObj = {...returnObj, ...properties};
+        }
+        self.postMessage(returnObj);
+    }
 
     updateDiagramStyling(
         fontSize,
@@ -956,15 +973,28 @@ class DiagramGenerator {
         eventWrapperHeight,
         fontColor,
         conjectureViolationColor,
-        themeColors
+        themeColors,
+        backgroundColor
     ) {
         // Reset cached draw functions as these are based on the prior styling
         this.resetViewDataCache();
+
+        if (!themeColors) {
+            this.themeColors = ["#000000"];
+            for (const color of LogEvent.eventKindsToColors.values()) {
+                this.themeColors.push(color);
+            }
+        } else {
+            this.themeColors = themeColors;
+        }
+
+
         this.gridLineWidth = gridLineWidth;
         this.eventLineWidth = eventLineWidth;
-        this.themeColors = themeColors;
+
         this.fontColor = fontColor;
         this.conjectureViolationColor = conjectureViolationColor;
+        this.backgroundColor = backgroundColor;
         // Properties that by default are relative to the above properties unless specified
         this.conjectureViolationMarkerWidth =
             conjectureViolationMarkerWidth == undefined ? gridLineWidth * 3 : conjectureViolationMarkerWidth;
