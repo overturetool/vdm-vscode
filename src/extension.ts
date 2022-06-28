@@ -34,7 +34,7 @@ import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
 import * as Util from "./util/Util";
-import { RTLogView } from "./RTLogView";
+import { RTLogViewHandler } from "./handlers/RTLogViewHandler";
 import { FMUHandler } from "./handlers/FMUHandler";
 
 let clientManager: ClientManager;
@@ -94,7 +94,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name, clientManager));
     const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
-    context.subscriptions.push(new RTLogView(context));
+    context.subscriptions.push(new RTLogViewHandler(context, knownVdmFolders));
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, vdmFileExtensions));
 
     // Initialise handlers

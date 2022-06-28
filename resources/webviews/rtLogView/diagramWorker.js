@@ -358,7 +358,11 @@ class DiagramGenerator {
             ) {
                 //TODO: If the canvas dimension exceeds the restricted size for the first timestamp then it cannot be displayed on a single canvas and should be split into multiple canvases
                 if (i == 0) {
-                    this.postErrorCanvas(canvas, `Events for time ${gdfs.time} cannot fit onto the diagram`, execViewId);
+                    this.postErrorCanvas(
+                        canvas,
+                        `Events for time ${gdfs.time} cannot fit onto the diagram! Try lowevering the font size.`,
+                        execViewId
+                    );
                     return;
                 }
                 timeOfExceededSize = gridDrawFunctionsForTime[i - 1].time;
@@ -691,7 +695,11 @@ class DiagramGenerator {
                     //TODO: If there is no time defined for the rollback the events for the timestamp cannot fit within the size restrictions of the canvas so the diagram needs to be displayed across multiple canvases
                     if (existingRollbackForTimestamp.time == undefined) {
                         if (disableMargins) {
-                            this.postErrorCanvas(canvas, `Events for time ${event.time} cannot fit onto the diagram`, viewId);
+                            this.postErrorCanvas(
+                                canvas,
+                                `Events for time ${event.time} cannot fit onto the diagram! Try lowevering the font size.`,
+                                viewId
+                            );
                         } else {
                             // Temporary mitigation is to call the drawCpuCanvas again but disable margins between obj deployments and let opnames clash to attempt to fit the events within the canvas size restricitons.
                             this.drawCpuCanvas(canvas, startTime, viewId, true);

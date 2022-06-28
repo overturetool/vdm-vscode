@@ -190,6 +190,11 @@
                 "category": "VDM"
             },
             {
+                "command": "vdm-vscode.OpenRTLog",
+                "title": "Open real-time log in log viewer",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.restartActiveClient",
                 "title": "Restart Client (of the active text document)",
                 "category": "VDM"
@@ -643,6 +648,10 @@
                 {
                     "command": "vdm-vscode.OpenVDMTools",
                     "when": "vdm-vscode.OpenVDMTools"
+                },
+                {
+                    "command": "vdm-vscode.OpenRTLog",
+                    "when": "vdm-vscode.OpenRTLog"
                 },
                 {
                     "command": "vdm-vscode.coverageOverlay.enable",

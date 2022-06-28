@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable eqeqeq */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
@@ -14,9 +15,11 @@ import {
     workspace,
     WorkspaceFolder,
 } from "vscode";
-import AutoDisposable from "./helper/AutoDisposable";
+import AutoDisposable from "../helper/AutoDisposable";
 import * as Fs from "fs-extra";
 import * as Path from "path";
+import * as Util from "../util/Util";
+import { vdmDialects } from "../util/DialectUtil";
 
 interface ConjectureTarget {
     kind: string;
@@ -33,10 +36,18 @@ interface ValidationConjecture {
     destination: ConjectureTarget;
 }
 
-export class RTLogView extends AutoDisposable {
-    private _panel: WebviewPanel;
+interface logData {
+    executionEvents: any[];
+    cpuDecls: any[];
+    busDecls: any[];
+    cpusWithEvents: any[];
+    timestamps: number[];
+    conjectures: ValidationConjecture[];
+}
+
+export class RTLogViewHandler extends AutoDisposable {
+    private _panel: WebviewPanel = undefined;
     private _wsFolder: WorkspaceFolder = undefined;
-    private _logName: string = "";
 
     // Consts
     private readonly _scaleSetting = "scaleWithEditorFont";
@@ -67,8 +78,56 @@ export class RTLogView extends AutoDisposable {
         deployObj: "DeployObj",
     };
 
-    constructor(private readonly _context: ExtensionContext) {
+    constructor(private readonly _context: ExtensionContext, readonly _knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
         super();
+        // Enable the command
+        commands.executeCommand("setContext", "vdm-vscode.OpenRTLog", true);
+        // Add listener for open log command
+        Util.registerCommand(this._disposables, "vdm-vscode.OpenRTLog", async () => {
+            const rtWorkSpaceFolders = new Map();
+            for (const [key, value] of _knownVdmFolders) {
+                if (value == vdmDialects.VDMRT) {
+                    rtWorkSpaceFolders.set(key, value);
+                }
+            }
+
+            // Open only if a real-time workspace is open
+            if (rtWorkSpaceFolders.size == 0) {
+                window.showInformationMessage("The real time log viewer can only be opened for VDM-RT projects.");
+                return;
+            }
+
+            // Ask the user to choose one of the workspace folders if more than one has been found
+            const wsFS: string | WorkspaceFolder =
+                workspace.workspaceFolders.length > 1
+                    ? await window.showQuickPick(
+                          Array.from(rtWorkSpaceFolders.entries()).map((entry) => entry[0].name),
+                          { canPickMany: false, title: "Select workspace folder" }
+                      )
+                    : workspace.workspaceFolders[0];
+
+            if (!wsFS) {
+                return;
+            }
+
+            // Get the log file name
+            const wsFolder: WorkspaceFolder =
+                typeof wsFS === "string" ? Array.from(rtWorkSpaceFolders.keys()).find((key) => key.name == wsFS) : wsFS;
+            const logFilesFolderPath: string = Path.join(wsFolder.uri.fsPath, ".generated", "rtlogs");
+            const logsInFolder: string[] = Fs.readdirSync(logFilesFolderPath).filter((entry) => entry.endsWith(this._logFileExtension));
+
+            const logFile: string =
+                workspace.workspaceFolders.length > 1
+                    ? await window.showQuickPick(logsInFolder, { canPickMany: false, title: "Select log file" })
+                    : logsInFolder[0];
+
+            if (!logFile) {
+                return;
+            }
+            const logFilePath = Path.join(logFilesFolderPath, logFile);
+            this.showLogView(logFilePath, wsFolder, Path.basename(logFilePath).split(".")[0]);
+        });
+
         // Add settings watch
         workspace.onDidChangeConfiguration(
             (e) => {
@@ -79,34 +138,21 @@ export class RTLogView extends AutoDisposable {
             this,
             _context.subscriptions
         );
+        // Add listener for log files
         this._disposables.push(
             workspace.onDidOpenTextDocument((doc: TextDocument) => {
                 if (doc.uri.fsPath.endsWith(this._logFileExtension)) {
-                    this._logName = Path.basename(doc.uri.fsPath).split(".")[0];
-                    window
-                        .showInformationMessage(`Open '${this._logName}' in log viewer?`, { modal: true }, ...["Open"])
-                        .then((response) => {
-                            if (response == "Open") {
-                                if (this._panel) {
-                                    this._panel.dispose();
-                                }
-
-                                this.parseAndPrepareLogData(doc.uri.fsPath).then((data) => {
-                                    this._wsFolder = data ? workspace.getWorkspaceFolder(doc.uri) : undefined;
-                                    if (data) {
-                                        commands.executeCommand("workbench.action.closeActiveEditor");
-                                        this.createWebView(
-                                            data.busDecls,
-                                            data.cpuDecls,
-                                            data.executionEvents,
-                                            data.cpusWithEvents,
-                                            data.timestamps,
-                                            data.conjectures
-                                        );
-                                    }
-                                });
+                    const logName: string = Path.basename(doc.uri.fsPath).split(".")[0];
+                    window.showInformationMessage(`Open '${logName}' in log viewer?`, { modal: true }, ...["Open"]).then((response) => {
+                        if (response == "Open") {
+                            if (this._panel) {
+                                this._panel.dispose();
                             }
-                        });
+                            commands
+                                .executeCommand("workbench.action.closeActiveEditor")
+                                .then(() => this.showLogView(doc.uri.fsPath, workspace.getWorkspaceFolder(doc.uri), logName));
+                        }
+                    });
                 }
             })
         );
@@ -120,8 +166,17 @@ export class RTLogView extends AutoDisposable {
         }
     }
 
+    private showLogView(logPath: string, wsFolder: WorkspaceFolder, viewName: string) {
+        this.parseAndPrepareLogData(logPath).then((dataObj: logData) => {
+            this._wsFolder = wsFolder;
+            if (dataObj) {
+                this.createWebView(viewName, dataObj);
+            }
+        });
+    }
+
     private changesAffectsViewCheck(event: ConfigurationChangeEvent) {
-        // The webview needs to redraw its content if the font user changes the theme or font
+        // The webview needs to redraw its content if the user changes the theme or font
         if (
             this._wsFolder &&
             (event.affectsConfiguration("editor.fontFamily") ||
@@ -306,14 +361,7 @@ export class RTLogView extends AutoDisposable {
             }
         });
 
-        const returnObj: {
-            executionEvents: any[];
-            cpuDecls: any[];
-            busDecls: any[];
-            cpusWithEvents: any[];
-            timestamps: number[];
-            conjectures: ValidationConjecture[];
-        } = {
+        const dataObj: logData = {
             executionEvents: executionEvents,
             cpuDecls: cpuDecls.sort((a, b) => a.id - b.id),
             busDecls: busDecls.sort((a, b) => a.id - b.id),
@@ -331,7 +379,7 @@ export class RTLogView extends AutoDisposable {
                     logContent
                         .trim()
                         .split(/[\r\n\t]+/g)
-                        .forEach((line) => returnObj.conjectures.push(JSON.parse(line)));
+                        .forEach((line) => dataObj.conjectures.push(JSON.parse(line)));
                 } catch (ex) {
                     const msg = "Encountered an ereror when parsing validation conjectures!";
                     window.showWarningMessage(msg);
@@ -340,7 +388,7 @@ export class RTLogView extends AutoDisposable {
             }
         }
 
-        return returnObj;
+        return dataObj;
     }
 
     private stringValueToTypedValue(value: string): any {
@@ -364,14 +412,7 @@ export class RTLogView extends AutoDisposable {
         return value.replace('"', "").replace('"', "");
     }
 
-    private createWebView(
-        busDecls: any[],
-        cpuDecls: any[],
-        executionEvents: any[],
-        cpusWithEvents: any[],
-        timestamps: number[],
-        conjectures: ValidationConjecture[]
-    ) {
+    private createWebView(logName: string, dataObj: logData) {
         if (!this._wsFolder) {
             return;
         }
@@ -381,7 +422,7 @@ export class RTLogView extends AutoDisposable {
             this._panel ||
             window.createWebviewPanel(
                 `${this._context.extension.id}.rtLogView`,
-                `Log Viewer: ${this._logName}`,
+                `Log Viewer: ${logName}`,
                 {
                     viewColumn: ViewColumn.Active,
                     preserveFocus: false,
@@ -400,17 +441,13 @@ export class RTLogView extends AutoDisposable {
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             async (cmd: string) => {
-                const returnObj: any = { cmd: cmd };
+                let returnObj: any = { cmd: cmd };
+                // Return view data on recieveing the "init" command
                 if (cmd == this._initMsg) {
                     const config = workspace.getConfiguration(this._configIdentifier, this._wsFolder);
-                    returnObj.busDecls = busDecls;
-                    returnObj.cpuDecls = cpuDecls;
-                    returnObj.executionEvents = executionEvents;
-                    returnObj.cpusWithEvents = cpusWithEvents;
-                    returnObj.timestamps = timestamps;
+                    returnObj = { ...returnObj, ...dataObj };
                     returnObj.fontSize = config.get(this._scaleSetting) == false ? config.get(this._fontSetting) : undefined;
                     returnObj.matchTheme = config.get(this._matchSetting);
-                    returnObj.conjectures = conjectures;
                     returnObj.logEvents = this._logEvents;
                 }
 
@@ -421,7 +458,7 @@ export class RTLogView extends AutoDisposable {
         );
 
         // Generate the html for the webview
-        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, cpuDecls);
+        this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, dataObj.cpuDecls);
     }
 
     private buildHtmlForWebview(webview: Webview, cpuDecls: any[]) {
