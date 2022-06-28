@@ -190,6 +190,11 @@
                 "category": "VDM"
             },
             {
+                "command": "vdm-vscode.OpenRTLog",
+                "title": "Open real-time log in log viewer",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.restartActiveClient",
                 "title": "Restart Client (of the active text document)",
                 "category": "VDM"
@@ -645,6 +650,10 @@
                     "when": "vdm-vscode.OpenVDMTools"
                 },
                 {
+                    "command": "vdm-vscode.OpenRTLog",
+                    "when": "vdm-vscode.OpenRTLog"
+                },
+                {
                     "command": "vdm-vscode.coverageOverlay.enable",
                     "when": "false"
                 },
@@ -1038,6 +1047,24 @@
                         "default": "",
                         "scope": "resource",
                         "description": "Path to VDMTools for VDM-SL."
+                    },
+                    "vdm-vscode.real-timeLogViewer.scaleWithEditorFont": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Enable scaling of the view relative to the current font size of the editor"
+                    },
+                    "vdm-vscode.real-timeLogViewer.matchTheme": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "resource",
+                        "description": "Enable colours of the view to match the current theme of the editor"
+                    },
+                    "vdm-vscode.real-timeLogViewer.fontSize": {
+                        "type": "number",
+                        "default": 15,
+                        "scope": "resource",
+                        "description": "Font size to use for the relative scaling of elements in the diagram. Only used if `#vdm-vscode.other.real-timeLogViewer.scaleWithEditorFont#` is disabled"
                     }
                 }
             },
@@ -1150,6 +1177,11 @@
                                 "description": "Delegate the control of the interpreter, thus the remote controller is in charge of the execution or debug session.",
                                 "default": ""
                             },
+                            "enableLogging": {
+                                "type": "boolean",
+                                "description": "Log real-time events for VDM-RT.",
+                                "default": false
+                            },
                             "settings": {
                                 "description": "Checks settings.",
                                 "type": "object",
@@ -1165,11 +1197,6 @@
                                         "type": "number",
                                         "description": "Precision level if using high precision (ignored for regular precision).",
                                         "default": 100
-                                    },
-                                    "enableLogging": {
-                                        "type": "boolean",
-                                        "description": "Log real-time events.",
-                                        "default": false
                                     },
                                     "dynamicTypeChecks": {
                                         "type": "boolean",

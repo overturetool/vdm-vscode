@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
 import { commands, Disposable, extensions, TextDocument, Uri, ViewColumn, window, workspace, WorkspaceFolder } from "vscode";
 import AutoDisposable from "../helper/AutoDisposable";
 import * as Util from "../util/Util";

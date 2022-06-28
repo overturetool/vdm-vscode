@@ -5,6 +5,10 @@ import * as vscode from "vscode";
 import { ClientManager } from "../ClientManager";
 import { CompletedParsingParams, CompletedParsingNotification } from "../server/ServerNotifications";
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
+import AutoDisposable from "../helper/AutoDisposable";
+import * as Util from "../util/Util";
+import * as Path from "path";
+import * as Fs from "fs-extra";
 import { vdmFileExtensions } from "../util/DialectUtil";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
@@ -17,6 +21,7 @@ export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     defaultName?: string | null;
     command?: string | null;
     remoteControl?: string | null;
+    enableLogging?: boolean | null;
 }
 
 export namespace VdmDapSupport {
@@ -127,14 +132,30 @@ export namespace VdmDapSupport {
                 config.noDebug = false;
             }
 
+            if (config?.enableLogging == true) {
+                // If logging of RT events is enabled then make sure the logging path exists and
+                // set the "logging" property on the configuration that is to be passed to the server.
+                const logPath: string = Path.join(Util.generatedDataPath(folder).fsPath, "rtlogs");
+                Fs.ensureDirSync(logPath);
+                const date = new Date();
+                config.logging = Path.join(
+                    logPath,
+                    `${config.name.replace(/\W+/g, "_")}_${`${date.toLocaleDateString()}_${date.toLocaleTimeString()}`.replace(
+                        /[: \\/]/g,
+                        "_"
+                    )}.rtlog`
+                );
+            }
+
             return config;
         }
     }
 
-    export class VdmDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+    export class VdmDebugAdapterDescriptorFactory extends AutoDisposable implements vscode.DebugAdapterDescriptorFactory {
         private dapPorts: Map<vscode.Uri, number> = new Map();
-
-        constructor(private _clientManager: ClientManager) {}
+        constructor(private _clientManager: ClientManager) {
+            super();
+        }
 
         addPort(folder: vscode.WorkspaceFolder, dapPort: number) {
             this.dapPorts.set(folder.uri, dapPort);

@@ -10,7 +10,8 @@
             "name": "Launch VDM Debug",
             "stopOnEntry": true,
             "noDebug": false,
-            "defaultName": null
+            "defaultName": null,
+            "enableLogging": true
         }
     ]
 }

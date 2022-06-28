@@ -209,7 +209,7 @@ export class ProofObligationPanel implements Disposable {
             );
 
             // Generate the html for the webview
-            this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+            this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview);
         }
     }
 
@@ -305,12 +305,12 @@ export class ProofObligationPanel implements Disposable {
         while (this._disposables.length) this._disposables.pop().dispose();
     }
 
-    private _getHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "poView.js"));
-        const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "poView.css"));
+    private buildHtmlForWebview(webview: Webview) {
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.js"));
+        const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.css"));
 
         // Use a nonce to only allow specific scripts to be run
-        const scriptNonce = getNonce();
+        const scriptNonce = this.generateNonce();
 
         return `<!DOCTYPE html>
         <html lang="en">
@@ -331,13 +331,13 @@ export class ProofObligationPanel implements Disposable {
         </body>
         </html>`;
     }
-}
 
-function getNonce() {
-    let text = "";
-    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    private generateNonce() {
+        let text = "";
+        const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for (let i = 0; i < 32; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
     }
-    return text;
 }

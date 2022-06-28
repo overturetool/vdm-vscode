@@ -1,0 +1,113 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+.btnsContainerItem {
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.timeSelector {
+    border-left: 2px solid var(--vscode-editor-foreground);
+    padding-left: 10px;
+}
+
+button {
+    border: 0;
+    font-family: var(--vscode-editor-font-family);
+    font-weight: var(--vscode-editor-font-weight);
+    font-size: var(--vscode-editor-font-size);
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.button:active {
+    background-color: var(--vscode-button-secondaryBackground);
+    transform: translateY(1px);
+}
+
+p {
+    word-break: break-all;
+    white-space: normal;
+}
+
+b,
+select,
+table,
+th,
+td,
+h1 {
+    font-family: var(--vscode-editor-font-family);
+    font-weight: var(--vscode-editor-font-weight);
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-editor-background);
+}
+
+h1 {
+    margin: 0px;
+}
+
+table,
+td,
+th {
+    text-align: left;
+    border: 1px solid;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+table {
+    white-space: pre-wrap;
+    border-collapse: collapse;
+    float: "center";
+}
+
+.tableContainer {
+    float: "left";
+    margin-bottom: "5px";
+}
+
+.btnsContainer {
+    margin-top: 10px;
+    height: fit-content;
+    width: fit-content;
+}
+
+.iswarning {
+    font-family: var(--vscode-editor-font-family);
+    font-weight: var(--vscode-editor-font-weight);
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-editorWarning-foreground);
+    height: fit-content;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.clickableCell {
+    cursor: pointer;
+}
+
+.mainContainer {
+    overflow: scroll;
+    width: 100%;
+}
+
+.secondaryContainer {
+    overflow: scroll;
+    padding-top: 10px;
+    height: fit-content;
+    width: fit-content;
+}
+
+.viewContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+th {
+    font-weight: 800;
+}
+
+.statuscell {
+    text-align: center;
+}
