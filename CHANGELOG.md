@@ -1,3 +1,13 @@
+### 1.3.4
+- Added Real-Time-Logger View 
+- Fixed Hover of variables in the debug
+- Added groups to settings
+- Added highprecision indicator to the status bar
+- Added tracing of DAP messages in the terminal 
+- Added precision to the launch configuration settings
+- Added default file nesting for sources like word files
+- Added extracting of embedded VDM in external sources
+
 ### 1.3.3
 - Updated the publisher name (Breaks settings! Workaround: Replace 'jonaskrask.xyz' to 'overturetool.xyz')
 - Added Open in VDMTools Feature
