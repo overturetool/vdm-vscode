@@ -215,7 +215,7 @@ function generateConjectureTable(conjectures) {
                 document.createTextNode(content.value === true ? "\u2713" : content.value === false ? "\u2715" : content.value)
             );
             // Click listener for focusing the diagram on the time of the conjecture violation
-            if (content.header == headerNames[3] || content.header == headerNames[5]) {
+            if ((content.header == headerNames[3] || content.header == headerNames[5]) && content.value != "") {
                 rowCell.classList.add("clickableCell");
                 rowCell.ondblclick = () => {
                     handleSelectedTimeChanged(content.value);
