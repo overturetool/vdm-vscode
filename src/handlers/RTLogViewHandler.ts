@@ -24,16 +24,16 @@ import { vdmDialects } from "../util/DialectUtil";
 interface ConjectureTarget {
     kind: string;
     opname: string;
-    time: number;
-    thid: number;
+    time: string;
+    thid: string;
 }
 
 interface ValidationConjecture {
     status: boolean;
     name: string;
     expression: string;
-    source: ConjectureTarget;
-    destination: ConjectureTarget;
+    source?: ConjectureTarget;
+    destination?: ConjectureTarget;
 }
 
 interface logData {
@@ -219,6 +219,7 @@ export class RTLogViewHandler extends AutoDisposable {
         const vBusDecl = { eventKind: this._logEvents.busDecl, id: 0, topo: [], name: "vBUS", time: 0 };
         const vCpuDecl = { eventKind: this._logEvents.cpuDecl, id: undefined, expl: false, sys: "", name: "vCPU", time: 0 };
         const knownLogEvents: string[] = Object.values(this._logEvents);
+        const unknownLogEvents: Map<string, number> = new Map();
         logLines?.forEach((line) => {
             const lineSplit: string[] = line.split(" -> ");
             if (lineSplit.length > 1) {
@@ -266,7 +267,7 @@ export class RTLogViewHandler extends AutoDisposable {
                     timestamps.push(currrentTime);
                 }
 
-                if (knownLogEvents.find((logEvent) => logEvent == logEventObj.eventKind)) {
+                if (knownLogEvents.includes(logEventObj.eventKind)) {
                     if (logEventObj.eventKind == this._logEvents.busDecl) {
                         busDecls.push(logEventObj);
                     } else if (logEventObj.eventKind == this._logEvents.cpuDecl) {
@@ -343,11 +344,15 @@ export class RTLogViewHandler extends AutoDisposable {
                         vCpuDecl.id = logEventObj.cpunm;
                         cpuDecls.push(vCpuDecl);
                     }
+                } else if (unknownLogEvents.has(logEventObj.eventKind)) {
+                    unknownLogEvents.set(logEventObj.eventKind, unknownLogEvents.get(logEventObj.eventKind) + 1);
                 } else {
-                    console.log("Ecnountered unknown log event: " + logEventObj.eventKind);
+                    unknownLogEvents.set(logEventObj.eventKind, 1);
                 }
             }
         });
+
+        unknownLogEvents.forEach((value, key) => console.log(`Encounted unknown log event: '${key}' ${value} times`));
 
         if (vBusDecl.topo.length > 0) {
             busDecls.push(vBusDecl);
@@ -385,9 +390,28 @@ export class RTLogViewHandler extends AutoDisposable {
                     logContent
                         .trim()
                         .split(/[\r\n\t]+/g)
-                        .forEach((line) => dataObj.conjectures.push(JSON.parse(line)));
+                        .forEach((line) => {
+                            const vc: ValidationConjecture = JSON.parse(line);
+                            if (!vc.destination) {
+                                vc.destination = {
+                                    kind: "",
+                                    opname: "",
+                                    time: "",
+                                    thid: "",
+                                };
+                            }
+                            if (!vc.source) {
+                                vc.source = {
+                                    kind: "",
+                                    opname: "",
+                                    time: "",
+                                    thid: "",
+                                };
+                            }
+                            dataObj.conjectures.push(vc);
+                        });
                 } catch (ex) {
-                    const msg = "Encountered an ereror when parsing validation conjectures!";
+                    const msg = "Encountered an error when parsing validation conjectures!";
                     window.showWarningMessage(msg);
                     console.log(`${msg} - ${ex}`);
                 }
