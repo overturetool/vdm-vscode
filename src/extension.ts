@@ -35,6 +35,7 @@ import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
 import * as Util from "./util/Util";
 import { FMUHandler } from "./handlers/FMUHandler";
+import { UmlButton } from "./slsp/views/UmlButton";
 
 export async function activate(context: ExtensionContext) {
     // Setup server factory
@@ -97,6 +98,7 @@ export async function activate(context: ExtensionContext) {
     const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, acceptedLanguageIds));
+    context.subscriptions.push(new UmlButton(ExtensionInfo.name));
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clientManager));

@@ -297,6 +297,12 @@
                 "enablement": "vdm-vscode.translate.isabelle"
             },
             {
+                "command": "vdm-vscode.vdm2uml",
+                "title": "TEST",
+                "category": "VDM",
+                "icon": "$(references)"
+            },
+            {
                 "command": "vdm-vscode.coverage.show",
                 "title": "Enable Coverage Overlay",
                 "category": "VDM",
@@ -497,6 +503,11 @@
                     "command": "vdm-vscode.translate.isabelle",
                     "when": "explorerResourceIsFolder || resourceLangId == vdmsl",
                     "group": "translate@3"
+                },
+                {
+                    "command": "vdm-vscode.vdm2uml",
+                    "when": "explorerResourceIsFolder || resourceLangId == vdmpp",
+                    "group": "uml@3"
                 },
                 {
                     "command": "vdm-vscode.translate.coverage",
@@ -734,6 +745,10 @@
                 },
                 {
                     "command": "vdm-vscode.translate.isabelle",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.vdm2uml",
                     "when": "false"
                 },
                 {

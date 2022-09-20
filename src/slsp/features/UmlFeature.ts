@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// import * as util from "../../util/Util";
-import { debug } from "console";
+import * as util from "../../util/Util";
 import { Uri } from "vscode";
 import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature } from "vscode-languageclient";
-import { TranslateClientCapabilities, TranslateServerCapabilities } from "../protocol/Translate";
+import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/Translate";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { TranslateProvider, TranslateProviderManager } from "../views/translate/TranslateProviderManager";
 
@@ -34,7 +33,7 @@ export default class TranslateFeature implements StaticFeature {
         // Check for feature's language //TODO: Inform that the server does not provide translation for the language although it was expected?
         if (languages.includes(this._language)) {
             const provider: TranslateProvider = {
-                doTranslation: () => this.provideTranslation(),
+                doTranslation: (saveUri: Uri, rootUri?: Uri, options?: any) => this.provideTranslation(saveUri, rootUri, options),
             };
             this._disposables.push(TranslateProviderManager.registerTranslateProvider(this._selector, provider, this._language));
         }
@@ -47,29 +46,25 @@ export default class TranslateFeature implements StaticFeature {
         while (this._disposables.length) this._disposables.pop().dispose();
     }
 
-    private provideTranslation(): Thenable<Uri> {
-        return new Promise(() => {
+    private provideTranslation(saveUri: Uri, rootUri?: Uri, options?: any): Thenable<Uri> {
+        return new Promise((resolve, reject) => {
             // Abort if not for this client
-            // if (!util.match(this._selector, rootUri)) return reject();
+            if (!util.match(this._selector, rootUri)) return reject();
 
             // Setup message parameters
-            // let params: TranslateParams = {
-            //     languageId: this._language,
-            //     saveUri: this._client.code2ProtocolConverter.asUri(saveUri),
-            //     uri: this._client.code2ProtocolConverter.asUri(rootUri),
-            //     options: options,
-            // };
+            let params: TranslateParams = {
+                languageId: this._language,
+                saveUri: this._client.code2ProtocolConverter.asUri(saveUri),
+                uri: this._client.code2ProtocolConverter.asUri(rootUri),
+                options: options,
+            };
 
-            debug("I made it here!");
-
-            this._client.sendRequest("uml2vdm").then(
+            this._client.sendRequest(TranslateRequest.type, params).then(
                 (response) => {
-                    debug(response);
-                    return response;
+                    return resolve(this._client.protocol2CodeConverter.asUri(response.uri));
                 },
                 (e) => {
-                    debug(`${e}`);
-                    return `Translation failed with error: ${e}`;
+                    return reject(`Translation failed with error: ${e}`);
                 }
             );
         });

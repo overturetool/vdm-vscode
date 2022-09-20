@@ -192,6 +192,21 @@ export namespace VdmDapSupport {
         vscode.debug.startDebugging(folder, debugConfiguration);
     }
 
+    export function startDebugConsoleWithCommand(command: string, folder: vscode.WorkspaceFolder | undefined, stopOnEntry?: boolean) {
+        var debugConfiguration: VdmDebugConfiguration = {
+            type: "vdm", // The type of the debug session.
+            name: "Debug Console", // The name of the debug session.
+            request: "attach", // The request type of the debug session.
+            noDebug: false, // Start debugger
+            stopOnEntry: stopOnEntry,
+            // Additional debug type specific properties.
+            command: command,
+        };
+
+        // Start debug session with custom debug configurations
+        vscode.debug.startDebugging(folder, debugConfiguration);
+    }
+
     // Used to kill debug session silently
     // TODO Remove when auto restart is implemented
     class StoppingDebugAdapter implements vscode.DebugAdapter {
