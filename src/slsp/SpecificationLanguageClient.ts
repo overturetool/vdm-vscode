@@ -26,5 +26,7 @@ export class SpecificationLanguageClient extends LanguageClient {
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.coverage));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.graphviz));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.isabelle));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.vdm2uml));
+        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.uml2vdm));
     }
 }

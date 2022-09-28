@@ -290,6 +290,18 @@
                 "enablement": "vdm-vscode.translate.isabelle"
             },
             {
+                "command": "vdm-vscode.translate.vdm2uml",
+                "title": "Translate to UML",
+                "category": "VDM",
+                "icon": "$(references)"
+            },
+            {
+                "command": "vdm-vscode.translate.uml2vdm",
+                "title": "Translate to VDM",
+                "category": "VDM",
+                "icon": "$(references)"
+            },
+            {
                 "command": "vdm-vscode.coverageOverlay.enable",
                 "title": "Enable Coverage Overlay",
                 "category": "VDM",
@@ -490,6 +502,15 @@
                     "command": "vdm-vscode.translate.isabelle",
                     "when": "explorerResourceIsFolder || resourceLangId == vdmsl",
                     "group": "translate@3"
+                },
+                {
+                    "command": "vdm-vscode.translate.vdm2uml",
+                    "when": "explorerResourceIsFolder || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "group": "translate@4"
+                },                {
+                    "command": "vdm-vscode.translate.uml2vdm",
+                    "when": "resourceLangId == plantuml",
+                    "group": "translate@5"
                 },
                 {
                     "command": "vdm-vscode.translate.coverage",
@@ -723,6 +744,14 @@
                 },
                 {
                     "command": "vdm-vscode.translate.isabelle",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.translate.vdm2uml",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.translate.uml2vdm",
                     "when": "false"
                 },
                 {

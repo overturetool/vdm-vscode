@@ -92,6 +92,9 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.graphviz, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.isabelle, ExtensionInfo.name, clientManager));
+    context.subscriptions.push(new TranslateButton(languageId.vdm2uml, ExtensionInfo.name, clientManager));
+    context.subscriptions.push(new TranslateButton(languageId.uml2vdm, ExtensionInfo.name, clientManager));
+
     const generateCoverageButton: GenerateCoverageButton = new GenerateCoverageButton(ExtensionInfo.name, clientManager);
     context.subscriptions.push(generateCoverageButton);
     context.subscriptions.push(new RTLogViewHandler(context, knownVdmFolders));

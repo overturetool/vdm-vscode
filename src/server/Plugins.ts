@@ -72,6 +72,17 @@ function getBuiltInPlugins(): PluginSetting[] {
             dialects: ["vdmsl"],
         });
 
+    // Add UML plugin
+    const vdmjPath = path.join(extensions.getExtension(extensionId).extensionUri.fsPath, "resources", "jars", "vdmj");
+    let umlJar = recursivePathSearch(vdmjPath, /uml.*jar/i);
+    if (umlJar)
+        result.push({
+            name: "Uml plugin",
+            classname: "plugins.UMLPlugin",
+            jar: umlJar,
+            dialects: ["vdmpp"],
+        });
+
     return result;
 }
 
