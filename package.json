@@ -507,11 +507,7 @@
                     "command": "vdm-vscode.translate.vdm2uml",
                     "when": "explorerResourceIsFolder || resourceLangId == vdmpp || resourceLangId == vdmrt",
                     "group": "translate@4"
-                },                {
-                    "command": "vdm-vscode.translate.uml2vdm",
-                    "when": "resourceLangId == plantuml",
-                    "group": "translate@5"
-                },
+                },                
                 {
                     "command": "vdm-vscode.translate.coverage",
                     "group": "generate@1"
@@ -640,6 +636,11 @@
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
                     "group": "vdm@1"
+                },
+                {
+                    "command": "vdm-vscode.translate.uml2vdm",
+                    "when": "resourceExtname == .puml",
+                    "group": "vdm@2"
                 }
             ],
             "editor/title": [
@@ -658,6 +659,11 @@
                 {
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "group": "vdm@1"
+                },
+                {
+                    "command": "vdm-vscode.translate.uml2vdm",
+                    "when": "resourceExtname == .puml",
                     "group": "vdm@1"
                 }
             ],

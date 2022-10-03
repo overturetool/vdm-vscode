@@ -64,24 +64,25 @@ function getBuiltInPlugins(): PluginSetting[] {
 
     // Add vdm2isa plugin
     let vdm2isaJar = recursivePathSearch(pluginsPath, /vdm2isa.*jar/i);
-    if (vdm2isaJar)
+    if (vdm2isaJar) {
         result.push({
             name: "vdm2isa alpha release",
             classname: "plugins.ISAPluginSL",
             jar: vdm2isaJar,
             dialects: ["vdmsl"],
         });
+    }
 
     // Add UML plugin
-    const vdmjPath = path.join(extensions.getExtension(extensionId).extensionUri.fsPath, "resources", "jars", "vdmj");
-    let umlJar = recursivePathSearch(vdmjPath, /uml.*jar/i);
-    if (umlJar)
+    let umlJar = recursivePathSearch(pluginsPath, /uml.*jar/i);
+    if (umlJar) {
         result.push({
             name: "Uml plugin",
             classname: "plugins.UMLPlugin",
             jar: umlJar,
-            dialects: ["vdmpp"],
+            dialects: ["vdmpp", "vdmrt"],
         });
+    }
 
     return result;
 }
