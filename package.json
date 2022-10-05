@@ -35,8 +35,8 @@
         "VDM-RT",
         "multi-root ready"
     ],
-    "main": "./dist/extension",
-    "browser": "./dist/webExtension.js",
+    "main": "./out/src/extension",
+    "browser": "./out/src/webExtension.js",
     "icon": "resources/icons/Overture.png",
     "homepage": "https://github.com/overturetool/vdm-vscode/blob/master/README.md",
     "repository": {
@@ -1488,10 +1488,9 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run check:version && npm run package",
-        "package": "webpack --mode production --devtool hidden-source-map",
-        "compile": "webpack --mode none",
-        "watch": "webpack --mode none --watch",
+        "vscode:prepublish": "npm run check:version && npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc --watch -p ./",
         "lint": "eslint --ext ts src",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
