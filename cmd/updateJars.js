@@ -33,7 +33,7 @@ var vdmjArtifactIds = ["annotations", "lsp", "vdmj"];
 vdmjArtifactIds.forEach(async function (aid) {
     await download.default(
         parser.default("dk.au.ece.vdmj:"+aid+":"+vs+ss),
-        "/tmp/resources/jars/vdmj",
+        "./resources/jars/vdmj",
         alternativeRepo
     );
 });
@@ -41,7 +41,7 @@ vdmjArtifactIds.forEach(async function (aid) {
 vdmjArtifactIds.forEach(async function (aid) {
     await download.default(
         parser.default("dk.au.ece.vdmj:"+aid+":"+vs+"-P"+ss),
-        "/tmp/resources/jars/vdmj_hp",
+        "./resources/jars/vdmj_hp",
         alternativeRepo
     );
 });
@@ -49,13 +49,13 @@ vdmjArtifactIds.forEach(async function (aid) {
 // Get jars for stdlib
 download.default(
     parser.default("dk.au.ece.vdmj:stdlib:"+vs+ss),
-    "/tmp/resources/jars/vdmj/libs",
+    "./resources/jars/vdmj/libs",
     alternativeRepo
 );
 
 download.default(
     parser.default("dk.au.ece.vdmj:stdlib:"+vs+"-P"+ss),
-    "/tmp/resources/jars/vdmj_hp/libs",
+    "./resources/jars/vdmj_hp/libs",
     alternativeRepo
 );
 
