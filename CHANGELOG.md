@@ -1,3 +1,7 @@
+### 1.3.5
+- Added VDM to (Plant) UML translation feature
+- Added VDMJ 1.5.0 features (Analysis plugins,...)
+
 ### 1.3.4
 - Added Real-Time-Logger View 
 - Fixed Hover of variables in the debug
@@ -7,8 +11,6 @@
 - Added precision to the launch configuration settings
 - Added default file nesting for sources like word files
 - Added extracting of embedded VDM in external sources
-- Added VDM to (Plant) UML translation feature
-- Added VDMJ 1.5.0 features (Analysis plugins,...)
 
 ### 1.3.3
 - Updated the publisher name (Breaks settings! Workaround: Replace 'jonaskrask.xyz' to 'overturetool.xyz')

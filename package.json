@@ -1,6 +1,6 @@
 {
     "name": "vdm-vscode",
-    "version": "1.3.4",
+    "version": "1.3.5",
     "publisher": "overturetool",
     "engines": {
         "vscode": "^1.64.0",
