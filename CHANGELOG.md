@@ -1,3 +1,7 @@
+### 1.3.5
+- Added VDM to (Plant) UML translation feature
+- Added VDMJ 1.5.0 features (Analysis plugins,...)
+
 ### 1.3.4
 - Added Real-Time-Logger View 
 - Fixed Hover of variables in the debug
