@@ -76,6 +76,8 @@
             },
             "explorer.fileNesting.enabled": true,
             "explorer.fileNesting.patterns": {
+   				"*.tex": "${capture}.tex.vdmsl, ${capture}.tex.vdmpp, ${capture}.tex.vdmrt",
+				"*.latex": "${capture}.latex.vdmsl, ${capture}.latex.vdmpp, ${capture}.latex.vdmrt",
                 "*.doc": "${capture}.doc.vdmsl, ${capture}.doc.vdmpp, ${capture}.doc.vdmrt",
                 "*.docx": "${capture}.docx.vdmsl, ${capture}.docx.vdmpp, ${capture}.docx.vdmrt",
                 "*.odt": "${capture}.odt.vdmsl, ${capture}.odt.vdmpp, ${capture}.odt.vdmrt",
@@ -1285,7 +1287,8 @@
                                     "vdmj.rt.max_periodic_overlaps": 20,
                                     "vdmj.rt.diags_guards": false,
                                     "vdmj.rt.diags_timestep": false,
-                                    "vdmj.in.powerset_limit": 30
+                                    "vdmj.in.powerset_limit": 30,
+                                    "vdmj.in.typebind_limit": 100000
                                 },
                                 "properties": {
                                     "vdmj.parser.comment_nesting": {
@@ -1397,6 +1400,11 @@
                                     "vdmj.in.powerset_limit": {
                                         "type": "number",
                                         "description": "The set size limit for power set expressions (default 30)",
+                                        "default": 30
+                                    },
+                                    "vdmj.in.typebind_limit": {
+                                        "type": "number",
+                                        "description": "The type size limit for type bind expressions (default 100000)",
                                         "default": 30
                                     }
                                 }
