@@ -1,3 +1,10 @@
+### 1.3.7
+- Hotfix to VDMJ to support Java 19
+- Updates UML Plugin jar to 0.1.1 including typing abstraction
+
+### 1.3.6
+- Hotfix to uml plugin jar: fixes stereotypes not translating correctly to VDM
+
 ### 1.3.5
 - Added VDM to (Plant) UML translation feature
 - Added VDMJ 1.5.0 features (Analysis plugins,...)
