@@ -942,17 +942,26 @@
                     },
                     "vdm-vscode.translate.isabelle.strict": {
                         "type": "boolean",
-                        "default": true,
+                        "default": false,
                         "scope": "resource",
                         "description": "Strict handling of certain errors (e.g. print output or not, raise VDMJ warnings as translation errors, etc.)."
                     },
                     "vdm-vscode.translate.isabelle.maxErrors": {
                         "type": "number",
-                        "default": 100,
+                        "default": 200,
                         "scope": "resource",
                         "description": "Maximum number (default=100) of translation errors to report. This is similar to VDMJ's maxErrors",
                         "minimum": 10,
                         "maximum": 10000
+                    },
+                    "vdm-vscode.translate.isabelle.isaVersion": {
+                        "type": "string",
+                        "enum": [
+                            "Isabelle2022"
+                        ],
+                        "default": "Isabelle2022",
+                        "description": "Isabelle/HOL version target for translation.",
+                        "scope": "resource"
                     },
                     "vdm-vscode.translate.isabelle.reportVDMWarnings": {
                         "type": "boolean",
@@ -960,9 +969,28 @@
                         "scope": "resource",
                         "description": "Report VDMJ warnings as part of the plugin output."
                     },
-                    "vdm-vscode.translate.isabelle.linientPost": {
+                    "vdm-vscode.translate.isabelle.debug": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Report VDMJ warnings as part of the plugin output."
+                    },
+                    "vdm-vscode.translate.isabelle.linientInvCheck": {
                         "type": "boolean",
                         "default": true,
+                        "scope": "resource",
+                        "description": "Exu invariant type checks allow subtyping instead of explicit invariant/pre calls."
+                    },
+                    "vdm-vscode.translate.isabelle.retypecheck": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Exu module sorting creates a new module, which you can re typecheck to ensure no VDM type errors have occured as a result of sorting."
+                    },
+
+                    "vdm-vscode.translate.isabelle.linientPost": {
+                        "type": "boolean",
+                        "default": false,
                         "scope": "resource",
                         "description": "Translate VDM source as an Isabelle comment alongside its translation."
                     },
@@ -1014,11 +1042,11 @@
                         "scope": "resource",
                         "description": "Translate VDM POs as a separate theory file associated with the recently translated VDM model."
                     },
-                    "vdm-vscode.translate.isabelle.linientInvCheck": {
+                    "vdm-vscode.translate.isabelle.createPogLocaleLemmas": {
                         "type": "boolean",
                         "default": true,
                         "scope": "resource",
-                        "description": "Exu invariant type checks allow subtyping instead of explicit invariant/pre calls."
+                        "description": "Translate VDM POs within an Isabelle locale with separate lemmas per PO."
                     },
                     "vdm-vscode.translate.isabelle.proofStrategy": {
                         "type": "string",
