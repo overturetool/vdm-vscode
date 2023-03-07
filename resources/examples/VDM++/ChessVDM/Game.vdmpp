@@ -1,0 +1,34 @@
+class GM
+types
+    public Winner = [PM`Color | <remis>];
+
+    public Game ::
+        board : BM`Board
+        turn : PM`Color;
+
+functions
+    -- Returns a Game containing a default Board and where it is white's turn
+    public default_game: () -> Game
+    default_game() == mk_Game(BM`default_board(), <white>);
+
+    -- Performs a move and evaluates if the game is decided.
+    public move : Game * BM`Move -> (Game * Winner)
+    move(game, mov) == (
+        let new_board = BM`move(game.board, mov),
+        opposite_c = PM`opposite_color(game.turn) in
+            if forall p in set new_board.board_state & p.color = opposite_c => BM`possible_moves(new_board, p) = {} then -- Opponent cannot move
+                if BM`in_check(new_board.board_state, opposite_c) then -- And they are put in check
+                    mk_(game, game.turn) -- They won
+                else
+                    mk_(game, <remis>) -- Draw
+            else
+                mk_(
+                    mk_Game(new_board, opposite_c),
+                    nil
+                )
+    )
+    pre mov.from.color = game.turn and mov in set BM`possible_moves(game.board, mov.from)
+    post len game.board.history < len RESULT.#1.board.history
+        and RESULT.#2 = nil => game.board.board_state <> RESULT.#1.board.board_state;
+
+end GM

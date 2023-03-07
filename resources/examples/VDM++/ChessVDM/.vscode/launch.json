@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Launch ChessVDM runner",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": true,
+            "defaultName": "RunAll",
+            "command": "p new RunAll().Run()"
+        }
+    ]
+}

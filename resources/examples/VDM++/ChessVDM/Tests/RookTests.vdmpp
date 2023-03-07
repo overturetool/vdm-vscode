@@ -1,0 +1,62 @@
+class RookCT is subclass of TestHelpers
+
+functions
+
+operations
+    -- Tester operation for checking when rook can move freely. I.e. in every horizontal and vertical direction
+    private move_freely_check : PM`Piece * set of PM`Coordinate ==> ()
+    move_freely_check(r, result) == skip
+    post (result = hori_and_verti_coords(r.square));
+
+    -- Tester operation for checking that a rook can move one step in each direction
+    private move_single_step_check : PM`Piece * set of PM`Coordinate ==> ()
+    move_single_step_check(r, result) == skip
+    post (result = neighbouring_coords(r.square));
+
+traces
+
+    -- Tests that a rook can move freely if it is alone on the board.
+    empty_board: (
+    let color in set PM`colors() in -- Combination of colors
+        let x in set xs in  -- All xs
+            let y in set ys in -- All ys
+                let r = mk_PM`Piece(<rook>, mk_PM`Coordinate(x, y), color) in
+                    move_freely_check(r, PM`type_based_moves(r, PM`pieces_to_obstacles({r})))
+    );
+
+    -- Tests that if the path of a Rook is blocked by a friend then it can only move to the coordinates in-between.
+    -- Implementation details:
+        -- Does so by creating neighbours with a certain offset. (Discards invalid potential neighbours)
+        -- Then it creates the set containing the coordinates between the neighbours and the rook.
+        -- Finally it checks that the possible moves are equal to the coordinates between neighbours and r.
+        -- Edge case:
+            -- Lets say r.square = (2,2) and offset = 3. Then we only have neighbours on (4,2) and (2,4)
+            -- The coords_between_neighbours_and_r will then be equal to: {(1,2), (2,1), (take note of these two)
+            -- (2,3), (3,2), (2,4), (4,2)}
+            -- The edge case of the neighbours to the left and bottom is handled by saying there are no pieces in that direction
+            -- so it should be able to move freely towards those directions.
+    blocked: (
+    let color in set PM`colors() in 
+        let x in set xs in 
+            let y in set ys in
+                let offset in set {0, ..., 7} in
+                    let r = mk_PM`Piece(<rook>, mk_PM`Coordinate(x, y), color) in
+                        let neighbours : set of PM`Piece = pawn_factory(neighbouring_coords_offset(r.square, offset), color) in
+                            let coords_between_neighbours_and_r = coords_between_neighbours(r.square, offset) in
+                                is_equal_set(coords_between_neighbours_and_r,  PM`type_based_moves(r, neighbours union PM`pieces_to_obstacles({r})))
+    );
+
+    -- Tests that if the path of a Rook is blocked by an enemy then it can only move to the coordinates in-between and on the enemy.
+    -- Implementation details: See @blocked.
+    attack: (
+    let color in set PM`colors() in 
+        let x in set xs in
+            let y in set ys in
+                let offset in set {0, ..., 7} in
+                    let r = mk_PM`Piece(<rook>, mk_PM`Coordinate(x, y), color) in
+                        let neighbours : set of PM`Piece = pawn_factory(neighbouring_coords_offset(r.square, offset), PM`opposite_color(color)) in
+                            let coords_between_and_including_neighbours_and_r = coords_between_neighbours(r.square, offset + 1) in
+                                is_equal_set(coords_between_and_including_neighbours_and_r, PM`type_based_moves(r, neighbours union PM`pieces_to_obstacles({r})))
+    );
+
+end RookCT

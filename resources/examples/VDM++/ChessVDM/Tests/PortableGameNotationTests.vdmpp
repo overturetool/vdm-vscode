@@ -1,0 +1,66 @@
+class PGNUT is subclass of TestCase, TestHelpers
+
+operations
+    operations
+
+    public test_str_to_move : () ==> ()
+    test_str_to_move() == (
+        let game = GM`default_game() in
+            let move = PGN`string_to_move(game, "Nf3") in
+            (
+                assertTrue(move.from = mk_PM`Piece(<knight>, mk_PM`Coordinate(7, 1), <white>));
+                assertTrue(move.to_ = BM`piece_coord_to_move(move.from, mk_PM`Coordinate(6, 3)).to_)
+            )
+    );
+
+    public test_str_to_move_with_x1 : () ==> ()
+    test_str_to_move_with_x1() == (
+        let r1 = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 1), <white>),
+        r2 = mk_PM`Piece(<rook>, mk_PM`Coordinate(8, 1), <white>),
+        k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(5, 2), <white>),
+        k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(7, 7), <black>) in
+            let board_state : BM`BoardState = {r1, r2, k1, k2} in
+                let board = mk_BM`Board(board_state, []) in
+                    let game = mk_GM`Game(board, <white>) in
+                        let move = PGN`string_to_move(game, "Rag1") in
+                        (
+                            assertTrue(move.from = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 1), <white>));
+                            assertTrue(move.to_ = BM`piece_coord_to_move(move.from, mk_PM`Coordinate(7, 1)).to_)
+                        )
+    );
+
+    public test_str_to_move_with_x2 : () ==> ()
+    test_str_to_move_with_x2() == (
+        let n1 = mk_PM`Piece(<knight>, mk_PM`Coordinate(3, 1), <white>),
+        n2 = mk_PM`Piece(<knight>, mk_PM`Coordinate(5, 1), <white>),
+        k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(5, 2), <white>),
+        k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(7, 7), <black>) in
+            let board_state : BM`BoardState = {n1, n2, k1, k2} in
+                let board = mk_BM`Board(board_state, []) in
+                    let game = mk_GM`Game(board, <white>) in
+                        let move = PGN`string_to_move(game, "Ncd3") in
+                        (
+                            assertTrue(move.from = mk_PM`Piece(<knight>, mk_PM`Coordinate(3, 1), <white>));
+                            assertTrue(move.to_ = BM`piece_coord_to_move(move.from, mk_PM`Coordinate(4, 3)).to_)
+                        )
+    );
+
+    public test_str_to_move_with_y : () ==> ()
+    test_str_to_move_with_y() == (
+        let r1 = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 1), <white>),
+        r2 = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 8), <white>),
+        k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(5, 2), <white>),
+        k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(7, 7), <black>) in
+            let board_state : BM`BoardState = {r1, r2, k1, k2} in
+                let board = mk_BM`Board(board_state, []) in
+                    let game = mk_GM`Game(board, <white>) in
+                        let move = PGN`string_to_move(game, "R1a2") in
+                        (
+                            assertTrue(move.from = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 1), <white>));
+                            assertTrue(move.to_ = BM`piece_coord_to_move(move.from, mk_PM`Coordinate(1, 2)).to_)
+                        )
+    );
+
+functions
+
+end PGNUT
