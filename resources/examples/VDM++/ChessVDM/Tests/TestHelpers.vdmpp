@@ -1,0 +1,124 @@
+class TestHelpers
+types
+    protected UnboundCoordinate ::
+        x : int
+        y : int;
+
+functions
+    -- Rounds any integer value to a number between 1 and 8.
+    protected round_coord_axis : int -> int
+    round_coord_axis(n) == if n > 8 then 8 elseif n < 1 then 1 else n;
+
+    -- Rounds any integer to a value between -1 and 1.
+    public round_step : int -> int
+    round_step(n) == if n > 1 then 1 elseif n < -1 then -1 else n;
+
+    -- Returns the distance between two coordinates
+    protected distance : PM`Coordinate * PM`Coordinate -> UnboundCoordinate
+    distance(a, b) == mk_UnboundCoordinate(b.x - a.x, b.y - a.y);
+
+    -- Moves one step from a towards b.
+    public step : PM`Coordinate * PM`Coordinate -> PM`Coordinate
+    step(a, b) ==
+    let d = distance(a, b) in
+        mk_PM`Coordinate(a.x + round_step(d.x), a.y + round_step(d.y));
+
+    -- Get all the y-values that are not end squares (color dependant)
+    protected set_y_vals_not_end : PM`Color -> set of nat1
+    set_y_vals_not_end(color) == {v | v in set ys & (color = <black> => v > 1) and (color = <white> => v < 8)};
+
+    -- Returns all the horizontal and vertical coordinates of the input coordinate
+    protected hori_and_verti_coords : PM`Coordinate -> set of PM`Coordinate
+    hori_and_verti_coords(c) == {mk_PM`Coordinate(x, c.y) | x in set xs & x <> c.x} union
+        {mk_PM`Coordinate(c.x, y) | y in set ys & y <> c.y};
+
+    -- Gets the end-square for a given color
+    protected end_square : PM`Color -> nat1
+    end_square(color) == if color = <white> then 8 else 1;
+
+    -- Returns the set of neighbouring coordinates with an offset. Filters out invalid coordinates
+    -- (Horizontal and vertical)
+    protected neighbouring_coords_offset : PM`Coordinate * int -> set of PM`Coordinate
+    neighbouring_coords_offset(coord, offset) == {
+        PM`coordinate_factory(coord.x + offset + 1, coord.y),
+        PM`coordinate_factory(coord.x - offset - 1, coord.y),
+        PM`coordinate_factory(coord.x, coord.y + offset + 1),
+        PM`coordinate_factory(coord.x, coord.y - offset - 1)
+    } \ {nil, coord} -- Filters invalid coordinates (and itself)
+    pre (offset >= -1 and offset <= 7);
+
+    -- Returns the set of neighbouring coordinates. Filters out invalid coordinates
+    -- (Horizontal and vertical)
+    protected neighbouring_coords : PM`Coordinate -> set of PM`Coordinate
+        neighbouring_coords(coord) == {
+        PM`coordinate_factory(coord.x + 1, coord.y),
+        PM`coordinate_factory(coord.x - 1, coord.y),
+        PM`coordinate_factory(coord.x, coord.y + 1),
+        PM`coordinate_factory(coord.x, coord.y - 1)
+    } \ {nil};
+
+    -- Returns the set of diagonal coordinates in a specified direction. Filters out invalid coordinates.
+    protected diagonal_coords_direction : PM`Coordinate * int -> set of PM`Coordinate
+    diagonal_coords_direction(coord, direction) == {
+        PM`coordinate_factory(coord.x + 1, coord.y + direction),
+        PM`coordinate_factory(coord.x - 1, coord.y + direction)
+    } \ {nil};
+
+    -- Returns the set of diagonal coordinates. Filters out invalid coordinates.
+    protected diagonal_coords : PM`Coordinate -> set of PM`Coordinate
+    diagonal_coords(coord) == diagonal_coords_direction(coord, 1) union diagonal_coords_direction(coord, -1);
+
+    -- Returns the set of surrounding coordinates. Filters out invalid coordinates.
+    protected surrounding_coords : PM`Coordinate -> set of PM`Coordinate
+    surrounding_coords(coord) == diagonal_coords(coord) union neighbouring_coords(coord);
+
+    -- Returns the coordinates between a and b. -- TODO: Add measure
+    protected coords_between : PM`Coordinate * PM`Coordinate -> set of PM`Coordinate
+    coords_between(a, b) == 
+    let d = distance(a, b) in
+        if d = mk_UnboundCoordinate(0,0) then
+            {}
+        else
+            let new_a = step(a, b) in
+                {new_a} union coords_between(new_a, b);
+        
+    -- Returns the coordinates between c and the neighbours it would have, assuming a given offset.
+    -- Note: In retrospect this could've been implemented by recursively calling `neighbouring_coords` with offset-1...
+    -- But this one is probably more efficient and I learned a lot.
+    protected coords_between_neighbours : PM`Coordinate * nat -> set of PM`Coordinate
+    coords_between_neighbours(c, offset) ==
+    let vals = mk_( round_coord_axis(c.x + offset),
+                    round_coord_axis(c.x - offset),
+                    round_coord_axis(c.y + offset),
+                    round_coord_axis(c.y - offset)) in
+        dunion {
+            coords_between(c, mk_PM`Coordinate(vals.#1, c.y)),
+            coords_between(c, mk_PM`Coordinate(vals.#2, c.y)),
+            coords_between(c, mk_PM`Coordinate(c.x, vals.#3)),
+            coords_between(c, mk_PM`Coordinate(c.x, vals.#4))
+        };
+    
+operations
+    -- Tests that the result is an empty set
+    protected static is_empty_set : set of PM`Coordinate ==> ()
+    is_empty_set(result) == skip
+    post result = {};
+
+    protected static is_equal_set : set of PM`Coordinate * set of PM`Coordinate ==> ()
+    is_equal_set(result, expected) == skip
+    post result = expected;
+
+    -- Returns a set of pawns on the given coordinate with the given color
+    -- (Operation since it allocates)
+    pure protected static pawn_factory : set of PM`Coordinate * PM`Color ==> set of PM`Piece
+    pawn_factory(coords, color) == return {mk_PM`Piece(<pawn>, c, color) | c in set coords};
+
+    -- Returns the combinatorics of pawn_factor minus the empty set. See `pawn_factory`.
+    pure protected static pawn_factory_combinatorics : set of PM`Coordinate * PM`Color ==> set of set of PM`Piece
+    pawn_factory_combinatorics(coords, color) == return (power pawn_factory(coords, color)) \ {{}};
+
+values
+    protected xs : set of nat1 = {1, ..., 8};
+    protected ys : set of nat1 = {1, ..., 8};
+
+end TestHelpers

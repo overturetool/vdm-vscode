@@ -1,0 +1,346 @@
+class BM -- BoardModule
+types
+    public Move ::
+        from : PM`Piece
+        to_ : PM`Piece -- to is a keyword
+    inv mi == mi.from.color = mi.to_.color and
+        mi.from.square <> mi.to_.square; 
+
+    public BoardState = set1 of PM`Piece
+    inv b == forall p1, p2 in set b & p1 <> p2 => p1.square <> p2.square; -- Two pieces cannot be on the same square
+
+    public History = seq of Move;
+
+    public Board ::
+        board_state : BoardState
+        history : History;
+
+functions
+
+    -- Returns a Board containing the default start position in Chess.
+    public default_board : () -> Board
+    default_board() ==
+    (
+        let board_state : BoardState = dunion {
+            {mk_PM`Piece(<rook>, mk_PM`Coordinate(x_coord, 1), <white>)   | x_coord in set {1, 8}},
+            {mk_PM`Piece(<rook>, mk_PM`Coordinate(x_coord, 8), <black>)   | x_coord in set {1, 8}},
+            {mk_PM`Piece(<knight>, mk_PM`Coordinate(x_coord, 1), <white>) | x_coord in set {2, 7}},
+            {mk_PM`Piece(<knight>, mk_PM`Coordinate(x_coord, 8), <black>) | x_coord in set {2, 7}},
+            {mk_PM`Piece(<bishop>, mk_PM`Coordinate(x_coord, 1), <white>) | x_coord in set {3, 6}},
+            {mk_PM`Piece(<bishop>, mk_PM`Coordinate(x_coord, 8), <black>) | x_coord in set {3, 6}},
+            {mk_PM`Piece(<queen>, mk_PM`Coordinate(4, 1), <white>)},
+            {mk_PM`Piece(<queen>, mk_PM`Coordinate(4, 8), <black>)},
+            {mk_PM`Piece(<king>, mk_PM`Coordinate(5, 1), <white>)},
+            {mk_PM`Piece(<king>, mk_PM`Coordinate(5, 8), <black>)},
+            {mk_PM`Piece(<pawn>, mk_PM`Coordinate(x_coord, 2), <white>) | x_coord in set {1, ..., 8}},
+            {mk_PM`Piece(<pawn>, mk_PM`Coordinate(x_coord, 7), <black>) | x_coord in set {1, ..., 8}}
+        } in
+            mk_Board(board_state, [])
+    );
+
+    -- Perform a Move on the Board
+    public move: Board * Move -> Board
+    move(board, mov) == (
+        if mov.from.type = <king> and iss_castling(board, mov) then
+            move_castling(board, mov)
+        else if (mov.from.type = <pawn> and iss_en_passant(board, mov)) then
+            move_en_passant(board, mov)
+        else
+            move_other(board, mov)
+    )
+    pre mov in set possible_moves(board, mov.from)
+        and mov.from in set board.board_state
+    post len board.history < len RESULT.history
+         and board.board_state <> RESULT.board_state;
+
+    -- Base case for performing a Move.
+    private move_other: Board * Move -> Board
+    move_other(board, mov) == (
+        let dead_piece = {p | p in set board.board_state & p.square = mov.to_.square} in -- Either empty or containing one Piece
+            let new_state = (board.board_state \ (dead_piece union {mov.from})) union {mov.to_} in
+                mk_Board(new_state, [mov] ^ board.history)
+    )
+    pre pre_move(board, mov)
+    post post_move(board, mov, RESULT);
+
+    -- Performs an en passant Move on the Board
+    private move_en_passant: Board * Move -> Board
+    move_en_passant(board, mov) == (
+        let dead_piece = (hd board.history).to_ in
+            let new_state = (board.board_state \ {dead_piece, mov.from})
+                union {mk_PM`Piece(mov.from.type, mov.to_.square, mov.from.color)} in
+                mk_Board(new_state, [mov] ^ board.history)
+    )
+    pre pre_iss_en_passant(board, mov) and iss_en_passant(board, mov);
+
+    -- Performs a castling Move on the Board
+    private move_castling: Board * Move -> Board
+    move_castling(board, mov) == (
+        let y = mov.to_.square.y,
+            king_side = mov.to_.square.x <> 3 in
+            let r_new_x = if king_side then 6 else 4,
+                r_cur_x = if king_side then 8 else 1 in
+                let rook = iota r in set board.board_state & r.square = mk_PM`Coordinate(r_cur_x, y) in
+                    let r_move = piece_coord_to_move(rook, mk_PM`Coordinate(r_new_x, y)),
+                        after_king_state = (board.board_state \ {mov.from}) union {mov.to_} in
+                            let after_rook_state = (after_king_state \ {r_move.from}) union {r_move.to_} in
+                                mk_Board(after_rook_state, [r_move, mov] ^ board.history)
+    )
+    pre pre_castling_legal(board, mov) and castling_legal(board, mov);
+
+    -- Returns true if `color` is in check.
+    -- Note: We can simply use PM`type_based_moves because we don't need to take the special rules into account:
+    -- 1. We don't need to care about en passant -- it is only a pawn-takes-pawn move
+    -- 2. We don't need to care about castling   -- one is not under attack from the castling pieces until **after** the move is performed
+        -- So one might perform a castle that puts the opponent in check, but one is not in check because castling is an option.
+    public in_check : BoardState * PM`Color -> bool
+    in_check(board_state, color) == (
+        let opposite_c = PM`opposite_color(color) in
+            let king = iota p in set board_state & p.type = <king> and p.color = color in -- Always returns instance due to precondition
+                exists p in set board_state & 
+                    (p.color = opposite_c) and (king.square in set PM`type_based_moves(p, PM`pieces_to_obstacles(board_state)))
+    )
+    pre exists piece in set board_state &
+        (piece.type = <king> and piece.color = color); -- Must be a king with the color we check for
+
+    -- Returns true if the move puts the player in self-check
+    -- Note: Does not handle castling as it involves moving two pieces and it is handled internally by `castling_legal`.
+    private puts_in_check: BoardState * Move -> bool
+    puts_in_check(board_state, mov) == (
+        let dead_piece = {p | p in set board_state & p.square = mov.to_.square} in 
+            let new_board = (board_state \ (dead_piece union {mov.from}))
+                union {mk_PM`Piece(mov.from.type, mov.to_.square, mov.from.color)} in -- Temporary state that we try
+                in_check(new_board, mov.from.color)
+    )
+    pre mov.from in set board_state
+        and pre_in_check(board_state, mov.from.color);
+
+    -- Returns the possible moves for a piece when taking special rules into account
+    -- Special rules being: En passant, castling, putting yourself in check, only making moves that puts one out of check
+    public possible_moves : Board * PM`Piece -> set of Move
+    possible_moves (board, piece) == (
+        let state_p_moves = stateful_possible_moves(board, piece),
+            state_imp_moves = stateful_impossible_moves(board, piece),
+            simple_moves = PM`type_based_moves(piece, PM`pieces_to_obstacles(board.board_state)) in
+                ({piece_coord_to_move(piece, c) | c in set simple_moves} union state_p_moves) \ state_imp_moves
+    )
+    pre piece in set board.board_state;
+
+    -- Returns the set of coordinates that would normally be possible but are impossible
+    -- because it results in the moving player losing the game.
+    -- This involves two scenarios:
+        -- Not making a move that puts you in check
+        -- If you are in check then you must make a move that puts you out of check
+    -- Note: Does not handle castling scenarios as it involves moving two pieces. These are handled internally by `castling_legal`.
+    private stateful_impossible_moves: Board * PM`Piece -> set of Move
+    stateful_impossible_moves(board, piece) == (
+        -- Consider type-based and stateful moves
+        let moves = {piece_coord_to_move(piece, c) | c in set PM`type_based_moves(piece, PM`pieces_to_obstacles(board.board_state))}
+                     union stateful_possible_moves(board, piece) in
+            -- Find all the moves that makes self-check
+            let moves_in_check = {m | m in set moves & puts_in_check(board.board_state, m)} in
+                if piece.type <> <pawn> then
+                    moves_in_check
+                else
+                    -- Special case for pawns:
+                    -- If pawn moving to square on last rank it must change it's piece-type (promotion)
+                    let promote_coords = {m.to_.square | m in set pawn_promotion(board.board_state, piece)} in
+                        moves_in_check union {piece_coord_to_move(piece, c) | c in set promote_coords}
+    )
+    -- The preconditions for all the moves we consider must not violate the precondition of `puts_in_check`
+    pre forall mov in set {piece_coord_to_move(piece, c) | c in set PM`type_based_moves(piece, PM`pieces_to_obstacles(board.board_state))}
+        union stateful_possible_moves(board, piece)
+            & pre_puts_in_check(board.board_state, mov);
+
+    -- Returns the set of Move containing the valid special moves.
+    private stateful_possible_moves: Board * PM`Piece -> set of Move
+    stateful_possible_moves(board, piece) == (
+        cases piece.type:
+            <pawn> -> dunion {
+                pawn_move_two(board.board_state, piece),
+                en_passant(board, piece),
+                pawn_promotion(board.board_state, piece)},
+            <king> -> castling_possible(board, piece),
+            others -> {}
+        end
+    );
+
+    -- ###### Special moves ###### --
+
+    -- Handles special case where a pawn initially can move two squares.
+    -- Note: We don't need to check if the pawn has moved as a pawn can't move backwards
+    private pawn_move_two: BoardState * PM`Piece -> set of Move
+    pawn_move_two(board_state, piece) == (
+        let initial_y = {<white> |-> 2, <black> |-> 7},
+        dir = PM`get_pawn_direction(piece) in
+        let sq = PM`coordinate_factory(piece.square.x, piece.square.y + 2*dir) in
+            -- Piece is located on initial square and there doesn't exist a piece on resulting square
+            if sq <> nil and piece.square.y = initial_y(piece.color) and
+                not exists p in set board_state & p.square = sq then
+                    {mk_Move(piece, mk_PM`Piece(piece.type, sq, piece.color))}
+            else
+                {}
+    )
+    pre piece.type = <pawn> and piece in set board_state;
+
+    -- Handles special case of pawn promotion
+    private pawn_promotion: BoardState * PM`Piece -> set of Move
+    pawn_promotion(board_state, pawn) == (
+        let last_y = if pawn.color = <white> then 8 else 1,
+            promotable_types = {<knight>, <bishop>, <rook>, <queen>} in
+            let promotion_squares = {coord | coord in set PM`type_based_moves(pawn, PM`pieces_to_obstacles(board_state)) & coord.y = last_y} in
+                -- Generate set of Moves with the combination of all the valid types and all the valid y-values.
+                {mk_Move(pawn, mk_PM`Piece(t_c_tuple.#1, t_c_tuple.#2, pawn.color)) |
+                        t_c_tuple in set sets_combine_tuple[PM`PieceType, PM`Coordinate](promotable_types, promotion_squares)}
+    )
+    pre pawn.type = <pawn> and pawn in set board_state;
+
+    -- Returns en passant move if it is possible for piece to do en passant. Else empty set.
+    private en_passant: Board * PM`Piece -> set of Move
+    en_passant(board, piece) == (
+        if board.history = [] then {} else -- First move can't be en passant
+        let prev = (hd board.history) in -- Prev move
+            if prev.from.type = <pawn> then
+                let prev_dir = PM`get_pawn_direction(prev.from),
+                    dir = PM`get_pawn_direction(piece) in
+                    -- If prev is a pawn, moved two fields last turn, and prev.to_ and piece are neighbors
+                        if  (prev.to_.square.y = piece.square.y) and
+                            (prev.from.square.y + 2*prev_dir = prev.to_.square.y) and
+                            (prev.from.square.x = piece.square.x + 1 or prev.from.square.x = piece.square.x - 1) then
+                            {mk_Move(piece, mk_PM`Piece(piece.type,
+                                mk_PM`Coordinate(prev.from.square.x, piece.square.y + dir), piece.color))}
+                        else {}
+            else {}
+    )
+    pre piece.type = <pawn> and piece in set board.board_state;
+    
+    -- Returns true if the move is a valid en passant move
+    private iss_en_passant: Board * Move -> bool -- `is` is a keyword..
+    iss_en_passant(board, mov) == (
+        mov in set en_passant(board, mov.from)
+    )
+    pre mov.from.type = <pawn> and mov.from in set board.board_state and mov in set possible_moves(board, mov.from);
+
+    -- Returns set of Move containing the possible castling moves (O-O and O-O-O)
+    private castling_possible: Board * PM`Piece -> set of Move
+    castling_possible(board, piece) == (
+        if has_moved(piece, board.history) then -- Early out (also needed to not violate Move invariant when creating `x_side_move` in case king.sq = `x_side_pos`)
+            {}  -- Can't be castling if the piece has moved
+        else
+            let king_side_move = piece_coord_to_move(piece, if piece.color = <white> then mk_PM`Coordinate(7, 1) else mk_PM`Coordinate(7, 8)),
+                queen_side_move = piece_coord_to_move(piece, if piece.color = <white> then mk_PM`Coordinate(3, 1) else mk_PM`Coordinate(3, 8)) in
+                    let king_side_possible = castling_legal(board, king_side_move),
+                        queen_side_possible = castling_legal(board, queen_side_move) in
+                            cases mk_(king_side_possible, queen_side_possible):
+                                mk_(false, false) -> {},
+                                mk_(false, true) -> {queen_side_move},
+                                mk_(true, false) -> {king_side_move},
+                                mk_(true, true) -> {king_side_move, queen_side_move}
+                            end
+    )
+    pre piece.type = <king> and piece in set board.board_state
+    post card RESULT < 3;
+
+    -- Tests if the move is a castling move that is legal.
+    -- Castling is illegal if:
+        -- A piece involved in the castling has moved
+        -- There a pieces blocking the castling
+        -- The king is under attack
+        -- The squares that the king and rook will be moved to are under attack
+    private castling_legal: Board * Move -> bool
+    castling_legal(board, mov) == (
+        not has_moved(mov.from, board.history) and -- Can't be castling if the piece has moved
+            -- Get set containing rook that is being castled with (or empty set)
+            let rook_s = {r | r in set board.board_state & r.type = <rook> and r.color = mov.from.color and
+                (r.square.x = mov.to_.square.x + 1 or r.square.x = mov.to_.square.x - 2) and
+                not has_moved(r, board.history)} in
+                    rook_s <> {} and
+                    let rook in set rook_s in -- Guaranteed to contain 1
+                        -- No blocking pieces
+                        not pieces_between(mk_(rook.square, mov.from.square), board.board_state) and
+                        let constrained_x_map = {1 |-> {3, 4, 5}, 8 |-> {5, 6, 7}} in
+                            let constrained_squares = {mk_PM`Coordinate(x, rook.square.y) | x in set constrained_x_map(rook.square.x)} in
+                                forall p in set board.board_state & p.color = PM`opposite_color(mov.from.color) and p.type <> <king> =>
+                                    constrained_squares inter {m.to_.square | m in set possible_moves(board, p)} = {}
+    )
+    pre mov.from.type = <king> and mov.from in set board.board_state;
+
+    -- Returns true if Move is a castling move.
+    -- Note: Assumes that the Move is only a castling Move if it is a legal castling move.
+    -- Therefore, it is simply an alias for `castling_legal`)
+    private iss_castling: Board * Move -> bool
+    iss_castling(board, mov) == castling_legal(board, mov)
+    pre pre_castling_legal(board, mov);
+
+    -- ###### Helper functions ###### --
+
+    -- Converts from a piece and coordinate to a move (not castling)
+    public piece_coord_to_move: PM`Piece * PM`Coordinate -> Move
+    piece_coord_to_move(piece, coord) == mk_Move(piece, mk_PM`Piece(piece.type, coord, piece.color));
+
+    public find_piece: BoardState * (PM`Piece -> bool) -> PM`Piece
+    find_piece(board_state, pred) == iota p in set board_state & pred(p) -- Always returns instance due to precondition
+    pre exists1 p in set board_state & pred(p);
+
+    -- Returns the set of tuples containing the combination of s1 and s2
+    public sets_combine_tuple[@T1, @T2]: set of @T1 * set of @T2 -> set of (@T1 * @T2)
+    sets_combine_tuple(s1, s2) == sets_combine_tuple_acc[@T1, @T2](s1, s2, {});
+
+    -- Accumulator for `sets_combine_tuple`
+    private sets_combine_tuple_acc[@T1, @T2]: set of @T1 * set of @T2 * set of (@T1 * @T2)
+        -> set of (@T1 * @T2)
+        sets_combine_tuple_acc(s1, s2, acc) == (
+            if s1 = {} then acc
+            else
+            let e1 in set s1 in 
+                let new_acc = acc union {mk_(e1, e2) | e2 in set s2} in
+                    sets_combine_tuple_acc[@T1, @T2](s1 \ {e1}, s2, new_acc)
+        )
+        measure card s1;
+
+    -- See if the Piece has moved by looking through the history
+    private has_moved: PM`Piece * History -> bool
+    has_moved(piece, history) == (
+        if history = [] then
+            false
+        elseif (hd history).to_ = piece then
+            true
+        else
+            has_moved(piece, tl history)
+    )
+    measure len history;
+
+
+    -- Returns the distance between two coordinates represented as a tuple
+    -- with x as #1 and y as #2. (Can contain negative numbers)
+    private distance : PM`Coordinate * PM`Coordinate -> (int * int)
+    distance(a, b) == mk_(b.x - a.x, b.y - a.y);
+
+    -- Rounds any integer to a value between -1 and 1.
+    private round_step : int -> int
+    round_step(n) == if n > 1 then 1 elseif n < -1 then -1 else n;
+
+    -- Moves one step from a towards b.
+    -- Note: Assumes diagonal steps are allowed if needed
+    private step : PM`Coordinate * PM`Coordinate -> PM`Coordinate
+    step(a, b) ==
+    let d = distance(a, b) in
+        mk_PM`Coordinate(a.x + round_step(d.#1), a.y + round_step(d.#2));
+
+    -- Returns the coordinates between a and b. -- TODO: Add measure
+    private coords_between : PM`Coordinate * PM`Coordinate -> set of PM`Coordinate
+    coords_between(a, b) == 
+    let d = distance(a, b) in
+        if abs(d.#1) + abs(d.#2) < 2 then -- < 2 because since we don't want it to be including coord of a
+            {}
+        else
+            let new_a = step(a, b) in
+                {new_a} union coords_between(new_a, b);
+
+    -- Returns whether any pieces between the two coordinates
+    private pieces_between: (PM`Coordinate * PM`Coordinate) * BoardState -> bool
+    pieces_between(squares, board_state) == (
+        exists p in set board_state & p.square in set coords_between(squares.#1, squares.#2)
+    );
+
+end BM

@@ -1,0 +1,55 @@
+class GameUT is subclass of TestCase, TestHelpers
+
+operations
+    operations
+
+    -- Helper operation that returns a string indicating it is the wrong player's turn
+    private wrong_turn : () ==> seq of char
+    wrong_turn() == return getName() ^": Wrong player's turn";
+
+    -- Helper operation that returns value-wise equivalence
+    -- (Comparing the board states)
+    private pure boards_equal : BM`BoardState * BM`BoardState ==> bool
+    boards_equal(b1, b2) == (
+            return card (b1 union b2) = card b1
+            -- Below is version that works with class types
+            -- let bs1 = b1.get_state(), bs2 = b2.get_state() in
+            -- return card bs1 = card bs2 and
+            -- forall p1 in set bs1 &
+            --     exists p2 in set bs2 & p1.type = p2.type and p1.square = p2.square and p1.color = p2.color
+    );
+
+    public test_game_changing_turn : () ==> ()
+    test_game_changing_turn() == (
+        let game = GM`default_game() in
+            let board_state = game.board.board_state in
+                let pawn = iota p in set board_state & p.square = mk_PM`Coordinate(4, 2) in
+                    let move = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(4, 3)) in
+                    (
+                        assertTrue(game.turn = <white>);
+                        let updated_game = GM`move(game, move).#1 in
+                            assertTrue(updated_game.turn = <black>)
+                    );
+
+    );
+
+    public test_game_winnable_white : () ==> ()
+    test_game_winnable_white() == (
+        let knight = mk_PM`Piece(<knight>, mk_PM`Coordinate(2, 5), <white>) in
+            let board_state : BM`BoardState = {
+                mk_PM`Piece(<pawn>, mk_PM`Coordinate(1, 7), <black>),
+                mk_PM`Piece(<pawn>, mk_PM`Coordinate(2, 7), <black>),
+                mk_PM`Piece(<king>, mk_PM`Coordinate(1, 8), <black>),
+                mk_PM`Piece(<rook>, mk_PM`Coordinate(2, 8), <black>),
+                mk_PM`Piece(<king>, mk_PM`Coordinate(5, 1), <white>),
+                knight} in -- Setting up for mate in one
+                let board = mk_BM`Board(board_state, []) in
+                    let game = mk_GM`Game(board, <white>) in
+                        let move = BM`piece_coord_to_move(knight, mk_PM`Coordinate(3, 7)) in
+                            let winner = GM`move(game, move).#2 in
+                                assertTrue(winner = <white>)
+    );
+
+functions
+
+end GameUT

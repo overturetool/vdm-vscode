@@ -1,0 +1,119 @@
+class PawnCT is subclass of TestHelpers
+
+operations
+    -- Tester operation for checking when pawn can move forward
+    static private move_forward_check : PM`Piece * set of PM`Coordinate ==> ()
+    move_forward_check(p, result) == skip
+    post (result = {mk_PM`Coordinate(p.square.x, p.square.y + get_pawn_direction(p))});
+
+    -- Tester operation for checking that the pawn can move forward and in the square of the attackable pieces
+    static private move_attack_and_forward_check : PM`Piece * set of PM`Piece * set of PM`Coordinate ==> ()
+    move_attack_and_forward_check(piece, piece_set, result) == skip
+    post result =
+        {mk_PM`Coordinate(piece.square.x, piece.square.y + get_pawn_direction(piece))} -- Forward
+        union PM`obstacles_to_coord_set(PM`pieces_to_obstacles(piece_set)); -- squares of attackable pawns
+
+    -- Helper operation for generating the combination of the diagonal pawns in any direction
+    -- (Must be operation since it allocates)
+    pure static private comb_diagonal_direction : PM`Coordinate * PM`Color * int ==>
+        set of set of PM`Piece
+    comb_diagonal_direction(coord, color, y_dir) ==
+        return pawn_factory_combinatorics(diagonal_coords_direction(coord, y_dir), color);
+
+    -- Helper operation for generating the combination of diagonal pawns ahead of the pawn
+    -- (Must be operation since it allocates)
+    pure static private comb_diagonal_ahead : PM`Piece * PM`Color ==> set of set of PM`Piece
+    comb_diagonal_ahead(p, color) ==
+        return comb_diagonal_direction(p.square, color, get_pawn_direction(p));
+
+    -- Helper operation for generating the combination of diagonal pawns behind of the pawn
+    -- (Must be operation since it allocates)
+    pure static private comb_diagonal_behind : PM`Piece * PM`Color ==> set of set of PM`Piece
+    comb_diagonal_behind(p, color) ==
+        return comb_diagonal_direction(p.square, color, -get_pawn_direction(p));
+
+functions
+    -- Copy of PM`get_pawn_direction used for tests
+    private get_pawn_direction : PM`Piece -> int
+    get_pawn_direction(p) == if p.color = <white> then 1 else -1
+    pre p.type = <pawn>;
+
+traces
+    -- Tests that a pawn can move forward  on all fields that are not the end square if the board is otherwise empty
+    move_forward : (
+    let color in set PM`colors() in -- Combination of colors
+            let x in set xs in -- Combination of all x-values
+                let y in set set_y_vals_not_end(color) in -- Combination of all y-values (minus end squares)
+                    let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x,y), color) in -- Create pawn in the square
+                        move_forward_check(p, PM`type_based_moves(p, PM`pieces_to_obstacles({p}))); -- Check that it can move forward
+    );
+
+    -- Tests if a pawn is at an end square then it cannot move forward
+    cant_move_forward : (
+    let color in set PM`colors() in
+        let x in set xs in
+            let y = end_square(color) in
+                let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x,y), color) in
+                    is_empty_set(PM`type_based_moves(p, PM`pieces_to_obstacles({p})));
+    );
+
+    -- Tests that a pawn with another pawn (of any color) in front of it cannot move forward
+    blocked : (
+    let color_p in set PM`colors() in
+        let color_b in set PM`colors() in
+            let x in set xs in
+                let y in set set_y_vals_not_end(color_p) in
+                    let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x, y), color_p) in
+                        let blocker = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x, y + get_pawn_direction(p)), color_b) in -- Create blocking pawn
+                            is_empty_set(PM`type_based_moves(p, PM`pieces_to_obstacles({blocker, p})));
+    );
+
+    -- Tests that a pawn can move to a diagonal square if there is an opponent piece on the coordinate
+    -- NOTE: The side-coordinates are tested as well since invalid coordinates are filtered in `comb_diagonal_ahead`
+    -- NOTE: If we included the empty set in our `comb_diagonal_ahead` we would essentially test the same
+    -- here as in `move_forward`. For clarity it is kept this way.
+    attack: (
+    let color in set PM`colors() in
+        let x in set xs in 
+            let y in set set_y_vals_not_end(color) in
+                let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x, y), color) in
+                    let diagonal_pieces in set comb_diagonal_ahead(p, PM`opposite_color(color)) in
+                        move_attack_and_forward_check(p, diagonal_pieces,
+                            PM`type_based_moves(p, PM`pieces_to_obstacles(diagonal_pieces union {p})));
+    );
+
+    -- Tests that a pawn cannot attack its friends if they are a step diagonal from it.
+    cant_attack_friends: (
+    let color in set PM`colors() in
+        let x in set xs in 
+            let y in set set_y_vals_not_end(color) in
+                let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x, y), color) in
+                    let diagonal_pieces in set comb_diagonal_ahead(p, color) in
+                        move_forward_check(p,
+                            PM`type_based_moves(p, PM`pieces_to_obstacles(diagonal_pieces union {p})));
+    );
+
+    -- Tests that if a pawn has an opponent pawn on the diagonal behind, it can't attack it.
+    -- NOTE: The side-coordinates are tested as well since invalid coordinates are filtered in `comb_diagonal_behind`
+    cant_attack_behind : (
+    let color in set PM`colors() in
+        let x in set xs in 
+            let y in set {2, ..., 7} in -- p must be able to move ahead and there must be a pawn behind. So we are limited to y = 2 ... 7 in both cases
+                let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x, y), color) in
+                    let diagonal_pieces in set comb_diagonal_behind(p, PM`opposite_color(p.color)) in
+                        move_forward_check(p, 
+                            PM`type_based_moves(p, PM`pieces_to_obstacles(diagonal_pieces union {p}))); -- Check that it can move forward only
+    );
+
+    -- Tests that if a pawn is at the end and it has an opponent pawn on the diagonal behind, it can't attack it.
+    -- NOTE: The side-coordinates are tested as well since invalid coordinates are filtered in `comb_diagonal_behind`
+    cant_attack_behind_ends: (
+    let color in set PM`colors() in
+        let x in set xs in
+            let y = end_square(color) in
+                let p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(x, y), color) in
+                    let diagonal_pieces in set comb_diagonal_behind(p, PM`opposite_color(p.color)) in
+                        is_empty_set(PM`type_based_moves(p, PM`pieces_to_obstacles(diagonal_pieces union {p}))); -- Can't move
+    );
+
+end PawnCT

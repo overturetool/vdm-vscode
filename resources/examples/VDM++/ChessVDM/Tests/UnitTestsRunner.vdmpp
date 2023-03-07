@@ -1,0 +1,54 @@
+class RunUnitTests
+operations
+
+public RunBoardUT : () ==> ()
+RunBoardUT() ==
+(
+    let ts : TestSuite = new TestSuite(new BoardUT()), result = new TestResult() in
+    (
+      ts.run(result);
+      IO`println(result.toString());
+    );
+);
+
+public RunGameUT : () ==> ()
+RunGameUT() ==
+(
+    let ts : TestSuite = new TestSuite(new GameUT()), result = new TestResult() in
+    (
+      ts.run(result);
+      IO`println(result.toString());
+    );
+);
+
+public RunPGNUT : () ==> ()
+RunPGNUT() ==
+(
+    let ts : TestSuite = new TestSuite(new PGNUT()), result = new TestResult() in
+    (
+      ts.run(result);
+      IO`println(result.toString());
+    );
+);
+
+public All : () ==> ()
+All() == 
+(
+    let ts : TestSuite = new TestSuite(new BoardUT()), result = new TestResult() in
+    (
+      ts.run(result);
+      IO`println(result.toString());
+    );
+    let ts : TestSuite = new TestSuite(new GameUT()), result = new TestResult() in
+    (
+      ts.run(result);
+      IO`println(result.toString());
+    );
+    let ts : TestSuite = new TestSuite(new PGNUT()), result = new TestResult() in
+    (
+      ts.run(result);
+      IO`println(result.toString());
+    );
+);
+
+end RunUnitTests

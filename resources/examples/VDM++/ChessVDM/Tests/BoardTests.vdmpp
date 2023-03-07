@@ -1,0 +1,682 @@
+class BoardUT is subclass of TestCase, TestHelpers
+types
+
+instance variables
+
+operations
+    -- Helper operation that returns a string indicating wrong cardinality
+    private wrong_cardinality : () ==> seq of char
+    wrong_cardinality() == return getName() ^": Wrong cardinality";
+
+    -- Helper operation that returns a string indicating that the updated square was wrong
+    private wrong_upd_pos : () ==> seq of char
+    wrong_upd_pos() == return getName() ^ "Wrong updated square";
+
+    -- Helper operation that returns a string indicating that the king was wrongfully not in check was wrong
+    private wrong_king_not_check : () ==> seq of char
+    wrong_king_not_check() == return getName() ^ "King was wrongfully not indicated as in check";
+
+    -- Helper operation that returns a string indicating that it was possible to move into a lost game
+    private wrong_move_into_lost : () ==> seq of char
+    wrong_move_into_lost() == return getName() ^ "Was able to move into lost game";
+
+    -- Helper operation that returns a string indicating wrong sequence length
+    private wrong_len : () ==> seq of char
+    wrong_len() == return getName() ^": Wrong sequence length";
+
+    -- Helper operation to avoid duplicate code
+    -- Tests that the default ctor constructs a board with n_pieces of piece_type,
+    -- that they are evenly split among each color and that they have the expected coordinates
+    private default_ctor_base_tests : PM`PieceType * set of PM`Coordinate  ==> set of PM`Piece
+    default_ctor_base_tests(piece_type, expected_coord_set) == (
+        let n_pieces = card expected_coord_set in
+            let b = BM`default_board().board_state in
+                let pieces = {p | p in set b & p.type = piece_type} in 
+                (
+                    -- Note: `getName()` is from `Test` class
+                    assertTrue(wrong_cardinality(), card pieces = n_pieces);
+                    assertTrue(getName() ^ ": Wrong amount of whites", card {p | p in set pieces & p.color = <white>} = n_pieces/2);
+                    assertTrue(getName() ^ ": Wrong amount of blacks", card {p | p in set pieces & p.color = <black>} = n_pieces/2);
+                        let coord_set = {p.square | p in set pieces} in
+                            assertTrue(getName() ^ ": Wrong coordinates", expected_coord_set = coord_set);
+                    return pieces;
+                );
+    )
+    pre card expected_coord_set mod 2 = 0; -- Only even number of pieces make sense
+
+    -- Tests that creating a board with the default constructor returns 32 pieces
+    public test_board_default_ctor : () ==> ()
+    test_board_default_ctor() == (
+        let b = BM`default_board().board_state in
+            assertTrue(wrong_cardinality(), card b = 32)
+    );
+
+    public test_board_default_ctor_pawns : () ==> ()
+    test_board_default_ctor_pawns() == (
+        let expected_coord_set = {mk_PM`Coordinate(x, 2) | x in set xs} union {mk_PM`Coordinate(x, 7) | x in set xs} in
+            let - = default_ctor_base_tests(<pawn>, expected_coord_set) in
+                skip
+    );
+
+    public test_board_default_ctor_rooks : () ==> ()
+    test_board_default_ctor_rooks() == (
+        let expected_coord_set = {mk_PM`Coordinate(1, 1), mk_PM`Coordinate(1, 8),
+                            mk_PM`Coordinate(8, 1), mk_PM`Coordinate(8, 8)} in
+            let - = default_ctor_base_tests(<rook>, expected_coord_set) in
+                skip
+    );
+
+    public test_board_default_ctor_knights : () ==> ()
+    test_board_default_ctor_knights() == (
+        let expected_coord_set = {mk_PM`Coordinate(2, 1), mk_PM`Coordinate(2, 8),
+                                    mk_PM`Coordinate(7, 1), mk_PM`Coordinate(7, 8)} in
+            let - = default_ctor_base_tests(<knight>, expected_coord_set) in
+                skip
+    );
+
+    public test_board_default_ctor_bishops : () ==> ()
+    test_board_default_ctor_bishops() == (
+        let expected_coord_set = {mk_PM`Coordinate(3, 1), mk_PM`Coordinate(6, 1),
+                                    mk_PM`Coordinate(3, 8), mk_PM`Coordinate(6, 8)} in
+            let - = default_ctor_base_tests(<bishop>, expected_coord_set) in
+                skip
+    );
+
+    public test_board_default_ctor_queens : () ==> ()
+    test_board_default_ctor_queens() == (
+        let expected_coord_set = {mk_PM`Coordinate(4, 1), mk_PM`Coordinate(4, 8)} in
+            let - = default_ctor_base_tests(<queen>, expected_coord_set) in
+                skip
+    );
+
+    public test_board_default_ctor_kings : () ==> ()
+    test_board_default_ctor_kings() == (
+        let expected_coord_set = {mk_PM`Coordinate(5, 1), mk_PM`Coordinate(5, 8)} in
+            let - = default_ctor_base_tests(<king>, expected_coord_set) in
+                skip
+    );
+
+    -- Tests that the specialized constructor only constructs a board with the given pieces
+    public test_specialized_ctor : () ==> ()
+    test_specialized_ctor() == (
+        let pawn = mk_PM`Piece(<pawn>, mk_PM`Coordinate(5,5), <white>),
+            king = mk_PM`Piece(<king>, mk_PM`Coordinate(8,8), <black>) in
+                let board : BM`BoardState = {pawn, king} in
+                    (
+                        assertTrue(card board = 2);
+                        assertTrue(exists p in set board & p = pawn);
+                        assertTrue(exists k in set board & k = king);
+                    )
+    );
+
+    -- Tests that the board is updated correctly after moving a piece
+    public test_move_valid : () ==> ()
+    test_move_valid() == (
+        let coord = mk_PM`Coordinate(1,1) in
+            let pawn = mk_PM`Piece(<pawn>, coord, <white>),
+            king = mk_PM`Piece(<king>, mk_PM`Coordinate(8,8), <white>) in
+                let board = mk_BM`Board({pawn, king}, []) in
+                    let move = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(coord.x, coord.y+1)) in
+                    (
+                        dcl new_state : BM`BoardState := BM`move(board, move).board_state; 
+                        assertTrue(wrong_cardinality(), card new_state = 2);
+                        assertTrue(wrong_upd_pos(), move.to_ in set new_state)
+                    );
+    );
+
+    -- Tests that a move is invalid
+    -- TODO: Ask if there is any way to catch an actual exception - Answer: There is not (according to Mikkel)
+    -- public test_move_invalid : () ==> ()
+    -- test_move_invalid() == (
+    --     dcl exception : [Error] := nil;
+    --     let coord = mk_PM`Coordinate(1,1) in
+    --         let pawn = new Pawn(<white>, mk_PM`Coordinate(coord.x, coord.y+1)) in
+    --             let board : BM`Board = {pawn}) in
+    --                 trap exc :Error
+    --                 with  
+    --                     exception := exc
+    --                 in
+    --                 (
+    --                     let - = BM`move(board, pawn, coord) in -- Attempt to move to current sq
+    --                         skip;
+    --                 );
+    --     assertTrue(exception <> nil);
+    -- );
+
+    -- Test that the Board state is updated correctly when attacking a piece
+    public test_move_attack : () ==> ()
+    test_move_attack() == (
+        let r_coord = mk_PM`Coordinate(1,1),
+            p_coord = mk_PM`Coordinate(r_coord.x,r_coord.y + 1) in
+                let rook = mk_PM`Piece(<rook>, r_coord, <black>),
+                    pawn = mk_PM`Piece(<pawn>, p_coord, <white>),
+                    king = mk_PM`Piece(<king>, mk_PM`Coordinate(8,8), <black>) in
+                        let move = BM`piece_coord_to_move(rook, p_coord),
+                            board = mk_BM`Board({pawn, rook, king}, []) in
+                        (
+                            dcl new_state : BM`BoardState := BM`move(board, move).board_state; -- Rook takes pawn
+                            assertTrue(wrong_cardinality(), card new_state = 2); -- Only rook and king
+                            assertTrue(wrong_upd_pos(), move.to_ in set new_state)
+                        );
+    );
+
+    -- Tests whether being in check in a very basic scenario is possible (without moving)
+    public test_in_check_basic : () ==> ()
+    test_in_check_basic() == (
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 1), <white>),
+            r = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 2), <black>) in
+            let b : BM`BoardState = {k, r} in
+                assertTrue(wrong_king_not_check(), BM`in_check(b, <white>))
+    );
+
+    -- Tests whether putting in check through a discovered attack is possible
+    public test_in_check_discover_attack : () ==> ()
+    test_in_check_discover_attack() == (
+        let k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 1), <white>),
+            k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(8, 8), <black>),
+            r = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 3), <black>),
+            bi = mk_PM`Piece(<bishop>, mk_PM`Coordinate(1,2), <black>) in
+            let move = BM`piece_coord_to_move(bi, mk_PM`Coordinate(2, 3)) in
+                let b = mk_BM`Board({k1, k2, r, bi}, []) in
+                (
+                    let new_state : BM`BoardState = BM`move(b, move).board_state in
+                        assertTrue(wrong_king_not_check(), BM`in_check(new_state, <white>))
+                );
+    );
+
+    -- Test that it is impossible to make a move that puts you in check
+    public test_impossible_put_self_in_check : () ==> ()
+    test_impossible_put_self_in_check() == (
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 1), <white>),
+            r = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 3), <black>),
+            bi = mk_PM`Piece(<bishop>, mk_PM`Coordinate(1,2), <white>) in
+            let b = mk_BM`Board({k, r, bi}, []) in
+                -- (There should be no moves here that doesn't put white in check)
+                assertTrue(getName() ^ "White put themselves in check", BM`possible_moves(b, bi) = {})
+    );
+
+    -- Test that if one is in check then one must make a move that puts one out of it
+    public test_must_move_king_out_of_check : () ==> ()
+    test_must_move_king_out_of_check() == (
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 1), <white>),
+            k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 3), <black>) in
+            let b = mk_BM`Board({k, k2}, []) in
+                -- Only one move that doesn't put white in check
+                assertTrue(wrong_move_into_lost(), BM`possible_moves(b, k) = {BM`piece_coord_to_move(k, mk_PM`Coordinate(2, 1))})
+    );
+
+    -- Test that if ones king is in check then one cannot move another piece if it doesn't put one out of check
+    public test_cant_move_random_piece_if_in_check : () ==> ()
+    test_cant_move_random_piece_if_in_check() == (
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 1), <white>),
+            p = mk_PM`Piece(<pawn>, mk_PM`Coordinate(5, 5), <white>),
+            r = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 3), <black>) in
+            let b = mk_BM`Board({k, r, p}, []) in
+                assertTrue(wrong_move_into_lost(), BM`possible_moves(b, p) = {})
+    );
+
+    -- Test that if ones king is in check then one cannot move another piece if it doesn't put one out of check
+    public test_can_defend_with_other_piece : () ==> ()
+    test_can_defend_with_other_piece() == (
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(1, 1), <white>),
+            r = mk_PM`Piece(<rook>, mk_PM`Coordinate(2, 2), <white>),
+            r2 = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, 3), <black>) in
+            let b = mk_BM`Board({k, r, r2}, []) in
+                assertTrue(wrong_move_into_lost(), BM`possible_moves(b, r) = {BM`piece_coord_to_move(r, mk_PM`Coordinate(1, 2))}) -- The rook can only move to defend
+    );
+
+    -- Tests that when a new board is default constructed then it has a history with length 0
+    public test_game_default_history : () ==> ()
+    test_game_default_history() == (
+        let b = BM`default_board() in
+            (
+            assertTrue(wrong_len(), len b.history = 0);
+        );
+    );
+
+    -- Tests that when a new game is default constructed and the first move is made then
+    -- the history has a length of 1 containing the move executed
+    public test_game_history_after_move : () ==> ()
+    test_game_history_after_move() == (
+        let board = BM`default_board() in
+            let pawn = iota p in set board.board_state & p.square = mk_PM`Coordinate(1, 2) in
+                let move = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(1,3)) in
+                    let updated_board = BM`move(board, move) in (
+                        assertTrue(wrong_len(), len updated_board.history = 1);
+                        assertTrue(move = hd updated_board.history)
+                    );
+    );
+
+    -- Tests that the white pawn can move two fields if it is in the initial square
+    public test_white_pawn_move_two: () ==> ()
+    test_white_pawn_move_two() == (
+        let board = BM`default_board() in
+            let pawn = iota p in set board.board_state & p.square = mk_PM`Coordinate(1, 2) in
+                let move_one = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(1,3)),
+                move_two = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(1,4)) in
+                    let moves = BM`possible_moves(board, pawn) in (
+                        assertTrue(card moves = 2);
+                        assertTrue(moves = {move_one, move_two});
+                    );
+
+    );
+
+    -- Tests that the black pawn can move two fields if it is in the initial square
+    public test_black_pawn_move_two: () ==> ()
+    test_black_pawn_move_two() == (
+        let board = BM`default_board() in
+            let pawn = iota p in set board.board_state & p.square = mk_PM`Coordinate(1, 7) in
+                let move_one = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(1,6)),
+                move_two = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(1,5)) in
+                    let moves = BM`possible_moves(board, pawn) in (
+                        assertTrue(card moves = 2);
+                        assertTrue(moves = {move_one, move_two});
+                    );
+
+    );
+
+    -- Tests that a pawn that is not in the initial square cannot move two fields
+    public test_pawn_cant_move_two: () ==> ()
+    test_pawn_cant_move_two() == (
+        let pawn = mk_PM`Piece(<pawn>, mk_PM`Coordinate(1,3), <white>),
+        king = mk_PM`Piece(<king>, mk_PM`Coordinate(1,5), <white>) in
+        let board = mk_BM`Board({king, pawn}, []) in
+            let move = BM`piece_coord_to_move(pawn, mk_PM`Coordinate(1,4)) in
+                let moves = BM`possible_moves(board, pawn) in (
+                    assertTrue(card moves = 1);
+                    assertTrue(moves = {move});
+                );
+
+    );
+
+    -- Tests that a pawn has en passant as a possible move
+    public test_en_passant: () ==> ()
+    test_en_passant() == (
+        let p1 = mk_PM`Piece(<pawn>, mk_PM`Coordinate(5,5), <white>), -- Ready for en passant
+        k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(1,5), <white>), -- Don't care
+        p2 = mk_PM`Piece(<pawn>, mk_PM`Coordinate(4,7), <black>), -- Initial sq
+        k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>) in -- Don't care
+        let board = mk_BM`Board({p1, p2, k1, k2}, []),
+        black_move = BM`piece_coord_to_move(p2, mk_PM`Coordinate(4, 5)) in -- Move p2 two fields
+            let updated_board = BM`move(board, black_move) in
+                let moves = BM`possible_moves(updated_board, p1) in (
+                    assertTrue(card moves = 2);
+                    let move_one = BM`piece_coord_to_move(p1, mk_PM`Coordinate(5,6)),
+                    move_two = BM`piece_coord_to_move(p1, mk_PM`Coordinate(4,6)) in
+                        assertTrue(moves = {move_one, move_two})
+                )
+    );
+
+    -- Tests that a pawn can make en passant
+    public test_en_passant_move: () ==> ()
+    test_en_passant_move() == (
+        let p1 = mk_PM`Piece(<pawn>, mk_PM`Coordinate(5,5), <white>), -- Ready for en passant
+        k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(1,5), <white>), -- Don't care
+        p2 = mk_PM`Piece(<pawn>, mk_PM`Coordinate(4,7), <black>), -- Initial sq
+        k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>) in -- Don't care
+        let board = mk_BM`Board({p1, p2, k1, k2}, []),
+        black_move = BM`piece_coord_to_move(p2, mk_PM`Coordinate(4, 5)) in -- Move p2 two fields
+            let tmp_board = BM`move(board, black_move) in
+                let white_move = BM`piece_coord_to_move(p1, mk_PM`Coordinate(4, 6)) in -- Kill the black pawn through en passant
+                    let updated_board = BM`move(tmp_board, white_move) in (
+                        assertTrue(card updated_board.board_state = 3);
+                        assertTrue(white_move.to_ in set updated_board.board_state);
+                        assertTrue(black_move.to_ not in set updated_board.board_state)
+                )
+    );
+
+    -- Tests that a pawn cant make en passant if the attacked piece didn't move two fields last turn
+    public test_en_passant_move_late: () ==> ()
+    test_en_passant_move_late() == (
+        let p1 = mk_PM`Piece(<pawn>, mk_PM`Coordinate(5,5), <white>), -- Ready for en passant
+        k1 = mk_PM`Piece(<king>, mk_PM`Coordinate(1,5), <white>), -- Don't care
+        p2 = mk_PM`Piece(<pawn>, mk_PM`Coordinate(4,7), <black>), -- Initial sq
+        k2 = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>) in 
+        let board = mk_BM`Board({p1, p2, k1, k2}, []),
+        black_move1 = BM`piece_coord_to_move(p2, mk_PM`Coordinate(4, 5)), -- Move p2 two fields
+        black_move2 = BM`piece_coord_to_move(k2, mk_PM`Coordinate(4,8)) in -- Move king one field
+            let tmp_board1 = BM`move(board, black_move1) in 
+            let updated_board = BM`move(tmp_board1, black_move2) in -- (We can move black twice as Board doesn't have knowledge of turn rules)
+                let white_move = BM`piece_coord_to_move(p1, mk_PM`Coordinate(4, 6)) in -- Try to kill the black pawn through en passant (not possible)
+                    let moves = BM`possible_moves(updated_board, p1) in (
+                        assertTrue(card moves = 1);
+                        assertTrue(white_move not in set moves)
+                )
+    );
+
+    -- TODO: Rewrite castling tests so that they are traces
+    -- Tests that castling is possible under different circumstances
+    public test_castling_possible: () ==> ()
+    test_castling_possible() == (
+        let kw = mk_PM`Piece(<king>, mk_PM`Coordinate(5,1), <white>),
+            kb = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>),
+            rw_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,1), <white>),
+            rw_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,1), <white>),
+            rb_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,8), <black>),
+            rb_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,8), <black>) in
+                (
+                -- White tests
+                let w_ks_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(7, 1)),
+                    w_qs_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(3, 1)),
+                    w_nc_b = mk_BM`Board({kw}, []), -- white no castling board
+                    w_ks_b = mk_BM`Board({kw, rw_k}, []), -- white kingside board 
+                    w_qs_b = mk_BM`Board({kw, rw_q}, []),
+                    w_ksqs_b = mk_BM`Board({kw, rw_k, rw_q}, []) in
+                    (
+                        -- White no castling possible
+                        assertTrue(w_ks_move not in set BM`possible_moves(w_nc_b, kw));
+                        assertTrue(w_qs_move not in set BM`possible_moves(w_nc_b, kw));
+                        -- White kingside castling only:
+                        assertTrue(w_ks_move in set BM`possible_moves(w_ks_b, kw));
+                        assertTrue(w_qs_move not in set BM`possible_moves(w_ks_b, kw));
+                        -- White queenside castling only:
+                        assertTrue(w_ks_move not in set BM`possible_moves(w_qs_b, kw));
+                        assertTrue(w_qs_move in set BM`possible_moves(w_qs_b, kw));
+                        -- White both castling:
+                        assertTrue(w_ks_move in set BM`possible_moves(w_ksqs_b, kw));
+                        assertTrue(w_qs_move in set BM`possible_moves(w_ksqs_b, kw));
+                    );
+                let b_ks_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(7, 8)),
+                    b_qs_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(3, 8)),
+                    b_nc_b = mk_BM`Board({kb}, []), -- black no castling board
+                    b_ks_b = mk_BM`Board({kb, rb_k}, []), -- black kingside board 
+                    b_qs_b = mk_BM`Board({kb, rb_q}, []),
+                    b_ksqs_b = mk_BM`Board({kb, rb_k, rb_q}, []) in
+                    (   
+                        -- Black no castling possible
+                        assertTrue(b_ks_move not in set BM`possible_moves(b_nc_b, kb));
+                        assertTrue(b_qs_move not in set BM`possible_moves(b_nc_b, kb));
+                        -- Black kingside castling only:
+                        assertTrue(b_ks_move in set BM`possible_moves(b_ks_b, kb));
+                        assertTrue(b_qs_move not in set BM`possible_moves(b_ks_b, kb));
+                        -- Black queenside castling only:
+                        assertTrue(b_ks_move not in set BM`possible_moves(b_qs_b, kb));
+                        assertTrue(b_qs_move in set BM`possible_moves(b_qs_b, kb));
+                        -- Black both castling:
+                        assertTrue(b_ks_move in set BM`possible_moves(b_ksqs_b, kb));
+                        assertTrue(b_qs_move in set BM`possible_moves(b_ksqs_b, kb));
+                    )
+                )
+    );
+
+    -- Tests castling impossible after R has moved - even though it is back on the square
+    public test_castling_impossible1: () ==> ()
+    test_castling_impossible1() == (
+        let kw = mk_PM`Piece(<king>, mk_PM`Coordinate(5,1), <white>),
+            kb = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>),
+            rw_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,1), <white>),
+            rw_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,1), <white>),
+            rb_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,8), <black>),
+            rb_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,8), <black>) in
+                (
+                -- White tests
+                let w_ks_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(7, 1)),
+                    w_qs_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(3, 1)),
+                    -- Rooks moving
+                    rw_k_move = BM`piece_coord_to_move(rw_k, mk_PM`Coordinate(7,1)),
+                    rw_q_move = BM`piece_coord_to_move(rw_q, mk_PM`Coordinate(2,1)) in
+                        let w_ks_b = BM`move(mk_BM`Board({kw, rw_k}, []), rw_k_move), -- white kingside board 
+                            w_qs_b = BM`move(mk_BM`Board({kw, rw_q}, []), rw_q_move),
+                            w_ksqs_b = BM`move(BM`move(mk_BM`Board({kw, rw_k, rw_q}, []), rw_k_move), rw_q_move) in
+                            (
+                                -- White kingside castling only:
+                                assertTrue(w_ks_move not in set BM`possible_moves(w_ks_b, kw));
+                                assertTrue(w_qs_move not in set BM`possible_moves(w_ks_b, kw));
+                                -- White queenside castling only:
+                                assertTrue(w_ks_move not in set BM`possible_moves(w_qs_b, kw));
+                                assertTrue(w_qs_move not in set BM`possible_moves(w_qs_b, kw));
+                                -- White both castling:
+                                assertTrue(w_ks_move not in set BM`possible_moves(w_ksqs_b, kw));
+                                assertTrue(w_qs_move not in set BM`possible_moves(w_ksqs_b, kw));
+                            );
+                    -- Black tests
+                    let b_ks_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(7, 8)),
+                        b_qs_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(3, 8)),
+                        -- Rooks moving back and forth
+                        rb_k_move = BM`piece_coord_to_move(rb_k, mk_PM`Coordinate(7,8)),
+                        rb_q_move = BM`piece_coord_to_move(rb_q, mk_PM`Coordinate(2,8)) in
+                            let b_ks_b = BM`move(mk_BM`Board({kb, rb_k}, []), rb_k_move), -- black kingside board 
+                                b_qs_b = BM`move(mk_BM`Board({kb, rb_q}, []), rb_q_move),
+                                b_ksqs_b = BM`move(BM`move(mk_BM`Board({kb, rb_k, rb_q}, []), rb_k_move), rb_q_move) in
+                                (
+                                    -- White kingside castling only:
+                                    assertTrue(b_ks_move not in set BM`possible_moves(b_ks_b, kb));
+                                    assertTrue(b_qs_move not in set BM`possible_moves(b_ks_b, kb));
+                                    -- White queenside castling only:
+                                    assertTrue(b_ks_move not in set BM`possible_moves(b_qs_b, kb));
+                                    assertTrue(b_qs_move not in set BM`possible_moves(b_qs_b, kb));
+                                    -- White both castling:
+                                    assertTrue(b_ks_move not in set BM`possible_moves(b_ksqs_b, kb));
+                                    assertTrue(b_qs_move not in set BM`possible_moves(b_ksqs_b, kb));
+                                );
+                    )
+    );
+
+    -- Tests castling impossible after R has moved back and forth - even though it is back on the square
+    public test_castling_impossible2: () ==> ()
+    test_castling_impossible2() == (
+        let kw = mk_PM`Piece(<king>, mk_PM`Coordinate(5,1), <white>),
+            kb = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>),
+            rw_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,1), <white>),
+            rw_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,1), <white>),
+            rb_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,8), <black>),
+            rb_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,8), <black>) in
+                    (
+                    -- White tests
+                    let w_ks_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(7, 1)),
+                        w_qs_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(3, 1)),
+                        -- Rooks moving back and forth - NOTE: Small hack that we just put it in history without updating the board
+                        rw_k_back = BM`piece_coord_to_move(rw_k, mk_PM`Coordinate(7,1)),
+                        rw_q_back = BM`piece_coord_to_move(rw_q, mk_PM`Coordinate(2,1)) in
+                        let rw_k_forth = BM`piece_coord_to_move(rw_k_back.to_, mk_PM`Coordinate(8,1)),
+                            rw_q_forth = BM`piece_coord_to_move(rw_k_back.to_, mk_PM`Coordinate(1,1)) in
+                            let w_ks_b = mk_BM`Board({kw, rw_k}, [rw_k_forth, rw_k_back]), -- white kingside board 
+                                w_qs_b = mk_BM`Board({kw, rw_q}, [rw_q_forth, rw_q_back]),
+                                w_ksqs_b = mk_BM`Board({kw, rw_k, rw_q}, [rw_q_forth, rw_q_back] ^ [rw_k_forth, rw_k_back]) in
+                                (
+                                    -- White kingside castling only:
+                                    assertTrue(w_ks_move not in set BM`possible_moves(w_ks_b, kw));
+                                    assertTrue(w_qs_move not in set BM`possible_moves(w_ks_b, kw));
+                                    -- White queenside castling only:
+                                    assertTrue(w_ks_move not in set BM`possible_moves(w_qs_b, kw));
+                                    assertTrue(w_qs_move not in set BM`possible_moves(w_qs_b, kw));
+                                    -- White both castling:
+                                    assertTrue(w_ks_move not in set BM`possible_moves(w_ksqs_b, kw));
+                                    assertTrue(w_qs_move not in set BM`possible_moves(w_ksqs_b, kw));
+                                );
+                    -- Black tests
+                    let b_ks_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(7, 8)),
+                        b_qs_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(3, 8)),
+                        -- Rooks moving back and forth - NOTE: Small hack that we just put it in history without updating the board
+                        rb_k_back = BM`piece_coord_to_move(rb_k, mk_PM`Coordinate(7,8)),
+                        rb_q_back = BM`piece_coord_to_move(rb_q, mk_PM`Coordinate(2,8)) in
+                        let rb_k_forth = BM`piece_coord_to_move(rb_k_back.to_, mk_PM`Coordinate(8,8)),
+                            rb_q_forth = BM`piece_coord_to_move(rb_k_back.to_, mk_PM`Coordinate(1,8)) in
+                            let b_ks_b = mk_BM`Board({kb, rb_k}, [rb_k_forth, rb_k_back]), -- black kingside board 
+                                b_qs_b = mk_BM`Board({kb, rb_q}, [rb_q_forth, rb_q_back]),
+                                b_ksqs_b = mk_BM`Board({kb, rb_k, rb_q}, [rb_q_forth, rb_q_back] ^ [rb_k_forth, rb_k_back]) in
+                                (
+                                    -- Black kingside castling only:
+                                    assertTrue(b_ks_move not in set BM`possible_moves(b_ks_b, kb));
+                                    assertTrue(b_qs_move not in set BM`possible_moves(b_ks_b, kb));
+                                    -- Black queenside castling only:
+                                    assertTrue(b_ks_move not in set BM`possible_moves(b_qs_b, kb));
+                                    assertTrue(b_qs_move not in set BM`possible_moves(b_qs_b, kb));
+                                    -- Black both castling:
+                                    assertTrue(b_ks_move not in set BM`possible_moves(b_ksqs_b, kb));
+                                    assertTrue(b_qs_move not in set BM`possible_moves(b_ksqs_b, kb));
+                                )
+                    )
+    );
+
+    -- Tests that castling move behaves correctly
+    public test_castling_moves: () ==> ()
+    test_castling_moves() == (
+        let kw = mk_PM`Piece(<king>, mk_PM`Coordinate(5,1), <white>),
+            kb = mk_PM`Piece(<king>, mk_PM`Coordinate(5,8), <black>),
+            rw_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,1), <white>),
+            rw_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,1), <white>),
+            rb_k = mk_PM`Piece(<rook>, mk_PM`Coordinate(8,8), <black>),
+            rb_q = mk_PM`Piece(<rook>, mk_PM`Coordinate(1,8), <black>) in
+                (
+                -- White tests
+                let w_ks_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(7, 1)),
+                    w_r_ks_move = BM`piece_coord_to_move(rw_k, mk_PM`Coordinate(6, 1)),
+                    w_qs_move = BM`piece_coord_to_move(kw, mk_PM`Coordinate(3, 1)),
+                    w_r_qs_move = BM`piece_coord_to_move(rw_q, mk_PM`Coordinate(4, 1)) in
+                    let w_ks_b = BM`move(mk_BM`Board({kw, rw_k}, []), w_ks_move), -- white kingside board 
+                        w_qs_b = BM`move(mk_BM`Board({kw, rw_q}, []), w_qs_move) in
+                        (
+                            -- White kingside castling:
+                            assertTrue(w_ks_move.to_ in set w_ks_b.board_state);
+                            assertTrue(w_r_ks_move.to_ in set w_ks_b.board_state); -- Rook also moved
+                            assertTrue(w_ks_move = hd tl w_ks_b.history);
+                            assertTrue(w_r_ks_move = hd w_ks_b.history);
+                            -- White queenside castling:
+                            assertTrue(w_qs_move.to_ in set w_qs_b.board_state);
+                            assertTrue(w_r_qs_move.to_ in set w_qs_b.board_state); -- Rook also moved
+                            assertTrue(w_qs_move = hd tl w_qs_b.history);
+                            assertTrue(w_r_qs_move = hd w_qs_b.history);
+                        );
+                -- Black tests
+                let b_ks_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(7, 8)),
+                    b_r_ks_move = BM`piece_coord_to_move(rb_k, mk_PM`Coordinate(6, 8)),
+                    b_qs_move = BM`piece_coord_to_move(kb, mk_PM`Coordinate(3, 8)),
+                    b_r_qs_move = BM`piece_coord_to_move(rb_q, mk_PM`Coordinate(4, 8)) in
+                    let b_ks_b = BM`move(mk_BM`Board({kb, rb_k}, []), b_ks_move), -- black kingside board 
+                        b_qs_b = BM`move(mk_BM`Board({kb, rb_q}, []), b_qs_move) in
+                        (
+                            -- White kingside castling:
+                            assertTrue(b_ks_move.to_ in set b_ks_b.board_state);
+                            assertTrue(b_r_ks_move.to_ in set b_ks_b.board_state); -- Rook also moved
+                            assertTrue(b_ks_move = hd tl b_ks_b.history);
+                            assertTrue(b_r_ks_move = hd b_ks_b.history);
+                            -- White queenside castling:
+                            assertTrue(b_qs_move.to_ in set b_qs_b.board_state);
+                            assertTrue(b_r_qs_move.to_ in set b_qs_b.board_state); -- Rook also moved
+                            assertTrue(b_qs_move = hd tl b_qs_b.history);
+                            assertTrue(b_r_qs_move = hd b_qs_b.history);
+                        );
+                )
+    );
+
+end BoardUT
+
+class BoardCT is subclass of TestHelpers, Assert
+functions
+    private promotion_power_set_ahead : PM`Piece -> set of set of PM`Piece
+    promotion_power_set_ahead(pawn) == (
+        let dir = PM`get_pawn_direction(pawn),
+            p_sq = pawn.square in
+            let opp_coord = {PM`coordinate_factory(x, p_sq.y + dir) | x in set {p_sq.x - 1, ..., p_sq.x + 1}} \ {nil} in
+                power {mk_PM`Piece(<pawn>, c, PM`opposite_color(pawn.color)) | c in set opp_coord} \ {{}}
+    )
+    pre pawn.type = <pawn> and ((pawn.square.y = 7 => pawn.color = <white>) and (pawn.square.y = 2 => pawn.color = <black>));
+
+    private promote_move_set: PM`Piece * PM`Coordinate -> set of BM`Move
+    promote_move_set(pawn, coord) == (
+        let promotion_types = {<knight>, <bishop>, <rook>, <queen>} in
+        {mk_BM`Move(pawn, mk_PM`Piece(t_c_tuple.#1, t_c_tuple.#2, pawn.color)) |
+            t_c_tuple in set
+                BM`sets_combine_tuple[PM`PieceType, PM`Coordinate](promotion_types, {coord})}
+    )
+    pre pawn.type = <pawn> and ((pawn.square.y = 7 => pawn.color = <white>) and (pawn.square.y = 2 => pawn.color = <black>));
+
+traces
+    -- This trace was sponsored by Mikkel Kirkegaard
+    promotion: (
+        let col in set PM`colors() in
+        let y = if col = <white> then 7 else 2,
+            k = mk_PM`Piece(<king>, mk_PM`Coordinate(5,5), col) in -- Don't care but don't be in the way
+        let pawn in set {mk_PM`Piece(<pawn>, mk_PM`Coordinate(x,y), col) | x in set xs} in
+        let opp_pawns in set promotion_power_set_ahead(pawn) in
+        let board = mk_BM`Board({k, pawn} union opp_pawns, []),
+            dir = PM`get_pawn_direction(pawn),
+            p_sq = pawn.square in
+        let ahead_coord = mk_PM`Coordinate(pawn.square.x, pawn.square.y + dir),
+            diag_l_coord = PM`coordinate_factory(pawn.square.x - 1, pawn.square.y + dir),
+            diag_r_coord = PM`coordinate_factory(pawn.square.x + 1, pawn.square.y + dir) in
+        let ahead_moveset = promote_move_set(pawn, ahead_coord),
+            diag_l_moveset = if diag_l_coord <> nil then promote_move_set(pawn, diag_l_coord) else {},
+            diag_r_moveset = if diag_r_coord <> nil then promote_move_set(pawn, diag_r_coord) else {} in
+        let pawn_moves = BM`possible_moves(board, pawn),
+            opp_ahead      = {p | p in set opp_pawns & p.square.y = p_sq.y + dir and p.square.x = p_sq.x} <> {},
+            opp_diag_left  = {p | p in set opp_pawns & p.square.y = p_sq.y + dir and p.square.x = p_sq.x - 1} <> {},
+            opp_diag_right = {p | p in set opp_pawns & p.square.y = p_sq.y + dir and p.square.x = p_sq.x + 1} <> {} in
+            (   
+                -- Enemy ahead? No promotion directly ahead
+                assertTrue(not opp_ahead => forall move in set ahead_moveset & move in set pawn_moves);
+                -- No enemy ahead? Promotion directly ahead
+                assertTrue(opp_ahead => forall move in set ahead_moveset & move not in set pawn_moves);
+                -- Enemy left? Promotion left
+                assertTrue(opp_diag_left => forall move in set diag_l_moveset & move in set pawn_moves);
+                -- No enemy left? No promotion left
+                assertTrue(not opp_diag_left => forall move in set diag_l_moveset & move not in set pawn_moves);
+                -- Enemy right? Promotion right
+                assertTrue(opp_diag_right => forall move in set diag_r_moveset & move in set pawn_moves);
+                -- No enemy right? No promotion right
+                assertTrue(not opp_diag_right => forall move in set diag_r_moveset & move not in set pawn_moves);
+            )
+                
+    );
+
+    -- Tests that castling is impossible in the initial board state. I.e., that one cannot castle when blocked by friendly pieces
+    test_castling_blocked: (
+        let b_tmp = BM`default_board() in
+        let bs = b_tmp.board_state \ {p | p in set b_tmp.board_state & p.square.x = 3 or p.square.x = 7} in -- Filter away castling squares
+        let b = mk_BM`Board(bs, []) in
+        let kings = {k | k in set b.board_state & k.type = <king>} in
+        let k in set kings in
+            assertTrue(BM`possible_moves(b, k) = {})
+    );
+
+    -- Tests that it is not possible to perform castling if:
+        -- The square the king is currently occupying is under attack
+        -- The squares that the king and rook will occupy are under attack
+    test_castling_attacked: (
+        let col in set PM`colors() in
+        let o_col = PM`opposite_color(col),
+            y = if col = <white> then 1 else 8,
+            enemy_y = if col = <white> then 7 else 2 in
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(5, y), col),
+            dc = mk_PM`Piece(<king>, mk_PM`Coordinate(2, if y = 1 then 8 else 1), o_col), -- Don't care but don't be in the way
+            rq = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, y), col),
+            rk = mk_PM`Piece(<rook>, mk_PM`Coordinate(8, y), col) in
+        let castling_squares = {mk_PM`Coordinate(3, y), mk_PM`Coordinate(7, y)} in
+        let castling_square in set castling_squares in
+        let enemy_squares = if castling_square.x = 3 then {mk_PM`Coordinate(x, enemy_y) | x in set {3, ..., 5}}
+            else {mk_PM`Coordinate(x, enemy_y) | x in set {5, ..., 7}} in
+        let enemy_square in set enemy_squares in
+        let enemy = mk_PM`Piece(<rook>,enemy_square, o_col) in
+        let board = mk_BM`Board({k, dc, rq, rk, enemy}, []) in
+        let moves = BM`possible_moves(board, k) in
+            assertTrue(BM`piece_coord_to_move(k, castling_square) not in set moves)
+    );
+
+    -- Tests that it is possible to perform castling if:
+        -- O-O: The square the rook is currently occupying is under attack
+        -- O-O-O: The square the rook is currently occupying and the one next to it is under attack.
+    test_castling_special_rook_cases:
+    (
+        let col in set PM`colors() in
+        let o_col = PM`opposite_color(col),
+            y = if col = <white> then 1 else 8,
+            enemy_y = if col = <white> then 7 else 2 in
+        let k = mk_PM`Piece(<king>, mk_PM`Coordinate(5, y), col),
+            dc = mk_PM`Piece(<king>, mk_PM`Coordinate(2, if y = 1 then 8 else 1), o_col), -- Don't care but don't be in the way
+            rq = mk_PM`Piece(<rook>, mk_PM`Coordinate(1, y), col),
+            rk = mk_PM`Piece(<rook>, mk_PM`Coordinate(8, y), col) in
+        let castling_squares = {mk_PM`Coordinate(3, y), mk_PM`Coordinate(7, y)} in
+        let castling_square in set castling_squares in
+        let enemy_squares = if castling_square.x = 3 then {mk_PM`Coordinate(x, enemy_y) | x in set {1, 2}}
+            else {mk_PM`Coordinate(x, enemy_y) | x in set {8}} in
+        let enemy_square in set enemy_squares in
+        let enemy = mk_PM`Piece(<rook>,enemy_square, o_col) in
+        let board = mk_BM`Board({k, dc, rq, rk, enemy}, []) in
+        let moves = BM`possible_moves(board, k) in
+            assertTrue(BM`possible_moves(board, k) <> {}
+                and BM`piece_coord_to_move(k, castling_square) in set moves
+            )
+    );
+
+end BoardCT

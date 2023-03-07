@@ -1,0 +1,88 @@
+class Runner
+
+instance variables
+    private game : GM`Game := GM`default_game();
+    private pgn_moves : seq of PGN`String;
+    private io : IO := new IO();
+
+values
+    private output_file : seq of char = "output.txt";
+
+operations
+	public Runner: seq of char ==> Runner
+	Runner(filename) ==
+	(
+		let mk_(-,input) = io.freadval[seq of char](filename) in
+		(
+			pgn_moves := PGN`movetext_to_move(input); -- NB. file body must be surrounded with "..."
+		);
+        let - = io.fecho(output_file, "", <start>) in -- Flush file
+            skip;
+	);
+
+    public Run: () ==> ()
+    Run() ==
+    (
+        for move_str in pgn_moves do (
+            let move = PGN`string_to_move(game, move_str) in
+                let res = GM`move(game, move) in
+                (
+                    game := res.#1;
+                    if res.#2 <> nil then
+                    (
+                        IO`print("Winner: ");
+                        IO`print(res.#2);
+                        IO`print("\n\n");
+                        -- def guarantees that it is executed sequentially
+                        def - = io.fwriteval[seq of char](output_file, "Winner: ", <append>);
+                            - = io.fwriteval[GM`Winner](output_file, res.#2, <append>) in
+                            skip;
+                    );
+                    def - = io.fwriteval[seq of char](output_file, "From: ", <append>);
+                        - = io.fwriteval[PM`Piece](output_file, move.from, <append>);
+                        - = io.fwriteval[seq of char](output_file, "To: ", <append>);
+                        - = io.fwriteval[PM`Piece](output_file, move.to_, <append>);
+                        - = io.fwriteval[seq of char](output_file, "\n", <append>) in
+                            skip;
+                    IO`print(move.from);
+                    IO`print(" To: ");
+                    IO`print(move.to_);
+                    IO`print("\n");
+                );
+        );
+        let - = io.fwriteval[seq of char](output_file, "\n\n PGN:\n\n", <append>) in
+            skip;
+        for move in reverse game.board.history do (
+            let - = io.fwriteval[seq of char](output_file, PGN`move_to_pgn_string(move) ^ " ", <append>) in
+                skip;
+        );
+    );
+
+end Runner
+
+class RunAll
+
+operations
+public r: seq of char ==> ()
+r(f) == (
+    let tmp = new Runner(f) in
+        (
+            IO`print("Start: " ^ f ^ "\n");
+            tmp.Run();
+            IO`print("End: " ^ f ^ "\n\n");
+        );
+);
+
+public Run: () ==> ()
+Run() == (
+    r("games/pgn4.txt"); -- NOTE: Ends in resignation
+    r("games/pgn1.txt"); -- NOTE: Ends in resignation = no winner seen in simulation
+    r("games/pgn2.txt");
+    r("games/pgn3.txt"); -- NOTE: Ends in resignation = no winner seen in simulation
+
+    let tmp = new RunUnitTests() in
+        tmp.All()
+)
+
+
+end RunAll
