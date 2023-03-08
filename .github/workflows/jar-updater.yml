@@ -1,10 +1,10 @@
-name: Manual workflow
+name: Jar Updater
 
 on:
   workflow_dispatch:
         
   repository_dispatch:
-    types: [test]
+    types: [new-jar]
 
 jobs:
   greet:
