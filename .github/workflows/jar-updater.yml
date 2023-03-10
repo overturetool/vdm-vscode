@@ -15,6 +15,6 @@ jobs:
       run: echo "Hello ${{ github.actor }}"
       
     - name: Repository
-      run: echo Repository $REPOSITORY
+      run: echo "Repository $REPOSITORY"
       env:
         $REPOSITORY: ${{ github.event.client_payload.repository }}
