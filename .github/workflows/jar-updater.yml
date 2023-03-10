@@ -21,3 +21,18 @@ jobs:
         VERSION: ${{ github.event.client_payload.version }}
         GROUPID: ${{ github.event.client_payload.groupId }}
         ARTIFACTID: ${{ github.event.client_payload.artifactId }}
+
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Run new-jar.js
+      run: node new-jar.js repo=$REPOSITORY groupId=$GROUPID artifactId=$ARTIFACTID version=$VERSION
+      with:
+        working-directory: ./resources/jars
+      env:
+        REPOSITORY: ${{ github.event.client_payload.repository }}
+        VERSION: ${{ github.event.client_payload.version }}
+        GROUPID: ${{ github.event.client_payload.groupId }}
+        ARTIFACTID: ${{ github.event.client_payload.artifactId }}
