@@ -11,10 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Send greeting
-      run: echo "Hello ${{ github.actor }}"
+    - uses: actions/checkout@v3
+
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
       
-    - name: Repository
+    - name: Log Info
       run: echo "Repository $REPOSITORY, Version $VERSION, GroupId $GROUPID, ArtifactId $ARTIFACTID"
       env:
         REPOSITORY: ${{ github.event.client_payload.repository }}
@@ -22,14 +26,9 @@ jobs:
         GROUPID: ${{ github.event.client_payload.groupId }}
         ARTIFACTID: ${{ github.event.client_payload.artifactId }}
 
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
-
     - name: Run new-jar.js
       run: node new-jar.js repo=$REPOSITORY groupId=$GROUPID artifactId=$ARTIFACTID version=$VERSION
-      working-directory: ./resources/jars
+      working-directory: resources/jars
       env:
         REPOSITORY: ${{ github.event.client_payload.repository }}
         VERSION: ${{ github.event.client_payload.version }}
