@@ -29,8 +29,7 @@ jobs:
 
     - name: Run new-jar.js
       run: node new-jar.js repo=$REPOSITORY groupId=$GROUPID artifactId=$ARTIFACTID version=$VERSION
-      with:
-        working-directory: ./resources/jars
+      working-directory: ./resources/jars
       env:
         REPOSITORY: ${{ github.event.client_payload.repository }}
         VERSION: ${{ github.event.client_payload.version }}
