@@ -41,3 +41,4 @@ jobs:
         VERSION: ${{ github.event.client_payload.version }}
         GROUPID: ${{ github.event.client_payload.groupId }}
         ARTIFACTID: ${{ github.event.client_payload.artifactId }}
+        GITHUB_TOKEN: ${{ github.token }}
