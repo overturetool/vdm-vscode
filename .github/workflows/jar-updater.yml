@@ -15,7 +15,9 @@ jobs:
       run: echo "Hello ${{ github.actor }}"
       
     - name: Repository
-      run: echo "Repository $REPOSITORY, Version $VERSION"
+      run: echo "Repository $REPOSITORY, Version $VERSION, GroupId $GROUPID, ArtifactId $ARTIFACTID"
       env:
         REPOSITORY: ${{ github.event.client_payload.repository }}
         VERSION: ${{ github.event.client_payload.version }}
+        GROUPID: ${{ github.event.client_payload.groupId }}
+        ARTIFACTID: ${{ github.event.client_payload.artifactId }}
