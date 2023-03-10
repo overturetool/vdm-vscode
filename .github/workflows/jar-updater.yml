@@ -17,4 +17,4 @@ jobs:
     - name: Repository
       run: echo "Repository $REPOSITORY"
       env:
-        $REPOSITORY: ${{ github.event.client_payload.repository }}
+        REPOSITORY: ${{ github.event.client_payload.repository }}
