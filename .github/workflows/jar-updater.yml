@@ -42,3 +42,6 @@ jobs:
         GROUPID: ${{ github.event.client_payload.groupId }}
         ARTIFACTID: ${{ github.event.client_payload.artifactId }}
         GITHUB_TOKEN: ${{ github.token }}
+        
+    - name: Git Status
+      run: git status
