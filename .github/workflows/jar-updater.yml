@@ -24,6 +24,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
+        
+    - name: npm install --only=dev
+      run: npm install --only=dev
       
     - name: Log Info
       run: echo "Repository $REPOSITORY, Version $VERSION, GroupId $GROUPID, ArtifactId $ARTIFACTID"
