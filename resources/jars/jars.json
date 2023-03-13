@@ -3,8 +3,8 @@
     {
       "name": "vdm-plantuml-plugin",
       "repository": "glennlaursen/vdm-plantuml-plugin",
-      "version": "0.1.1",
-      "classifier": "jar-with-dependencies",
+      "version": "0.1.1-SNAPSHOT",
+      "classifier": "",
       "dest_dir": "./plugins/"
     },
     {
@@ -13,6 +13,20 @@
       "version": "4.5",
       "classifier": "",
       "dest_dir": "./plugins/"
+    },
+    {
+      "name": "javagen",
+      "repository": "overturetool/overture",
+      "version": "3.0.3-SNAPSHOT",
+      "classifier": "jar-with-dependencies",
+      "dest_dir": "./tools/"
+    },
+    {
+      "name": "fmu-import-export",
+      "repository": "overturetool/overture-fmu",
+      "version": "0.2.19-SNAPSHOT",
+      "classifier": "jar-with-dependencies",
+      "dest_dir": "./tools/"
     }
   ]
 }
