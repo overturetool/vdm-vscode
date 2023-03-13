@@ -53,6 +53,7 @@ jobs:
       env:
         VERSION: ${{ github.event.client_payload.version }}
         CONFIGID: ${{ github.event.client_payload.configId }}
+        GITHUB_TOKEN: ${{ github.token }}
 
     - name: Git Status
       run: git status

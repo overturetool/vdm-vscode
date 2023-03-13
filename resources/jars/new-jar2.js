@@ -35,7 +35,7 @@ if (jarInfo.classifier && jarInfo.classifier.length > 0) {
 
 
 function download(repository, groupId, artifactId, version, destDir) {
-    const output = execSync(`mvn dependency:get \
+    const output = execSync(`mvn --batch-mode dependency:get \
     -Dartifact=${groupId}:${artifactId}:${version} \
     -DremoteRepositories=github::default::https://maven.pkg.github.com/${repository} \
     -Ddest=${destDir}/${artifactId}-${version}.jar`, {encoding: 'utf-8'});
