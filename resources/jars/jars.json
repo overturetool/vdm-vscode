@@ -4,7 +4,7 @@
       "name": "vdm-plantuml-plugin",
       "repository": "glennlaursen/vdm-plantuml-plugin",
       "version": "0.1.1",
-      "classifier": "",
+      "classifier": "jar-with-dependencies",
       "dest_dir": "./plugins/"
     },
     {
