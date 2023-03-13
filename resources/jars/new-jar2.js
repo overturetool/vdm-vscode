@@ -9,21 +9,28 @@ if (args.length < 1) {
     throw new Error("repository argument required");
 }
 
-let repo = args.find((a) => a.includes("repo=")).slice("repo=".length);
-let groupId = args.find((a) => a.includes("groupId=")).slice("groupId=".length);
-let artifactId = args.find((a) => a.includes("artifactId=")).slice("artifactId=".length);
+let configId = args.find((a) => a.includes("configId=")).slice("configId=".length);
 let version = args.find((a) => a.includes("version=")).slice("version=".length);
 
-let jarInfo = data.jars.find((j) => j.repository === repo);
+
+let jarInfo = data.jars2[configId];
 
 if (!jarInfo) {
-    throw new Error("Repository is not allowed");
+    throw new Error("No config found.");
 }
 
-if (jarInfo.classifier && jarInfo.classifier.includes('-')) {
-    downloadWithClassifier(jarInfo.repository, groupId, artifactId, version, jarInfo.classifier, jarInfo.destDir);
+if (jarInfo.classifier && jarInfo.classifier.length > 0) {
+    jarInfo.jarDestinations.forEach((dest) => {
+        dest.artifactIds.split(',').forEach((artifactId) => {
+            downloadWithClassifier(jarInfo.repository, jarInfo.groupId, artifactId, version, jarInfo.classifier, dest.destDir);
+        });
+    });
 } else {
-    download(jarInfo.repository, groupId, artifactId, version, jarInfo.destDir);
+    jarInfo.jarDestinations.forEach((dest) => {
+        dest.artifactIds.split(',').forEach((artifactId) => {
+            download(jarInfo.repository, jarInfo.groupId, artifactId, version, dest.destDir);
+        });
+    });
 }
 
 

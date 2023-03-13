@@ -29,22 +29,30 @@ jobs:
       run: npm install
       
     - name: Log Info
-      run: echo "Repository $REPOSITORY, Version $VERSION, GroupId $GROUPID, ArtifactId $ARTIFACTID"
+      run: echo "ConfigId $CONFIGID Repository $REPOSITORY, Version $VERSION, GroupId $GROUPID, ArtifactId $ARTIFACTID"
       env:
+        CONFIGID: ${{ github.event.client_payload.configId }}
         REPOSITORY: ${{ github.event.client_payload.repository }}
         VERSION: ${{ github.event.client_payload.version }}
         GROUPID: ${{ github.event.client_payload.groupId }}
         ARTIFACTID: ${{ github.event.client_payload.artifactId }}
 
-    - name: Run new-jar.js
-      run: node new-jar.js repo=$REPOSITORY groupId=$GROUPID artifactId=$ARTIFACTID version=$VERSION
+    #- name: Run new-jar.js
+    # run: node new-jar.js repo=$REPOSITORY groupId=$GROUPID artifactId=$ARTIFACTID version=$VERSION
+    #  working-directory: resources/jars
+    #  env:
+    #    REPOSITORY: ${{ github.event.client_payload.repository }}
+    #    VERSION: ${{ github.event.client_payload.version }}
+    #    GROUPID: ${{ github.event.client_payload.groupId }}
+    #    ARTIFACTID: ${{ github.event.client_payload.artifactId }}
+    #    GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Run new-jar2.js
+      run: node new-jar2.js configId=$CONFIGID version=$VERSION
       working-directory: resources/jars
       env:
-        REPOSITORY: ${{ github.event.client_payload.repository }}
         VERSION: ${{ github.event.client_payload.version }}
-        GROUPID: ${{ github.event.client_payload.groupId }}
-        ARTIFACTID: ${{ github.event.client_payload.artifactId }}
-        GITHUB_TOKEN: ${{ github.token }}
-        
+        CONFIGID: ${{ github.event.client_payload.configId }}
+
     - name: Git Status
       run: git status

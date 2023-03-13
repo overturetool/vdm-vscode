@@ -5,28 +5,117 @@
       "repository": "glennlaursen/vdm-plantuml-plugin",
       "version": "0.1.1-SNAPSHOT",
       "classifier": "",
-      "dest_dir": "./plugins/"
+      "destDir": "./plugins/"
     },
     {
       "name": "vdm2isa",
       "repository": "glennlaursen/VDM_Toolkit",
       "version": "4.5",
       "classifier": "",
-      "dest_dir": "./plugins/"
+      "destDir": "./plugins/"
     },
     {
       "name": "javagen",
       "repository": "overturetool/overture",
       "version": "3.0.3-SNAPSHOT",
       "classifier": "jar-with-dependencies",
-      "dest_dir": "./tools/"
+      "destDir": "./tools/"
     },
     {
-      "name": "fmu-import-export",
+      "name": "vdmj",
+      "repository": "glennlaursen/vdmj",
+      "version": "4.5.0-SNAPSHOT",
+      "classifier": "",
+      "destDir": "./vdmj/"
+    },
+    {
+      "name": "vdmj_hp",
+      "repository": "glennlaursen/vdmj",
+      "version": "4.5.0-P-SNAPSHOT",
+      "classifier": "",
+      "destDir": "./vdmj_hp/"
+    }
+  ],
+  "jars2": {
+    "vdmj": {
+      "repository": "glennlaursen/vdmj",
+      "version": "4.5.0-SNAPSHOT",
+      "groupId": "dk.au.ece.vdmj",
+      "jarDestinations": [
+        {
+          "name": "vdmj",
+          "artifactIds": "vdmj,lsp,annotations",
+          "destDir": "./vdmj/"
+        },
+        {
+          "name": "vdmj-libs",
+          "artifactIds": "stdlib",
+          "destDir": "./vdmj/libs"
+        }
+      ]
+    },
+    "vdmj_hp": {
+      "repository": "glennlaursen/vdmj",
+      "version": "4.5.0-P-SNAPSHOT",
+      "groupId": "dk.au.ece.vdmj",
+      "jarDestinations": [
+        {
+          "name": "vdmj",
+          "artifactIds": "vdmj,lsp,annotations",
+          "destDir": "./vdmj_hp/"
+        },
+        {
+          "name": "vdmj-libs",
+          "artifactIds": "stdlib",
+          "destDir": "./vdmj_hp/libs"
+        }
+      ]
+    },
+    "vdm-plantuml-plugin": {
+      "repository": "glennlaursen/vdm-plantuml-plugin",
+      "version": "0.1.1-SNAPSHOT",
+      "groupId": "dk.au.ece.vdmj",
+      "jarDestinations": [
+        {
+          "artifactIds": "uml",
+          "destDir": "./plugins/"
+        }
+      ]
+    },
+    "javagen": {
+      "repository": "overturetool/overture",
+      "version": "3.0.3-SNAPSHOT",
+      "groupId": "org.overturetool.core.codegen",
+      "classifier": "jar-with-dependencies",
+      "jarDestinations": [
+        {
+          "artifactIds": "javagen",
+          "destDir": "./tools/"
+        }
+      ]
+    },
+    "fmu-import-export": {
       "repository": "overturetool/overture-fmu",
       "version": "0.2.19-SNAPSHOT",
+      "groupId": "org.overturetool.fmi.core",
       "classifier": "jar-with-dependencies",
-      "dest_dir": "./tools/"
+      "jarDestinations": [
+        {
+          "artifactIds": "fmu-import-export",
+          "destDir": "./tools/"
+        }
+      ]
+    },
+    "vdm2isa": {
+      "repository": "glennlaursen/VDM_Toolkit",
+      "version": "1.2.0-SNAPSHOT",
+      "groupId": "vdmtoolkit",
+      "jarDestinations": [
+        {
+          "artifactIds": "vdm2isa",
+          "destDir": "./plugins/"
+        }
+      ]
     }
-  ]
+  }
 }
