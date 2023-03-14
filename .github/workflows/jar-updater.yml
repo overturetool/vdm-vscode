@@ -21,7 +21,6 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        cache: 'maven'
 
     - name: Setup Node
       uses: actions/setup-node@v3
