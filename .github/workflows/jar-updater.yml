@@ -48,13 +48,9 @@ jobs:
         CONFIGID: ${{ github.event.client_payload.configId }}
         GITHUB_TOKEN: ${{ github.token }}
       
-    - name:  'Automated Version Bump'
-      uses:  'phips28/gh-action-bump-version@master'
-      with:
-        skip-commit:  'true'
-        skip-tag:  'true'
-        skip-push:  'true'
-        version-type:  'minor'
+    - name:  'Bump version in package.json'
+      id: bump_node_version
+      run: echo "version=$(npm version minor --git-tag-version=false --commit-hooks=false)" >> $GITHUB_OUTPUT
     
     - name: Test
       run: cat package.json
@@ -72,8 +68,8 @@ jobs:
     - name: Upload VSIX
       uses: actions/upload-artifact@v3
       with:
-        path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
-        name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+        path: vdm-vscode-${{ steps.bump_node_version.outputs.version }}.vsix
+        name: vdm-vscode-${{ steps.bump_node_version.outputs.version }}.vsix
     
     - name: Git Status
       run: git status
