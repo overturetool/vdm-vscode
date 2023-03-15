@@ -65,7 +65,7 @@ jobs:
       id: package-node-version
     
     - name: Add to change log.
-      run: echo -e "### ${{ steps.bump-version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
+      run: echo -e "### ${{ steps.bump-version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
       env:
         VERSION: ${{ github.event.client_payload.version }}
         CONFIGID: ${{ github.event.client_payload.configId }}
