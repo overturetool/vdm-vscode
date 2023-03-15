@@ -56,10 +56,12 @@ jobs:
       
     - name:  'Bump version in package.json'
       id: bump_node_version
-      run: echo "version=$(npm version minor --git-tag-version=false --commit-hooks=false)" >> $GITHUB_OUTPUT
+      run: |
+        npm version patch --git-tag-version=false --commit-hooks=false)
+        echo "version=$(npm pkg get version | sed 's/"//g') >> $GITHUB_OUTPUT
     
     - name: Add to change log.
-      run: echo -e "#${{ steps.bump_node_version.outputs.version }}\nUpdate $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
+      run: echo -e "### ${{ steps.bump_node_version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
       env:
         VERSION: ${{ github.event.client_payload.version }}
         CONFIGID: ${{ github.event.client_payload.configId }}
