@@ -1,5 +1,5 @@
 ### 1.3.8
-- This is just for fixing stuff
+- This is just for fixing stuffs
 
 ### 1.3.7
 - Hotfix to VDMJ to support Java 19
