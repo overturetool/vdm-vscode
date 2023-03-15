@@ -7,7 +7,7 @@ on:
     types: [new-jar]
 
 jobs:
-  greet:
+  update-jar:
     runs-on: ubuntu-latest
 
     steps:
@@ -60,11 +60,7 @@ jobs:
         npm version patch --git-tag-version=false --commit-hooks=false
         echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
     
-    - name: Read version from package.json
-      uses: culshaw/read-package-node-version-actions@v1
-      id: package-node-version
-    
-    - name: Add to change log.
+    - name: Add to CHANGELOG-md
       run: echo -e "### ${{ steps.bump-version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
       env:
         VERSION: ${{ github.event.client_payload.version }}
