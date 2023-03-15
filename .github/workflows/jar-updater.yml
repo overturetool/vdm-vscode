@@ -36,7 +36,9 @@ jobs:
         npm install webpack
         
     - name: Get script from dev branch
-      run: git checkout development -- resources/jars/jars.json resources/jars/new-jar2.js
+      run: |
+        git fetch origin development --depth 1
+        git checkout origin/development -- resources/jars/jars.json resources/jars/new-jar2.js
       
     - name: Log Info
       run: echo "ConfigId $CONFIGID, Version $VERSION"
