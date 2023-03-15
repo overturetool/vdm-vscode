@@ -31,8 +31,12 @@ jobs:
     - name: npm install
       run: |
         npm install
+        npm install txml
         npm install -g vsce 
         npm install webpack
+        
+    - name: Get script from dev branch
+      run: git checkout development -- resources/jars/jars.json resources/jars/new-jar2.js
       
     - name: Log Info
       run: echo "ConfigId $CONFIGID, Version $VERSION"
@@ -52,18 +56,17 @@ jobs:
       id: bump_node_version
       run: echo "version=$(npm version minor --git-tag-version=false --commit-hooks=false)" >> $GITHUB_OUTPUT
     
-    - name: Test
-      run: cat package.json
+    - name: Add to change log.
+      run: echo -e "#${{ steps.bump_node_version.outputs.version }}\nUpdate $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
+      env:
+        VERSION: ${{ github.event.client_payload.version }}
+        CONFIGID: ${{ github.event.client_payload.configId }}
         
     - name: Build VSIX
       run: |
         npm run enableWebpack
         vsce package
         npm run disableWebpack
-    
-    - name: Read version from package.json
-      uses: culshaw/read-package-node-version-actions@v1
-      id: package-node-version
 
     - name: Upload VSIX
       uses: actions/upload-artifact@v3
