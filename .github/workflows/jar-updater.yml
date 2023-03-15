@@ -57,7 +57,7 @@ jobs:
     - name:  'Bump version in package.json'
       id: bump_node_version
       run: |
-        npm version patch --git-tag-version=false --commit-hooks=false)
+        npm version patch --git-tag-version=false --commit-hooks=false
         echo "version=$(npm pkg get version | sed 's/"//g') >> $GITHUB_OUTPUT
     
     - name: Add to change log.
