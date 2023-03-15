@@ -76,8 +76,8 @@ jobs:
     - name: Upload VSIX
       uses: actions/upload-artifact@v3
       with:
-        path: vdm-vscode-${{ steps.bump_node_version.outputs.version }}.vsix
-        name: vdm-vscode-${{ steps.bump_node_version.outputs.version }}.vsix
+        path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+        name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
     
     - name: Git Status
       run: git status
