@@ -1,3 +1,6 @@
+### 1.3.8
+- This is just for fixing stuff
+
 ### 1.3.7
 - Hotfix to VDMJ to support Java 19
 - Updates UML Plugin jar to 0.1.1 including typing abstraction
