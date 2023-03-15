@@ -54,14 +54,15 @@ jobs:
         CONFIGID: ${{ github.event.client_payload.configId }}
         GITHUB_TOKEN: ${{ github.token }}
       
-    - name:  'Bump version in package.json'
-      id: bump_node_version
-      run: |
-        npm version patch --git-tag-version=false --commit-hooks=false
-        echo "version=$(npm pkg get version | sed 's/"//g') >> $GITHUB_OUTPUT
+    - name: Bump version in package.json
+      run: npm version patch --git-tag-version=false --commit-hooks=false
+    
+    - name: Read version from package.json
+      uses: culshaw/read-package-node-version-actions@v1
+      id: package-node-version
     
     - name: Add to change log.
-      run: echo -e "### ${{ steps.bump_node_version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
+      run: echo -e "### ${{ steps.package-node-version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
       env:
         VERSION: ${{ github.event.client_payload.version }}
         CONFIGID: ${{ github.event.client_payload.configId }}
