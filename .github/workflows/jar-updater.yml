@@ -55,14 +55,17 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
       
     - name: Bump version in package.json
-      run: npm version patch --git-tag-version=false --commit-hooks=false
+      id: bump-version
+      run: |
+        npm version patch --git-tag-version=false --commit-hooks=false
+        echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
     
     - name: Read version from package.json
       uses: culshaw/read-package-node-version-actions@v1
       id: package-node-version
     
     - name: Add to change log.
-      run: echo -e "### ${{ steps.package-node-version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
+      run: echo -e "### ${{ steps.bump-version.outputs.version }}\n- Update $CONFIGID to version $VERSION\n$(cat CHANGELOG.md)" > CHANGELOG.md
       env:
         VERSION: ${{ github.event.client_payload.version }}
         CONFIGID: ${{ github.event.client_payload.configId }}
@@ -76,8 +79,8 @@ jobs:
     - name: Upload VSIX
       uses: actions/upload-artifact@v3
       with:
-        path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
-        name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+        path: vdm-vscode-${{ steps.bump_version.outputs.version }}.vsix
+        name: vdm-vscode-${{ steps.bump_version.outputs.version }}.vsix
     
     - name: Git Status
       run: git status
