@@ -31,6 +31,7 @@ jobs:
         run: |
           npm version patch --git-tag-version=false --commit-hooks=false
           echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
+          echo "version_v=v$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
       
       - name: Add to CHANGELOG.md #TODO add more stuff to changelog from closed issues.
         run: echo -e "### ${{ steps.bump-version.outputs.version }}\n$(cat CHANGELOG.md)" > CHANGELOG.md
@@ -46,7 +47,7 @@ jobs:
       - name: Create release branch from development
         run: git switch $BRANCH 2>/dev/null || git switch -c $BRANCH
         env:
-          BRANCH: release-${{ steps.bump-version.outputs.version }}
+          BRANCH: release-${{ steps.bump-version.outputs.version_v }}
           
       - name: Push release branch to origin
         run: |
@@ -54,7 +55,7 @@ jobs:
           git commit --allow-empty -m "[Automated action] Push release branch to origin"
           git push
         env: 
-          BRANCH: release-${{ steps.bump-version.outputs.version }}
+          BRANCH: release-${{ steps.bump-version.outputs.version_v }}
       
       - name: Build VSIX
         run: |
@@ -69,5 +70,5 @@ jobs:
             vdm-vscode-${{ steps.bump-version.outputs.version }}.vsix
           prerelease: true
           generate_release_notes: true
-          tag_name: v${{ steps.bump-version.outputs.version }}
+          tag_name: ${{ steps.bump-version.outputs.version_v }}
     
