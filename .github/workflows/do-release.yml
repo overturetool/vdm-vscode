@@ -19,6 +19,7 @@ jobs:
        
       - name: Merge release branch into main
         run: |
+          git fetch
           git checkout main
           git merge release-${{ github.ref_name }}
           
