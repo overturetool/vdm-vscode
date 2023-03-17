@@ -70,5 +70,5 @@ jobs:
             vdm-vscode-${{ steps.bump-version.outputs.version }}.vsix
           prerelease: true
           generate_release_notes: true
-          tag_name: ${{ steps.bump-version.outputs.version_v }}
+          tag_name: ${{ steps.bump-version.outputs.version_v }}-beta
     
