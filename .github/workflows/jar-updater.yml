@@ -90,3 +90,6 @@ jobs:
         git add resources/jars/*.jar CHANGELOG.md
         git commit -m "[Automated action] Update $CONFIGID to version $VERSION"
         git push
+      env:
+        VERSION: ${{ github.event.client_payload.version }}
+        CONFIGID: ${{ github.event.client_payload.configId }}
