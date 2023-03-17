@@ -28,7 +28,7 @@ jobs:
           git push
           
       - name: Release
-        run: gh release edit v1.3.9 --prerelease=false
+        run: gh release edit v1.3.9 --prerelease=false --latest
         env:
           GH_TOKEN: ${{ github.token }}
         
