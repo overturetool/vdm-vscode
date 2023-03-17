@@ -1,0 +1,27 @@
+name: Do Release
+
+on:
+  workflow_dispatch:
+  
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    if: ${{ github.ref_type == 'tag' }}
+
+    steps:
+      - uses: actions/checkout@v3
+       
+      - name: Merge release branch into main
+        run: |
+          git checkout main
+          git merge release-${{ github.ref_name }}
+          
+      - name: Release
+        run: gh release edit ${{ github.ref_name }} --prerelease=false
+        
+      - name: Push to VSCode Marketplace
+        run: echo "I am a dunkey."
