@@ -33,25 +33,28 @@ jobs:
           echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
       
       - name: Add to CHANGELOG.md #TODO add more stuff to changelog from closed issues.
-        run: echo -e "### ${{ github.steps.bump-version.outputs.version }}\n$(cat CHANGELOG.md)" > CHANGELOG.md
+        run: echo -e "### ${{ steps.bump-version.outputs.version }}\n$(cat CHANGELOG.md)" > CHANGELOG.md
         
       - name: Commit & Push
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add package.json CHANGELOG.md
-          git commit -m "[Automated action] Bump package.json version to ${{ github.steps.bump-version.outputs.version }}. Update CHANGELOG.md"
+          git commit -m "[Automated action] Bump package.json version to ${{ steps.bump-version.outputs.version }}. Update CHANGELOG.md"
           git push
         
       - name: Create release branch from development
         run: git switch $BRANCH 2>/dev/null || git switch -c $BRANCH
         env:
-          BRANCH: release-${{ github.steps.bump-version.outputs.version }}
+          BRANCH: release-${{ steps.bump-version.outputs.version }}
           
       - name: Push release branch to origin
         run: |
+          git push --set-upstream origin $BRANCH
           git commit --allow-empty -m "[Automated action] Push release branch to origin"
           git push
+        env: 
+          BRANCH: release-${{ steps.bump-version.outputs.version }}
       
       - name: Build VSIX
         run: |
