@@ -9,7 +9,6 @@ on:
   
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   update-jar:
@@ -62,8 +61,8 @@ jobs:
       run: |
         echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
     
-    - name: Add to CHANGELOG-md
-      run: echo -e "Update $CONFIGID to version $VERSION\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
+    - name: Add to CHANGELOG.md
+      run: echo -e "- Update $CONFIGID to version $VERSION\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
       env:
         VERSION: ${{ github.event.client_payload.version }}
         CONFIGID: ${{ github.event.client_payload.configId }}
