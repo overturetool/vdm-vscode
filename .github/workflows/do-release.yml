@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: release-v1.3.10
+          ref: release-v1.3.11
           fetch-depth: 0
        
       - name: Merge release branch into main
@@ -23,11 +23,20 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git checkout main
-          git merge release-v1.3.10
+          git merge release-v1.3.11
           git push
           
+      - name: Build new vsix
+        run: |
+          npm run enableWebpack
+          vsce package
+          npm run disableWebpack
+          
+      - name: Update prerelease with new vsix
+        run: gh release upload v1.3.11-beta vdm-vscode-v1.3.11.vsix --clobber
+          
       - name: Release
-        run: gh release edit v1.3.10-beta --prerelease=false --latest --tag=v1.3.10
+        run: gh release edit v1.3.11-beta --prerelease=false --latest --tag=v1.3.11
         env:
           GH_TOKEN: ${{ github.token }}
         
