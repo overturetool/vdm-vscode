@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: release-v1.3.9
+          ref: release-v1.3.10
           fetch-depth: 0
        
       - name: Merge release branch into main
@@ -23,11 +23,11 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git checkout main
-          git merge release-v1.3.9
+          git merge release-v1.3.10
           git push
           
       - name: Release
-        run: gh release edit v1.3.9 --prerelease=false --latest
+        run: gh release edit v1.3.10-beta --prerelease=false --latest --tag=v1.3.10
         env:
           GH_TOKEN: ${{ github.token }}
         
