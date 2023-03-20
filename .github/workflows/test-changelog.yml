@@ -15,6 +15,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-       - name: echo changelog
-         run: |
-           echo ${{steps.build_changelog.outputs.changelog}}
+      - name: echo changelog
+        run: |
+          echo ${{steps.build_changelog.outputs.changelog}}
