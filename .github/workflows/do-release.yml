@@ -36,6 +36,11 @@ jobs:
           git merge $BRANCH
           git push
           
+      - name: Update tag
+        run: |
+          git tag -f $TAG
+          git push --force origin $TAG
+          
       - name: npm install
         run: |
           npm install
