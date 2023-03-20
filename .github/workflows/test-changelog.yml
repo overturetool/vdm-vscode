@@ -11,7 +11,7 @@ jobs:
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v3
         with:
-          fromTag: "v1.3.20"
+          fromTag: "v1.3.19"
           toTag: "v1.3.21"
           outputFile: './change.md'
         env:
