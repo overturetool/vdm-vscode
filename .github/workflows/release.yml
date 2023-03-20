@@ -1,1 +1,65 @@
+name: Release
 
+on:
+  workflow_dispatch:
+  
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 'development'
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+          
+      - name: npm install
+        run: |
+          npm install
+          npm install txml
+          npm install -g vsce 
+          npm install webpack
+          
+      - name: Bump version in package.json
+        id: bump-version
+        run: |
+          npm version patch --git-tag-version=false --commit-hooks=false
+          echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
+          echo "version_v=v$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
+          
+      - name: Add to CHANGELOG.md #TODO add more stuff to changelog from closed issues.
+        run: echo -e "### ${{ steps.bump-version.outputs.version }}\n$(cat CHANGELOG.md)" > CHANGELOG.md
+        
+      - name: Commit & Push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add package.json CHANGELOG.md
+          git commit -m "[Automated action] Bump package.json version to ${{ steps.bump-version.outputs.version }}. Update CHANGELOG.md"
+          git push
+          
+      - name: Build new vsix
+        run: |
+          npm run enableWebpack
+          vsce package
+          
+      - name: Prerelease
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            vdm-vscode-${{ steps.bump-version.outputs.version }}.vsix
+          prerelease: false
+          generate_release_notes: true
+          tag_name: ${{ steps.bump-version.outputs.version_v }}
+          
+      - name: Push to VSCode Marketplace
+        run: echo "I am a dunkey."
+          
+    
