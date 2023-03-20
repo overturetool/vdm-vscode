@@ -11,7 +11,7 @@ jobs:
         uses: mikepenz/release-changelog-builder-action@v3
         with:
           fromTag: "v1.3.19"
-          toTag: "v1.3.22"
+          toTag: "v1.3.21"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
