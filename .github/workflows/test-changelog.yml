@@ -6,18 +6,15 @@ jobs:
   test-changelog:
     runs-on: ubuntu-latest
     steps:
-      - run: touch change.md
       - name: Build Changelog
-        id: build_changelog
+        id: github_release
         uses: mikepenz/release-changelog-builder-action@v3
         with:
           fromTag: "v1.3.19"
-          toTag: "v1.3.21"
-          outputFile: './change.md'
+          toTag: "v1.3.22"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: echo changelog
         run: |
-          cat change.md
-          echo "${{steps.build_changelog.outputs.changelog}}"
+          echo ${{ steps.github_release.outputs.changelog }}
