@@ -36,11 +36,14 @@ jobs:
           cat change.md
           
           
-      - name: Update CHANGELOG
-        id: changelog
-        uses: requarks/changelog-action@v1
+      - name: changelog-ci
+        uses: saadmk11/changelog-ci@v1.1.1
+        id: changelog-ci
         with:
-          token: ${{ github.token }}
-          tag: v1.3.21
-          
-      - run: echo ${{ steps.changelog.outputs.changes }}
+          changelog_filename: 'CHANGELOG.md'
+          release_version: v1.3.22
+
+      - name: Get Changelog Output
+        run: |
+          echo "${{ steps.changelog-ci.outputs.changelog }}"
+          echo "${{ steps.changelog-ci.outputs.changelog }}" >> $GITHUB_STEP_SUMMARY
