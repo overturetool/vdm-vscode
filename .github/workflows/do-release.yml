@@ -50,10 +50,10 @@ jobs:
           npm run disableWebpack
           
       - name: Update prerelease with new vsix
-        run: gh release upload $TAG-beta vdm-vscode-$TAG.vsix --clobber
+        run: gh release upload $TAG vdm-vscode-$TAG.vsix --clobber
           
       - name: Release
-        run: gh release edit $TAG-beta --prerelease=false --latest --tag=$TAG --title=$TAG
+        run: gh release edit $TAG --prerelease=false --latest --tag=$TAG --title=$TAG
         env:
           GH_TOKEN: ${{ github.token }}
         
