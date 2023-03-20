@@ -2,6 +2,9 @@ name: Create VSIX
 
 on: push
 
+permissions:
+  contents: write
+
 jobs:
   Build-VSIX:
     runs-on: ubuntu-latest
@@ -12,6 +15,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
+          node-version: 18
           cache: 'npm'
 
       - name: Install dependencies
@@ -37,7 +41,7 @@ jobs:
           name: vdm-vscode-${{ steps.read-version.outputs.version }}.vsix
           
       - name: Update release if release branch
-        if: ${{ startsWith(github.ref_name, 'release-')
+        if: ${{ startsWith(github.ref_name, 'release-') }}
         run: |
           TAG=$(echo $BRANCH | sed -e "s/^release-//")
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
