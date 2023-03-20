@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: $BRANCH
+          ref: ${{ env.BRANCH }}
           fetch-depth: 0
           
       - name: Setup Node
