@@ -77,3 +77,7 @@ jobs:
           git checkout development
           git merge $BRANCH
           git push
+          
+      - name: Delete release branch
+        run: |
+          git push origin --delete $BRANCH
