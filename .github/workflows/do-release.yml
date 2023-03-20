@@ -51,6 +51,8 @@ jobs:
           
       - name: Update prerelease with new vsix
         run: gh release upload $TAG vdm-vscode-$TAG.vsix --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
           
       - name: Release
         run: gh release edit $TAG --prerelease=false --latest --tag=$TAG --title=$TAG
