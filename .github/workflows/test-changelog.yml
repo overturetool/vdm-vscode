@@ -12,9 +12,11 @@ jobs:
         with:
           fromTag: "v1.3.20"
           toTag: "v1.3.21"
+          outputFile: 'change.md'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: echo changelog
         run: |
+          cat change.md
           echo ${{steps.build_changelog.outputs.changelog}}
