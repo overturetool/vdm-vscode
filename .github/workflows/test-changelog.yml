@@ -43,7 +43,7 @@ jobs:
         id: changelog-ci
         with:
           changelog_filename: 'CHANGELOG.md'
-          release_version: v1.3.22
+          release_version: v1.3.21
 
       - name: Get Changelog Output
         run: |
