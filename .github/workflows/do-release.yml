@@ -49,8 +49,13 @@ jobs:
           vsce package
           npm run disableWebpack
           
+      - name: Read version in package.json
+        id: read-version
+        run: |
+          echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
+          
       - name: Update prerelease with new vsix
-        run: gh release upload $TAG vdm-vscode-$TAG.vsix --clobber
+        run: gh release upload $TAG vdm-vscode-${{ steps.read-version.outputs.version }}.vsix --clobber
         env:
           GH_TOKEN: ${{ github.token }}
           
