@@ -37,7 +37,7 @@ jobs:
           name: vdm-vscode-${{ steps.read-version.outputs.version }}.vsix
           
       - name: Update release if release branch
-        if: ${{ startsWith(github.ref_name, 'release-')
+        if: ${{ startsWith(github.ref_name, 'release-') }}
         run: |
           TAG=$(echo $BRANCH | sed -e "s/^release-//")
           git tag -f $TAG
