@@ -34,4 +34,13 @@ jobs:
       - name: echo changelog
         run: |
           cat change.md
-          echo ${{ steps.github_release.outputs.changelog }}
+          
+          
+      - name: Update CHANGELOG
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: v1.3.21
+          
+      - run: echo ${{ steps.changelog.outputs.changes }}
