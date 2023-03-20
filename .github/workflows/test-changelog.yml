@@ -6,12 +6,14 @@ jobs:
   test-changelog:
     runs-on: ubuntu-latest
     steps:
+      - run: touch change.md
       - name: Build Changelog
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v3
         with:
           fromTag: "v1.3.19"
           toTag: "v1.3.21"
+          outputFile: './change.md'
           configurationJson: |
             {
               "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
@@ -31,4 +33,5 @@ jobs:
           
       - name: echo changelog
         run: |
+          cat change.md
           echo ${{ steps.github_release.outputs.changelog }}
