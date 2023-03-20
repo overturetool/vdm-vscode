@@ -7,12 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Setup Node js
-        uses: actions/setup-node@v2
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
-          cache: "npm"
+          cache: 'npm'
 
       - name: Install dependencies
         run: |
@@ -20,18 +20,29 @@ jobs:
           npm install -g vsce 
           npm install webpack
 
-      - name: Switch to use webpack
-        run: npm run enableWebpack
-
-      - name: Create vsix
-        run: vsce package
-
-      - name: Read version from package.json
-        uses: culshaw/read-package-node-version-actions@v1
-        id: package-node-version
+      - name: Build VSIX
+        run: |
+          npm run enableWebpack
+          vsce package
+        
+      - name: Read version in package.json
+        id: read-version
+        run: |
+          echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
 
       - name: Upload VSIX
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          path: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
-          name: vdm-vscode-${{ steps.package-node-version.outputs.version }}.vsix
+          path: vdm-vscode-${{ steps.read-version.outputs.version }}.vsix
+          name: vdm-vscode-${{ steps.read-version.outputs.version }}.vsix
+          
+      - name: Update release if release branch
+        if: ${{ startsWith(github.ref_name, 'release-')
+        run: |
+          TAG=$(echo $BRANCH | sed -e "s/^release-//")
+          git tag -f $TAG
+          git push --force origin $TAG
+          gh release upload $TAG vdm-vscode-${{ steps.read-version.outputs.version }}.vsix --clobber
+        env:
+          BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
