@@ -1,0 +1,20 @@
+name: 'test-changelog'
+on:
+  workflow_dispatch:
+
+jobs:
+  test-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v3
+        with:
+          fromTag: "v1.3.20"
+          toTag: "v1.3.21"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+       - name: echo changelog
+         run: |
+           echo ${{steps.build_changelog.outputs.changelog}}
