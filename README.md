@@ -34,35 +34,12 @@ For now only the following limited feature set is available in the web version o
 
 Thus, most feature contributions relates to the desktop version of the extension.
 
-## Features
-
-Following is a select number of features. For the full up to date list see the [wiki](https://github.com/overturetool/vdm-vscode/wiki/Developer#Feature-Matrix).
-
--   Syntax Highlighting
--   Syntax- and type-checking
--   Smart navigation
--   Debugging
--   Proof Obligation Generation
--   Combinatiorial Testing
--   Translation to LaTeX and Word
--   Java code generation
--   Dependency graph generation
--   Coverage report
--   Import of project examples
--   Import of VDM libraries
--   Snippets
-
-### Future Work
-
--   Improve syntax highlighting
--   Improve debugging execution
--   Show all workspace folders in the Combinatorial Testing view
-
 ## Usage
 
 Open a folder (single VDM project) or a workspace (multiple VDM projects) and then open a VDM file(`.vdmsl`, `.vdmpp` or `.vdmrt`) from the explorer window. This will automatically start the language server in the background.
 
 [Click here](https://github.com/overturetool/vdm-vscode/wiki/Usage-GIFs) for an overview of how to use the features of the extension.
+
 
 ## Settings
 
@@ -92,3 +69,28 @@ Submit an [issue](https://github.com/overturetool/vdm-vscode/issues) if you find
 
 Contributions are very welcome. To do so either open an issue or feature request or fork the [repo](https://github.com/overturetool/vdm-vscode) and submit a pull request.
 For further information see [here](CONTRIBUTING.md).
+
+## Features
+
+Following is a select number of features. For the full up to date list see the [wiki](https://github.com/overturetool/vdm-vscode/wiki/Developer#Feature-Matrix).
+
+-   Syntax Highlighting
+-   Syntax- and type-checking
+-   Smart navigation
+-   Debugging
+-   Proof Obligation Generation
+-   Combinatiorial Testing
+-   Translation to LaTeX and Word
+-   Java code generation
+-   Dependency graph generation
+-   Coverage report
+-   Import of project examples
+-   Import of VDM libraries
+-   Snippets
+
+### Future Work
+
+-   Improve syntax highlighting
+-   Improve debugging execution
+-   Show all workspace folders in the Combinatorial Testing view
+
