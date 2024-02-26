@@ -97,7 +97,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
 
                 // Create run configuration
                 let className = selectedClass.substring(0, selectedClass.indexOf("("));
-                let debugConfiguration: DebugConfiguration = this.buildDebugConfiguration(className, selectedCommand);
+                let debugConfiguration: DebugConfiguration = this.buildDebugConfiguration(selectedCommand, className);
 
                 if (dialect == vdmDialects.VDMSL) debugConfiguration.command = `print ${selectedCommand}`;
                 else debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
