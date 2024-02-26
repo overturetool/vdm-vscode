@@ -78,6 +78,10 @@ export class ProofObligationPanel implements Disposable {
         return Uri.joinPath(this._context.extensionUri, "resources");
     }
 
+    private get _webviewsUri(): Uri {
+        return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
+    }
+
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
         this._providers.push({ selector: documentSelector, provider: provider });
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, true);
@@ -158,7 +162,7 @@ export class ProofObligationPanel implements Disposable {
                     },
                     {
                         enableScripts: true, // Enable javascript in the webview
-                        localResourceRoots: [this._resourcesUri], // Restrict the webview to only load content from the extension's `resources` directory.
+                        localResourceRoots: [this._resourcesUri, this._webviewsUri], // Restrict the webview to only load content from the extension's `resources` directory.
                         retainContextWhenHidden: true, // Retain state when PO view goes into the background
                     }
                 );
@@ -306,7 +310,7 @@ export class ProofObligationPanel implements Disposable {
     }
 
     private buildHtmlForWebview(webview: Webview) {
-        const scriptUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.js"));
+        const scriptUri = webview.asWebviewUri(Uri.joinPath(this._webviewsUri, "webviews.js"));
         const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.css"));
 
         // Use a nonce to only allow specific scripts to be run
@@ -318,16 +322,11 @@ export class ProofObligationPanel implements Disposable {
             <meta charset="UTF-8">
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${scriptNonce}';">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            
             <link href="${styleUri}" rel="stylesheet">
         </head>
         <body>
-            <button class="button" id="expandPOsBtn">Expand all proof obligations</button>
-            <button class="button" id="filterPOsBtn">Filter by status</button>
-            <br>
-            <p id="posInvalid"><b>Warning:</b> Proof obligations are no longer guaranteed to be valid!</p>
-            <div id="poContainer"></div>
-            <script nonce="${scriptNonce}" src="${scriptUri}"></script>
+            <div id="root"></div>
+            <script type="module" nonce="${scriptNonce}">import { renderWebview} from "${scriptUri}"; renderWebview("root", "ProofObligations")</script>
         </body>
         </html>`;
     }

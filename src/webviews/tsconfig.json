@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "target": "ES6",
+        "outDir": "out",
+        "jsx": "react",
+        "lib": ["DOM", "es6"],
+        "sourceMap": true,
+        "allowSyntheticDefaultImports": true
+    }
+}

@@ -74,4 +74,47 @@ const nodeConfig = {
 		],
 	},
 };
-module.exports = [nodeConfig, webConfig];
+
+/**@type {import('webpack').Configuration}*/
+const webviewConfig = {
+	target: "web", // webview runs in a chromium web-context
+
+	entry: "./src/webviews/index.tsx", // the entry point of the webviews, 📖 -> https://webpack.js.org/configuration/entry-context/
+	experiments: {
+        outputModule: true
+    },
+    mode: "production",
+    output: {
+		// the bundle is stored in the 'resources/webviews' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
+		path: path.resolve(__dirname, "dist", "webviews"),
+		filename: "webviews.js",
+		libraryTarget: "module",
+	},
+	devtool: "source-map",
+	resolve: {
+		// support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
+		extensions: [".ts", ".js", ".tsx", ".jsx", ".css"],
+	},
+	module: {
+		rules: [
+			{
+				test: /\.(ts|tsx)$/,
+				exclude: /node_modules/,
+				use: [
+					{
+						loader: "ts-loader",
+					},
+				],
+			},
+            {
+                test: /\.css$/,
+                use: ["style-loader", "css-loader"],
+            },
+		],
+	},
+    optimization: {
+        minimize: true,
+        nodeEnv: "production"
+    }
+};
+module.exports = [nodeConfig, webConfig, webviewConfig];

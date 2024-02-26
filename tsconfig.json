@@ -1,17 +1,14 @@
 {
-	"compilerOptions": {
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"target": "es6",
-		"outDir": "out",
-		"lib": [ "es6" ],
-		"sourceMap": true,
-		"rootDir": ".",
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-	},
-	"exclude": [
-		"cmd",
-		"node_modules"
-	]
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es6",
+        "outDir": "out",
+        "lib": ["es6"],
+        "sourceMap": true,
+        "rootDir": ".",
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+    },
+    "exclude": ["cmd", "node_modules", "src/webviews"]
 }
