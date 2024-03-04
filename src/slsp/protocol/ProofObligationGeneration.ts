@@ -10,6 +10,7 @@ import {
     RequestHandler,
     RequestType,
 } from "vscode-languageclient";
+import { VdmLaunchConfiguration } from "../../handlers/AddRunConfigurationHandler";
 
 export interface ProofObligationGenerationClientCapabilities {
     /**
@@ -37,6 +38,17 @@ export interface ProofObligationGenerationServerCapabilities {
 /**
  * Parameters describing a Proof Obligation (PO) and meta data.
  */
+export interface ProofObligationLaunchConfiguration extends VdmLaunchConfiguration {
+    command: string;
+}
+
+export interface ProofObligationCounterExample {
+    launch: ProofObligationLaunchConfiguration;
+    variables: Record<string, unknown>;
+}
+
+export type ProofObligationWitness = ProofObligationCounterExample;
+
 export interface ProofObligation {
     /**
      * Unique identifier of the PO.
@@ -67,6 +79,11 @@ export interface ProofObligation {
      * An optional status of the PO, e.g., "Unproved" or "Proved".
      */
     status?: string;
+    // TODO: Write documentation string
+    provedBy?: string;
+    message?: string;
+    counterexample: ProofObligationCounterExample;
+    witness: ProofObligationWitness;
 }
 
 /**

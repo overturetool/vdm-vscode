@@ -14,10 +14,13 @@ import {
     ExtensionContext,
     commands,
     DocumentSelector,
+    debug,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
 import { isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
+import { VdmDapSupport } from "../../dap/VdmDapSupport";
+import { ProofObligationCounterExample, ProofObligationWitness } from "../protocol/ProofObligationGeneration";
 
 export interface ProofObligation {
     id: number;
@@ -26,6 +29,10 @@ export interface ProofObligation {
     location: Location;
     source: string | string[];
     status?: string;
+    provedBy?: string;
+    message?: string;
+    counterexample?: ProofObligationCounterExample;
+    witness?: ProofObligationWitness;
 }
 
 export interface ProofObligationProvider {
@@ -82,6 +89,10 @@ export class ProofObligationPanel implements Disposable {
         return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
     }
 
+    private get _codiconsDistUri(): Uri {
+        return Uri.joinPath(this._context.extensionUri, "node_modules", "@vscode", "codicons", "dist");
+    }
+
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
         this._providers.push({ selector: documentSelector, provider: provider });
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, true);
@@ -124,8 +135,14 @@ export class ProofObligationPanel implements Disposable {
             let uri = this._lastUri;
 
             // Switch to active editor is on a file from the clients workspace
-            let activeWsFolder = workspace.getWorkspaceFolder(window.activeTextEditor?.document.uri);
-            if (!isSameWorkspaceFolder(activeWsFolder, this._lastWsFolder)) uri = activeWsFolder.uri;
+            const activeEditor = window.activeTextEditor?.document.uri;
+
+            if (activeEditor !== undefined) {
+                let activeWsFolder = workspace.getWorkspaceFolder(activeEditor);
+                if (!isSameWorkspaceFolder(activeWsFolder, this._lastWsFolder)) {
+                    uri = activeWsFolder.uri;
+                }
+            }
 
             // If POG is possible
             if (canRun) {
@@ -162,7 +179,7 @@ export class ProofObligationPanel implements Disposable {
                     },
                     {
                         enableScripts: true, // Enable javascript in the webview
-                        localResourceRoots: [this._resourcesUri, this._webviewsUri], // Restrict the webview to only load content from the extension's `resources` directory.
+                        localResourceRoots: [this._resourcesUri, this._webviewsUri, this._codiconsDistUri], // Restrict the webview to only load content from the extension's `resources` directory.
                         retainContextWhenHidden: true, // Retain state when PO view goes into the background
                     }
                 );
@@ -204,6 +221,18 @@ export class ProofObligationPanel implements Disposable {
                             this._panel.webview.postMessage({
                                 command: "rebuildPOview",
                                 pos: this.sortPOs(this._pos, this._currentSortingHeader, false),
+                            });
+                            break;
+                        case "debugQCRun":
+                            console.log("DebugQCRun");
+                            const requestBody = {
+                                expression: message.data,
+                                context: "repl",
+                            };
+
+                            VdmDapSupport.getAdHocVdmDebugger(wsFolder).then((ds) => {
+                                console.log("Evaluating");
+                                setTimeout(() => ds.customRequest("evaluate", requestBody).then(() => debug.stopDebugging(ds)), 100);
                             });
                             break;
                     }
@@ -312,6 +341,7 @@ export class ProofObligationPanel implements Disposable {
     private buildHtmlForWebview(webview: Webview) {
         const scriptUri = webview.asWebviewUri(Uri.joinPath(this._webviewsUri, "webviews.js"));
         const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.css"));
+        const codiconsUri = webview.asWebviewUri(Uri.joinPath(this._codiconsDistUri, "codicon.css"));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = this.generateNonce();
@@ -320,13 +350,14 @@ export class ProofObligationPanel implements Disposable {
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${scriptNonce}';">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${scriptNonce}'; font-src ${webview.cspSource}; script-src 'nonce-${scriptNonce}';">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
+            <link href="${codiconsUri}" rel="stylesheet">
         </head>
         <body>
             <div id="root"></div>
-            <script type="module" nonce="${scriptNonce}">import { renderWebview} from "${scriptUri}"; renderWebview("root", "ProofObligations")</script>
+            <script type="module" nonce="${scriptNonce}">import { renderWebview} from "${scriptUri}"; renderWebview("root", "ProofObligations", acquireVsCodeApi(), "${scriptNonce}")</script>
         </body>
         </html>`;
     }

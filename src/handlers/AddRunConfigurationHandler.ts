@@ -12,7 +12,7 @@ interface VdmArgument {
     value?: string;
 }
 
-interface VdmLaunchConfiguration {
+export interface VdmLaunchConfiguration {
     name: string; // The name of the debug session.
     type: string; // The type of the debug session.
     request: string; // The request type of the debug session.

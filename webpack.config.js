@@ -83,7 +83,7 @@ const webviewConfig = {
 	experiments: {
         outputModule: true
     },
-    mode: "production",
+    mode: "development",
     output: {
 		// the bundle is stored in the 'resources/webviews' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
 		path: path.resolve(__dirname, "dist", "webviews"),
@@ -102,7 +102,7 @@ const webviewConfig = {
 				exclude: /node_modules/,
 				use: [
 					{
-						loader: "ts-loader",
+						loader: "babel-loader",
 					},
 				],
 			},
@@ -113,8 +113,8 @@ const webviewConfig = {
 		],
 	},
     optimization: {
-        minimize: true,
-        nodeEnv: "production"
+        minimize: false,
+        nodeEnv: "development"
     }
 };
 module.exports = [nodeConfig, webConfig, webviewConfig];

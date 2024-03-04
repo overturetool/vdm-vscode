@@ -1,5 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
+html, body {
+    height: 100%;
+}
+
+#root {
+    height: 100%;
+}
+
 td,
 p {
     cursor: default;

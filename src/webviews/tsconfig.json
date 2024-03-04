@@ -4,7 +4,8 @@
         "moduleResolution": "node",
         "target": "ES6",
         "outDir": "out",
-        "jsx": "react",
+        "jsx": "react-jsx",
+        "jsxImportSource": "@emotion/react",
         "lib": ["DOM", "es6"],
         "sourceMap": true,
         "allowSyntheticDefaultImports": true

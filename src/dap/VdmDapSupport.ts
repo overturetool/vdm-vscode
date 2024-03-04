@@ -28,6 +28,7 @@ export namespace VdmDapSupport {
     let initialized: boolean = false;
     let factory: VdmDebugAdapterDescriptorFactory;
     let sessions: string[] = new Array(); // Array of running sessions
+    let debugSessions: vscode.DebugSession[] = [];
     let outputChannel: any;
 
     export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
@@ -68,6 +69,7 @@ export namespace VdmDapSupport {
             vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
                 if (session.type === "vdm") {
                     sessions.push(session.workspaceFolder.uri.toString());
+                    debugSessions.push(session);
                 }
             });
 
@@ -78,6 +80,9 @@ export namespace VdmDapSupport {
                         onError: (m) => {
                             if ((m.message = "connection closed")) {
                                 sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                                debugSessions = debugSessions.filter(
+                                    (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString()
+                                );
                             }
                         },
                     };
@@ -196,6 +201,9 @@ export namespace VdmDapSupport {
 
                                         // Remove sessions from active sessions
                                         sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                                        debugSessions = debugSessions.filter(
+                                            (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString()
+                                        );
                                         return resolve(new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session)));
                                     }
                                 }
@@ -221,6 +229,9 @@ export namespace VdmDapSupport {
 
                     // Remove sessions from active sessions
                     sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                    debugSessions = debugSessions.filter(
+                        (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString()
+                    );
                     return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session));
                 }
             } else {
@@ -230,7 +241,29 @@ export namespace VdmDapSupport {
         }
     }
 
-    export function startDebuggerWithCommand(command: string, folder: vscode.WorkspaceFolder | undefined, stopOnEntry?: boolean) {
+    export function getAdHocVdmDebugger(folder: vscode.WorkspaceFolder): Thenable<vscode.DebugSession | undefined> {
+        if (debugSessions.length > 0) {
+            return new Promise((resolve) => resolve(debugSessions[0]));
+        }
+
+        return startDebuggerWithCommand(undefined, folder, false, true).then(
+            (success) => {
+                if (success) {
+                    return debugSessions[0];
+                }
+
+                return undefined;
+            },
+            () => undefined
+        );
+    }
+
+    export function startDebuggerWithCommand(
+        command: string | undefined,
+        folder: vscode.WorkspaceFolder | undefined,
+        stopOnEntry?: boolean,
+        adHoc: boolean = false
+    ): Thenable<boolean> {
         var debugConfiguration: VdmDebugConfiguration = {
             type: "vdm", // The type of the debug session.
             name: "Launch command", // The name of the debug session.
@@ -241,8 +274,18 @@ export namespace VdmDapSupport {
             command: command,
         };
 
+        let sessionOptions: vscode.DebugSessionOptions = {};
+
+        if (adHoc) {
+            sessionOptions = {
+                suppressDebugToolbar: true,
+                suppressDebugStatusbar: true,
+                suppressDebugView: true,
+            };
+        }
+
         // Start debug session with custom debug configurations
-        vscode.debug.startDebugging(folder, debugConfiguration);
+        return vscode.debug.startDebugging(folder, debugConfiguration, sessionOptions);
     }
 
     // Used to kill debug session silently

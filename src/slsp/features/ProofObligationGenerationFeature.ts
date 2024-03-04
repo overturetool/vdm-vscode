@@ -78,6 +78,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
     };
 
     private asCodeProofObligation(po: ProofObligation): CodeProofObligation {
+        console.log(po);
         return {
             id: po.id,
             kind: po.kind,
@@ -85,6 +86,10 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             location: this._client.protocol2CodeConverter.asLocation(po.location),
             source: po.source,
             status: po.status,
+            provedBy: po.provedBy,
+            counterexample: po.counterexample,
+            witness: po.witness,
+            message: po.message,
         };
     }
 }
