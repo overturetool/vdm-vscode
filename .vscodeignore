@@ -18,14 +18,16 @@ webpack.config.js
 
 
 
-# withWebpack:node_modules
+# withWebpack:
+node_modules
 out
 
 
 # /withWebpack
 
 
-# withoutWebpack:# dist
+# withoutWebpack:
+# dist
 
 
 # /withoutWebpack

@@ -20,7 +20,7 @@ import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
 import { isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
 import { VdmDapSupport } from "../../dap/VdmDapSupport";
-import { ProofObligationCounterExample, ProofObligationWitness } from "../protocol/ProofObligationGeneration";
+import { ProofObligationCounterExample, ProofObligationWitness, QuickCheckInfo } from "../protocol/ProofObligationGeneration";
 
 export interface ProofObligation {
     id: number;
@@ -38,11 +38,35 @@ export interface ProofObligation {
 export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
     provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
+    quickCheckProvider: boolean;
+    runQuickCheck(): Thenable<QuickCheckInfo[]>;
 }
 
 interface Message {
     command: string;
     data?: any;
+}
+
+class OnReady {
+    private _used: boolean;
+
+    constructor(private _resolve: () => void, private _reject: (error: any) => void) {
+        this._used = false;
+    }
+
+    public get isUsed(): boolean {
+        return this._used;
+    }
+
+    public resolve(): void {
+        this._used = true;
+        this._resolve();
+    }
+
+    public reject(error: any): void {
+        this._used = true;
+        this._reject(error);
+    }
 }
 
 export class ProofObligationPanel implements Disposable {
@@ -53,17 +77,30 @@ export class ProofObligationPanel implements Disposable {
     private _lastUri: Uri;
     private _disposables: Disposable[] = [];
     private _pos: ProofObligation[];
-    private _sorting = new Map<string, boolean>(); // Maps a header to a boolean telling if sorting should be done DESCENDING.
-    private _currentSortingHeader: string;
-    private _statusFilter: string[] = [];
+
+    private onReady: Promise<void>;
+    private _onReadyCallbacks: OnReady;
 
     constructor(private readonly _context: ExtensionContext, clientManager: ClientManager) {
+        this.onReady = new Promise<void>((resolve, reject) => {
+            this._onReadyCallbacks = new OnReady(resolve, reject);
+        });
+
         this._disposables.push(
             commands.registerCommand(
                 `vdm-vscode.pog.run`,
                 async (uri: Uri) => {
+                    if (Object.values(uri).length === 0) {
+                        window.showWarningMessage(
+                            "Proof Obligation Generation failed. POG cannot be run on multiple folders in a multi-root workspace, choose a more specific target."
+                        );
+                        return;
+                    }
+
                     const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(uri);
-                    if (!wsFolder) throw Error(`[POG]: Cannot find workspace folder for iri: ${uri.toString()}`);
+                    if (!wsFolder) {
+                        throw Error(`[POG]: Cannot find workspace folder for uri: ${uri.toString()}`);
+                    }
                     // If in a multi project workspace environment the user could utilise the pog.run command on a project for which no client (and therefore server) has been started.
                     // So check if a client is present for the workspacefolder or else start it.
                     if (!clientManager.get(wsFolder)) {
@@ -102,31 +139,50 @@ export class ProofObligationPanel implements Disposable {
         return {
             dispose: () => {
                 listener.dispose();
-                this._providers = this._providers.filter((p) => p.selector != documentSelector || p.provider != provider);
-                if (this._providers.length == 0) commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+                this._providers = this._providers.filter((p) => p.selector !== documentSelector || p.provider !== provider);
+                if (this._providers.length === 0) {
+                    commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+                }
             },
         };
     }
 
+    private getPOProvider(uri: Uri) {
+        // There can only ever be one provider that matches a given URI as a provider is unique per client.
+        // It's impossible for a file to be present in multiple workspace folders.
+        return ProofObligationPanel._providers.find((p) => util.match(p.selector, uri));
+    }
+
     protected async onRunPog(uri: Uri) {
         this._pos = [];
-        for await (const p of ProofObligationPanel._providers) {
-            if (util.match(p.selector, uri)) {
-                try {
-                    let res = await p.provider.provideProofObligations(uri);
-                    this._pos.push(...res);
-                } catch (e) {
-                    console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
-                }
-            }
+
+        const poProvider = this.getPOProvider(uri);
+        console.log("Provider", poProvider);
+        try {
+            let res = await poProvider.provider.provideProofObligations(uri);
+            this._pos = [...res];
+        } catch (e) {
+            console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
         }
 
         let wsFolder = workspace.getWorkspaceFolder(uri);
-        this.createWebView(wsFolder);
+        this.createWebView(poProvider.provider.quickCheckProvider, wsFolder);
         this.updateContent();
 
         this._lastUri = uri;
         this._lastWsFolder = wsFolder;
+    }
+
+    protected async onRunQuickCheck(uri) {
+        console.log("Running QuickCheck");
+        const poProvider = this.getPOProvider(uri);
+
+        try {
+            return await poProvider.provider.runQuickCheck();
+        } catch (e) {
+            console.log(e);
+            console.warn(`[Proof Obligation View] QuickCheck provider failed.`);
+        }
     }
 
     protected onUpdate(canRun: boolean) {
@@ -135,7 +191,7 @@ export class ProofObligationPanel implements Disposable {
             let uri = this._lastUri;
 
             // Switch to active editor is on a file from the clients workspace
-            const activeEditor = window.activeTextEditor?.document.uri;
+            const activeEditor = window.activeTextEditor?.document?.uri;
 
             if (activeEditor !== undefined) {
                 let activeWsFolder = workspace.getWorkspaceFolder(activeEditor);
@@ -144,17 +200,38 @@ export class ProofObligationPanel implements Disposable {
                 }
             }
 
+            console.log("Using URI", uri);
+
             // If POG is possible
             if (canRun) {
+                console.log("Can run.");
                 this.onRunPog(uri);
             } else {
                 // Display warning that POs may be outdated
+                console.log("Not working.");
                 this.displayWarning();
             }
         }
     }
 
-    protected createWebView(wsFolder?: WorkspaceFolder) {
+    private addQuickCheckInfoToPos(pos: Array<ProofObligation>, qcInfos: Array<QuickCheckInfo>): Array<ProofObligation> {
+        const poMap: Record<number, ProofObligation> = pos.reduce((_poMap, _po) => {
+            _poMap[_po.id] = _po;
+            return _poMap;
+        }, {});
+
+        return qcInfos.reduce((newPos, qcInfo) => {
+            const matchingPo = poMap[qcInfo.id];
+
+            if (matchingPo) {
+                newPos.push(Object.assign(matchingPo, qcInfo));
+            }
+
+            return newPos;
+        }, []);
+    }
+
+    protected createWebView(withQuickCheck: boolean, wsFolder?: WorkspaceFolder) {
         // Define which column the po view should be in
         const column = window.activeTextEditor ? ViewColumn.Beside : ViewColumn.Two;
 
@@ -168,6 +245,12 @@ export class ProofObligationPanel implements Disposable {
             this._panel.reveal(column, true);
         } else {
             // Create panel
+            if (this._onReadyCallbacks.isUsed) {
+                this.onReady = new Promise<void>((resolve, reject) => {
+                    this._onReadyCallbacks = new OnReady(resolve, reject);
+                });
+            }
+
             this._panel =
                 this._panel ||
                 window.createWebviewPanel(
@@ -193,9 +276,12 @@ export class ProofObligationPanel implements Disposable {
                 async (message: Message) => {
                     console.log(`[Proof Obligation View] Received new message: ${message.command}`);
                     switch (message.command) {
+                        case "readyToReceive":
+                            this._onReadyCallbacks.resolve();
+                            break;
                         case "goToSymbol":
                             // Find path of po with id
-                            let po = this._pos.find((d) => d.id.toString() == message.data);
+                            let po = this._pos.find((d) => d.id.toString() === message.data.toString());
                             let path = Uri.parse(po.location.uri.toString()).path;
 
                             // Open the specification file with the symbol responsible for the po
@@ -204,27 +290,7 @@ export class ProofObligationPanel implements Disposable {
                             // Show the file
                             window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 });
                             break;
-                        case "sort":
-                            // Sort and post pos to javascript
-                            this._currentSortingHeader = message.data;
-                            this._panel.webview.postMessage({
-                                command: "rebuildPOview",
-                                pos: this.sortPOs(this._pos, this._currentSortingHeader, true),
-                            });
-                            break;
-                        case "filterPOs":
-                            this.filterByStatus();
-                            break;
-                        case "filterPOsDisable":
-                            this._statusFilter = []; // Remove filter
-                            this._panel.webview.postMessage({ command: "updateFilterBtn", active: false });
-                            this._panel.webview.postMessage({
-                                command: "rebuildPOview",
-                                pos: this.sortPOs(this._pos, this._currentSortingHeader, false),
-                            });
-                            break;
                         case "debugQCRun":
-                            console.log("DebugQCRun");
                             const requestBody = {
                                 expression: message.data,
                                 context: "repl",
@@ -235,6 +301,13 @@ export class ProofObligationPanel implements Disposable {
                                 setTimeout(() => ds.customRequest("evaluate", requestBody).then(() => debug.stopDebugging(ds)), 100);
                             });
                             break;
+                        case "runQC":
+                            const qcInfos = await this.onRunQuickCheck(wsFolder.uri);
+                            const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
+
+                            this._panel.webview.postMessage({ command: "newPOs", pos: posWithQc });
+
+                            break;
                     }
                 },
                 null,
@@ -242,7 +315,7 @@ export class ProofObligationPanel implements Disposable {
             );
 
             // Generate the html for the webview
-            this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview);
+            this._panel.webview.html = this.buildHtmlForWebview(this._panel.webview, withQuickCheck);
         }
     }
 
@@ -258,75 +331,9 @@ export class ProofObligationPanel implements Disposable {
     }
 
     protected updateContent() {
-        const pos = this._pos;
-
-        if (pos.length < 1) {
-            this._panel.webview.postMessage({ command: "newPOs", pos: pos });
-            return;
-        }
-
-        if (!this._currentSortingHeader) this._currentSortingHeader = Object.keys(pos[0])[0];
-
-        this._panel.webview.postMessage({ command: "newPOs", pos: this.sortPOs([...pos], this._currentSortingHeader, false) });
-    }
-
-    private onlyUnique(value, index, self) {
-        return self.indexOf(value) === index;
-    }
-
-    private filterByStatus() {
-        let items: string[] = this._pos.map((po) => po.status).filter(this.onlyUnique); // Create list of available status's
-        window.showQuickPick(items, { title: "Select which to show", canPickMany: true }).then((selected: string[]) => {
-            if (!selected || selected.length == 0 || selected.length == items.length) return; // Abort
-
-            // Update filter and UI
-            this._statusFilter = selected;
-            this._panel.webview.postMessage({ command: "updateFilterBtn", active: true });
-            this._panel.webview.postMessage({ command: "rebuildPOview", pos: this.sortPOs(this._pos, this._currentSortingHeader, false) });
+        this.onReady.then(() => {
+            this._panel.webview.postMessage({ command: "newPOs", pos: this._pos });
         });
-    }
-
-    private sortPOs(pos, sortingHeader, changeSortingDirection) {
-        if (pos.length < 1) return pos;
-
-        // Add header and sorting state to sorting map
-        if (!this._sorting.has(sortingHeader)) this._sorting.set(sortingHeader, false);
-        else if (changeSortingDirection) this._sorting.set(sortingHeader, this._sorting.get(sortingHeader) ? false : true);
-
-        // Filter proved pos
-        if (this._statusFilter.length != 0) pos = pos.filter((po) => this._statusFilter.includes(po.status));
-
-        // Check if values are numbers - assumes all values found in the column are of the same type
-        let isNum = /^\d+$/.test(pos[0][sortingHeader]);
-
-        // Do number sort
-        if (isNum) {
-            pos.sort(function (a, b) {
-                let aval = a[Object.keys(a).find((k) => k == sortingHeader)];
-                let bval = b[Object.keys(b).find((k) => k == sortingHeader)];
-                return aval - bval;
-            });
-        }
-        // Do string sort
-        else {
-            pos.sort(function (a, b) {
-                let aStringVal = a[Object.keys(a).find((k) => k == sortingHeader)];
-                let bStringVal = b[Object.keys(b).find((k) => k == sortingHeader)];
-                let aIdVal = a["id"];
-                let bIdVal = b["id"];
-
-                if (aStringVal instanceof Array) {
-                    aStringVal = aStringVal.join(".");
-                    bStringVal = bStringVal.join(".");
-                }
-
-                return aStringVal == bStringVal ? aIdVal - bIdVal : aStringVal.localeCompare(bStringVal);
-            });
-        }
-        // Change sorted direction
-        if (this._sorting.get(sortingHeader)) pos.reverse();
-
-        return pos;
     }
 
     public dispose() {
@@ -335,10 +342,12 @@ export class ProofObligationPanel implements Disposable {
         // Clean up our resources
         this._panel.dispose();
 
-        while (this._disposables.length) this._disposables.pop().dispose();
+        while (this._disposables.length) {
+            this._disposables.pop().dispose();
+        }
     }
 
-    private buildHtmlForWebview(webview: Webview) {
+    private buildHtmlForWebview(webview: Webview, withQuickCheck: boolean) {
         const scriptUri = webview.asWebviewUri(Uri.joinPath(this._webviewsUri, "webviews.js"));
         const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.css"));
         const codiconsUri = webview.asWebviewUri(Uri.joinPath(this._codiconsDistUri, "codicon.css"));
@@ -357,7 +366,13 @@ export class ProofObligationPanel implements Disposable {
         </head>
         <body>
             <div id="root"></div>
-            <script type="module" nonce="${scriptNonce}">import { renderWebview} from "${scriptUri}"; renderWebview("root", "ProofObligations", acquireVsCodeApi(), "${scriptNonce}")</script>
+            <script type="module" nonce="${scriptNonce}">
+                import { renderWebview} from "${scriptUri}"; 
+                
+                renderWebview("root", "ProofObligations", acquireVsCodeApi(), "${scriptNonce}", {
+                    "enableQuickCheck": ${withQuickCheck}
+                });
+            </script>
         </body>
         </html>`;
     }

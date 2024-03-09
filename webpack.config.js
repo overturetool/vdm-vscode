@@ -113,8 +113,8 @@ const webviewConfig = {
 		],
 	},
     optimization: {
-        minimize: false,
-        nodeEnv: "development"
+        minimize: true,
+        nodeEnv: "production"
     }
 };
 module.exports = [nodeConfig, webConfig, webviewConfig];

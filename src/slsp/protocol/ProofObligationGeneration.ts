@@ -9,6 +9,7 @@ import {
     NotificationType,
     RequestHandler,
     RequestType,
+    RequestType0,
 } from "vscode-languageclient";
 import { VdmLaunchConfiguration } from "../../handlers/AddRunConfigurationHandler";
 
@@ -31,8 +32,15 @@ export interface ProofObligationGenerationServerCapabilities {
         /**
          * Capabilities specific to the `slsp/POG/` messages.
          */
-        proofObligationProvider?: boolean;
+        proofObligationProvider?: ProofObligationProviderCapability;
     };
+}
+
+interface ProofObligationProviderCapability {
+    /**
+     * Indicates if the language server is capable of QuickCheck. Is undefined if the capability is not present.
+     */
+    quickCheckProvider?: boolean;
 }
 
 /**
@@ -42,14 +50,16 @@ export interface ProofObligationLaunchConfiguration extends VdmLaunchConfigurati
     command: string;
 }
 
+export type CounterExampleVariables = Record<string, unknown>;
+
 export interface ProofObligationCounterExample {
     launch: ProofObligationLaunchConfiguration;
-    variables: Record<string, unknown>;
+    variables: CounterExampleVariables;
 }
 
 export type ProofObligationWitness = ProofObligationCounterExample;
 
-export interface ProofObligation {
+export interface ProofObligation extends Omit<QuickCheckInfo, "status" | "id"> {
     /**
      * Unique identifier of the PO.
      */
@@ -79,10 +89,34 @@ export interface ProofObligation {
      * An optional status of the PO, e.g., "Unproved" or "Proved".
      */
     status?: string;
-    // TODO: Write documentation string
+}
+
+export interface QuickCheckInfo {
+    /**
+     * Unique identifier of the PO.
+     */
+    id: number;
+    /**
+     * An optional status of the PO, e.g., "Unproved" or "Proved".
+     */
+    status?: string;
+    /**
+     * The strategy used by QuickCheck to prove the obligation, e.g. "trivial" or "witness".
+     */
     provedBy?: string;
+    /**
+     * Message provided by QuickCheck to provide context to the proof status.
+     */
     message?: string;
+    /**
+     * An example that disproves a proof obligation, i.e. a set of variables that show that the PO fails.
+     * Contains a launch command that is runnable in a debug session.
+     */
     counterexample: ProofObligationCounterExample;
+    /**
+     * A witness to a satisfiablity obligation, i.e. a set of variables that show that the PO is satisfiable.
+     * Contains a launch command that is runnable in a debug session.
+     */
     witness: ProofObligationWitness;
 }
 
@@ -128,5 +162,24 @@ export interface POGUpdatedParams {
      * True if POG is possible.
      * False otherwise, e.g. the specification is not type-correct.
      */
-    successful: boolean;
+    successful?: boolean;
+    /**
+     * Whether quickcheck was successful.
+     * True if POG ran successfully.
+     * False otherwise. Not present if quickcheck was not run.
+     */
+    quickcheck?: boolean;
+}
+
+/**
+ * The `slsp/POG/quickcheck` request is sent from the client to the server to run the QuickCheck tool on the proof obligations of a specification.
+ */
+export namespace RunQuickCheckRequest {
+    export const type = new RequestType0<QuickCheckInfo[], void>("slsp/POG/quickcheck");
+    export type HandlerSignature = RequestHandler<void, QuickCheckInfo[], void>;
+    export type MiddlewareSignature = (
+        params: void,
+        token: CancellationToken,
+        next: HandlerSignature
+    ) => HandlerResult<QuickCheckInfo[], void>;
 }

@@ -11,6 +11,8 @@ import {
     ProofObligation,
     ProofObligationGenerationClientCapabilities,
     ProofObligationGenerationServerCapabilities,
+    QuickCheckInfo,
+    RunQuickCheckRequest,
 } from "../protocol/ProofObligationGeneration";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
@@ -34,11 +36,16 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         // Not supported
         if (!pogCapabilities?.experimental?.proofObligationProvider) return;
 
+        // If the QuickCheck plugin isn't installed or any error occured in loading the plugin, QuickCheck will not be enabled in the client.
+        const quickCheckEnabled = pogCapabilities.experimental.proofObligationProvider?.quickCheckProvider ?? false;
+
         this._onDidChangeProofObligations = new EventEmitter<boolean>();
         this._disposables.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
         let provider: ProofObligationProvider = {
             provideProofObligations: (uri: Uri) => this.requestPOG(uri),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
+            quickCheckProvider: quickCheckEnabled,
+            runQuickCheck: () => this.runQuickCheck(),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
     }
@@ -61,6 +68,8 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
                 uri: this._client.code2ProtocolConverter.asUri(uri),
             };
 
+            console.log("Request POG", this._client);
+
             // Send request
             this._client
                 .sendRequest(GeneratePORequest.type, params)
@@ -73,23 +82,23 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
+    private runQuickCheck(): Thenable<QuickCheckInfo[]> {
+        return new Promise((resolve, reject) => {
+            this._client
+                .sendRequest(RunQuickCheckRequest.type)
+                .then((qcInfos) => resolve(qcInfos))
+                .catch((e) => reject("QuickCheck failed." + e));
+        });
+    }
+
     private onPOGUpdatedNotification: POGUpdatedNotification.HandlerSignature = (params) => {
-        this._onDidChangeProofObligations.fire(params.successful);
+        this._onDidChangeProofObligations.fire(params.successful ?? params.quickcheck);
     };
 
     private asCodeProofObligation(po: ProofObligation): CodeProofObligation {
-        console.log(po);
         return {
-            id: po.id,
-            kind: po.kind,
-            name: po.name,
+            ...po,
             location: this._client.protocol2CodeConverter.asLocation(po.location),
-            source: po.source,
-            status: po.status,
-            provedBy: po.provedBy,
-            counterexample: po.counterexample,
-            witness: po.witness,
-            message: po.message,
         };
     }
 }

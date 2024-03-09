@@ -39,6 +39,7 @@ export function getDefaultWorkspaceFolderLocation(): Uri | undefined {
 
 export function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
     const sorted = sortedWorkspaceFolders();
+    console.log(sorted);
     for (const element of sorted) {
         let uri = folder.uri.toString();
         if (uri.charAt(uri.length - 1) !== "/") {
@@ -48,6 +49,7 @@ export function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceF
             return workspace.getWorkspaceFolder(Uri.parse(element))!;
         }
     }
+    console.log(folder);
     return folder;
 }
 
