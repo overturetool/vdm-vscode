@@ -1,3 +1,9 @@
+### 1.4.0-beta.1
+- Updated VDMJ to 4.6.0-SNAPSHOT
+- Added QuickCheck plugin 4.6.0-SNAPSHOT
+- Rewrite of Proof Obligation webview using React.
+- Added QuickCheck functionality into Proof Obligation view.
+
 ### 1.3.7
 - Hotfix to VDMJ to support Java 19
 - Updates UML Plugin jar to 0.1.1 including typing abstraction

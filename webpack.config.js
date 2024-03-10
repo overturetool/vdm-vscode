@@ -3,6 +3,7 @@
 "use strict";
 
 const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
 /**@type {import('webpack').Configuration}*/
 const webConfig = {
@@ -115,6 +116,14 @@ const webviewConfig = {
     optimization: {
         minimize: true,
         nodeEnv: "production"
-    }
+    },
+    plugins: [
+        new CopyPlugin({
+            // Include the codicons stylesheet in the dist directory
+            patterns: [
+                {"from": "node_modules/@vscode/codicons/dist/", "to": "codicons"}
+            ]
+        })
+    ]
 };
 module.exports = [nodeConfig, webConfig, webviewConfig];

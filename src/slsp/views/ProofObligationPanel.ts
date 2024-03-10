@@ -126,10 +126,6 @@ export class ProofObligationPanel implements Disposable {
         return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
     }
 
-    private get _codiconsDistUri(): Uri {
-        return Uri.joinPath(this._context.extensionUri, "node_modules", "@vscode", "codicons", "dist");
-    }
-
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
         this._providers.push({ selector: documentSelector, provider: provider });
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, true);
@@ -262,7 +258,7 @@ export class ProofObligationPanel implements Disposable {
                     },
                     {
                         enableScripts: true, // Enable javascript in the webview
-                        localResourceRoots: [this._resourcesUri, this._webviewsUri, this._codiconsDistUri], // Restrict the webview to only load content from the extension's `resources` directory.
+                        localResourceRoots: [this._resourcesUri, this._webviewsUri], // Restrict the webview to only load content from the extension's `resources` directory.
                         retainContextWhenHidden: true, // Retain state when PO view goes into the background
                     }
                 );
@@ -350,7 +346,7 @@ export class ProofObligationPanel implements Disposable {
     private buildHtmlForWebview(webview: Webview, withQuickCheck: boolean) {
         const scriptUri = webview.asWebviewUri(Uri.joinPath(this._webviewsUri, "webviews.js"));
         const styleUri = webview.asWebviewUri(Uri.joinPath(this._resourcesUri, "webviews", "poView", "poView.css"));
-        const codiconsUri = webview.asWebviewUri(Uri.joinPath(this._codiconsDistUri, "codicon.css"));
+        const codiconsUri = webview.asWebviewUri(Uri.joinPath(this._webviewsUri, "codicons", "codicon.css"));
 
         // Use a nonce to only allow specific scripts to be run
         const scriptNonce = this.generateNonce();
