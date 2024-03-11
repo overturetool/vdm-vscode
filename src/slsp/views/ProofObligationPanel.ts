@@ -292,8 +292,7 @@ export class ProofObligationPanel implements Disposable {
                                 context: "repl",
                             };
 
-                            VdmDapSupport.getAdHocVdmDebugger(wsFolder).then((ds) => {
-                                console.log("Evaluating");
+                            VdmDapSupport.getAdHocVdmDebugger(wsFolder, false).then((ds) => {
                                 setTimeout(() => ds.customRequest("evaluate", requestBody).then(() => debug.stopDebugging(ds)), 100);
                             });
                             break;

@@ -241,12 +241,12 @@ export namespace VdmDapSupport {
         }
     }
 
-    export function getAdHocVdmDebugger(folder: vscode.WorkspaceFolder): Thenable<vscode.DebugSession | undefined> {
+    export function getAdHocVdmDebugger(folder: vscode.WorkspaceFolder, quiet: boolean = true): Thenable<vscode.DebugSession | undefined> {
         if (debugSessions.length > 0) {
             return new Promise((resolve) => resolve(debugSessions[0]));
         }
 
-        return startDebuggerWithCommand(undefined, folder, false, true).then(
+        return startDebuggerWithCommand(undefined, folder, false, quiet).then(
             (success) => {
                 if (success) {
                     return debugSessions[0];
