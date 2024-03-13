@@ -180,8 +180,8 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                             }
 
                             // Add class initialisation
-                            // TODO: Replace hard-coded empty arrays with appropiate values (When is this triggered?)
-                            await this.requestArgumentValues(input.constructors[cIndex], [], input.defaultName, "constructor").then(
+                            // A constructor cannot be polymorphic, so no type params are ever available
+                            await this.requestArguments(input.constructors[cIndex], [], input.defaultName, "constructor").then(
                                 () => {
                                     command += `new ${this.getCommandString(input.defaultName, input.constructors[cIndex], [])}.`;
                                     this.lastConfigCtorArgs[wsFolder.name] = input.constructors[cIndex];
@@ -193,12 +193,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         }
 
                         // Add function/operation call to command
-                        await this.requestArgumentValues(
-                            input.applyArgs,
-                            input.applyTypes ?? [],
-                            input.applyName,
-                            "operation/function"
-                        ).then(
+                        await this.requestArguments(input.applyArgs, input.applyTypes ?? [], input.applyName, "operation/function").then(
                             (types) => {
                                 command += this.getCommandString(input.applyName, input.applyArgs, Array.from(types.values()));
                                 this.lastConfigApplyArgs[wsFolder.name] = input.applyArgs;
@@ -254,15 +249,12 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         return runConf.name.startsWith(AddRunConfigurationHandler.lensNameBegin);
     }
 
-    private async requestArgumentValues(args: VdmArgument[], types: VdmType[], name: string, type: string): Promise<Map<VdmType, string>> {
-        const commandString = this.getCommandOutlineString(name, args, types);
-        // Request type arguments from user
-
+    private async requestConcreteTypes(types: VdmType[], outlineString: string, requestType: string): Promise<Map<VdmType, string>> {
         const concreteTypes: Map<VdmType, string> = new Map();
-        for (let t of types) {
+        for (const t of types) {
             const concreteType = await window.showInputBox({
-                prompt: `Input type for ${type}`,
-                title: commandString,
+                prompt: `Input type for ${requestType}`,
+                title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: t,
             });
@@ -274,14 +266,16 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             concreteTypes.set(t, concreteType);
         }
 
-        // Request argument values from user
+        return Promise.resolve(concreteTypes);
+    }
+
+    private async requestArgumentValues(args: VdmArgument[], outlineString: string, requestType: string): Promise<void> {
         for await (let a of args) {
-            const resolvedType = concreteTypes.get(a.type) ?? a.type;
             let value = await window.showInputBox({
-                prompt: `Input argument for ${type}`,
-                title: commandString,
+                prompt: `Input argument for ${requestType}`,
+                title: outlineString,
                 ignoreFocusOut: true,
-                placeHolder: `${a.name}: ${resolvedType}`,
+                placeHolder: `${a.name}: ${a.type}`,
                 value: a.value,
             });
 
@@ -291,14 +285,37 @@ export class AddRunConfigurationHandler extends AutoDisposable {
 
             a.value = value;
         }
+    }
+
+    private applyTypesToArgs(args: VdmArgument[], types: Map<VdmType, string>): VdmArgument[] {
+        return args.map((a) => {
+            const concreteType = types.get(a.type);
+            if (concreteType) {
+                a.type = concreteType;
+            }
+
+            return a;
+        });
+    }
+
+    private async requestArguments(args: VdmArgument[], types: VdmType[], name: string, type: string): Promise<Map<VdmType, string>> {
+        const commandString = this.getCommandOutlineString(name, args, types);
+
+        // Request type arguments from user
+        const concreteTypes = await this.requestConcreteTypes(types, commandString, type);
+
+        // Request argument values from user - requestArgumentValues modifies args, changing the .value property.
+        const typedArgs = this.applyTypesToArgs(args, concreteTypes);
+        const commandStringConcrete = this.getCommandOutlineString(name, typedArgs);
+
+        await this.requestArgumentValues(typedArgs, commandStringConcrete, type);
 
         return Promise.resolve(concreteTypes);
     }
 
     private async requestConstructor(className: string, constructors: [VdmArgument[]]): Promise<number> {
         // Create strings of constructors to pick from
-        // TODO: Replace hard-coded empty array with appropiate value (When is this triggered?)
-        let ctorStrings: string[] = constructors.map((ctor) => this.getCommandOutlineString(className, ctor, []));
+        let ctorStrings: string[] = constructors.map((ctor) => this.getCommandOutlineString(className, ctor));
 
         let pick = await window.showQuickPick(ctorStrings, {
             canPickMany: false,
@@ -306,8 +323,11 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             title: "Select constructor",
         });
 
-        if (pick === undefined) return Promise.reject();
-        else return Promise.resolve(ctorStrings.indexOf(pick));
+        if (pick === undefined) {
+            return Promise.reject();
+        } else {
+            return Promise.resolve(ctorStrings.indexOf(pick));
+        }
     }
 
     // Transfer the arguments frome the last run configuraiton to 'config'
@@ -329,7 +349,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         });
     }
 
-    private getCommandOutlineString(name: string, args: VdmArgument[], typeParameters: VdmType[]): string {
+    private getCommandOutlineString(name: string, args: VdmArgument[], typeParameters: VdmType[] = []): string {
         const argOutlines: string[] = args.map((a) => `${a.name}: ${a.type}`);
         const typeParametersOutline = typeParameters.length === 0 ? "" : `[${typeParameters.join(", ")}]`;
         let command = `${name}${typeParametersOutline}(${argOutlines.join(", ")})`;
@@ -337,8 +357,8 @@ export class AddRunConfigurationHandler extends AutoDisposable {
     }
 
     private getCommandString(name: string, args: VdmArgument[], types: VdmType[]): string {
-        const typeParameters = types.length === 0 ? "" : `[${types.join(", ")}]`;
-        let command = `${name}${typeParameters}(${args.map((x) => x.value).join(", ")})`;
+        const typeArguments = types.length === 0 ? "" : `[${types.join(", ")}]`;
+        let command = `${name}${typeArguments}(${args.map((x) => x.value).join(", ")})`;
         return command;
     }
 }
