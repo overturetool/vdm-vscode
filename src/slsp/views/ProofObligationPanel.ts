@@ -39,7 +39,7 @@ export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
     provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
-    runQuickCheck(): Thenable<QuickCheckInfo[]>;
+    runQuickCheck(wsFolder: Uri): Thenable<QuickCheckInfo[]>;
 }
 
 interface Message {
@@ -174,9 +174,9 @@ export class ProofObligationPanel implements Disposable {
         const poProvider = this.getPOProvider(uri);
 
         try {
-            return await poProvider.provider.runQuickCheck();
+            return await poProvider.provider.runQuickCheck(this._lastWsFolder.uri);
         } catch (e) {
-            console.log(e);
+            window.showErrorMessage(e);
             console.warn(`[Proof Obligation View] QuickCheck provider failed.`);
         }
     }
