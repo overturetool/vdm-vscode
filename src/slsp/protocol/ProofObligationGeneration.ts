@@ -9,7 +9,6 @@ import {
     NotificationType,
     RequestHandler,
     RequestType,
-    RequestType0,
 } from "vscode-languageclient";
 import { VdmLaunchConfiguration } from "../../handlers/AddRunConfigurationHandler";
 
@@ -175,11 +174,17 @@ export interface POGUpdatedParams {
  * The `slsp/POG/quickcheck` request is sent from the client to the server to run the QuickCheck tool on the proof obligations of a specification.
  */
 export namespace RunQuickCheckRequest {
-    export const type = new RequestType0<QuickCheckInfo[], void>("slsp/POG/quickcheck");
-    export type HandlerSignature = RequestHandler<void, QuickCheckInfo[], void>;
+    export const type = new RequestType<RunQuickCheckRequestParams, QuickCheckInfo[], void>("slsp/POG/quickcheck");
+    export type HandlerSignature = RequestHandler<RunQuickCheckRequestParams, QuickCheckInfo[], void>;
     export type MiddlewareSignature = (
-        params: void,
+        params: RunQuickCheckRequestParams,
         token: CancellationToken,
         next: HandlerSignature
     ) => HandlerResult<QuickCheckInfo[], void>;
+}
+
+export interface RunQuickCheckRequestParams {
+    strategies: Array<unknown>;
+    timeout: number;
+    pattern: string;
 }

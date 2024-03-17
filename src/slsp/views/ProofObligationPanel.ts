@@ -153,7 +153,6 @@ export class ProofObligationPanel implements Disposable {
         this._pos = [];
 
         const poProvider = this.getPOProvider(uri);
-        console.log("Provider", poProvider);
         try {
             let res = await poProvider.provider.provideProofObligations(uri);
             this._pos = [...res];
@@ -169,8 +168,7 @@ export class ProofObligationPanel implements Disposable {
         this._lastWsFolder = wsFolder;
     }
 
-    protected async onRunQuickCheck(uri) {
-        console.log("Running QuickCheck");
+    protected async onRunQuickCheck(uri: Uri) {
         const poProvider = this.getPOProvider(uri);
 
         try {
@@ -196,15 +194,11 @@ export class ProofObligationPanel implements Disposable {
                 }
             }
 
-            console.log("Using URI", uri);
-
             // If POG is possible
             if (canRun) {
-                console.log("Can run.");
                 this.onRunPog(uri);
             } else {
                 // Display warning that POs may be outdated
-                console.log("Not working.");
                 this.displayWarning();
             }
         }

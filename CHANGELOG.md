@@ -2,7 +2,7 @@
 - Fix char literals syntax highligting (issue #190)
 - Fix name of generated debug configuration (issue #214)
 - Fix code lenses on polymorphic functions (issue #188)
-- Add quick interpreter
+- Add the ability to configure QuickCheck using JSON
 
 ### 1.4.0-beta.1
 - Updated VDMJ to 4.6.0-SNAPSHOT
