@@ -13,10 +13,11 @@ import {
     ProofObligationGenerationServerCapabilities,
     QuickCheckInfo,
     RunQuickCheckRequest,
+    RunQuickCheckRequestParams,
 } from "../protocol/ProofObligationGeneration";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
-import { readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
+import { mergeDeep, readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
 
 export default class ProofObligationGenerationFeature implements StaticFeature {
     private _onDidChangeProofObligations: EventEmitter<boolean>;
@@ -46,7 +47,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             provideProofObligations: (uri: Uri) => this.requestPOG(uri),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
-            runQuickCheck: (wsFolder: Uri) => this.runQuickCheck(wsFolder),
+            runQuickCheck: (wsFolder: Uri, poIds: number[]) => this.runQuickCheck(wsFolder, poIds),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
     }
@@ -81,11 +82,17 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
-    private runQuickCheck(wsFolder: Uri): Thenable<QuickCheckInfo[]> {
+    private runQuickCheck(wsFolder: Uri, poIds: number[]): Thenable<QuickCheckInfo[]> {
         return new Promise((resolve, reject) => {
-            readOptionalConfiguration(wsFolder, "quickcheck.json", (config) => {
+            readOptionalConfiguration(wsFolder, "quickcheck.json", (config: RunQuickCheckRequestParams) => {
+                const configWithObligations = mergeDeep(config ?? {}, {
+                    config: {
+                        obligations: poIds,
+                    },
+                });
+
                 this._client
-                    .sendRequest(RunQuickCheckRequest.type, config ?? {})
+                    .sendRequest(RunQuickCheckRequest.type, configWithObligations)
                     .then((qcInfos) => resolve(qcInfos))
                     .catch((e) => reject(`QuickCheck failed. ${e}`));
             });

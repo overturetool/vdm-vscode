@@ -39,7 +39,7 @@ export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
     provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
-    runQuickCheck(wsFolder: Uri): Thenable<QuickCheckInfo[]>;
+    runQuickCheck(wsFolder: Uri, poIds: number[]): Thenable<QuickCheckInfo[]>;
 }
 
 interface Message {
@@ -168,11 +168,11 @@ export class ProofObligationPanel implements Disposable {
         this._lastWsFolder = wsFolder;
     }
 
-    protected async onRunQuickCheck(uri: Uri) {
+    protected async onRunQuickCheck(uri: Uri, poIds: number[]) {
         const poProvider = this.getPOProvider(uri);
 
         try {
-            return await poProvider.provider.runQuickCheck(this._lastWsFolder.uri);
+            return await poProvider.provider.runQuickCheck(this._lastWsFolder.uri, poIds);
         } catch (e) {
             window.showErrorMessage(e);
             console.warn(`[Proof Obligation View] QuickCheck provider failed.`);
@@ -204,17 +204,29 @@ export class ProofObligationPanel implements Disposable {
         }
     }
 
+    private deleteQcInfo(po: ProofObligation): ProofObligation {
+        delete po["provedBy"];
+        delete po["message"];
+        delete po["counterexample"];
+        delete po["witness"];
+
+        return po;
+    }
+
     private addQuickCheckInfoToPos(pos: Array<ProofObligation>, qcInfos: Array<QuickCheckInfo>): Array<ProofObligation> {
-        const poMap: Record<number, ProofObligation> = pos.reduce((_poMap, _po) => {
-            _poMap[_po.id] = _po;
-            return _poMap;
+        const qcInfoMap: Record<number, QuickCheckInfo> = qcInfos.reduce((_qcInfoMap, _qcInfo) => {
+            _qcInfoMap[_qcInfo.id] = _qcInfo;
+            return _qcInfoMap;
         }, {});
 
-        return qcInfos.reduce((newPos, qcInfo) => {
-            const matchingPo = poMap[qcInfo.id];
+        return pos.reduce((newPos, po) => {
+            const matchingInfo = qcInfoMap[po.id];
 
-            if (matchingPo) {
-                newPos.push(Object.assign(matchingPo, qcInfo));
+            if (matchingInfo) {
+                this.deleteQcInfo(po);
+                newPos.push(Object.assign(po, matchingInfo));
+            } else {
+                newPos.push(po);
             }
 
             return newPos;
@@ -291,11 +303,10 @@ export class ProofObligationPanel implements Disposable {
                             });
                             break;
                         case "runQC":
-                            const qcInfos = await this.onRunQuickCheck(wsFolder.uri);
+                            const qcInfos = await this.onRunQuickCheck(wsFolder.uri, message.data.poIds ?? []);
                             const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
 
                             this._panel.webview.postMessage({ command: "newPOs", pos: posWithQc });
-
                             break;
                     }
                 },

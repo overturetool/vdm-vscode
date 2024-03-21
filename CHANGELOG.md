@@ -1,5 +1,9 @@
+### 1.4.0-beta.3
+- QuickCheck now only runs on the visible subset of proof obligations.
+- Fixed bug where QuickCheck info would become stale when changing settings and subsequently running QuickCheck. 
+
 ### 1.4.0-beta.2
-- Fix char literals syntax highligting (issue #190)
+- Fix char literals syntax highlighting (issue #190)
 - Fix name of generated debug configuration (issue #214)
 - Fix code lenses on polymorphic functions (issue #188)
 - Add the ability to configure QuickCheck using JSON

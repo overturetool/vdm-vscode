@@ -186,5 +186,8 @@ export namespace RunQuickCheckRequest {
 export interface RunQuickCheckRequestParams {
     strategies: Array<unknown>;
     timeout: number;
-    pattern: string;
+    config: {
+        timeout: number;
+        obligations: Array<number>;
+    };
 }
