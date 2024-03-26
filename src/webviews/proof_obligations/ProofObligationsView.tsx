@@ -41,6 +41,8 @@ interface FilterState {
     totalRows: number;
 }
 
+export type SelectionState = FormattedProofObligation;
+
 interface ProofObligationsHeaderMenuProps {
     onFilterChanged: (newFilterText: string) => void;
     onExpandCollapse: () => void;
@@ -48,6 +50,7 @@ interface ProofObligationsHeaderMenuProps {
     openPos: Set<number>;
     filterState?: FilterState;
     onClickQuickCheck?: () => void;
+    disableQuickCheck: boolean;
 }
 
 const ProofObligationsHeaderMenu = ({
@@ -57,6 +60,7 @@ const ProofObligationsHeaderMenu = ({
     openPos,
     filterState,
     onClickQuickCheck,
+    disableQuickCheck
 }: ProofObligationsHeaderMenuProps) => {
     return (
         <div
@@ -81,7 +85,7 @@ const ProofObligationsHeaderMenu = ({
                 <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
                     {openPos.size === filterState?.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
                 </VSCodeButton>
-                {enableQuickCheck ? <VSCodeButton onClick={onClickQuickCheck}>Run QuickCheck</VSCodeButton> : null}
+                {enableQuickCheck ? <VSCodeButton disabled={disableQuickCheck} onClick={onClickQuickCheck}>Run QuickCheck</VSCodeButton> : null}
             </div>
         </div>
     );
@@ -114,6 +118,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     const [pos, setPos] = useState<Array<FormattedProofObligation>>([]);
     const [openPos, setOpenPos] = useState<Set<number>>(new Set<number>());
     const [filterText, setFilterText] = useState<string>("");
+    const [runningQuickCheck, setRunningQuickCheck] = useState<boolean>(false);
 
     const filteredPos = useMemo(() => filterPOs(pos, filterText), [filterText, pos]);
     const currentFilterState: FilterState | undefined =
@@ -125,6 +130,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
               };
 
     const handleQuickCheck = () => {
+        setRunningQuickCheck(true);
         vscodeApi.postMessage({
             command: "runQC",
             data: {
@@ -178,6 +184,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 setPos(formatProofObligations(e.data.pos));
                 setProofObligation(null);
                 setPosAreInvalid(false);
+                setRunningQuickCheck(false);
                 break;
             case "rebuildPOview":
                 setPos(formatProofObligations(e.data.pos));
@@ -209,6 +216,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 openPos={openPos}
                 filterState={currentFilterState}
                 onClickQuickCheck={handleQuickCheck}
+                disableQuickCheck={runningQuickCheck}
             />
 
             <div
@@ -224,6 +232,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     onClickRow={handleRowClick}
                     openPos={openPos}
                     onOpenQuickCheck={handleOpenQuickCheck}
+                    selectionState={proofObligation}
                 />
             </div>
 

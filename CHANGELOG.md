@@ -1,3 +1,7 @@
+### 1.4.0-beta.4
+- Add visual progress indicator when QuickCheck is running.
+- Show cancel button instead of "Run QuickCheck" during long-running QuickCheck.
+
 ### 1.4.0-beta.3
 - QuickCheck now only runs on the visible subset of proof obligations.
 - Fixed bug where QuickCheck info would become stale when changing settings and subsequently running QuickCheck. 

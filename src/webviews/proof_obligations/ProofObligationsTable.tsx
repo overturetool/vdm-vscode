@@ -1,5 +1,5 @@
 import React, { MouseEvent, useState } from "react";
-import { FormattedProofObligation } from "./ProofObligationsView";
+import { FormattedProofObligation, SelectionState } from "./ProofObligationsView";
 import { VSCodeButton, VSCodeDataGrid, VSCodeDataGridCell, VSCodeDataGridRow } from "@vscode/webview-ui-toolkit/react";
 import { TableHeader, SortingState } from "./ProofObligationsTableHeader";
 
@@ -66,15 +66,17 @@ export interface ProofObligationsTableProps {
     openPos: Set<FormattedProofObligation["id"]>;
     onClickRow: (po: FormattedProofObligation) => void;
     onOpenQuickCheck: (po: FormattedProofObligation) => void;
+    selectionState: SelectionState | null;
 }
 
-export const ProofObligationsTable = ({ headers, pos, onJumpToSource, openPos, onClickRow, onOpenQuickCheck }: ProofObligationsTableProps) => {
+export const ProofObligationsTable = ({ headers, pos, onJumpToSource, openPos, onClickRow, onOpenQuickCheck, selectionState }: ProofObligationsTableProps) => {
     const [sortingState, setSortingState] = useState<SortingState<FormattedProofObligation>>({
         id: "id",
         direction: "ascending",
     });
 
     const sortedPOs = sortPOs(pos, sortingState);
+    console.log(selectionState);
 
     return (
         <VSCodeDataGrid gridTemplateColumns="2fr 3fr 8fr 3fr" css={{ flexGrow: "1" }}>
@@ -83,7 +85,7 @@ export const ProofObligationsTable = ({ headers, pos, onJumpToSource, openPos, o
                 <React.Fragment key={`pog-row-${row.id}`}>
                     <VSCodeDataGridRow
                         onClick={() => onClickRow(row)}
-                        css={{ borderTop: "2px solid var(--vscode-textBlockQuote-background)" }}
+                        css={[{ borderTop: "2px solid var(--vscode-textBlockQuote-background)" }, row.id === selectionState?.id && {border: "1px solid var(--vscode-list-focusOutline)"}]}
                     >
                         <VSCodeDataGridCell grid-column="1">
                             <VSCodeButton title="Jump to source"

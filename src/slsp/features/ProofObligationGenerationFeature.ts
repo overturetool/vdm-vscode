@@ -2,7 +2,14 @@
 
 import * as util from "../../util/Util";
 import { window, Uri, EventEmitter } from "vscode";
-import { StaticFeature, ClientCapabilities, ServerCapabilities, DocumentSelector, Disposable } from "vscode-languageclient";
+import {
+    StaticFeature,
+    ClientCapabilities,
+    ServerCapabilities,
+    DocumentSelector,
+    Disposable,
+    CancellationToken,
+} from "vscode-languageclient";
 import { ProofObligationPanel, ProofObligationProvider } from "../views/ProofObligationPanel";
 import {
     GeneratePOParams,
@@ -47,7 +54,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             provideProofObligations: (uri: Uri) => this.requestPOG(uri),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
-            runQuickCheck: (wsFolder: Uri, poIds: number[]) => this.runQuickCheck(wsFolder, poIds),
+            runQuickCheck: (wsFolder: Uri, poIds: number[], token?: CancellationToken) => this.runQuickCheck(wsFolder, poIds, token),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
     }
@@ -82,7 +89,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
-    private runQuickCheck(wsFolder: Uri, poIds: number[]): Thenable<QuickCheckInfo[]> {
+    private runQuickCheck(wsFolder: Uri, poIds: number[], cancellationToken?: CancellationToken): Thenable<QuickCheckInfo[]> {
         return new Promise((resolve, reject) => {
             readOptionalConfiguration(wsFolder, "quickcheck.json", (config: RunQuickCheckRequestParams) => {
                 const configWithObligations = mergeDeep(config ?? {}, {
@@ -92,7 +99,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
                 });
 
                 this._client
-                    .sendRequest(RunQuickCheckRequest.type, configWithObligations)
+                    .sendRequest(RunQuickCheckRequest.type, configWithObligations, cancellationToken)
                     .then((qcInfos) => resolve(qcInfos))
                     .catch((e) => reject(`QuickCheck failed. ${e}`));
             });

@@ -102,6 +102,12 @@ export const QuickCheckPanel = ({ proofObligation, vscodeApi, onClose }: QuickCh
                     </VSCodeButton>
                 ) : null}
             </div>
+            <div css={{
+                fontSize: "1.2em",
+                marginBlock: "0.75em"
+            }}>
+            Proof obligation #{proofObligation.id}
+            </div>
 
             {provedByMessage}
             <QuickCheckExampleTable variables={allVariables} />
