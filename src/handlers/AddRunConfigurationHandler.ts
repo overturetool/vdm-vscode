@@ -297,19 +297,22 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 continue;
             }
 
+            const typeValue = this.getLastApplyType(wsFolder, applyName, t);
+            const prefillPostfix = ` - [${t}]`;
+            const prefillValue = typeValue ? `${typeValue}${prefillPostfix}` : null;
             const concreteType = await window.showInputBox({
-                prompt: `Enter type for ${t}`,
+                prompt: ``,
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: t,
-                value: this.getLastApplyType(wsFolder, applyName, t),
+                value: prefillValue,
             });
 
             if (concreteType === undefined) {
                 return Promise.reject();
             }
 
-            concreteTypes.set(t, concreteType);
+            concreteTypes.set(t, concreteType.replace(prefillPostfix, ""));
         }
 
         return Promise.resolve(concreteTypes);
@@ -322,7 +325,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             const prefillPostfix = ` - [${a.name}: ${a.type}]`;
             const prefillValue = a.value ? `${a.value}${prefillPostfix}` : null;
             const value = await window.showInputBox({
-                prompt: `Enter value for [${a.name}: ${a.type}]`,
+                prompt: ``,
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: `${a.name}: ${a.type}`,
