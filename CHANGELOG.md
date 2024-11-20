@@ -2,6 +2,8 @@
 - Add support for PO code lenses.
 - Subsequent launches of polymorphic code lenses now prefill type arguments.
 - Fix "Debug example" in QuickCheck panel of PO view in workspaces with multiple modules.
+- Add postfix helper text in launch configuration input prompt.
+- Scope transfer of type arguments to function name.
 
 ### 1.5.0
 - Update VDMJ JARs to stable 4.6.0 release.

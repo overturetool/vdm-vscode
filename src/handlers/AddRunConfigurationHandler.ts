@@ -45,7 +45,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
     // Argument storage, map from workspacefolder name to arguments
     private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map();
     private lastConfigApplyArgs: Map<string, VdmArgument[][]> = new Map();
-    private lastConfigApplyTypes: Map<string, Map<VdmTypeParameter, string>> = new Map();
+    private lastConfigApplyTypes: Map<string, Map<string, Map<VdmTypeParameter, string>>> = new Map();
 
     constructor() {
         super();
@@ -56,6 +56,20 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         util.registerCommand(this._disposables, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) =>
             this.addLensRunConfiguration(input)
         );
+    }
+
+    private getLastApplyType(wsFolder: WorkspaceFolder, name: string, typeName: string) {
+        const lastType = this.lastConfigApplyTypes.get(wsFolder.name)?.get(name)?.get(typeName);
+
+        return lastType;
+    }
+
+    private setLastApplyType(wsFolder: WorkspaceFolder, name: string, typeName: string, typeValue: string) {
+        const wsMap = this.lastConfigApplyTypes.get(wsFolder.name) ?? new Map<string, Map<VdmTypeParameter, string>>();
+        const typeMap = wsMap.get(name) ?? new Map<VdmTypeParameter, string>();
+        typeMap.set(typeName, typeValue);
+        wsMap.set(name, typeMap);
+        this.lastConfigApplyTypes.set(wsFolder.name, wsMap);
     }
 
     private async addRunConfiguration(wsFolder: WorkspaceFolder) {
@@ -197,7 +211,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
 
                             // Add class initialisation
                             // A constructor cannot be polymorphic, so no type params are ever available
-                            await this.requestArguments([input.constructors[cIndex]], [], input.defaultName, wsFolder.name).then(
+                            await this.requestArguments([input.constructors[cIndex]], [], input.defaultName, wsFolder).then(
                                 () => {
                                     command += `new ${this.getCommandString(input.defaultName, [input.constructors[cIndex]], [])}.`;
                                     this.lastConfigCtorArgs.set(wsFolder.name, input.constructors[cIndex]);
@@ -209,17 +223,14 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         }
 
                         // Add function/operation call to command
-                        await this.requestArguments(input.applyArgs, input.applyTypes ?? [], input.applyName, wsFolder.name).then(
+                        await this.requestArguments(input.applyArgs, input.applyTypes ?? [], input.applyName, wsFolder).then(
                             (types) => {
                                 command += this.getCommandString(input.applyName, input.applyArgs, Array.from(types.values()));
                                 this.lastConfigApplyArgs.set(wsFolder.name, input.applyArgs);
 
-                                const lastWsConfigApplyTypes =
-                                    this.lastConfigApplyTypes.get(wsFolder.name) ?? new Map<VdmTypeParameter, string>();
                                 Array.from(types.entries()).forEach(([typeParam, resolvedType]) =>
-                                    lastWsConfigApplyTypes.set(typeParam, resolvedType)
+                                    this.setLastApplyType(wsFolder, input.applyName, typeParam, resolvedType)
                                 );
-                                this.lastConfigApplyTypes.set(wsFolder.name, lastWsConfigApplyTypes);
                             },
                             () => {
                                 throw new Error("Operation/function arguments missing");
@@ -275,7 +286,8 @@ export class AddRunConfigurationHandler extends AutoDisposable {
     private async requestConcreteTypes(
         types: VdmTypeParameter[],
         outlineString: string,
-        wsName: string
+        wsFolder: WorkspaceFolder,
+        applyName: string
     ): Promise<Map<VdmTypeParameter, string>> {
         const concreteTypes: Map<VdmTypeParameter, string> = new Map();
         for (const [idx, t] of types.entries()) {
@@ -290,7 +302,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: t,
-                value: this.lastConfigApplyTypes.get(wsName)?.get(t),
+                value: this.getLastApplyType(wsFolder, applyName, t),
             });
 
             if (concreteType === undefined) {
@@ -307,19 +319,21 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         const flattenedArgs = args.flat();
 
         for await (let a of flattenedArgs) {
-            let value = await window.showInputBox({
+            const prefillPostfix = ` - [${a.name}: ${a.type}]`;
+            const prefillValue = a.value ? `${a.value}${prefillPostfix}` : null;
+            const value = await window.showInputBox({
                 prompt: `Enter value for [${a.name}: ${a.type}]`,
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: `${a.name}: ${a.type}`,
-                value: a.value,
+                value: prefillValue,
             });
 
             if (value === undefined) {
                 return Promise.reject();
             }
 
-            a.value = value;
+            a.value = value.replace(prefillPostfix, "");
         }
     }
 
@@ -340,12 +354,12 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         args: VdmArgument[][],
         types: VdmTypeParameter[],
         name: string,
-        wsName: string
+        wsFolder: WorkspaceFolder
     ): Promise<Map<VdmTypeParameter, string>> {
         const commandString = this.getCommandOutlineString(name, args, types);
 
         // Request type arguments from user
-        const concreteTypes = await this.requestConcreteTypes(types, commandString, wsName);
+        const concreteTypes = await this.requestConcreteTypes(types, commandString, wsFolder, name);
 
         // Request argument values from user - requestArgumentValues modifies args, changing the .value property.
         const typedArgs = this.applyTypesToArgs(args, concreteTypes);

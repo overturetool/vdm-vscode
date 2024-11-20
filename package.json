@@ -1441,6 +1441,10 @@
                                         "default": 30
                                     }
                                 }
+                            },
+                            "params": {
+                              "description": "Miscellaneous launch parameters",
+                              "type": "object"
                             }
                         }
                     }
