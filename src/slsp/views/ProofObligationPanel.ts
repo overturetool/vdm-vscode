@@ -14,15 +14,15 @@ import {
     ExtensionContext,
     commands,
     DocumentSelector,
-    debug,
     ProgressLocation,
     Progress,
     TabInputWebview,
+    debug,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
 import { isSameUri, isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
-import { VdmDapSupport } from "../../dap/VdmDapSupport";
+// import { VdmDapSupport } from "../../dap/VdmDapSupport";
 import { ProofObligationCounterExample, ProofObligationWitness, QuickCheckInfo } from "../protocol/ProofObligationGeneration";
 import { CancellationToken } from "vscode-languageclient";
 
@@ -343,14 +343,19 @@ export class ProofObligationPanel implements Disposable {
                             window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 });
                             break;
                         case "debugQCRun":
-                            const requestBody = {
-                                expression: message.data,
-                                context: "repl",
-                            };
+                            // const requestBody = {
+                            //     expression: message.data,
+                            //     context: "repl",
+                            // };
 
-                            VdmDapSupport.getAdHocVdmDebugger(this._lastWsFolder, false).then((ds) => {
-                                setTimeout(() => ds.customRequest("evaluate", requestBody).then(() => debug.stopDebugging(ds)), 100);
-                            });
+                            console.log("debugging with", message.data, message);
+                            // VdmDapSupport.startDebuggerWithCommand(message.data, this._lastWsFolder, true, false);
+                            debug.startDebugging(this._lastWsFolder, message.data);
+
+                            // VdmDapSupport.getAdHocVdmDebugger(this._lastWsFolder, false).then((ds) => {
+                            //     ds.customRequest("evaluate", requestBody);
+                            //     // setTimeout(() => ds.customRequest("evaluate", requestBody).then(() => debug.stopDebugging(ds)), 100);
+                            // });
                             break;
                         case "runQC":
                             window.withProgress(

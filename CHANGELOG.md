@@ -1,5 +1,7 @@
 ### 1.5.1
 - Add support for PO code lenses.
+- Subsequent launches of polymorphic code lenses now prefill type arguments.
+- Fix "Debug example" in QuickCheck panel of PO view in workspaces with multiple modules.
 
 ### 1.5.0
 - Update VDMJ JARs to stable 4.6.0 release.

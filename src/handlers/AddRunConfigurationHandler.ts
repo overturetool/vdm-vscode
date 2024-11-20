@@ -6,7 +6,7 @@ import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
 import { guessDialect, VdmDialect } from "../util/DialectUtil";
 import AutoDisposable from "../helper/AutoDisposable";
 
-type VdmType = string;
+type VdmTypeParameter = string;
 
 interface VdmArgument {
     name: string;
@@ -32,7 +32,10 @@ interface VdmLaunchLensConfiguration {
     constructors?: [VdmArgument[]];
     applyName: string;
     applyArgs: VdmArgument[][];
-    applyTypes?: VdmType[];
+    applyTypes?: VdmTypeParameter[];
+    settings: any;
+    properties: any;
+    params: any;
 }
 
 export class AddRunConfigurationHandler extends AutoDisposable {
@@ -42,6 +45,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
     // Argument storage, map from workspacefolder name to arguments
     private lastConfigCtorArgs: Map<string, VdmArgument[]> = new Map();
     private lastConfigApplyArgs: Map<string, VdmArgument[][]> = new Map();
+    private lastConfigApplyTypes: Map<string, Map<VdmTypeParameter, string>> = new Map();
 
     constructor() {
         super();
@@ -142,6 +146,18 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     // Add remote control
                     if (input.remoteControl) runConfig.remoteControl = input.remoteControl;
 
+                    if (input.settings) {
+                        runConfig.settings = input.settings;
+                    }
+
+                    if (input.properties) {
+                        runConfig.properties = input.properties;
+                    }
+
+                    if (input.params) {
+                        runConfig.params = input.params;
+                    }
+
                     // Add command
                     if (input.applyName) {
                         // Warn user that types might be unresolved for projects with unsaved files
@@ -181,7 +197,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
 
                             // Add class initialisation
                             // A constructor cannot be polymorphic, so no type params are ever available
-                            await this.requestArguments([input.constructors[cIndex]], [], input.defaultName, "constructor").then(
+                            await this.requestArguments([input.constructors[cIndex]], [], input.defaultName, wsFolder.name).then(
                                 () => {
                                     command += `new ${this.getCommandString(input.defaultName, [input.constructors[cIndex]], [])}.`;
                                     this.lastConfigCtorArgs.set(wsFolder.name, input.constructors[cIndex]);
@@ -193,10 +209,17 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         }
 
                         // Add function/operation call to command
-                        await this.requestArguments(input.applyArgs, input.applyTypes ?? [], input.applyName, "operation/function").then(
+                        await this.requestArguments(input.applyArgs, input.applyTypes ?? [], input.applyName, wsFolder.name).then(
                             (types) => {
                                 command += this.getCommandString(input.applyName, input.applyArgs, Array.from(types.values()));
                                 this.lastConfigApplyArgs.set(wsFolder.name, input.applyArgs);
+
+                                const lastWsConfigApplyTypes =
+                                    this.lastConfigApplyTypes.get(wsFolder.name) ?? new Map<VdmTypeParameter, string>();
+                                Array.from(types.entries()).forEach(([typeParam, resolvedType]) =>
+                                    lastWsConfigApplyTypes.set(typeParam, resolvedType)
+                                );
+                                this.lastConfigApplyTypes.set(wsFolder.name, lastWsConfigApplyTypes);
                             },
                             () => {
                                 throw new Error("Operation/function arguments missing");
@@ -249,19 +272,25 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         return runConf.name.startsWith(AddRunConfigurationHandler.lensNameBegin);
     }
 
-    private async requestConcreteTypes(types: VdmType[], outlineString: string, requestType: string): Promise<Map<VdmType, string>> {
-        const concreteTypes: Map<VdmType, string> = new Map();
+    private async requestConcreteTypes(
+        types: VdmTypeParameter[],
+        outlineString: string,
+        wsName: string
+    ): Promise<Map<VdmTypeParameter, string>> {
+        const concreteTypes: Map<VdmTypeParameter, string> = new Map();
         for (const [idx, t] of types.entries()) {
             // concrete types don't need to be resolved
             if (!t.startsWith("@")) {
                 concreteTypes.set(idx.toString(), t);
                 continue;
             }
+
             const concreteType = await window.showInputBox({
-                prompt: `Input type for ${requestType}`,
+                prompt: `Enter type for ${t}`,
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: t,
+                value: this.lastConfigApplyTypes.get(wsName)?.get(t),
             });
 
             if (concreteType === undefined) {
@@ -274,12 +303,12 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         return Promise.resolve(concreteTypes);
     }
 
-    private async requestArgumentValues(args: VdmArgument[][], outlineString: string, requestType: string): Promise<void> {
+    private async requestArgumentValues(args: VdmArgument[][], outlineString: string): Promise<void> {
         const flattenedArgs = args.flat();
 
         for await (let a of flattenedArgs) {
             let value = await window.showInputBox({
-                prompt: `Input argument for ${requestType}`,
+                prompt: `Enter value for [${a.name}: ${a.type}]`,
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: `${a.name}: ${a.type}`,
@@ -294,7 +323,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         }
     }
 
-    private applyTypesToArgs(argLists: VdmArgument[][], types: Map<VdmType, string>): VdmArgument[][] {
+    private applyTypesToArgs(argLists: VdmArgument[][], types: Map<VdmTypeParameter, string>): VdmArgument[][] {
         return argLists.map((args) => {
             return args.map((a) => {
                 const concreteType = types.get(a.type);
@@ -307,17 +336,22 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         });
     }
 
-    private async requestArguments(args: VdmArgument[][], types: VdmType[], name: string, type: string): Promise<Map<VdmType, string>> {
+    private async requestArguments(
+        args: VdmArgument[][],
+        types: VdmTypeParameter[],
+        name: string,
+        wsName: string
+    ): Promise<Map<VdmTypeParameter, string>> {
         const commandString = this.getCommandOutlineString(name, args, types);
 
         // Request type arguments from user
-        const concreteTypes = await this.requestConcreteTypes(types, commandString, type);
+        const concreteTypes = await this.requestConcreteTypes(types, commandString, wsName);
 
         // Request argument values from user - requestArgumentValues modifies args, changing the .value property.
         const typedArgs = this.applyTypesToArgs(args, concreteTypes);
         const commandStringConcrete = this.getCommandOutlineString(name, typedArgs);
 
-        await this.requestArgumentValues(typedArgs, commandStringConcrete, type);
+        await this.requestArgumentValues(typedArgs, commandStringConcrete);
 
         return Promise.resolve(concreteTypes);
     }
@@ -365,14 +399,14 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         });
     }
 
-    private getCommandOutlineString(name: string, args: VdmArgument[][], typeParameters: VdmType[] = []): string {
+    private getCommandOutlineString(name: string, args: VdmArgument[][], typeParameters: VdmTypeParameter[] = []): string {
         const typeParametersOutline = typeParameters.length === 0 ? "" : `[${typeParameters.join(", ")}]`;
         const argumentLists = args.map((a) => `(${a.map((x) => `${x.name}: ${x.type}`).join(", ")})`).join("");
         let command = `${name}${typeParametersOutline}${argumentLists}`;
         return command;
     }
 
-    private getCommandString(name: string, args: VdmArgument[][], types: VdmType[]): string {
+    private getCommandString(name: string, args: VdmArgument[][], types: VdmTypeParameter[]): string {
         const typeArguments = types.length === 0 ? "" : `[${types.join(", ")}]`;
         const argumentLists = args.map((a) => `(${a.map((x) => x.value).join(", ")})`).join("");
         let command = `${name}${typeArguments}${argumentLists}`;

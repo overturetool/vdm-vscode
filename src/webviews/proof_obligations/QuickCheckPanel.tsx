@@ -3,6 +3,7 @@ import { TableHeader } from "./ProofObligationsTableHeader";
 import { FormattedProofObligation } from "./ProofObligationsView";
 import { VSCodeAPI } from "../shared.types";
 import { MouseEvent } from "react";
+import { VdmLaunchConfiguration } from "../../handlers/AddRunConfigurationHandler";
 
 interface QuickCheckExampleTableProps {
     variables: Array<[string, string]>;
@@ -48,12 +49,12 @@ export const QuickCheckPanel = ({ proofObligation, vscodeApi, onClose }: QuickCh
     // There will never be both a counterexample and a witness, so the following array is either equal to counterExampleVariables or witnessVariables or []
     const allVariables = [...counterExampleVariables, ...witnessVariables];
 
-    let launchCommand: string | null = null;
+    let launchCommand: VdmLaunchConfiguration | null = null;
 
     if (proofObligation.counterexample) {
-        launchCommand = proofObligation.counterexample.launch?.command ?? null;
+        launchCommand = proofObligation.counterexample.launch ?? null;
     } else if (proofObligation.witness) {
-        launchCommand = proofObligation.witness.launch?.command ?? null;
+        launchCommand = proofObligation.witness.launch ?? null;
     }
 
     return (
