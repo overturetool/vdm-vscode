@@ -1,6 +1,6 @@
 types
 
-Trace = seq of [Event];
+Trace = seq1 of [Event];
 
 Event = <A> | <V>;
 

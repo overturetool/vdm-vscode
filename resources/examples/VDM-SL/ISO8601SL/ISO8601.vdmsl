@@ -64,8 +64,8 @@ exports types struct Year;
                   diff: DTG * DTG +> Duration;
                   durAdd: Duration * Duration +> Duration;
                   durSubtract: Duration * Duration +> Duration;
-                  durMultiply: Duration * nat +> Duration;
-                  durDivide: Duration * nat +> Duration;
+                  durMultiply: Duration * nat1 +> Duration;
+                  durDivide: Duration * nat1 +> Duration;
                   durDiff: Duration * Duration +> Duration;
                   durToMillis: Duration +> nat;
                   durFromMillis: nat +> Duration;
@@ -314,12 +314,12 @@ functions
   --post durAdd(RESULT, d2) = d1;
 
   -- Multiply a duration by a fixed amount.
-  durMultiply: Duration * nat +> Duration
+  durMultiply: Duration * nat1 +> Duration
   durMultiply(d, n) == mk_Duration(d.dur * n)
   post durDivide(RESULT, n) = d;
 
   -- Divide a duration by a fixed amount.
-  durDivide: Duration * nat +> Duration
+  durDivide: Duration * nat1 +> Duration
   durDivide(d, n) == mk_Duration(d.dur div n);
   --post durMultiply(RESULT, n) <= d and d < durMultiply(RESULT, n+1);
 
@@ -417,11 +417,7 @@ functions
     then 0
     else 1 + durToYear(durDiff(dur, durFromYear(year)), year+1)
   --post RESULT = Set`max({ y | y : Year & durUptoYear(year+y) <= dur })
-  measure m_durToYear;
-
-  -- The measure function for durToYear
-  m_durToYear : Duration * Year +> nat
-  m_durToYear(d,-) == d.dur;
+  measure dur.dur;
 
   -- The duration of a year.
   durFromYear: Year +> Duration
@@ -575,22 +571,19 @@ functions
   pre dd <= daysInMonth(yy, mm)
   --post RESULT = minDate({ date | date:Date & date > mk_Date(yy, mm, dd) and
   --                                           date.day = day })
-  measure m_nextYMDForDay;
-
-  -- The measure function for nextYMDForDay
-  m_nextYMDForDay: Year * Month * Day * Day +> nat
-  m_nextYMDForDay(y,m,-,-) == ((LAST_YEAR+1)*MONTHS_PER_YEAR) - (y*MONTHS_PER_YEAR + m);
+  measure ((LAST_YEAR+1)*MONTHS_PER_YEAR) - (yy*MONTHS_PER_YEAR + mm);
 
   -- Given a date, find the previous date on which the day of month is the same.
   previousDateForYM: Date +> Date
-  previousDateForYM(date) == previousDateForDay(date, date.day);
+  previousDateForYM(date) == previousDateForDay(date, date.day)
+  pre date <> mk_Date(0, 1, 1);
   --post RESULT = maxDate({ dt | dt:Date & dt  date and dt.day = date.day });
 
   -- Given a date and specific day, find the closest previous date on which the day of month is
   -- the same as the specified day.
   previousDateForDay: Date * Day +> Date
   previousDateForDay(date, day) == previousYMDForDay(date.year, date.month, date.day, day)
-  pre day <= MAX_DAYS_PER_MONTH;
+  pre date <> mk_Date(0, 1, 1) and day <= MAX_DAYS_PER_MONTH;
   --post RESULT = maxDate({ dt | dt:Date & dt < date and dt.day = day });
 
   -- Given a date, find the closest later date on which the day of month is the same.
@@ -606,11 +599,7 @@ functions
   pre dd <= daysInMonth(yy, mm)
   --post RESULT = maxDate({ date | date:Date & date < mk_Date(yy, mm, dd) and
   --                                           date.day = day })
-  measure m_previousYMDForDay;
-
-  -- The measure function for previousYMDForDay
-  m_previousYMDForDay: Year * Month * Day * Day +> nat
-  m_previousYMDForDay(y,m,-,-) == y*MONTHS_PER_YEAR + m;
+  measure yy*MONTHS_PER_YEAR + mm;
 
   -- Normalise a DTG value such that it is expressed without time zone offset.
   -- Applying the offset may result in a change of date.

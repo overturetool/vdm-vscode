@@ -110,11 +110,7 @@ get(dB,i)==
 	else get(dB\{record},i)	
 pre	i in set usedIds(dB) 
 post RESULT.id=i and RESULT in set dB
-measure CardDb;
-
-CardDb: set of Record*Id +> nat
-CardDb(dB,-) ==
-  card dB;
+measure card dB;
   
 getvalue: Valuetype*set of Record*Id +> Value
 getvalue(valuetype,dB,i)==
@@ -356,11 +352,7 @@ idset(dB,ids)==
   else let record in set dB 
        in 
 	     idset(dB\{record},ids union {record.id})
-measure CardRecords;
- 
-CardRecords: set of Record*set of Id +> nat
-CardRecords(s,-) ==
-  card s;
+measure card dB;
   
 operations
 

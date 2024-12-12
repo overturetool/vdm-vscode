@@ -59,11 +59,7 @@ functions
     []         -> b,
     [e] ^ rest -> AuxSeqToBag(rest, Add(e, b))
     end
-  measure LenPar1;
-  
-  LenPar1 : seq of Elem * Bag -> nat
-  LenPar1(list,-) ==
-    len list;
+  measure len s;
 \end{vdm_al}
 
 \begin{vdm_al}

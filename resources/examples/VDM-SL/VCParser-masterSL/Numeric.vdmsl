@@ -33,7 +33,7 @@ functions
   formatNat(n) == if n < 10
                   then [toChar(n)]
                   else formatNat(n div 10) ^ [toChar(n mod 10)]
-  measure size1;
+  measure n;
 
   -- Create a natural number from a sequence of digit characters.
   decodeNat: seq1 of Char`Digit +> nat
@@ -41,7 +41,7 @@ functions
                     [c] -> fromChar(c),
                     u^[c] -> 10*decodeNat(u)+fromChar(c)
                   end
-  measure size2;
+  measure len s;
 
   -- Convert a character digit to the corresponding natural number.
   fromChar: Char`Digit +> nat
@@ -68,13 +68,5 @@ functions
   -- Product of two numbers.
   mult: real * real +> real
   mult(m,n) == m*n;
-
-  -- Measure functions.
-
-  size1: nat +> nat
-  size1(n) == n;
-
-  size2: seq1 of Char`Digit +> nat
-  size2(s) == len s;
 
 end Numeric

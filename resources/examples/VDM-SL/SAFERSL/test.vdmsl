@@ -5,19 +5,7 @@ module TEST
 imports from SAFER all,
         from HCM all,
         from TS all,
-        from AUX all,
-	from GEOM
-	  operations
-    InitGeom : () ==> ();
-    ShowThrust : seq of seq of char ==> (),
-  
-
-
-   from GUI 
-
-    operations
-      GetCommand : ()  ==> seq of seq of char; 
-      GUI_Init_Tcl : () ==> ()
+        from AUX all
 
   exports all
 
@@ -60,22 +48,6 @@ values
   
 functions
 
-  BigTest: () -> 
-    map (HCM`SwitchPositions * HCM`HandGripPosition * AUX`RotCommand) to 
-        TS`ThrusterSet 
-  BigTest() == 
-    {mk_(switch,grip,aah_law) |-> SAFER`ControlCycle(switch,grip,aah_law) |
-     switch in set switch_positions, grip in set grip_positions, 
-     aah_law in set all_rot_commands};
-
-   HugeTest: () -> 
-     map (HCM`SwitchPositions * HCM`HandGripPosition * AUX`RotCommand) to 
-         TS`ThrusterSet 
-   HugeTest() == 
-   {mk_(switch,grip,aah_law) |-> SAFER`ControlCycle(switch,grip,aah_law) |
-    switch in set switch_positions, grip in set all_grip_positions, 
-    aah_law in set all_rot_commands};
-
   ConvertAxisCmd: seq of char -> AUX`AxisCommand
   ConvertAxisCmd(str) ==
     cases str:
@@ -91,7 +63,8 @@ functions
     then []
     else let t in set ts
          in
-	   [ConvertTId(t)]^ ConvertTIds(ts\{t});
+	   [ConvertTId(t)]^ ConvertTIds(ts\{t})
+  measure card ts;
 
   ConvertTId: TS`ThrusterName +> seq of char
   ConvertTId(tnm) ==
@@ -123,48 +96,24 @@ functions
      end;
      
 operations
-  
-  StartTest: () ==> ()
-  StartTest() == ( GUI`GUI_Init_Tcl();
-                   GEOM`InitGeom() );
 
-  RunTest: () ==> bool
-  RunTest() ==
-   let cl = GUI`GetCommand()
-   in
-     if cl = []
-     then return false
-     else let [mode,aah,horiz,trans,vert,twist,roll,pitch,yaw] = cl,
-              ts = SAFER`ControlCycle(
-                    mk_HCM`SwitchPositions(
-                     if mode = "translation" then <Tran> else <Rot>,
-                     if aah = "1" then <Up> else <Down> ),
-                   mk_HCM`HandGripPosition(ConvertAxisCmd(vert),
-                                           ConvertAxisCmd(horiz),
-                      ConvertAxisCmd(trans),ConvertAxisCmd(twist)),
-                   {<Roll> |-> ConvertAxisCmd(roll), 
-                    <Pitch> |-> ConvertAxisCmd(pitch),
-                    <Yaw> |-> ConvertAxisCmd(yaw)})
-	 in
-	   (GEOM`ShowThrust(ConvertTIds(ts));
-            return true );
-    
+  BigTest: () ==> 
+    map (HCM`SwitchPositions * HCM`HandGripPosition * AUX`RotCommand) to 
+        TS`ThrusterSet 
+  BigTest() == 
+    return
+    {mk_(switch,grip,aah_law) |-> SAFER`ControlCycle(switch,grip,aah_law) |
+     switch in set switch_positions, grip in set grip_positions, 
+     aah_law in set all_rot_commands};
 
-  Loop : () ==> ()
-  Loop() ==
-  (
-    StartTest();
-    while RunTest() do skip;
-    GEOM`ShowThrust(["stop"])
-  );
-
-  Move: () ==> ()
-  Move() ==
-   GEOM`ShowThrust(["move"]);
-
-  NoMove: () ==> ()
-  NoMove() ==
-   GEOM`ShowThrust(["nomove"]);
+   HugeTest: () ==> 
+     map (HCM`SwitchPositions * HCM`HandGripPosition * AUX`RotCommand) to 
+         TS`ThrusterSet 
+   HugeTest() == 
+   return
+   {mk_(switch,grip,aah_law) |-> SAFER`ControlCycle(switch,grip,aah_law) |
+    switch in set switch_positions, grip in set all_grip_positions, 
+    aah_law in set all_rot_commands};
 
 
 end TEST

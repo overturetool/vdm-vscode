@@ -91,13 +91,10 @@ state  crosswords of
 	 cwgrid : grid
 	 valid_words : set of word
 	 waiting_words : set of word
-       inv mk_crosswords(gr,val,wait) == 
-		CW_INVARIANT(gr,val,wait)
-init mk_crosswords(gr,val,wait) ==
-        val = { } and wait = { } and 
-	forall i in set {1,...,size} &
-	forall j in set {1,...,size} &
-	gr(mk_position(i,j)) = white
+inv mk_crosswords(gr,val,wait) == 
+		true --CW_INVARIANT(gr,val,wait)
+init s == s = mk_crosswords(
+	{mk_position(i,j) |-> white | i,j in set {1,...,size}}, {}, {}) 
 end
 \end{vdm_al}
 
@@ -174,9 +171,9 @@ characters (if any) are $white$ or $black$. The code of the explicit function
 is rather implicit since it refers to a set comprehension definition which is
 not executable.
 \begin{vdm_al}
-WORDS_OF_SEQ : seq of char +> set of word
+WORDS_OF_SEQ : seq1 of char +> set of word
 WORDS_OF_SEQ(s) == {w | w : word & 
-		exists s1, s2 : seq of char &
+		exists s1, s2 : seq1 of char &
 			s = s1 ^ w ^ s2
 		        and (s1 = [] or s1(len s1) = black or s1(len s1) = white)
 			and (s2 = [] or s2(1) = black or s2(1) = white)}

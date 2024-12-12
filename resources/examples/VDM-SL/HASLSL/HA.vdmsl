@@ -55,9 +55,10 @@ HA(haInputs, outputSoFar, curTime) ==
                        HA(rest,AddOutput(targetTemp, currentTemp, targetHumid, 
                                          currentHumid, curTime, newOutput), nextTime)
                 else ChangeHA(haInputs,outputSoFar,curTime)
-           else ChangeHA(haInputs,outputSoFar,curTime);
+           else ChangeHA(haInputs,outputSoFar,curTime)
+  measure len haInputs;
 
-ChangeHA: HAInputs * HAOut * AbsTime -> HAOut
+ChangeHA: seq1 of HAInput * HAOut * AbsTime -> HAOut
 ChangeHA(haInputs,outputSoFar,curTime) ==
   let mk_(change,targetTemp,currentTemp,targetHumid,currentHumid) = hd haInputs,
       rest = tl haInputs,
@@ -66,7 +67,8 @@ ChangeHA(haInputs,outputSoFar,curTime) ==
     if change 
     then HA(rest,AddOutput(targetTemp, currentTemp, targetHumid, currentHumid, 
                            curTime, outputSoFar), nextTime)
-    else HA(rest,outputSoFar,nextTime);
+    else HA(rest,outputSoFar,nextTime)
+measure len haInputs;
 
 AddOutput: nat * nat * nat * nat * nat * seq of OutStep -> seq of OutStep
 AddOutput(targetTemp, curTemp, targetHumid, curHumid, curTime, outputSoFar) ==
@@ -89,7 +91,7 @@ HumidChanged: nat * nat * nat * nat * nat * seq of OutStep -> seq of OutStep
 HumidChanged(targetTemp, curTemp, targetHumid, curHumid, curTime, outputSoFar) ==
   let tempChanged = (curHumid-targetHumid)*HumidChangeDuration/TempChangeDuration,
       action = if (curTemp-tempChanged) > targetTemp then <DecTemp> else <IncTemp>,
-      timeChange = curTime+(curHumid-targetHumid)*HumidChangeDuration
+      timeChange = abs (curTime+(curHumid-targetHumid)*HumidChangeDuration)
   in
     outputSoFar ^ [mk_(<OpenWindow>,curTime)] ^ 
     if (curTemp-tempChanged) <> targetTemp
@@ -104,7 +106,7 @@ InterruptOutput : seq of OutStep * nat -> seq of OutStep
 InterruptOutput(output, curTime) ==
   [output(i) | i in set inds output & let mk_(-,t) = output(i) in t <= curTime];
 
-CounterOutput : seq of OutStep * nat -> seq of OutStep
+CounterOutput : seq1 of OutStep * nat -> seq of OutStep
 CounterOutput(output, curTime) ==
   let mk_(lastOutput,-) = output(len output)
   in

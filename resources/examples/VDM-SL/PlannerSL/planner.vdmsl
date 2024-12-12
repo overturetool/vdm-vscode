@@ -50,6 +50,7 @@ state Partial_Plan of
 	Ps: Goal_instances
 	As: Goal_instances
 inv  mk_Partial_Plan(pp, Os, Ts, Ps, As)== 
+	({mk_token("pinit"),mk_token("goal")} subset dom Os) and
 	(Os(mk_token("pinit")) = mk_Action([mk_token("pinit")], { }, pp.I, { })) and
 	(Os(mk_token("goal")) = mk_Action([mk_token("goal")], pp.G, { }, { })) and
 	rng Os subset pp.AS union {Os(mk_token("pinit")), Os(mk_token("goal"))} and

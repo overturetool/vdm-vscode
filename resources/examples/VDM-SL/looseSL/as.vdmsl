@@ -138,7 +138,7 @@ investigate an executable subset of VDM-SL here.
 
 Pattern = PatternName | MatchVal | SetPattern;
 
-PatternName :: nm : [(Name * Position)];
+PatternName :: nm : Name * Position;
 
 MatchVal :: val : Expr;
 

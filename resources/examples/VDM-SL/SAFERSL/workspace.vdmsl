@@ -19,12 +19,6 @@ inv tm == len tm = 4 and forall i in set inds tm & len tm(i) = 6
 
 functions
 
-RunControlCycle: Input -> ThrusterMatrix
-RunControlCycle (input) ==
-  let mk_(swpos, hgpos, rcom) = TransformInput (input) in
-  let ts = SAFER`ControlCycle (swpos, hgpos, rcom) in
-  GenerateThrusterMatrix (ts);
-
 TransformInput: Input -> HCM`SwitchPositions * HCM`HandGripPosition * 
                          AUX`RotCommand
 TransformInput (input) ==
@@ -91,5 +85,13 @@ values
 switchpos = mk_HCM`SwitchPositions (<Tran>,<Down>);
 handgrippos = mk_HCM`HandGripPosition (<Zero>,<Pos>,<Zero>,<Zero>);
 rotcomm = { <Roll> |-> <Zero>, <Pitch> |-> <Zero>, <Yaw> |-> <Zero> }
+
+operations
+
+RunControlCycle: Input ==> ThrusterMatrix
+RunControlCycle (input) ==
+  let mk_(swpos, hgpos, rcom) = TransformInput (input) in
+  let ts = SAFER`ControlCycle (swpos, hgpos, rcom) in
+  return GenerateThrusterMatrix (ts);
 
 end WorkSpace

@@ -19,10 +19,11 @@ definitions
    status: map Subscriber to Status
    calls:  inmap Subscriber to Subscriber
  inv mk_Exchange(status, calls) == 
-    forall i in set dom calls & 
+    forall i in set ((dom calls) inter (dom status)) & 
        (status(i) = <WI> and status(calls(i)) = <WR>) 
        or
        (status(i) = <SI> and status(calls(i)) = <SR>)
+ init s == s = mk_Exchange({|->},{|->})
  end
 
 \end{vdm_al}

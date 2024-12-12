@@ -285,7 +285,7 @@ THe algorithm for this function is copied from \cite{Guting&93}.
           else undefined
   pre Intersect(s,t);
 
-  RoundToN: nat * nat +> nat 
+  RoundToN: nat1 * nat1 +> nat 
   RoundToN(a,b) ==
     let mk_(z,aa) = if a >= b
                     then mk_(a div b, a mod b)
@@ -418,7 +418,8 @@ done and recursion is introduced with the rest.
                let mk_(p1,p2) = SelPoints(s)
                in
                  ChopNPoints(ps\{p},(ss \{s}) union {mk_NSeg({p1,p}),mk_NSeg({p2,p})})
-  pre forall p in set ps & exists s in set ss & p in set E(s) and p not in set s.pts;
+  pre forall p in set ps & exists s in set ss & p in set E(s) and p not in set s.pts
+  measure card ps;
 \end{vdm_al}
 
 It is necessary to introduce the auxiliary function $ChopNSegs$
@@ -454,15 +455,21 @@ every time. This function has four parameters:
     then mk_(ps,ss union newss)
     else let t in set s_inter
          in
-           let {s} = {s |s in set newss & Intersect(s,t)}
+           let s = {h |h in set newss & Intersect(h,t)}
            in
-             let p = Intersection(t,s)
+            if s = {}
+            then mk_(ps,ss union newss)
+            else let s2 in set s
+            in
+             let p = Intersection(t,s2)
              in
-               let chop_s = {mk_NSeg({p,sp})|sp in set s.pts & p <> sp},
+               let chop_s = {mk_NSeg({p,sp})|sp in set s2.pts & p <> sp},
                    chop_t = {mk_NSeg({p,tp})|tp in set t.pts & p <> tp}
                in
                  ChopNSegs((ss \ {t}) union chop_t,
-                           s_inter\{t}, (newss \ {s}) union chop_s, ps union{p});
+                           s_inter\{t}, (newss \ {s2}) union chop_s, ps union{p})
+pre s_inter psubset newss
+measure card s_inter;
 \end{vdm_al}
 
 The envelope of a segment (that is the grid points immediately above

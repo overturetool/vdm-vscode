@@ -74,7 +74,7 @@ functions
   Censor(ms,cat) ==
     [m | m in seq ms & Classify(m,cat) = <LO>];
 
-  FlattenMessages: seq of Message -> Message
+  FlattenMessages: seq1 of Message -> Message
   FlattenMessages(ms) ==
     conc ms
   pre len conc ms <= 100 

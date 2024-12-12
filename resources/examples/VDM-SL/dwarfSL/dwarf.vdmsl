@@ -152,7 +152,7 @@ functions
 
   ToOrFromStop: Trace * nat1 +> bool
   ToOrFromStop(t,i) ==
-    (i > 2 => t(i - 2) = stoplamps) and 
+    ((i > 2 and len t >= i) => t(i - 2) = stoplamps) and 
     (i + 1 < len t => t(i + 2) = stoplamps);
 
   AlwaysDefinedState: Signal +> bool

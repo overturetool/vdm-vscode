@@ -13,7 +13,8 @@ functions
   -- Convenience function for "12345"
   luhns: seq1 of char -> Digit
   luhns(number) ==
-    luhn(strToSeq(number));
+    luhn(strToSeq(number))
+  pre elems number subset elems "0123456789";
   
   -- Convenience function for numbers
   luhnn: nat -> Digit
@@ -33,28 +34,22 @@ functions
           if product < 10
           then product
           else (product mod 10) + 1
-  measure slen;
-  
-  slen: seq of Digit -> nat
-  slen(data) ==
-    len data;  -- Length is strictly decreasing.
-    
+  measure len data;
+      
   strToSeq: seq1 of char -> seq1 of Digit
   strToSeq(s) ==
     [ cases i :
       '0'  -> 0, '1' -> 1, '2' -> 2, '3' -> 3, '4' -> 4,
       '5'  -> 5, '6' -> 6, '7' -> 7, '8' -> 8, '9' -> 9
-      end | i in seq s];
+      end | i in seq s]
+  pre elems s subset elems "0123456789";
 
   natToSeq: nat -> seq of Digit
   natToSeq(n) ==
     if n < 10
     then [n]
     else natToSeq(n div 10) ^ [n rem 10]
-  measure id;
-  
-  id: nat -> nat
-  id(n) == n;
+  measure n;
 
 traces
   /**

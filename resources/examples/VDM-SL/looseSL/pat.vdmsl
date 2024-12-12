@@ -107,7 +107,8 @@ MatchLists (els_lp, val_lv) ==
    if {} not in set elems tmp_ls
    then let perm_s = SeqOfSetOf2SetOfSeqOf(tmp_ls) in
           UnionMatch({ conc l | l in set perm_s })
-   else return {};
+   else return {}
+pre len els_lp = len val_lv;
 \end{vdm_al}
 
 For each element from the input pattern sequence, we create a set of

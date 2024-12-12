@@ -223,11 +223,7 @@ sum(s) ==
   else let x in set s 
        in
          x + sum(s \ {x})
-measure Card;
-
-Card: set of real -> nat
-Card(s) ==
-  card s;
+measure card s;
 
 suff_capacity: Object * Magazine -> bool
 suff_capacity(o,m) ==

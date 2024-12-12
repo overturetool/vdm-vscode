@@ -500,11 +500,7 @@ functions
     then 0
     else 1 + durToYear(durDiff(dur, durFromYear(year)), year+1)
   --post RESULT = Set`max({ y | y : Year & durLeq(durUptoYear(year+y), dur) })
-  measure durToYear_measure;
-
-  -- The measure function for durToYear
-  durToYear_measure : Duration * Year +> nat
-  durToYear_measure(d,-) == d.dur;
+  measure dur.dur;
 
   -- The duration of a year.
   durFromYear: Year +> Duration

@@ -3,7 +3,7 @@ exports all
 definitions
 types
 
-Quadrant = seq of M;
+Quadrant = seq1 of M;
 --inv Q == 
 --  forall a in seq Q &
 --    (not exists b in set elems Q \ {a} &
@@ -78,7 +78,9 @@ add(size, hole, Q) ==
                         then [mk_M(<USED>, h.start, h.stop)] ^ tail
                         else [mk_M(<USED>, h.start, h.start + size - 1),
                               mk_M(<FREE>, h.start + size, h.stop)] ^ tail
-                   else	[h] ^ add(size, hole, tail),
+                   else	[h] ^ if len Q = 1
+                              then []
+                              else add(size, hole, tail),
     others -> Q
   end
 pre hole >= size
@@ -107,7 +109,9 @@ delete: M * Quadrant -> Quadrant
 delete(item, Q) ==
   if hd Q = item
   then combine([mk_M(<FREE>, item.start, item.stop)] ^ tl Q)
-  else [hd Q] ^ delete(item, tl Q)
+  else [hd Q] ^ if len Q = 1
+                then []
+                else delete(item, tl Q)
   measure MQuadrantLen;
 
 MQuadrantLen: M * Quadrant -> nat
@@ -116,7 +120,7 @@ MQuadrantLen(-,list) ==
 
 fragments: Quadrant -> nat
 fragments(Q) ==
-  card {x | x in seq Q & x.type = <FREE>} - 1;
+  card {x | x in seq Q & x.type = <FREE>};
 
 operations
 

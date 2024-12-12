@@ -73,7 +73,7 @@ functions
   --pre (exists x:@a & forall y:@a & f(x,y) = y and f(y,x) = y)
   --and (forall x,y:@a & f(x, y) = f(y, x))
   --and (forall x,y,z:@a & f(x,f(y,z)) = f(f(x,y),z))
-  measure size2;
+  measure card s;
 
   -- Fold (iterate, accumulate, reduce) a binary function over a non-empty set.
   -- The function is assumed to be commutative and associative.
@@ -85,7 +85,7 @@ functions
   pre s <> {}
   --and (forall x,y:@a & f(x,y) = f(y,x))
   --and (forall x,y,z:@a & f(x,f(y,z)) = f(f(x,y),z))
-  measure size1;
+  measure card s;
 
   -- Are the members of a set of sets pairwise disjoint.
   pairwiseDisjoint[@a]: set of set of @a +> bool
@@ -106,22 +106,11 @@ functions
   post -- for a set of size n, there are n! permutations
        card RESULT = prod({1,...,card s}) and
        forall sq in set RESULT & len sq = card s and elems sq = s
-  measure size;
+  measure card s;
 
   -- The cross product of two sets.
   xProduct[@a,@b]: set of @a * set of @b +> set of (@a * @b)
   xProduct(s,t) == { mk_(x,y) | x in set s, y in set t }
   post card RESULT = card s * card t;
-
-  -- Measure functions.
-
-  size[@a]: set of @a +> nat
-  size(s) == card s;
-
-  size1[@a]: (@a * @a +> @a) * set of @a +> nat
-  size1(-, s) == card s;
-
-  size2[@a]: (@a * @a +> @a) * @a * set of @a +> nat
-  size2(-, -, s) == card s;
 
 end Set

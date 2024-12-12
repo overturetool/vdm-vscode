@@ -552,14 +552,16 @@ min(s) ==
   let m in set s in
   if card s = 1 then m 
   else let sm = min(s\{m}) in
-    if m < sm then m else sm;
+    if m < sm then m else sm
+measure card s;
 
 max: set1 of real -> real
 max(s) ==
   let m in set s in
   if card s = 1 then m 
   else let sm = max(s\{m}) in
-    if m > sm then m else sm;
+    if m > sm then m else sm
+measure card s;
 
 intbinop: Int * Int * NumOp -> Expressible_value
 intbinop(x,y,mk_NumOp(op)) ==
@@ -977,7 +979,8 @@ vector_sum(v) ==
     then <err>
     elseif is_Real(hd v) 
     then realplus(hd v,s)
-    else intplus(hd v,s);
+    else intplus(hd v,s)
+measure len v;
 
 vector_product: VectorValue -> Expressible_value
 vector_product(v) ==
@@ -988,7 +991,8 @@ vector_product(v) ==
     then <err>
     elseif is_Real(hd v) 
     then realmult(hd v,s)
-    else intmult(hd v,s);
+    else intmult(hd v,s)
+measure len v;
        
 
 vector_all: VectorValue -> Expressible_value
@@ -998,7 +1002,8 @@ vector_all(v) ==
   else let b = vector_all(tl v) in
        if b = <err>
        then <err>
-       else tr_and(hd v,b);
+       else tr_and(hd v,b)
+measure len v;
 
 vector_some: VectorValue -> Expressible_value
 vector_some(v) ==
@@ -1007,7 +1012,8 @@ vector_some(v) ==
   else let b = vector_some(tl v) in
        if b = <err>
        then <err>
-       else tr_or(hd v,b);
+       else tr_or(hd v,b)
+measure len v;
 
 vector_max: VectorValue -> Expressible_value
 vector_max(v) ==
@@ -1018,7 +1024,8 @@ vector_max(v) ==
        then <err>
        elseif is_Real(hd v)
        then realmax(hd v,s)
-       else intmax(hd v,s);
+       else intmax(hd v,s)
+measure len v;
 
 vector_min: VectorValue -> Expressible_value
 vector_min(v) ==
@@ -1029,7 +1036,8 @@ vector_min(v) ==
        then <err>
        elseif is_Real(hd v)
        then realmin(hd v,s)
-       else intmin(hd v,s);
+       else intmin(hd v,s)
+measure len v;
 
 vector_concat: Vector * Vector -> Vector
 vector_concat(v1,v2) ==
@@ -1259,7 +1267,8 @@ timeleq(mk_(lt1,ut1),mk_(lt2,ut2)) ==
 
 access_env : Id -> Env -> Denotable_value
 access_env(i)(mk_(m,l)) ==
-  m(i);
+  m(i)
+pre i in set dom m;
 
 update_env : Id -> Denotable_value -> Env -> Env
 update_env(i)(d)(mk_(m,l)) ==

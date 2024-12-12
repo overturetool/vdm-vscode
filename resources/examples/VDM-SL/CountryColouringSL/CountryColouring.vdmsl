@@ -63,11 +63,7 @@ functions
            if canBeExtBy(col,c,r)
            then { {c} union col } union cols \ {col}
            else { col } union extndCol(cols \ {col}, c, r)
-  measure CardColouring;
-
-  CardColouring: Colouring * Country * Relation -> nat
-  CardColouring(cols,-,-) ==
-    card cols;
+  measure card cols;
 
   colCntrs: set of Country * Relation -> Colouring
   colCntrs(cs, r) ==
@@ -76,11 +72,7 @@ functions
     else let c in set cs 
          in 
            extndCol(colCntrs(cs\{c}, r), c, r)
-  measure CardCountry;
-
-  CardCountry: set of Country * Relation -> nat
-  CardCountry(cs,-) ==
-    card cs;
+  measure card cs;
 
   colMapExpl: Relation -> Colouring
   colMapExpl(r) ==
