@@ -1,0 +1,12 @@
+{
+    "configurations": [
+	{
+	    "name": "Launch VienneDOMSL Debug 1",
+	    "type": "vdm",
+	    "request": "launch",
+	    "noDebug": false,
+	    "defaultName": "ViennaDOM",
+	    "command": "print createElement(\"SVG\")"
+	}
+    ]
+}
