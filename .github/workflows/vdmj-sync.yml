@@ -21,8 +21,17 @@ jobs:
 
             - name: Get latest VDMJ release info
               id: vdmj_release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  curl -s https://api.github.com/repos/nickbattle/vdmj/releases/latest > release.json
+                  curl -s -H "Authorization: token $GH_TOKEN" https://api.github.com/repos/nickbattle/vdmj/releases/latest -o release.json
+                  cat release.json
+                  if jq -e .assets release.json > /dev/null; then
+                    echo "Assets found."
+                  else
+                    echo "Error: No assets found in release.json."
+                    exit 1
+                  fi
                   echo "::set-output name=tag::$(jq -r .tag_name release.json)"
                   echo "::set-output name=id::$(jq -r .id release.json)"
 
