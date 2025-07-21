@@ -1,0 +1,73 @@
+name: Sync VDMJ Jars
+
+on:
+    schedule:
+        - cron: '0 * * * *' # every hour
+    workflow_dispatch:
+
+jobs:
+    sync-vdmj:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  ref: development
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.x'
+
+            - name: Get latest VDMJ release info
+              id: vdmj_release
+              run: |
+                  curl -s https://api.github.com/repos/nickbattle/vdmj/releases/latest > release.json
+                  echo "::set-output name=tag::$(jq -r .tag_name release.json)"
+                  echo "::set-output name=id::$(jq -r .id release.json)"
+
+            - name: Check if already synced
+              id: check_synced
+              run: |
+                  if git ls-remote --exit-code --heads origin vdmj-${{ steps.vdmj_release.outputs.tag }}; then
+                    echo "Already synced this release."
+                    echo "::set-output name=skip::true"
+                  else
+                    echo "::set-output name=skip::false"
+                  fi
+
+            - name: Exit if already synced
+              if: steps.check_synced.outputs.skip == 'true' && github.event_name != 'workflow_dispatch'
+              run: exit 0
+
+            - name: Create new branch for VDMJ ${{ steps.vdmj_release.outputs.tag }}
+              run: |
+                  git config user.name "github-actions"
+                  git config user.email "github-actions@github.com"
+                  git checkout -b vdmj-${{ steps.vdmj_release.outputs.tag }}
+
+            - name: Download release assets
+              run: |
+                  assets=$(jq -r '.assets[] | select(.name | endswith("-distribution.zip")) | .browser_download_url' release.json)
+                  mkdir -p vdmj_zips
+                  for url in $assets; do
+                    fname=$(basename "$url")
+                    curl -L "$url" -o "vdmj_zips/$fname"
+                  done
+
+            - name: Unpack and move jars
+              run: |
+                  mkdir -p resources/jars/vdmj resources/jars/vdmj_hp
+                  for zip in vdmj_zips/*-distribution.zip; do
+                    if [[ "$zip" == *-P-*.zip ]]; then
+                      unzip -o "$zip" -d resources/jars/vdmj_hp
+                    else
+                      unzip -o "$zip" -d resources/jars/vdmj
+                    fi
+                  done
+
+            - name: Commit and push changes
+              run: |
+                  git add resources/jars/vdmj resources/jars/vdmj_hp
+                  git commit -m "Sync VDMJ jars from release ${{ steps.vdmj_release.outputs.tag }}"
+                  git push origin HEAD
