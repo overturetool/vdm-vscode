@@ -74,9 +74,14 @@ jobs:
                     else
                       target=resources/jars/vdmj
                     fi
+                    mkdir -p "$target/annotations" "$target/libs" "$target/plugins"
+                    # Remove old jars with the same prefix
+                    rm -f "$target"/vdmj-*.jar
+                    rm -f "$target/annotations"/annotations-*.jar
+                    rm -f "$target/libs"/stdlib-*.jar
+                    rm -f "$target/plugins"/quickcheck-*.jar
                     tmpdir=$(mktemp -d)
                     unzip -o "$zip" -d "$tmpdir"
-                    mkdir -p "$target/annotations" "$target/libs" "$target/plugins"
                     shopt -s nullglob
                     # Only move regular files, not directories
                     find "$tmpdir" -type f -name 'vdmj-*.jar' -exec mv {} "$target/" \;
