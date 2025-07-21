@@ -69,10 +69,27 @@ jobs:
                   mkdir -p resources/jars/vdmj resources/jars/vdmj_hp
                   for zip in vdmj_zips/*-distribution.zip; do
                     if [[ "$zip" == *-P-*.zip ]]; then
-                      unzip -o "$zip" -d resources/jars/vdmj_hp
+                      target=resources/jars/vdmj_hp
                     else
-                      unzip -o "$zip" -d resources/jars/vdmj
+                      target=resources/jars/vdmj
                     fi
+                    tmpdir=$(mktemp -d)
+                    unzip -o "$zip" -d "$tmpdir"
+                    mkdir -p "$target/annotations" "$target/libs" "$target/plugins"
+                    shopt -s nullglob
+                    for f in "$tmpdir"/vdmj-*; do
+                      mv "$f" "$target/" || true
+                    done
+                    for f in "$tmpdir"/annotations-*; do
+                      mv "$f" "$target/annotations/" || true
+                    done
+                    for f in "$tmpdir"/stdlib-*; do
+                      mv "$f" "$target/libs/" || true
+                    done
+                    for f in "$tmpdir"/quickcheck-*; do
+                      mv "$f" "$target/plugins/" || true
+                    done
+                    rm -rf "$tmpdir"
                   done
 
             - name: Commit and push changes
