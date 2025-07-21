@@ -14,7 +14,7 @@
 
 ### 1.4.0
 - Updates to VDMJ:
-  -  Added the slsp/POG/quickcheck processing to support the GUI button
+  - Added the slsp/POG/quickcheck processing to support the GUI button
   - Better support for disconnect and terminate (faster)
   - Use a "quickcheck.json" configuration file
   - Rationalise the LSP plugin architecture
@@ -44,7 +44,7 @@
 - Added Real-Time-Logger View 
 - Fixed Hover of variables in the debug
 - Added groups to settings
-- Added highprecision indicator to the status bar
+- Added high precision indicator to the status bar
 - Added tracing of DAP messages in the terminal 
 - Added precision to the launch configuration settings
 - Added default file nesting for sources like word files
@@ -79,7 +79,7 @@
 - Improved completion suggestions
 - Improved Server logging
 - Improved Debug Watch
-- Improved file encodidin support
+- Improved file encoding support
 - Removed dependency on portfinder
 - Fixes to VDMJ
 
@@ -137,7 +137,7 @@
 - Added scheme to control parse ordering
 
 ### 1.0.5
-- Added logging of server stdio to a file or terminal, this allows allotations to be printed during CT execution
+- Added logging of server stdio to a file or terminal, this allows annotations to be printed during CT execution
 - Specifications with "Too many type checking errors" handled sensibly
 - Maintain synchronisation between client and server on folder deletion
 - Improved handling of types that are imported

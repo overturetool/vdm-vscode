@@ -13,7 +13,7 @@ Start by opening an issue or propose a change by submitting a pull request (incl
 ## Install From VSIX
 You may want to package the project yourself this is done using:
 1. Installing vsce: `npm install -g vsce`
-1. Packageing the extension: `vsce package`
+1. Packaging the extension: `vsce package`
 
 To install the package in VS Code:
 In VS Code under "Extensions -> Views and More actions... -> Install from VSIX" locate the .vsix file in the VDM-VSCode extension folder, choose the file and click install. This will install the extension or update it if an older version is already present.

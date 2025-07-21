@@ -79,7 +79,7 @@ Following is a select number of features. For the full up to date list see the [
 -   Smart navigation
 -   Debugging
 -   Proof Obligation Generation
--   Combinatiorial Testing
+-   Combinatorial Testing
 -   Translation to LaTeX and Word
 -   Java code generation
 -   Dependency graph generation
