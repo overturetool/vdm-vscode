@@ -77,18 +77,11 @@ jobs:
                     unzip -o "$zip" -d "$tmpdir"
                     mkdir -p "$target/annotations" "$target/libs" "$target/plugins"
                     shopt -s nullglob
-                    for f in "$tmpdir"/vdmj-*; do
-                      mv "$f" "$target/" || true
-                    done
-                    for f in "$tmpdir"/annotations-*; do
-                      mv "$f" "$target/annotations/" || true
-                    done
-                    for f in "$tmpdir"/stdlib-*; do
-                      mv "$f" "$target/libs/" || true
-                    done
-                    for f in "$tmpdir"/quickcheck-*; do
-                      mv "$f" "$target/plugins/" || true
-                    done
+                    # Only move regular files, not directories
+                    find "$tmpdir" -maxdepth 1 -type f -name 'vdmj-*.jar' -exec mv {} "$target/" \;
+                    find "$tmpdir" -maxdepth 1 -type f -name 'annotations-*.jar' -exec mv {} "$target/annotations/" \;
+                    find "$tmpdir" -maxdepth 1 -type f -name 'stdlib-*.jar' -exec mv {} "$target/libs/" \;
+                    find "$tmpdir" -maxdepth 1 -type f -name 'quickcheck-*.jar' -exec mv {} "$target/plugins/" \;
                     rm -rf "$tmpdir"
                   done
 
