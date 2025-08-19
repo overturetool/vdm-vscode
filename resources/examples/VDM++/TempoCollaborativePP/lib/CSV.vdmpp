@@ -1,3 +1,4 @@
+-- @NoPOG
 class CSV is subclass of IO
 
 --  Overture STANDARD LIBRARY: INPUT/OUTPUT
