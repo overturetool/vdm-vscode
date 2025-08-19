@@ -1,4 +1,4 @@
-@NoPOG
+-- @NoPOG
 class IO
 
 --  Overture STANDARD LIBRARY: INPUT/OUTPUT
