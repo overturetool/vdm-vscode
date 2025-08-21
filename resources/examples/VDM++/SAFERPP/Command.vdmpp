@@ -40,7 +40,8 @@ operations
   public
   GetDirection : Axis ==> Direction
   GetDirection(a) == 
-    return axesdir(a);
+    return axesdir(a)
+  pre a in set dom axesdir;
 
   public
   SetDirection : Axis * Direction ==> ()
