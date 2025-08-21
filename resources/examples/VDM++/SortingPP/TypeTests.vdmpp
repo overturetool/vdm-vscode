@@ -3,7 +3,7 @@
  */
 class TypeTests is subclass of TestCase
 types
-	Collation = seq of char
+	Collation = seq1 of char
 	inv c == card elems c = len c;		-- No duplicates in a collation sequence
 
 	String = seq of char;				-- Strings can be empty (and sort *before* everything else)
@@ -22,7 +22,8 @@ functions
 
 	lessCh: Collation -> char * char -> bool
 	lessCh(collation)(a, b) ==
-		valofCh(a, collation) < valofCh(b, collation);
+		valofCh(a, collation) < valofCh(b, collation)
+	pre a in set elems collation and b in set elems collation;
 
 	less: Collation -> String * String -> bool
 	less(collation)(a, b) ==
@@ -33,6 +34,7 @@ functions
 			else if a(1) <> b(1)
 				then lessCh(collation)(a(1), b(1))
 				else less(collation)(tl a, tl b)
+	pre elems a subset elems collation and elems b subset elems collation
 	measure len a + len b;	-- Strictly decreasing
 
 	ltint: int * int -> bool
