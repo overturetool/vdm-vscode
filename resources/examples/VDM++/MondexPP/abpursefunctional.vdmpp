@@ -94,7 +94,8 @@ public TransferLost: AbWorld * PurseId * PurseId * nat -> AbWorld
    )
   pre frm in set dom wrld.abPurses and
    GetBalance(wrld.abPurses(frm)) >= val
-  post GetTotal(RESULT.abPurses(frm)) =
+  post frm in set dom RESULT.abPurses and
+    GetTotal(RESULT.abPurses(frm)) =
     GetTotal(wrld.abPurses(frm)) and
 	 GetBalance(wrld.abPurses(frm)) >=
     GetBalance(RESULT.abPurses(frm))
