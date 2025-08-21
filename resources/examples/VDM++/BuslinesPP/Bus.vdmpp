@@ -8,7 +8,7 @@ class Bus
 		line : nat;
 
 		-- the route of road the bus is moving along
-		route : seq of Road;
+		route : seq1 of Road;
 		-- what roads are left in the current pass of the route
 		curRoute : seq of Road;
 		-- where are we heading
@@ -19,7 +19,7 @@ class Bus
 		wps : seq of Waypoint;
 		
 	operations
-		public Bus : nat * seq of Road * seq of Waypoint ==> Bus
+		public Bus : nat * seq1 of Road * seq of Waypoint ==> Bus
 		Bus(linenumber, busroute, waypoints)==
 		(
 			line := linenumber;
@@ -29,8 +29,8 @@ class Bus
 
 			wps := waypoints;
 			seats := {};
-		)
-		pre len waypoints > 1; --ensure bus has somewhere to go
+		);
+		--pre len waypoints > 1; --ensure bus has somewhere to go
 
 		public GetOn : set of Passenger ==> ()
 		GetOn(ps) == 
