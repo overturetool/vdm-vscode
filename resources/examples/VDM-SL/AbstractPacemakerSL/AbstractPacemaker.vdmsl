@@ -5,13 +5,13 @@ Trace = seq1 of [Event];
 Event = <A> | <V>;
 
 state Pacemaker of
-  aperiod : nat 
-  vdelay  : nat
+  aperiod : nat1 
+  vdelay  : nat1
 init p == p = mk_Pacemaker(15,10)
 end
 operations
 
-Init: nat * nat ==> ()
+Init: nat1 * nat1 ==> ()
 Init(aperi,vdel) ==
   (aperiod := aperi;
    vdelay := vdel);
