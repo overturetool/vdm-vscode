@@ -541,7 +541,10 @@ TCM2Service (tcm_old, tcm_new) ==
      (is_TrafficLight(tcm_old))	-> TrafficLight2Service(tcm_old, tcm_new),
      (is_RampMeter (tcm_old))   -> RampMeter2Service(tcm_old, tcm_new),
      (is_HardShoulder(tcm_old)) -> HardShoulder2Service(tcm_new),
-     (is_LaneClosure(tcm_old))  -> LaneClosure2Service(tcm_old, tcm_new)
+     (is_LaneClosure(tcm_old))  -> if is_LaneClosure(tcm_new)
+                                    then LaneClosure2Service(tcm_old, tcm_new)
+                                    else undefined,
+     others -> undefined
    end;
 
 MaxSpeed2Service: MaxSpeed +> ServiceId
@@ -592,13 +595,15 @@ ConvertTCM(string) ==
     "TrafficLight" -> mk_TrafficLight(true, STANDARDGREENTIME),
     "RampMeter" -> mk_RampMeter(NORMALREDTIME),
     "HardShoulder" -> mk_HardShoulder(CLOSED),
-    "LaneClosure" -> mk_LaneClosure(0)
+    "LaneClosure" -> mk_LaneClosure(0),
+    others -> undefined
   end;
   
 public ConvertBridge: seq of char +> Object
 ConvertBridge(string) ==
   cases string:
-    "Bridge" -> mk_Bridge(<closed>)
+    "Bridge" -> mk_Bridge(<closed>),
+    others -> undefined
   end;
   
 AddTrig: set of TCM * set of TCM +> set of TCM

@@ -26,7 +26,7 @@ public runwithoutcollab: ()  ==> () --Performance
   	Run("RotterdamNetwork.csv", "TMSconfiguration.csv", 300)
 	);
 	
-  public Run: seq of char * seq1 of char * [nat] ==> () --Performance
+  public Run: seq1 of char * seq1 of char * [nat] ==> () --Performance
   Run(network_file, tms_file, simtime) == (
   	network := ReadRoadNetwork(network_file);
   	for all tid in set dom tms_m do
@@ -60,7 +60,7 @@ public runwithoutcollab: ()  ==> () --Performance
            )
       else error;
       
-  public ReadTMSs: seq of char * Network ==> ()
+  public ReadTMSs: seq1 of char * Network ==> ()
   ReadTMSs(file_n, n) ==
     let mk_(ok,lines) = CSV`flinecount(file_n)
     in
@@ -73,7 +73,7 @@ public runwithoutcollab: ()  ==> () --Performance
             -- - a priority if available (alternatively nil is included)
             -- - possible suggested routes to make diversions avoiding the edge
              let mk_(ok,[tmsid,edgeid,tcm,prio,diversions]) = 
-                  CSV`freadval[seq of ([nat] | seq of char |set of seq of seq of char)](file_n,i),
+                  CSV`freadval[seq of ([nat] | seq1 of char |set of seq of seq1 of char)](file_n,i),
                   tid = tmsid
              in (  --{["A202","S109","S102","A153"],["A42","A43","A152","A153"],["A42","S114","S102","A153"]}
                if not tid in set dom tms_m 
