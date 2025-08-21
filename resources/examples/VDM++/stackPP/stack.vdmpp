@@ -26,6 +26,7 @@ class Stack
     public
     Top : () ==> int
     Top() ==
-      return (hd stack);
+      return (hd stack)
+    pre stack <> [];
 
 end Stack
