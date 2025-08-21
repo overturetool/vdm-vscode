@@ -547,7 +547,7 @@ ToStringIntMeasure(a) == a;
 -------------------------------------
 -- Convert a int < 10 to a String
 -------------------------------------
-public static GetStringFromNum : int  -> seq of char --| nat | real
+public static GetStringFromNum : nat  -> seq of char --| nat | real
 GetStringFromNum(val) == ["0123456789"(val+1)]
 pre val < 10;
   
