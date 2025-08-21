@@ -37,10 +37,10 @@ functions
     private static Track: nat * nat * InterlockingSystem`TrackKind * nat1 -> InterlockingSystem`Track
                    Track(x, y, kind, capacity) == mk_InterlockingSystem`Track(mk_(x, y), kind, capacity);
     
-    private static CircularLine: InterlockingSystem`MetroLineName * seq of InterlockingSystem`Track -> InterlockingSystem`MetroLine
+    private static CircularLine: InterlockingSystem`MetroLineName * seq1 of InterlockingSystem`Track -> InterlockingSystem`MetroLine
                    CircularLine(name, tracks) == InterlockingSystem`CreateCircularLine(name, tracks);
     
-    private static LinearLine: InterlockingSystem`MetroLineName * seq of InterlockingSystem`Track -> InterlockingSystem`MetroLine
+    private static LinearLine: InterlockingSystem`MetroLineName * seq1 of InterlockingSystem`Track -> InterlockingSystem`MetroLine
                    LinearLine(name, tracks) == InterlockingSystem`CreateLinearLine(name, tracks);
     
 operations

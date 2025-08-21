@@ -106,7 +106,8 @@ to be nil.
   ReceiveRequest() ==
     let r = req in
     (req := nil;
-     return r);
+     return r)
+  pre req <> nil;
 \end{vdm_al}
 
 The server sends a response to the buffer using SendResponse. The resp instance 

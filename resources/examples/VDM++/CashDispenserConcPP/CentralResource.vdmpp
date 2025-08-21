@@ -78,7 +78,8 @@ administrate number of tries stored for each card.
 
   pure public NumberOfTriesExceeded : Card`CardId ==> bool
   NumberOfTriesExceeded(cardId) == 
-    return numberOfTries(cardId) >= maxNumberOfTries;
+    return numberOfTries(cardId) >= maxNumberOfTries
+  pre cardId in set dom numberOfTries;
 
   public ResetNumberOfTries : Card`CardId ==> ()
   ResetNumberOfTries(cardId) ==
@@ -86,7 +87,9 @@ administrate number of tries stored for each card.
 
   public IncrNumberOfTries : Card`CardId ==> ()
   IncrNumberOfTries(cardId) ==
-    numberOfTries(cardId) := numberOfTries(cardId) + 1;
+    numberOfTries(cardId) := if cardId in set dom numberOfTries
+                             then numberOfTries(cardId) + 1
+                             else 1;
 \end{vdm_al}
 
 The two operations below are used to update the central resource. 
