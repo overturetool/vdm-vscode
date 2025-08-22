@@ -268,7 +268,8 @@ updated to include larger set values and larger corresponding models
 	         lval := lval union Consistent(ap_lv,m))));
            LeaveCurFn());
     PopEnvL();
-    return lval);
+    return lval)
+  pre fct_e in set dom fn_m;
 \end{vdm_al}
 Here it is worth noting how function application is treated. For all
 possible matches of the argument value against the formal parameter
