@@ -7,8 +7,8 @@ definitions
 
 types
 	Configuration ::
-		gridSide : int
-		sleepTime : int
+		gridSide : nat1
+		sleepTime : nat1
 		pop : Conway`Population;
 
 functions
