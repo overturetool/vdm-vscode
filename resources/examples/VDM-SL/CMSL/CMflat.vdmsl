@@ -24,7 +24,7 @@ types
               <FlareTwoB>  | <FlareOneC>  | <FlareTwoC> |
               <DoNothingA> | <DoNothingB> | <DoNothingC>;
 
-  Plan = seq1 of (FlareType * Delay);
+  Plan = seq of (FlareType * Delay);
 
   Delay = nat;
 
@@ -35,7 +35,8 @@ values
                       mk_(<DoNothingA>,100), mk_(<FlareOneA>,500)],
      <MissileB> |-> [ mk_(<FlareTwoB>,500), mk_(<FlareTwoB>,700)],
      <MissileC> |-> [ mk_(<FlareOneC>,400), mk_(<DoNothingC>,100),
-                      mk_(<FlareTwoC>,400), mk_(<FlareOneC>,500)]
+                      mk_(<FlareTwoC>,400), mk_(<FlareOneC>,500)],
+    <None>      |-> []
     };
 
   missilePriority : map MissileType to nat
@@ -106,7 +107,7 @@ LeavePrefixUnchanged: seq of OutputStep * nat ->
 LeavePrefixUnchanged(output_l, curTime) ==
   [o | o in seq output_l & let mk_(-,t) = o in t <= curTime];
 
-MakeOutputFromPlan : nat * seq1 of Response -> seq of OutputStep
+MakeOutputFromPlan : nat * seq of Response -> seq of OutputStep
 MakeOutputFromPlan(curTime, response) ==
   let output = OutputAtTimeZero(response) in
     [let mk_(flare,t) = o
@@ -114,7 +115,7 @@ MakeOutputFromPlan(curTime, response) ==
        mk_(flare,t+curTime)
     | o in seq output];
 
-OutputAtTimeZero : seq1 of Response -> seq of OutputStep
+OutputAtTimeZero : seq of Response -> seq of OutputStep
 OutputAtTimeZero(response) ==
   let absTimes = RelativeToAbsoluteTimes(response) in
     let mk_(firstFlare,-) = hd absTimes in
