@@ -12,10 +12,9 @@ values
 operations
   public SimpleEnigma: () ==> SimpleEnigma
   SimpleEnigma () ==
-    (dcl cp : Component ;
-     alph := new Alphabet("ABCD");
+    (alph := new Alphabet("ABCD");
      next := new Reflector(4,alph,refcfg);
-     cp := new Rotor(3,3,alph,rotcfg);
+     (dcl cp : Component := new Rotor(3,3,alph,rotcfg);
      cp.SetNext(next);
      next := cp;
      cp := new Rotor(2,2,alph,rotcfg);
@@ -26,7 +25,7 @@ operations
      next := cp;
      cp := new Plugboard(alph,pbcfg);
      cp.SetNext(next);
-     next := cp);
+     next := cp));
 
   public Keystroke : char ==> char
   Keystroke (pch) ==
