@@ -34,10 +34,10 @@ functions
 	tests: () +> seq of bool
 	tests() ==
 	[
-		-- @Printf("------------ controlledTemperature\n")
+		-- @Printf("------------ controlledTemperature (FAILS!)\n")
 		isValidFMIConfigurations(controlledTemperature, nil, nil),
-		-- @Printf("------------ integrateSignal\n")
+		-- @Printf("------------ integrateSignal (FAILS!)\n")
 		isValidFMIConfigurations(integrateSignal, nil, nil),
-		-- @Printf("------------ springMassDamper\n")
+		-- @Printf("------------ springMassDamper (PASSES!)\n")
 		isValidFMIConfigurations(springMassDamper, nil, nil)
 	];

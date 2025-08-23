@@ -1,0 +1,19 @@
+{
+	"configurations": [
+		{
+			"name": "Debug Console",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": null
+		},
+		{
+			"name": "FMI3 tests()",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "DEFAULT",
+			"command": "p tests()"
+		}
+	]
+}
