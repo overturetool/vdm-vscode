@@ -113,7 +113,9 @@ operations			-- Processes that use the functions above to define how to play
 	move(p, pos) ==
 		game(pos) := p
 	pre pos not in set movesSoFar(game) and
-		moveCountLeft(game) > 0
+		moveCountLeft(game) > 0 and
+		not exists p2 : Player &
+			card movesForPlayer(game, p2) < card movesForPlayer(game, p)
 	post game = game~ munion {pos |-> p} and
 		 moveCountSoFar(game) = moveCountSoFar(game~) + 1;
 
