@@ -56,7 +56,8 @@ functions
 
   -- Format a natural number as a string with leading zeros up to a specified length.
   zeroPad: nat * nat1 +> seq of Char`Digit
-  zeroPad(n,w) == Seq`padLeft[char](formatNat(n),'0',w);
+  zeroPad(n,w) == Seq`padLeft[char](formatNat(n),'0',w)
+  pre Seq`pre_padLeft[char](formatNat(n),'0',w);
 
   -- The following functions wrap primitives for convenience, to allow them for example to
   -- serve as function arguments.

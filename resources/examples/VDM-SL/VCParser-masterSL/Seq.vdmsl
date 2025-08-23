@@ -123,8 +123,10 @@ functions
   -- Pad a sequence with a given item such that it is centred in a specified length.
   -- If padded by an odd number, add the extra item on the right.
   padCentre[@a]: seq of @a * @a * nat +> seq of @a
-  padCentre(sq,x,n) == let space = if n <= len sq then 0 else n - len sq
-                       in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n);
+  padCentre(sq,x,n) == 
+    let space = if n <= len sq then 0 else n - len sq
+    in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n)
+  pre pre_padRight[@a](padLeft[@a](sq,x,len sq + (if n <= len sq then 0 else n - len sq div 2)),x,n);
 
 --  trim[@a]: seq of @a * (@a +> bool) +> seq of @a
 --  trim(s, p) == trimpre(reverse(trimpre(reverse s, p)), p);
