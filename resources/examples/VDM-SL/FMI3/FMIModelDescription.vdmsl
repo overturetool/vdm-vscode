@@ -45,7 +45,7 @@ types
 		inv_Annotations'(fmd.annotations),
 
 		-- If these rules use variables at all, they are the "raw" values
-		-- The rules are defined in FmiModelDescription.adoc
+		-- The rules are defined in FmiModelDescription.vdmsl in Rules folder
 		validGenerationDateAndTime(fmd),
 		validModelTypes(fmd),
 		validTypeUnits(fmd),
@@ -58,7 +58,7 @@ types
 		let evs = effectiveVariables(fmd.modelVariables, fmd.typeDefinitions) in
 		[
 			-- If these rules use variables, they use the effective values
-			-- The rules are defined in FmiModelDescription.adoc
+			-- The rules are defined in FmiModelDescription.vdmsl in Rules folder
 			validMinMax(fmd, evs),
 			validStart(fmd, evs),
 			validMultipleSets(fmd, evs),

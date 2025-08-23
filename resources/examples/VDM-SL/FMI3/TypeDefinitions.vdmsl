@@ -32,7 +32,7 @@ types
 	([
 		invs_fmi3TypeDefinition'(tdefs),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeDefinitionNames(tdefs)
 	]);
 
@@ -66,7 +66,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef),
 		validTypeDisplayUnit(tdef)
 	]);
@@ -76,7 +76,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef),
 		validTypeDisplayUnit(tdef)
 	]);
@@ -86,7 +86,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -95,7 +95,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -104,7 +104,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -113,7 +113,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -122,7 +122,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -131,7 +131,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -140,7 +140,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -149,7 +149,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -176,7 +176,7 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef),
 		validEnumerationTypeBijection(tdef)
 	]);
@@ -186,6 +186,6 @@ types
 	([
 		inv_Annotations'(tdef.annotations),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validClockType(tdef)
 	]);

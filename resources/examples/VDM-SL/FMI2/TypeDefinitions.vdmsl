@@ -32,7 +32,7 @@ types
 	([
 		invs_SimpleTypes'(tdefs),
 
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeDefinitionNames(tdefs)
 	]);
 
@@ -53,14 +53,14 @@ types
 	RealType' = RealType
 	inv tdef == allOf
 	([
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
 	IntegerType' = IntegerType
 	inv tdef == allOf
 	([
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validTypeMinMax(tdef)
 	]);
 
@@ -79,6 +79,6 @@ types
 	EnumerationType' = EnumerationType
 	inv tdef == allOf
 	([
-		-- Rules are defined in TypeDefinitions.adoc
+		-- Rules are defined in TypeDefinitions.vdmsl in Rules folder
 		validEnumerationTypeBijection(tdef)
 	]);

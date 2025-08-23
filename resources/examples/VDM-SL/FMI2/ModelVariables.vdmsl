@@ -30,7 +30,7 @@ types
 	ModelVariables' = ModelVariables	-- raw model variables, not effective values
 	inv mvs == allOf
 	([
-		-- Rules are defined in ModelVariables.adoc
+		-- Rules are defined in ModelVariables.vdmsl in Rules folder
 		validModelVariables(mvs),
 		validIndependentVariable(mvs)
 	]);

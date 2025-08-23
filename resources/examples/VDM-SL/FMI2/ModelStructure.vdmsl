@@ -38,6 +38,6 @@ types
 	Unknown' = Unknown
 	inv out == allOf
 	([
-		-- Rules are defined in ModelStructure.adoc
+		-- Rules are defined in ModelStructure.vdmsl in Rules folder
 		validDependencyKinds(out)
 	]);

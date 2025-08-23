@@ -32,7 +32,7 @@ types
 	([
 		invs_fmi3Variable'(mvs),
 
-		-- Rules are defined in ModelVariables.adoc
+		-- Rules are defined in ModelVariables.vdmsl in Rules folder
 		validModelVariables(mvs),
 		validValueReferences(mvs),
 		validAliasNames(mvs),
@@ -178,6 +178,6 @@ types
 	Dimension' = Dimension
 	inv d == allOf
 	([
-		-- Rules are defined in ModelVariables.adoc
+		-- Rules are defined in ModelVariables.vdmsl in Rules folder
 		validStartAndVRef(d)
 	]);

@@ -32,7 +32,7 @@ types
 	([
 		invs_Category'(lcats),
 
-		-- Rules defined in LogCategories.adoc
+		-- Rules defined in LogCategories.vdmsl in Rules folder
 		validLogCategories(lcats)
 	]);
 

@@ -30,7 +30,7 @@ types
 	DefaultExperiment' = [DefaultExperiment]
 	inv dexp == dexp <> nil => allOf
 	([
-		-- The rules are defined in DefaultExperiment.adoc
+		-- The rules are defined in DefaultExperiment.vdmsl in Rules folder
 		validTolerance(dexp),
 		validStartStopTime(dexp),
 		validStepSize(dexp)

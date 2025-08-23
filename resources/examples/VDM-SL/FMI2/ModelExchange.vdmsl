@@ -30,7 +30,7 @@ types
 	ModelExchange' = [ModelExchange]
 	inv me == me <> nil => allOf
 	([
-		-- Rules are defined in ModelExchange.adoc
+		-- Rules are defined in ModelExchange.vdmsl in Rules folder
 		validMEModelIdentifier(me),
 		validMESourceFiles(me)
 	]);

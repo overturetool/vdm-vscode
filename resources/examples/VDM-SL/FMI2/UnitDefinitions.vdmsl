@@ -32,7 +32,7 @@ types
 	([
 		invs_Unit'(units),
 
-		-- Rules are defined in UnitDefinitions.adoc
+		-- Rules are defined in UnitDefinitions.vdmsl in Rules folder
 		validUnitNames(units)
 	]);
 
@@ -42,7 +42,7 @@ types
 		invs_DisplayUnit'(unit.displayUnit),
 		inv_BaseUnit'(unit.baseUnit),
 
-		-- Rules are defined in UnitDefinitions.adoc
+		-- Rules are defined in UnitDefinitions.vdmsl in Rules folder
 		validDisplayUnitNames(unit)
 	]);
 

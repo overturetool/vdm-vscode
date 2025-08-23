@@ -32,6 +32,6 @@ types
 	([
 		inv_Annotations'(se.annotations),
 
-		-- Rules are defined in ScheduledExecution.adoc
+		-- Rules are defined in ScheduledExecution.vdmsl in Rules folder
 		validSEModelIdentifier(se)
 	]);

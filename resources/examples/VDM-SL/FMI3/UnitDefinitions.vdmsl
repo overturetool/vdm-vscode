@@ -32,7 +32,7 @@ types
 	([
 		invs_Unit'(units),
 
-		-- Rules are defined in UnitDefinitions.adoc
+		-- Rules are defined in UnitDefinitions.vdmsl in Rules folder
 		validUnitNames(units)
 	]);
 
@@ -43,7 +43,7 @@ types
 		inv_BaseUnit'(unit.baseUnit),
 		inv_Annotations'(unit.annotations),
 
-		-- Rules are defined in UnitDefinitions.adoc
+		-- Rules are defined in UnitDefinitions.vdmsl in Rules folder
 		validDisplayUnitNames(unit)
 	]);
 
@@ -63,7 +63,7 @@ types
 		[
 			inv_Annotations'(edu.annotations),
 
-			-- Rules are defined in UnitDefinitions.adoc
+			-- Rules are defined in UnitDefinitions.vdmsl in Rules folder
 			validInverseAndOffset(edu)
 		]
 	);

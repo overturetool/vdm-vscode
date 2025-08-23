@@ -32,7 +32,7 @@ types
 	([
 		inv_Annotations'(dexp.annotations),
 
-		-- The rules are defined in DefaultExperiment.adoc
+		-- The rules are defined in DefaultExperiment.vdmsl in Rules folder
 		validTolerance(dexp),
 		validStartStopTime(dexp),
 		validStepSize(dexp)

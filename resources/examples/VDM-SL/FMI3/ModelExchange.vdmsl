@@ -32,6 +32,6 @@ types
 	([
 		inv_Annotations'(me.annotations),
 
-		-- Rules are defined in ModelExchange.adoc
+		-- Rules are defined in ModelExchange.vdmsl in Rules folder
 		validMEModelIdentifier(me)
 	]);

@@ -46,7 +46,7 @@ types
 	CoordinateSystem' = [CoordinateSystem]
 	inv cs == cs <> nil => allOf
 	([
-		-- Rules are defined in Terminals.adoc
+		-- Rules are defined in Terminals.vdmsl in Rules folder
 		validCoordinateSystem(cs)
 	]);
 
@@ -68,7 +68,7 @@ types
 		inv_Terminals'(mk_(t.terminal, fmd)),		-- RECURSIVE!!
 		inv_Annotations'(t.annotations),
 
-		-- Rules are defined in Terminals.adoc
+		-- Rules are defined in Terminals.vdmsl in Rules folder
 		validTerminalMemberVariables(t, fmd),
 		validTerminalGraphicalRepresentation(t),
 		validTerminalStreamMemberVariables(t, fmd)

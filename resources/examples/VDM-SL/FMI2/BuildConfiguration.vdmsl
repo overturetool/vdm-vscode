@@ -50,7 +50,7 @@ types
 		invs_IncludeDirectory'(sfs.includeDirectory),
 		inv_Annotations'(sfs.annotations),
 
-		-- Rules are defined in BuildConfiguration.adoc
+		-- Rules are defined in BuildConfiguration.vdmsl in Rules folder
 		validCompilerOptions(sfs),
 		validSourceFileNames(sfs),
 		validPreprocessorDefinitionNames(sfs),
