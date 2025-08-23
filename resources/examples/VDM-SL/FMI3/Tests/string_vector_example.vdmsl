@@ -1,0 +1,94 @@
+/**
+ * VDM value created from TestXML/string_vector_example.xml
+ */
+values
+    string_vector_example =
+    mk_FmiModelDescription
+    (
+        mk_Location("string_vector_example.xml", 7),
+        "3.0",  -- fmiVersion
+        "",  -- modelName
+        "",  -- instantiationToken
+        "",  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        "2022-05-01T20:00:00Z",  -- generationDateAndTime
+        nil,  -- variableNamingConvention
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("string_vector_example.xml", 8),
+            "string_start_values",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            nil,  -- canHandleVariableCommunicationStepSize
+            nil,  -- fixedInternalStepSize
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- recommendedIntermediateInputSmoothness
+            nil,  -- providesIntermediateUpdate
+            nil,  -- mightReturnEarlyFromDoStep
+            nil,  -- canReturnEarlyAfterIntermediateUpdate
+            nil,  -- hasEventMode
+            nil,  -- providesEvaluateDiscreteStates
+            nil   -- annotations
+        ),
+        nil,  -- scheduledExecution
+        nil,  -- unitDefinitions
+        nil,  -- typeDefinitions
+        nil,  -- logCategories
+        nil,  -- defaultExperiment
+        [
+            mk_String
+            (
+                mk_Location("string_vector_example.xml", 11),
+                "strings",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("string_vector_example.xml", 12),
+                        3,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                -- start
+                [
+                    "First string",
+                    "Second string",
+                    "Third string"
+                ],
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("string_vector_example.xml", 19),
+            nil,  -- output
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            nil,  -- initialUnknown
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+

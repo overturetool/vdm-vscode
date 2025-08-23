@@ -1,0 +1,97 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+
+/**
+ * The model definition for the Spring Mass Damper example in section 4.3.2 on p111
+ */
+values
+	loc : Location = mk_Location("dummy", 1);	-- Dummy location
+
+	springMassDamper = mk_FmiModelDescription
+	(
+		-- Attributes
+		loc,
+		"2.0", "MassSpringDamper", "GUID", nil, nil, nil, nil, nil, nil, nil, <structured>, nil,
+
+		-- Model types
+		mk_ModelExchange(loc, "MSD", nil, nil, nil, nil, nil, nil, nil, nil),
+		nil,
+
+		-- Unit definitions
+		nil,
+
+		-- TypeDefinitions
+		[
+			mk_SimpleType(loc, "Modelica.SIunits.Inertia",         nil, mk_RealType(loc, nil, nil, nil, nil, 0, nil, nil, nil)),
+			mk_SimpleType(loc, "Modelica.SIunits.Torque",          nil, mk_RealType(loc, nil, nil, nil, nil, nil, nil, nil, nil)),
+			mk_SimpleType(loc, "Modelica.SIunits.AngularVelocity", nil, mk_RealType(loc, nil, nil, nil, nil, nil, nil, nil, nil)),
+			mk_SimpleType(loc, "Modelica.SIunits.Angle",           nil, mk_RealType(loc, nil, nil, nil, nil, nil, nil, nil, nil))
+		],
+
+		-- Log categories
+		nil,
+
+		-- Default experiment
+		nil,
+
+		-- Vendor annotations
+		nil,
+
+		-- ScalarVariables
+		[
+/* 1 */		mk_ScalarVariable(loc, "inertial.J", 0, nil, <parameter>, <fixed>, nil, nil,
+					mk_Real(loc, "Modelica.SIunits.Inertia", nil, nil, nil, nil, nil, nil, nil, nil, 1, nil, nil), nil),
+
+/* 2 */		mk_ScalarVariable(loc, "torque.tau", 1, nil, <input>, nil, nil, nil,
+					mk_Real(loc, "Modelica.SIunits.Torque", nil, nil, nil, nil, nil, nil, nil, nil, 0, nil, nil), nil),
+
+/* 3 */		mk_ScalarVariable(loc, "inertial.phi", 2, nil, <output>, nil, nil, nil,
+					mk_Real(loc, "Modelica.SIunits.Angle", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), nil),
+
+/* 4 */		mk_ScalarVariable(loc, "inertial.w", 3, nil, <output>, nil, nil, nil,
+					mk_Real(loc, "Modelica.SIunits.AngularVelocity", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), nil)
+		],
+
+		mk_ModelStructure
+		(
+			loc,
+			-- Outputs
+			[
+				mk_Unknown(loc, 3, nil, nil),
+				mk_Unknown(loc, 4, nil, nil)
+			],
+			-- Derivatives
+			nil,
+			-- InitialUnknowns
+			[
+				mk_Unknown(loc, 3, nil, nil),
+				mk_Unknown(loc, 4, nil, nil)
+			]
+		)
+	);

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription fmiVersion="3.0-rc.2"
+	modelName="Test FMU" instantiationToken="{111-222-333-444}">
+	<CoSimulation modelIdentifier="Test_FMU" />
+	<UnitDefinitions>
+		<Unit name="rad">
+		<BaseUnit rad="1"/>
+		<DisplayUnit name="deg" factor="57.2957795130823"/>
+		</Unit>
+		<Unit name="rad/s">
+		<BaseUnit s="-1" rad="1"/>
+		</Unit>
+		<Unit name="kg.m2">
+		<BaseUnit kg="1" m="2"/>
+		</Unit>
+		<Unit name="N.m">
+		<BaseUnit kg="1" m="2" s="-2"/>
+		</Unit>
+	</UnitDefinitions>
+	<TypeDefinitions>
+		<Float64Type name="Modelica.Units.SI.Inertia" quantity="MomentOfInertia" unit="kg.m2" min="0.0"/>
+		<Float64Type name="Modelica.Units.SI.Torque" quantity="Torque" unit="N.m"/>
+		<Float64Type name="Modelica.Units.SI.AngularVelocity" quantity="AngularVelocity" unit="rad/s"/>
+		<Float64Type name="Modelica.Units.SI.Angle" quantity="Angle" unit="rad"/>
+	</TypeDefinitions>
+	<ModelVariables>
+		<Float64 name="varname" valueReference="0" declaredType="Modelica.Units.SI.Inertia" />
+		<Int16 name="short" valueReference="1" />
+	</ModelVariables>
+	<ModelStructure>
+	</ModelStructure>
+</fmiModelDescription>

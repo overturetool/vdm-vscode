@@ -1,0 +1,529 @@
+/**
+ * VDM value created from TestXML/variable_types.xml
+ */
+values
+    variable_types =
+    mk_FmiModelDescription
+    (
+        mk_Location("variable_types.xml", 2),
+        "3.0",  -- fmiVersion
+        "VariableTypes",  -- modelName
+        "",  -- instantiationToken
+        nil,  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        nil,  -- generationDateAndTime
+        nil,  -- variableNamingConvention
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("variable_types.xml", 4),
+            "VariableTypes",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            nil,  -- canHandleVariableCommunicationStepSize
+            nil,  -- fixedInternalStepSize
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- recommendedIntermediateInputSmoothness
+            nil,  -- providesIntermediateUpdate
+            nil,  -- mightReturnEarlyFromDoStep
+            nil,  -- canReturnEarlyAfterIntermediateUpdate
+            nil,  -- hasEventMode
+            nil,  -- providesEvaluateDiscreteStates
+            nil   -- annotations
+        ),
+        nil,  -- scheduledExecution
+        nil,  -- unitDefinitions
+        nil,  -- typeDefinitions
+        nil,  -- logCategories
+        nil,  -- defaultExperiment
+        [
+            mk_Float32
+            (
+                mk_Location("variable_types.xml", 7),
+                "Float32",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    XSD`NEGATIVE_INFINITY,
+                    -3.402823E+38,
+                    -1.175494E-38,
+                    XSD`NOT_A_NUMBER,
+                    1.175494E-38,
+                    3.402823E+38,
+                    XSD`POSITIVE_INFINITY
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 8),
+                        7,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("variable_types.xml", 10),
+                "Float64",  -- name
+                2,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    XSD`NEGATIVE_INFINITY,
+                    -1.79769E+308,
+                    -2.22507E-308,
+                    XSD`NOT_A_NUMBER,
+                    2.22507E-308,
+                    1.79769E+308,
+                    XSD`POSITIVE_INFINITY
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 11),
+                        7,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Int8
+            (
+                mk_Location("variable_types.xml", 13),
+                "Int8",  -- name
+                3,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    -128,
+                    127
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 14),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_UInt8
+            (
+                mk_Location("variable_types.xml", 16),
+                "UInt8",  -- name
+                4,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    0,
+                    255
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 17),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Int16
+            (
+                mk_Location("variable_types.xml", 19),
+                "Int16",  -- name
+                5,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    -32768,
+                    32767
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 20),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_UInt16
+            (
+                mk_Location("variable_types.xml", 22),
+                "UInt16",  -- name
+                6,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    0,
+                    65535
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 23),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Int32
+            (
+                mk_Location("variable_types.xml", 25),
+                "Int32",  -- name
+                7,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    -2147483648,
+                    2147483647
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 26),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_UInt32
+            (
+                mk_Location("variable_types.xml", 28),
+                "UInt32",  -- name
+                8,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    0,
+                    4294967295
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 29),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Int64
+            (
+                mk_Location("variable_types.xml", 31),
+                "Int64",  -- name
+                9,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    -9223372036854775808,
+                    9223372036854775807
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 32),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_UInt64
+            (
+                mk_Location("variable_types.xml", 34),
+                "UInt64",  -- name
+                10,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    0,
+                    18446744073709551615
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 35),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Boolean
+            (
+                mk_Location("variable_types.xml", 37),
+                "Boolean",  -- name
+                11,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                -- start
+                [
+                    true,
+                    false,
+                    true,
+                    false
+                ],
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 38),
+                        2,  -- start
+                        nil   -- valueReference
+                    ),
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 39),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_String
+            (
+                mk_Location("variable_types.xml", 41),
+                "String",  -- name
+                12,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 42),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                -- start
+                [
+                    "foo",
+                    "bar"
+                ],
+                nil   -- alias
+            ),
+            mk_Binary
+            (
+                mk_Location("variable_types.xml", 46),
+                "Binary",  -- name
+                13,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                <exact>,  -- initial
+                nil,  -- mimeType
+                28,  -- maxSize
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("variable_types.xml", 47),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                -- start
+                [
+                    "3c3f",
+                    "686572"
+                ],
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("variable_types.xml", 53),
+            nil,  -- output
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            nil,  -- initialUnknown
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+

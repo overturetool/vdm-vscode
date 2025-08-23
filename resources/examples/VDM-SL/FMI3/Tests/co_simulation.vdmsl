@@ -1,0 +1,385 @@
+/**
+ * VDM value created from TestXML/co_simulation.xml
+ */
+values
+    co_simulation =
+    mk_FmiModelDescription
+    (
+        mk_Location("co_simulation.xml", 9),
+        "3.0",  -- fmiVersion
+        "MyLibrary.SpringMassDamper",  -- modelName
+        "{8c4e810f-3df3-4a00-8276-176fa3c9f9e0}",  -- instantiationToken
+        "Rotational Spring Mass Damper System",  -- description
+        nil,  -- author
+        "1.0",  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        "2022-05-01T16:57:33Z",  -- generationDateAndTime
+        <structured>,  -- variableNamingConvention
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("co_simulation.xml", 12),
+            "MyLibrary_SpringMassDamper",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            true,  -- canHandleVariableCommunicationStepSize
+            nil,  -- fixedInternalStepSize
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- recommendedIntermediateInputSmoothness
+            nil,  -- providesIntermediateUpdate
+            nil,  -- mightReturnEarlyFromDoStep
+            nil,  -- canReturnEarlyAfterIntermediateUpdate
+            nil,  -- hasEventMode
+            nil,  -- providesEvaluateDiscreteStates
+            nil   -- annotations
+        ),
+        nil,  -- scheduledExecution
+        [
+            mk_Unit
+            (
+                mk_Location("co_simulation.xml", 14),
+                "rad",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("co_simulation.xml", 15),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    1,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                -- displayUnit
+                [
+                    mk_DisplayUnit
+                    (
+                        mk_Location("co_simulation.xml", 16),
+                        "deg",  -- name
+                        57.2957795130823,  -- factor
+                        nil,  -- offset
+                        nil,  -- inverse
+                        nil   -- annotations
+                    )
+                ],
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("co_simulation.xml", 18),
+                "rad/s",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("co_simulation.xml", 19),
+                    nil,  -- kg
+                    nil,  -- m
+                    -1,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    1,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("co_simulation.xml", 21),
+                "kg.m2",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("co_simulation.xml", 22),
+                    1,  -- kg
+                    2,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("co_simulation.xml", 24),
+                "N.m",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("co_simulation.xml", 25),
+                    1,  -- kg
+                    2,  -- m
+                    -2,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            )
+        ],
+        [
+            mk_Float64Type
+            (
+                mk_Location("co_simulation.xml", 29),
+                "Modelica.Units.SI.Inertia",  -- name
+                nil,  -- description
+                "MomentOfInertia",  -- quantity
+                "kg.m2",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                0.0,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            ),
+            mk_Float64Type
+            (
+                mk_Location("co_simulation.xml", 30),
+                "Modelica.Units.SI.Torque",  -- name
+                nil,  -- description
+                "Torque",  -- quantity
+                "N.m",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            ),
+            mk_Float64Type
+            (
+                mk_Location("co_simulation.xml", 31),
+                "Modelica.Units.SI.AngularVelocity",  -- name
+                nil,  -- description
+                "AngularVelocity",  -- quantity
+                "rad/s",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            ),
+            mk_Float64Type
+            (
+                mk_Location("co_simulation.xml", 32),
+                "Modelica.Units.SI.Angle",  -- name
+                nil,  -- description
+                "Angle",  -- quantity
+                "rad",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            )
+        ],
+        nil,  -- logCategories
+        mk_DefaultExperiment
+        (
+            mk_Location("co_simulation.xml", 34),
+            0.0,  -- startTime
+            3.0,  -- stopTime
+            0.0001,  -- tolerance
+            nil,  -- stepSize
+            nil   -- annotations
+        ),
+        [
+            mk_Float64
+            (
+                mk_Location("co_simulation.xml", 38),
+                "inertia1.J",  -- name
+                1073741824,  -- valueReference
+                "Moment of load inertia",  -- description
+                <parameter>,  -- causality
+                <fixed>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                "Modelica.Units.SI.Inertia",  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    1
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("co_simulation.xml", 41),
+                "torque.tau",  -- name
+                536870912,  -- valueReference
+                "Accelerating torque acting at flange (= -flange.tau)",  -- description
+                <input>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                "Modelica.Units.SI.Torque",  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    0
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("co_simulation.xml", 44),
+                "inertia1.phi",  -- name
+                805306368,  -- valueReference
+                "Absolute rotation angle of component",  -- description
+                <output>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                "Modelica.Units.SI.Angle",  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil,  -- start
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("co_simulation.xml", 47),
+                "inertia1.w",  -- name
+                805306369,  -- valueReference
+                "Absolute angular velocity of component (= der(phi))",  -- description
+                <output>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                "Modelica.Units.SI.AngularVelocity",  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil,  -- start
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("co_simulation.xml", 49),
+            -- output
+            [
+                mk_Output
+                (
+                    mk_Location("co_simulation.xml", 50),
+                    805306368,  -- valueReference
+                    nil,  -- dependencies
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                ),
+                mk_Output
+                (
+                    mk_Location("co_simulation.xml", 51),
+                    805306369,  -- valueReference
+                    nil,  -- dependencies
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                )
+            ],
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            -- initialUnknown
+            [
+                mk_InitialUnknown
+                (
+                    mk_Location("co_simulation.xml", 52),
+                    805306368,  -- valueReference
+                    nil,  -- dependencies
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                ),
+                mk_InitialUnknown
+                (
+                    mk_Location("co_simulation.xml", 53),
+                    805306369,  -- valueReference
+                    nil,  -- dependencies
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                )
+            ],
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+

@@ -1,0 +1,374 @@
+/**
+ * VDM value created from TestXML/scheduled_execution.xml
+ */
+values
+    scheduled_execution =
+    mk_FmiModelDescription
+    (
+        mk_Location("scheduled_execution.xml", 2),
+        "3.0",  -- fmiVersion
+        "ThreeInputClocks",  -- modelName
+        "ThreeInputClocks",  -- instantiationToken
+        nil,  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        nil,  -- generationDateAndTime
+        nil,  -- variableNamingConvention
+        nil,  -- modelExchange
+        nil,  -- coSimulation
+        mk_ScheduledExecution
+        (
+            mk_Location("scheduled_execution.xml", 3),
+            "ThreeInputClocks",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            nil   -- annotations
+        ),
+        nil,  -- unitDefinitions
+        nil,  -- typeDefinitions
+        [
+            mk_Category
+            (
+                mk_Location("scheduled_execution.xml", 5),
+                "logStatusError",  -- name
+                "Log error messages",  -- description
+                nil   -- annotations
+            )
+        ],
+        mk_DefaultExperiment
+        (
+            mk_Location("scheduled_execution.xml", 7),
+            0,  -- startTime
+            6,  -- stopTime
+            nil,  -- tolerance
+            0.001,  -- stepSize
+            nil   -- annotations
+        ),
+        [
+            mk_Float64
+            (
+                mk_Location("scheduled_execution.xml", 11),
+                "AIn1",  -- name
+                0,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    5
+                ],
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    0
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("scheduled_execution.xml", 13),
+                "AIn2",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    5
+                ],
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    0
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("scheduled_execution.xml", 14),
+                "AOut",  -- name
+                2,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    5
+                ],
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil,  -- start
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("scheduled_execution.xml", 18),
+                "BIn",  -- name
+                3,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    6
+                ],
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    0
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("scheduled_execution.xml", 19),
+                "BOut",  -- name
+                4,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    6
+                ],
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil,  -- start
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Clock
+            (
+                mk_Location("scheduled_execution.xml", 24),
+                "10msClock",  -- name
+                5,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- declaredType
+                nil,  -- canBeDeactivated
+                1,  -- priority
+                <constant>,  -- intervalVariability
+                0.01,  -- intervalDecimal
+                nil,  -- shiftDecimal
+                nil,  -- supportsFraction
+                nil,  -- resolution
+                nil,  -- intervalCounter
+                nil,  -- shiftCounter
+                nil,  -- annotations
+                nil   -- alias
+            ),
+            mk_Clock
+            (
+                mk_Location("scheduled_execution.xml", 27),
+                "AperiodicClock",  -- name
+                6,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    5
+                ],
+                nil,  -- declaredType
+                nil,  -- canBeDeactivated
+                2,  -- priority
+                <countdown>,  -- intervalVariability
+                nil,  -- intervalDecimal
+                nil,  -- shiftDecimal
+                nil,  -- supportsFraction
+                nil,  -- resolution
+                nil,  -- intervalCounter
+                nil,  -- shiftCounter
+                nil,  -- annotations
+                nil   -- alias
+            ),
+            mk_Clock
+            (
+                mk_Location("scheduled_execution.xml", 30),
+                "OutputClock",  -- name
+                7,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                -- clocks
+                [
+                    5
+                ],
+                nil,  -- declaredType
+                nil,  -- canBeDeactivated
+                nil,  -- priority
+                <triggered>,  -- intervalVariability
+                nil,  -- intervalDecimal
+                nil,  -- shiftDecimal
+                nil,  -- supportsFraction
+                nil,  -- resolution
+                nil,  -- intervalCounter
+                nil,  -- shiftCounter
+                nil,  -- annotations
+                nil   -- alias
+            ),
+            mk_Clock
+            (
+                mk_Location("scheduled_execution.xml", 33),
+                "50msClock",  -- name
+                8,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- declaredType
+                nil,  -- canBeDeactivated
+                3,  -- priority
+                <constant>,  -- intervalVariability
+                0.05,  -- intervalDecimal
+                nil,  -- shiftDecimal
+                nil,  -- supportsFraction
+                nil,  -- resolution
+                nil,  -- intervalCounter
+                nil,  -- shiftCounter
+                nil,  -- annotations
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("scheduled_execution.xml", 35),
+            -- output
+            [
+                mk_Output
+                (
+                    mk_Location("scheduled_execution.xml", 36),
+                    2,  -- valueReference
+                    -- dependencies
+                    [
+                        0,
+                        1,
+                        5
+                    ],
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                ),
+                mk_Output
+                (
+                    mk_Location("scheduled_execution.xml", 37),
+                    4,  -- valueReference
+                    -- dependencies
+                    [
+                        3,
+                        6
+                    ],
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                ),
+                mk_Output
+                (
+                    mk_Location("scheduled_execution.xml", 38),
+                    7,  -- valueReference
+                    -- dependencies
+                    [
+                        5
+                    ],
+                    nil,  -- dependenciesKind
+                    nil   -- annotations
+                )
+            ],
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            nil,  -- initialUnknown
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+
