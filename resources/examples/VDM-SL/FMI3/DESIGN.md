@@ -12,7 +12,7 @@ So the following approach was taken:
 - Each VDM record type has a twin, with an apostrophe in its name, which is set equal to the unchecked type with the addition of an invariant.
 - The record invariants explicitly call the invariant functions of their constituent record types, and collect the boolean results into a seq of bool.
 - A helper function called `allOf([...])` asserts that every element in the sequene is true.
-- In addition to calling the invariants of their constituent fields, an invariant may also invoke a `validXXX(field)` function, which checks the validity of a particular field or fields in the record (typically those that require consistency between field values, or which do not have subfields).
+- In addition to calling the invariants of their constituent fields, an invariant may also invoke several `validXXX(...)` functions, which check the validity of a particular fields in the record (typically those that require consistency between field values, or which do not have subfields).
 
 For example:
 ```
@@ -37,11 +37,11 @@ types
 	]);
 
 functions
-	-- @DocLink("<FMI2_STANDARD> Section 2.2.2, Page 35")
 	invs_Unit': [ set of Unit | seq of Unit ] +> bool
 	invs_Unit'(args) ==
 		apply[Unit](inv_Unit', args);
 
+	-- @DocLink("<FMI2_STANDARD> Section 2.2.2, Page 35")
 	validUnitNames: UnitDefinitions +> bool
 	validUnitNames(units) ==
 		-- @OnFail("%NAME: Unit names must be unique")
