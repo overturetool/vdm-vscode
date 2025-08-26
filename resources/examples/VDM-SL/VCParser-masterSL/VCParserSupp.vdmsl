@@ -35,39 +35,39 @@ Note this module depends on modules Char, Numeric and Seq that are in the ISO860
     http://overturetool.org/download/examples/VDMSL/
 
 ***/
-imports from VCParser values
-                            digit renamed digit
-                            lowerAlphabet renamed lowerAlphabet
-                            upperAlphabet renamed upperAlphabet
-                            alphabet renamed alphabet
-                      types PARSER renamed PARSER
-                            SOURCE renamed SOURCE
-                            PARSED renamed PARSED
-                            TREE   renamed TREE
-                            ERROR  renamed ERROR
-                            LABEL  renamed LABEL
-                      functions label renamed label
-                                either renamed either
-                                concat renamed concat
-                                iterate renamed iterate
-                                takeChar renamed takeChar,
+imports from VCParser types PARSER renamed PARSER;
+                            SOURCE renamed SOURCE;
+                            PARSED renamed PARSED;
+                            TREE   renamed TREE;
+                            ERROR  renamed ERROR;
+                            LABEL  renamed LABEL;
+                      functions label renamed label;
+                                either renamed either;
+                                concat renamed concat;
+                                iterate renamed iterate;
+                                takeChar renamed takeChar;
+                      values digit renamed digit;
+                                lowerAlphabet renamed lowerAlphabet;
+                                upperAlphabet renamed upperAlphabet;
+                                alphabet renamed alphabet,
+
         from Seq all,
         from Numeric all,
         from Char all
-exports values lowerAlphanum, upperAlphanum, alphanum, octal, hex: PARSER
-        functions takeNumeric      : [nat1] * [nat1] -> PARSER
-                  takeFixedNumeric : nat1 -> PARSER
-                  takeBoundedString: seq1 of char * PARSER * nat * nat -> PARSER
-                  takeUpto         : seq1 of char * [PARSER] +> PARSER
-                  takeUptoOneOf    : seq of seq1 of char * [seq1 of char] * [PARSER] +> PARSER
-                  getContent       : LABEL * TREE +> seq of char
-                  getContentNat    : LABEL * TREE +> nat
-                  getTrees         : LABEL * TREE +> seq of TREE
-                  getTree          : LABEL * TREE +> TREE
-                  isEmpty          : TREE +> bool
-                  prune            : PARSED -> PARSED
-                  pruneTree        : TREE -> TREE
-                  format           : PARSED -> seq of char
+exports values lowerAlphanum, upperAlphanum, alphanum, octal, hex: PARSER;
+        functions takeNumeric      : [nat1] * [nat1] -> PARSER;
+                  takeFixedNumeric : nat1 -> PARSER;
+                  takeBoundedString: seq1 of char * PARSER * nat * nat -> PARSER;
+                  takeUpto         : seq1 of char * [PARSER] +> PARSER;
+                  takeUptoOneOf    : seq of seq1 of char * [seq1 of char] * [PARSER] +> PARSER;
+                  getContent       : LABEL * TREE +> seq of char;
+                  getContentNat    : LABEL * TREE +> nat;
+                  getTrees         : LABEL * TREE +> seq of TREE;
+                  getTree          : LABEL * TREE +> TREE;
+                  isEmpty          : TREE +> bool;
+                  prune            : PARSED -> PARSED;
+                  pruneTree        : TREE -> TREE;
+                  format           : PARSED -> seq of char;
                   formatTree       : TREE * nat -> seq of char
 
 definitions
@@ -167,7 +167,7 @@ functions
     -- Get the character content as a natural number.
     getContentNat: LABEL * TREE +> nat
     getContentNat(lbl, tree) == Numeric`decodeNat(getContent(lbl,tree))
-    pre pre_getContent(lbl, tree) and Char`isDigits(tree.contents);
+    pre pre_getContent(lbl, tree) and Char`isDigits(tree.contents) and tree.contents <> [];
 
     -- Get the sequence of sub trees.
     getTrees: LABEL * TREE +> seq of TREE

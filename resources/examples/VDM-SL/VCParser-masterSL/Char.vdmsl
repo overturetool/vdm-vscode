@@ -7,34 +7,34 @@
 */
 module Char
 imports from Seq all
-exports types struct Upper
-              struct Lower
-              struct Letter
-              struct Digit
-              struct Octal
-              struct Hex
-              struct AlphaNumUpper
-              struct AlphaNumLower
-              struct AlphaNum
-              struct Space
-              struct WhiteSpace
-              struct Phrase
-              struct PhraseUpper
-              struct PhraseLower
-              struct Text
-              struct TextUpper
+exports types struct Upper;
+              struct Lower;
+              struct Letter;
+              struct Digit;
+              struct Octal;
+              struct Hex;
+              struct AlphaNumUpper;
+              struct AlphaNumLower;
+              struct AlphaNum;
+              struct Space;
+              struct WhiteSpace;
+              struct Phrase;
+              struct PhraseUpper;
+              struct PhraseLower;
+              struct Text;
+              struct TextUpper;
               struct TextLower
-        values SP, TB, CR, LF: char
-               WHITE_SPACE, UPPER, LOWER, LETTER, DIGIT, OCTAL, HEX, ALPHANUMUPPER, ALPHANUMLOWER, ALPHANUM, PUNCTUATION: set of char
-               UPPERS, LOWERS, LETTERS, DIGITS, OCTALS, HEXS, ALPHANUMUPPERS, ALPHANUMLOWERS, ALPHANUMS, PUNCTUATIONS: seq of char
-        functions toLower: Upper +> Lower
-                  toUpper: Lower +> Upper
-                  isDigit: char +> bool
-                  isDigits: seq of char +> bool
-                  isWhiteSpace: char +> bool
-                  isWhiteSpaces: seq of char +> bool
-                  trimWhite: seq of char +> seq of char
-                  filterWhite: seq of char +> seq of char
+        values SP, TB, CR, LF: char;
+               WHITE_SPACE, UPPER, LOWER, LETTER, DIGIT, OCTAL, HEX, ALPHANUMUPPER, ALPHANUMLOWER, ALPHANUM, PUNCTUATION: set of char;
+               UPPERS, LOWERS, LETTERS, DIGITS, OCTALS, HEXS, ALPHANUMUPPERS, ALPHANUMLOWERS, ALPHANUMS, PUNCTUATIONS: seq of char;
+        functions toLower: Upper +> Lower;
+                  toUpper: Lower +> Upper;
+                  isDigit: char +> bool;
+                  isDigits: seq of char +> bool;
+                  isWhiteSpace: char +> bool;
+                  isWhiteSpaces: seq of char +> bool;
+                  trimWhite: seq of char +> seq of char;
+                  filterWhite: seq of char +> seq of char;
 
 definitions
 

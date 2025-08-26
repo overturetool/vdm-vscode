@@ -6,32 +6,32 @@
 */
 module Seq
 imports from Numeric all
-exports functions sum: seq of real +> real
-                  prod: seq of real +> real
-                  min: seq1 of real +> real
-                  max: seq1 of real +> real
-                  inSeq[@a]: @a * seq of @a +> bool
-                  indexOf[@a]: @a * seq1 of @a +> nat1
-                  indexOfSeq[@a]: seq1 of @a * seq1 of @a +> nat1
-                  indexOfSeqOpt[@a]: seq1 of @a * seq1 of @a +> [nat1]
-                  numOccurs[@a]: @a * seq of @a +> nat
-                  permutation[@a]: seq of @a * seq of @a +> bool
-                  preSeq[@a]: seq of @a * seq of @a +> bool
-                  postSeq[@a]: seq of @a * seq of @a +> bool
-                  subSeq[@a]: seq of @a * seq of @a +> bool
-                  replicate[@a]: nat * @a +> seq of @a
-                  padLeft[@a]: seq of @a * @a * nat +> seq of @a
-                  padRight[@a]: seq of @a * @a * nat +> seq of @a
-                  padCentre[@a]: seq of @a * @a * nat +> seq of @a
-                  dropWhile[@a]: (@a +> bool) * seq of @a +> seq of @a
-                  xform[@a,@b]: (@a +> @b) * seq of @a +> seq of @b
-                  fold[@a]: (@a * @a +> @a) * @a * seq of @a +> @a
-                  fold1[@a]: (@a * @a +> @a) * seq1 of @a +> @a
-                  zip[@a,@b]: seq of @a * seq of @b +> seq of (@a * @b)
-                  unzip[@a,@b]: seq of (@a * @b) +> seq of @a * seq of @b
-                  isDistinct[@a]: seq of @a +> bool
-                  app[@a]: seq of @a * seq of @a +> seq of @a
-                  setOf[@a]: seq of @a +> set of @a
+exports functions sum: seq of real +> real;
+                  prod: seq of real +> real;
+                  min: seq1 of real +> real;
+                  max: seq1 of real +> real;
+                  inSeq[@a]: @a * seq of @a +> bool;
+                  indexOf[@a]: @a * seq1 of @a +> nat1;
+                  indexOfSeq[@a]: seq of @a * seq of @a +> nat1;
+                  indexOfSeqOpt[@a]: seq of @a * seq of @a +> [nat1];
+                  numOccurs[@a]: @a * seq of @a +> nat;
+                  permutation[@a]: seq of @a * seq of @a +> bool;
+                  preSeq[@a]: seq of @a * seq of @a +> bool;
+                  postSeq[@a]: seq of @a * seq of @a +> bool;
+                  subSeq[@a]: seq of @a * seq of @a +> bool;
+                  replicate[@a]: nat * @a +> seq of @a;
+                  padLeft[@a]: seq of @a * @a * nat +> seq of @a;
+                  padRight[@a]: seq of @a * @a * nat +> seq of @a;
+                  padCentre[@a]: seq of @a * @a * nat +> seq of @a;
+                  dropWhile[@a]: (@a +> bool) * seq of @a +> seq of @a;
+                  xform[@a,@b]: (@a +> @b) * seq of @a +> seq of @b;
+                  fold[@a]: (@a * @a +> @a) * @a * seq of @a +> @a;
+                  fold1[@a]: (@a * @a +> @a) * seq1 of @a +> @a;
+                  zip[@a,@b]: seq of @a * seq of @b +> seq of (@a * @b);
+                  unzip[@a,@b]: seq of (@a * @b) +> seq of @a * seq of @b;
+                  isDistinct[@a]: seq of @a +> bool;
+                  app[@a]: seq of @a * seq of @a +> seq of @a;
+                  setOf[@a]: seq of @a +> set of @a;
                   format[@a]: (@a +> seq of char) * seq of char * seq of @a +> seq of char
 
 definitions
@@ -70,7 +70,7 @@ functions
   measure size0;
 
   -- The position a subsequence appears in a sequence.
-  indexOfSeq[@a]: seq1 of @a * seq1 of @a +> nat1
+  indexOfSeq[@a]: seq of @a * seq of @a +> nat1
   indexOfSeq(r,s) == if preSeq[@a](r,s)
                      then 1
                      else 1 + indexOfSeq[@a](r, tl s)
@@ -78,7 +78,7 @@ functions
   measure size3;
 
   -- The position a subsequence appears in a sequence?
-  indexOfSeqOpt[@a]: seq1 of @a * seq1 of @a +> [nat1]
+  indexOfSeqOpt[@a]: seq of @a * seq of @a +> [nat1]
   indexOfSeqOpt(r,s) == if subSeq[@a](r,s) then indexOfSeq[@a](r, s) else nil;
 
   -- The number of times an element appears in a sequence.
@@ -123,10 +123,10 @@ functions
   -- Pad a sequence with a given item such that it is centred in a specified length.
   -- If padded by an odd number, add the extra item on the right.
   padCentre[@a]: seq of @a * @a * nat +> seq of @a
-  padCentre(sq,x,n) == 
-    let space = if n <= len sq then 0 else n - len sq
-    in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n)
-  pre pre_padRight[@a](padLeft[@a](sq,x,len sq + (if n <= len sq then 0 else n - len sq div 2)),x,n);
+  padCentre(sq,x,n) == if n<= len sq then sq
+                       else let space = n - len sq
+                       in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n);
+>>>>>>> development
 
 --  trim[@a]: seq of @a * (@a +> bool) +> seq of @a
 --  trim(s, p) == trimpre(reverse(trimpre(reverse s, p)), p);
@@ -218,7 +218,7 @@ functions
   size2[@a]: (@a * @a +> @a) * @a * seq of @a +> nat
   size2(-, -, s) == len s;
 
-  size3[@a]: seq1 of @a * seq1 of @a +> nat
+  size3[@a]: seq of @a * seq of @a +> nat
   size3(-, s) == len s;
 
   size4[@a]: (@a +> seq of char) * seq of char * seq of @a +> nat
