@@ -161,7 +161,7 @@ functions
             series([takeChar(string(index)) | index in set inds string]));
 
     -- Recognise and discard a specified string.
-    passString : seq of char -> PARSER
+    passString : seq1 of char -> PARSER
     passString(s) == pass(takeString(s));
 
     -- Recognise one of a sequence of specified strings.
