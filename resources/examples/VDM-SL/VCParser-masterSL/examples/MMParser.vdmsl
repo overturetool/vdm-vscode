@@ -66,7 +66,8 @@ functions
                                 nil,
                                 [mk_VCParser`TREE(operator, [left, operand]),
                                 mk_VCParser`TREE(nil, rest)]))
-                    end;
+                    end
+    pre len tree.contents = 2 and forall t in seq tree.contents & is_VCParser`TREE(t);
     
     evalInt : seq of char -> int
     evalInt(string) ==
@@ -88,7 +89,6 @@ functions
     evalTree(tree) ==
         cases tree:
             mk_VCParser`TREE("int", contents) -> evalInt(contents),
-            mk_VCParser`TREE(nil, contents) -> evalInt(contents),
             mk_VCParser`TREE("*", [e1, e2]) -> evalTree(e1) * evalTree(e2),
             mk_VCParser`TREE("/", [e1, e2]) -> evalTree(e1) div evalTree(e2),
             mk_VCParser`TREE("+", [e1, e2]) -> evalTree(e1) + evalTree(e2),
@@ -99,8 +99,7 @@ functions
     hasDivZero(tree) == cases tree:
         mk_VCParser`TREE("/", [-, mk_VCParser`TREE("int", "0")]) -> true,
         mk_VCParser`TREE("/", [-, mk_VCParser`TREE("int", "-0")]) -> true,
-        mk_VCParser`TREE("int", -),
-        mk_VCParser`TREE(nil, -) -> false,
+        mk_VCParser`TREE("int", -) -> false,
         mk_VCParser`TREE(-, [tree1, tree2]) -> hasDivZero(tree1) or hasDivZero(tree2)
         end;
 
