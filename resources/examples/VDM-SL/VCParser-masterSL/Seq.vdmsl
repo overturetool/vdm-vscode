@@ -126,7 +126,6 @@ functions
   padCentre(sq,x,n) == if n<= len sq then sq
                        else let space = n - len sq
                        in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n);
->>>>>>> development
 
 --  trim[@a]: seq of @a * (@a +> bool) +> seq of @a
 --  trim(s, p) == trimpre(reverse(trimpre(reverse s, p)), p);
