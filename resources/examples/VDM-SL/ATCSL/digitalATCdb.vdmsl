@@ -558,7 +558,8 @@ Change_Area(ln, aid, area) ==
 mu(ln, areas |-> ln.areas ++ {aid |-> area})
 pre	aid in set dom ln.areas and
 	inv_Line(mk_Line(ln.areas ++ {aid |-> area}, ln.connect))
-post	RESULT.areas(aid) = area and
+post	aid in set dom ln.areas and
+        RESULT.areas(aid) = area and
         RESULT.connect = ln.connect;
 
 
