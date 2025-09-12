@@ -118,7 +118,9 @@ MakeOutputFromPlan(curTime, response) ==
 OutputAtTimeZero : seq of Response -> seq of OutputStep
 OutputAtTimeZero(response) ==
   let absTimes = RelativeToAbsoluteTimes(response) in
-    let mk_(firstFlare,-) = hd absTimes in
+    if absTimes = []
+    then []
+    else let mk_(firstFlare,-) = hd absTimes in
       [mk_(firstFlare,0)] ^
       [ let mk_(-,t) = absTimes(i-1),
             mk_(f,-) = absTimes(i) in
