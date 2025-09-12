@@ -22,7 +22,7 @@ exports
     hasAttribute : TaggedElement * String -> bool;
     getAttributeNames : TaggedElement -> set of Element;
     removeAttribute : TaggedElement * String -> TaggedElement;
-    setAttribute : TaggedElement * String * (Name| real| seq of Point) -> TaggedElement;
+    setAttribute : TaggedElement * Name * (Name| real| seq of Point) -> TaggedElement;
     setEventHandler : TaggedElement * EventType -> TaggedElement;
     addToken : TaggedElement * token -> TaggedElement;
     hasToken : TaggedElement * token -> bool;
@@ -123,13 +123,12 @@ functions
     removeAttribute(element, attribute) ==
         mu(element,attributes |-> {attribute} <-: element.attributes);
     
-    setAttribute : TaggedElement * String * (Name| real| seq of Point) -> TaggedElement
+    setAttribute : TaggedElement * Name * (Name| real| seq of Point) -> TaggedElement
     setAttribute(element, attribute, value) ==
         mu(element,
             attributes
             |-> element.attributes
-            ++ {attribute
-            |-> if is_(value, seq of Point) then points2string(value) else value});
+            ++ {attribute |-> if is_(value, seq of Point) then points2string(value) else value});
         
     setEventHandler : TaggedElement * EventType -> TaggedElement
     setEventHandler(element, event) ==
