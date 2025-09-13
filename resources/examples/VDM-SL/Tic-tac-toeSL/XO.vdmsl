@@ -103,7 +103,10 @@ types								-- These types are to do with moves and playing
 
 
 state Sigma of		-- Sigma is just a convention for the name of a system state
-	game : Game		-- The game board, initialized by the play operation
+	game : Game		-- The game board
+
+init s ==
+	s = mk_Sigma({|->})		-- Board is initially empty
 end
 
 
@@ -124,7 +127,6 @@ operations			-- Processes that use the functions above to define how to play
 	play(playorder, moves) ==
 	(
 		dcl order:PlayOrder := playorder;	-- hd order is always next to play
-		game := {|->};
 
 		-- @LoopInvariant(elems GHOST$ = dom game union {m})
 		-- @LoopInvariant(elems order = elems playorder)
@@ -143,6 +145,7 @@ operations			-- Processes that use the functions above to define how to play
 
 		return <UNFINISHED>
 	)
+	pre game = {|->}
 	post if RESULT = <DRAW> then isDraw(game)
 		 else if RESULT = <UNFINISHED> then isUnfinished(game)
 		 else RESULT = whoWon(game);
