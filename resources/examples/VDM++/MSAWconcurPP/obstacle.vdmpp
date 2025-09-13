@@ -10,7 +10,7 @@ instance variables
   
 operations 
  
-public Obstacle : MinimumSafetyAltitude * Coordinates * nat * nat * 
+public Obstacle : MinimumSafetyAltitude * Coordinates * nat1 * nat * 
                   ObstacleType ==> Obstacle
 Obstacle(msa,loc,ra,secRa,tp) ==
  (MSA := msa;
