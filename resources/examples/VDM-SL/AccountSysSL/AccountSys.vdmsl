@@ -24,7 +24,8 @@ inv mk_Account(-,-,b,l,t) == l >= 0 and b >= l and balanceOf(t) = b
 
 state AccountSys of
   accounts : map AccNum to Account
-inv mk_AccountSys(a) == forall num in set dom a & num = a(num).number
+inv mk_AccountSys(a) == 
+  forall num in set dom a & num = a(num).number
 init ac == ac = mk_AccountSys({|->})
 end
 
