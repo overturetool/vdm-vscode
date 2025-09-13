@@ -128,15 +128,12 @@ FindAllInstances(nm) ==
     return res
   );
  
-LookUpEntityInstance: nat ==> [Record]
+LookUpEntityInstance: nat ==> Record
 LookUpEntityInstance (ein) ==
-  let eins = dom in_model.datasec 
+  let mk_(-,rec) = in_model.datasec(ein) 
   in
-    if ein in set eins 
-    then let mk_(-,rec) = in_model.datasec(ein) 
-         in
-           return rec
-    else return nil;
+    return rec
+  pre ein in set dom in_model.datasec;
 
 TransformRmVertex: nat ==> nat
 TransformRmVertex(rmv_id) ==
@@ -144,7 +141,8 @@ TransformRmVertex(rmv_id) ==
   in
     let mk_EntityInstanceName(cpnt_id) = parms(5) 
     in
-      return cpnt_id;
+      return cpnt_id
+pre rmv_id in set dom in_model.datasec;
 
 TransformRmEdge: nat ==> set of (nat * nat)
 TransformRmEdge (rme_id) ==
@@ -160,7 +158,8 @@ TransformRmEdge (rme_id) ==
           in
             res := res union {mk_(rme_id, TransformRmVertex(rmee_ref))};
       return res
-    );
+    )
+pre rme_id in set dom in_model.datasec;
 
        TransformRmLoop: nat ==> seq of nat
        TransformRmLoop (rml_id) ==
@@ -173,7 +172,8 @@ TransformRmEdge (rme_id) ==
                    for all rme_id in set rme_ref do
                      res := res union TransformRmEdge(rme_id);
               return SortPoints(res)
-            );
+            )
+        pre rml_id in set dom in_model.datasec;
 
        Transform: () ==> set of seq of nat
        Transform () ==
@@ -191,19 +191,19 @@ TransformRmEdge (rme_id) ==
                polylist : seq of EntityInstanceName := [];
            for all ent in set Collect(AbstrMod) do
              ( last_id := last_id + 1;
-               LookUpTable := LookUpTable munion { ent |-> last_id };
+               LookUpTable := LookUpTable ++ { ent |-> last_id };
                let mk_SimpleRecord(-,parms) = LookUpEntityInstance(ent) in
-                 ds := ds munion { last_id |-> mk_(nil, 
+                 ds := ds ++ { last_id |-> mk_(nil, 
                    mk_SimpleRecord("VERTEX",[parms(3)]))}
              );
            for all poly in set AbstrMod do
              ( last_id := last_id + 1;
-               ds := ds munion { last_id |-> mk_(nil,
+               ds := ds ++ { last_id |-> mk_(nil,
                  mk_SimpleRecord("POLYLINE",[mk_ListParameter(
                    MapInToOut(poly,LookUpTable))]))};
                polylist := polylist ^ [mk_EntityInstanceName(last_id)]
              );
-           ds := ds munion { last_id + 1 |-> mk_(nil,
+           ds := ds ++ { last_id + 1 |-> mk_(nil,
              mk_SimpleRecord("DRAWING",[mk_ListParameter(polylist)]))};
            out_model := mk_PhysicalFile (
              { "FILE_NAME" |-> [mk_UnknownParameter()],
@@ -226,6 +226,7 @@ TransformRmEdge (rme_id) ==
            []
          else
            [mk_EntityInstanceName(lut(hd ins))] ^ MapInToOut(tl ins, lut)
+      pre elems ins subset dom lut
       measure len ins;
       
       LenPar1: seq of nat * map nat to nat -> nat
@@ -257,8 +258,11 @@ TransformRmEdge (rme_id) ==
          cases theSet:
            {} -> [],
            others ->
-             let mk_(a,b) in set theSet be st a = goal in
+             if exists mk_(a,-) in set theSet & a = goal
+             then let mk_(a,b) in set theSet be st a = goal in
                 SortInnerRight(theSet\{mk_(a,b)}, b)
+             else []
+
          end;
 
       SortInnerRight: set of (nat * nat) * nat -> seq of nat
@@ -266,14 +270,17 @@ TransformRmEdge (rme_id) ==
          cases theSet:
            {} -> [],
            others ->
-             let mk_(a,b) in set theSet be st b = goal in
+             if exists mk_(-,b) in set theSet & b = goal
+             then let mk_(a,b) in set theSet be st b = goal in
                 [b] ^ SortInnerLeft(theSet\{mk_(a,b)}, a)
+             else []
          end;
 
       SortPoints : set of (nat * nat) -> seq of nat
       SortPoints (theSet) ==
          let mk_(a,b) in set theSet in
            SortInnerRight(theSet\{mk_(a,b)},b)
+      pre theSet <> {}
 
     state Kernel of
       in_model : PhysicalFile
