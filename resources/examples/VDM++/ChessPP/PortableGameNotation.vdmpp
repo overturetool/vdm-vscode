@@ -58,8 +58,11 @@ functions
     -- TODO: Update precondition
 
     private string_to_coord: String -> PM`Coordinate
-    string_to_coord(str) == mk_PM`Coordinate(x_char_to_nat1(str(1)), numerical_char_to_nat(str(2)))
-    pre len(str) = 2 and str(1) in set elems valid_x_chars;
+    string_to_coord(str) == 
+      mk_PM`Coordinate(x_char_to_nat1(str(1)), numerical_char_to_nat(str(2)))
+    pre len(str) = 2 and 
+        str(1) in set elems valid_x_chars and 
+        str(2) in set dom numerical_char_to_nat;
 
     private string_to_castling: GM`Game * String -> BM`Move
     string_to_castling(game, str) == 
@@ -102,7 +105,9 @@ functions
 
     -- Splits a string of movetext into a sequence of strings describing moves. Discards the turn number indicators
     public movetext_to_move: String -> seq of String
-    movetext_to_move(str) == [m | m in seq string_split(str, " ") & m(1) not in set elems numerical_chars];
+    movetext_to_move(str) == 
+      [m | m in seq string_split(str, " ") & m(1) not in set elems numerical_chars]
+    pre str <> "";
     
     -- Non-recursive string_split implemented by Nick Battle
     private string_split: String * String -> seq of String
@@ -138,14 +143,14 @@ functions
     if forall i in set inds rm & str(i) = rm(i) then
         [str(i) | i in set inds str & i > len rm] -- Recurse without the `rm` part of the seq
     else
-        str;
+        str
+    pre len str >= len rm;
 
-    private string_remove_all: String * String -> String
+    string_remove_all: String * String -> String
     string_remove_all(str, rm) ==
-        if len str = 0 then
+        if len str = 0 or str = rm then
             ""
-        else
-        if forall i in set inds rm & str(i) = rm(i) then
+        elseif forall i in set inds rm & str(i) = rm(i) then
             string_remove_all(
                 [str(i) | i in set inds str & i > len rm], -- Recurse without the `rm` part of the seq
                 rm
@@ -155,6 +160,7 @@ functions
                 [str(i) | i in set inds str & i > 1], -- Recurse with the first index as result
                 rm
             )
+    pre len str >= len rm 
     measure len str;
 
     private string_remove_all_seq : String * seq of String -> String
@@ -163,6 +169,7 @@ functions
         str
     else
         string_remove_all_seq(string_remove_all(str, hd rm_seq), tl rm_seq)
+    pre [] not in set elems rm_seq and forall s in seq rm_seq & len str >= len s
     measure len rm_seq;
 
     private char_to_piece_type: char -> PM`PieceType
