@@ -157,9 +157,10 @@ sole_leader(stage,name,leaders) ==
   let cand = iota c in seq stage & c.name = name in
   let leading_scores = 
       {sc | sc in seq stage & sc.name in set leaders} \ {cand} in
-  forall sc in set leading_scores & cand.count > sc.count;
+  forall sc in set leading_scores & cand.count > sc.count
+pre exists1 c in seq stage & c.name = name;
 
-greatest_value_at_earliest_stage: Candidate_names * seq of Stage -> bool
+greatest_value_at_earliest_stage: Candidate_names * seq1 of Stage -> bool
 greatest_value_at_earliest_stage(name,all_stages) ==
         let leaders = {score.name | score in seq hd all_stages &
                           score.count = (hd hd all_stages).count} in
@@ -168,7 +169,8 @@ greatest_value_at_earliest_stage(name,all_stages) ==
            and
            (forall j in set {i+1,...,len all_stages}, 
                     other_leader in set leaders &
-                not (sole_leader(all_stages(j),other_leader,leaders))));
+                not (sole_leader(all_stages(j),other_leader,leaders))))
+pre hd all_stages <> [];
  
 
 
