@@ -56,7 +56,7 @@ HA(haInputs, outputSoFar, curTime) ==
                                          currentHumid, curTime, newOutput), nextTime)
                 else ChangeHA(haInputs,outputSoFar,curTime)
            else ChangeHA(haInputs,outputSoFar,curTime)
-  measure len haInputs;
+  measure 2 * len haInputs;
 
 ChangeHA: seq1 of HAInput * HAOut * AbsTime -> HAOut
 ChangeHA(haInputs,outputSoFar,curTime) ==
@@ -68,7 +68,7 @@ ChangeHA(haInputs,outputSoFar,curTime) ==
     then HA(rest,AddOutput(targetTemp, currentTemp, targetHumid, currentHumid, 
                            curTime, outputSoFar), nextTime)
     else HA(rest,outputSoFar,nextTime)
-measure len haInputs;
+measure 2 * len haInputs - 1;
 
 AddOutput: nat * nat * nat * nat * nat * seq of OutStep -> seq of OutStep
 AddOutput(targetTemp, curTemp, targetHumid, curHumid, curTime, outputSoFar) ==
