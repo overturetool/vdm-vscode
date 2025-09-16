@@ -2,7 +2,7 @@ class Configuration
   is subclass of Component
 
 instance variables
-  protected config: inmap nat to nat;
+  protected config: inmap nat to nat := {|->};
 
 operations
   pure protected Encode: nat ==> nat
