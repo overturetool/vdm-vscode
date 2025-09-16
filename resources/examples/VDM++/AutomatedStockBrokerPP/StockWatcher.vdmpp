@@ -127,7 +127,7 @@ class StockWatcher is subclass of GLOBAL
     in 
      sv >= l and sv <= u;
     
-  IsPeak: seq of StockValue -> bool
+  IsPeak: seq1 of StockValue -> bool
   IsPeak(svs) == 
    let current = hd svs 
     in 
@@ -139,7 +139,7 @@ class StockWatcher is subclass of GLOBAL
         and 
         svs(i+1) = current;
 
-  IsValley: seq of StockValue -> bool
+  IsValley: seq1 of StockValue -> bool
   IsValley(svs) == 
    let current = hd svs 
     in 
@@ -156,9 +156,10 @@ class StockWatcher is subclass of GLOBAL
     in
      let i,j in set pastEvents be st (i <> j) => (events(i).TimeStamp <= events(j).TimeStamp)  
      in 
-       i;
+       i
+   pre exists x in set inds events & events(x).TimeStamp <= time;
 
-  public IsActionTriggeredAtTime: nat * ActionTrigger * seq of Event  -> bool
+  public IsActionTriggeredAtTime: nat * ActionTrigger * seq1 of Event  -> bool
   IsActionTriggeredAtTime(time,action,eventHistory) == 
    let tgr = action.Trigger
     in
@@ -166,7 +167,8 @@ class StockWatcher is subclass of GLOBAL
          s = eventHistory(index,...,index + len tgr - 1)
       in
       ((forall i in set inds s & s(i).Type = tgr(i))
-      and (s(1).TimeStamp = time)
+      and (s <> [] => s(1).TimeStamp = time)
       and len s = len tgr)
-   
+   pre exists x in set inds eventHistory & eventHistory(x).TimeStamp <= time;
+
 end StockWatcher

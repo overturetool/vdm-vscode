@@ -62,6 +62,7 @@ public isFinished : () ==> bool
 functions
  public FindSmallestSeqLen: map String to seq of Event -> nat
  FindSmallestSeqLen(m) == 
- let x,y in set {len m(x) | x in set dom m} be st x <> y => x <= y in x; 
+ let x,y in set {len m(x) | x in set dom m} be st x <> y => x <= y in x
+ pre m <> {|->}; 
 
 end World
