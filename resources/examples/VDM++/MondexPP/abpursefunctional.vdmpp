@@ -62,7 +62,8 @@ public TransferOk: AbWorld * PurseId * PurseId * nat -> AbWorld
     too in set dom wrld.abPurses
     and
     (GetBalance(wrld.abPurses(frm)) >= val)
-  post (GetTotal(RESULT.abPurses(frm)) +
+  post pre_TransferOk(wrld,frm,too,val) and
+   (GetTotal(RESULT.abPurses(frm)) +
     GetTotal(RESULT.abPurses(too)) =
 	 (GetTotal(wrld.abPurses(frm)) +
        GetTotal(wrld.abPurses(too)))	
@@ -94,7 +95,8 @@ public TransferLost: AbWorld * PurseId * PurseId * nat -> AbWorld
    )
   pre frm in set dom wrld.abPurses and
    GetBalance(wrld.abPurses(frm)) >= val
-  post frm in set dom RESULT.abPurses and
+  post pre_TransferLost(wrld,frm,frm,val) and
+    frm in set dom RESULT.abPurses and
     GetTotal(RESULT.abPurses(frm)) =
     GetTotal(wrld.abPurses(frm)) and
 	 GetBalance(wrld.abPurses(frm)) >=
