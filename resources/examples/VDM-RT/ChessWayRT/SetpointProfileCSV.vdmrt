@@ -14,7 +14,7 @@ next_setpoint: [(real * real)]
 operations
 
 -- constructor for SetpointProfileCSV
-public SetpointProfileCSV: real * seq of char ==> SetpointProfileCSV
+public SetpointProfileCSV: real * seq1 of char ==> SetpointProfileCSV
 SetpointProfileCSV(init, file) ==
 (
 	-- count lines in file
