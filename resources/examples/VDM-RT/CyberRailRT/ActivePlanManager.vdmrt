@@ -182,7 +182,7 @@ handleInactiveRoute(msg) ==
 	)
 );
 
-private handleTransportPlan :  MessageTypes`MessageT ==> ()
+private handleTransportPlan :  MessageTypes`RETURNPLAN ==> ()
 handleTransportPlan(msg) ==
 (	
 	

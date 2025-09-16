@@ -17,7 +17,7 @@ operations
 	async public trip : EventType * PigId * [Position] ==> ()
 	trip(eventType,pigId, position) == 
 	(
-		if (eventType = <PIG_NEW>) then
+		if (eventType = <PIG_NEW> and position <> nil) then
 		(
 			stableController.AddPig(pigId, self, position);
 		) 
