@@ -106,7 +106,8 @@ Evaluate(expr,env) ==
 
 pure private MId : Id * Env ==> Val
 MId(Id,env) == 
-	return env.GetVal(Id); 
+	return env.GetVal(Id)
+pre Id in set dom env.GetSenv(); 
 
 MRelExpr : RelExpr * Env ==> Val
 MRelExpr(exp,env) == 
@@ -118,39 +119,60 @@ MRelExpr(exp,env) ==
 
 EvaluateLT: Expr * Expr * Env ==> Val
 EvaluateLT(exp1,exp2,env) == 
-  return (Evaluate(exp1,env) < Evaluate(exp2,env));
+  let left  = Evaluate(exp1,env),
+      right = Evaluate(exp2,env) in 
+    
+    if is_int(left) and is_int(right) 
+    then return left < right
+    else error;
 
 EvaluateGT: Expr * Expr * Env ==> Val
 EvaluateGT(exp1,exp2,env) == 
-  return (Evaluate(exp1,env) > Evaluate(exp2,env));
+  let left  = Evaluate(exp1,env),
+      right = Evaluate(exp2,env) in 
+    
+    if is_int(left) and is_int(right) 
+    then return left > right
+    else error;
 
 MUnary : Unary * Env ==> Val
 MUnary(unary,env) == 
-	return not (Evaluate(unary.body,env));
+  let body = Evaluate(unary.body,env) in
+    if is_bool(body) 
+    then return not body
+    else error;
 
 MInfix : Infix * Env ==> Val
 MInfix(exp,env) == 
-  cases exp:
-   mk_Infix(-,<AND>,-) -> return (EvaluateAND(exp.left,exp.right,env)),
-   mk_Infix(-,<OR>,-)  -> return (EvaluateOR(exp.left,exp.right,env)),
-   others -> error
-  end;
+  let left  = Evaluate(exp.left,env),
+      right = Evaluate(exp.right,env) in
+    if is_bool(left) and is_bool(right) 
+    then 
+      cases exp:
+        mk_Infix(-,<AND>,-) -> return (EvaluateAND(left,right)),
+        mk_Infix(-,<OR>,-)  -> return (EvaluateOR(left,right)),
+      others -> error
+     end
+    else error;
 
-EvaluateAND: Expr * Expr * Env ==> Val
-EvaluateAND(exp1,exp2,env) ==
-  return (Evaluate(exp1,env) and Evaluate(exp2,env));
+EvaluateAND: bool * bool ==> Val
+EvaluateAND(exp1,exp2) ==
+  return (exp1 and exp2);
 
 MEqual : Equal * Env ==> Val
 MEqual(exp,env) == 
-   return (Evaluate(exp.left, env) = Evaluate(exp.right,env));
+  let left  = Evaluate(exp.left,env),
+      right = Evaluate(exp.right,env) in
+   if (is_bool(left) and is_bool(right)) or
+      (is_int(left) and is_int(right)) 
+   then return (left = right)
+   else error;
 
 -- order of evaluation is left to right, as stipulated by XACML standard
 
-EvaluateOR: Expr * Expr * Env ==> Val
-EvaluateOR(exp1,exp2,env) ==
-  if (Evaluate(exp1,env))
-  then return true
-  else return Evaluate(exp2,env);
+EvaluateOR: bool * bool ==> Val
+EvaluateOR(exp1,exp2) ==
+  return (exp1 or exp2);
 
 MArrayLookup : ArrayLookup * Env ==> Val
 MArrayLookup(mk_ArrayLookup(aname,index),env) == 
