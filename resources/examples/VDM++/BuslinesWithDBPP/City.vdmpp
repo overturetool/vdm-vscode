@@ -74,7 +74,8 @@ class City
 			if highspeed then 
 				addRoad(wayspoints(wp1), wayspoints(wp2), roadNmbr, length, Config`DefaultRoadSpeedLimit + 10)
 			else
-				addRoad(wayspoints(wp1), wayspoints(wp2), roadNmbr, length);
+				addRoad(wayspoints(wp1), wayspoints(wp2), roadNmbr, length)
+		pre wp1 in set dom wayspoints and wp2 in set dom wayspoints;
 
 		--overloaded addRoad, which allows for the speedlimit of the road to be change from
 		-- the default value
@@ -133,7 +134,8 @@ class City
 
 		pure private findRoadsFromRoadNumber : seq of Road`RoadNumber ==> seq of Road
 		findRoadsFromRoadNumber(route)==  
-				return [roads(elem) | elem in seq route]; 
+				return [roads(elem) | elem in seq route] 
+		pre elems route subset dom roads; 
 
 		pure public getCentralStation : () ==> Busstop
 		getCentralStation()== 

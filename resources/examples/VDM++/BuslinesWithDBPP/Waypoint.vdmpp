@@ -32,7 +32,8 @@ class Waypoint
 			"D" -> <D>,
 			"E" -> <E>,
 			"F" -> <F>,
-			"Central" -> <Central>
+			"Central" -> <Central>,
+			others -> undefined
 		    end
 	  	);
 
