@@ -16,7 +16,8 @@ Wait() ==
 public Notify : () ==> ()
 Notify() ==
   let p in set waitset in
-    waitset := waitset \ {p};
+    waitset := waitset \ {p}
+pre waitset <> {};
 
 public NotifyThread: nat ==> ()
 NotifyThread(tId) ==

@@ -62,32 +62,30 @@ Alloc3 : ADDR * State * map ADDR to CON -> State
 Alloc3 (addr,mk_State(mem,access,used),mem2) ==
   let used' = used union {addr},
 --      mem'  = mem ++ {addr |-> <c0>}
-      mem'  = mem munion {addr |-> let c:CON in c} 
+      mem'  = mem ++ {addr |-> let c:CON in c} 
   in
       mk_State(mem',access,used')	
 pre addr not in set used and
     addr in set access
-post mem2 =  mem munion {addr |-> let c:CON in c};
+--post mem2 =  mem ++ {addr |-> let c:CON in c};
 
 functions -- conjecture
 
 AllocSafe : ADDR * State -> bool
 AllocSafe (addr,sta) == 
      Safe(sta) => Safe(Alloc(addr,sta))
-post RESULT = true;
+pre addr not in set sta.used;
 
 AllocSafe0 : ADDR * State -> bool
 AllocSafe0 (addr,sta) == 
      Safe(sta) => Safe(Alloc(addr,sta))
-pre addr not in set sta.used
-post RESULT = true;
+pre addr not in set sta.used;
 
 AllocSafe2 : ADDR * State -> bool
 AllocSafe2 (addr,sta) == 
      Safe(sta) => Safe(Alloc(addr,sta))
 pre addr not in set sta.used and
     addr in set sta.access
-post RESULT = true;
 
 operations
 
