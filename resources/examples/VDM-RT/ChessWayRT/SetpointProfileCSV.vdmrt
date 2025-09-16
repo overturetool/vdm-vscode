@@ -30,7 +30,7 @@ SetpointProfileCSV(init, file) ==
 );
 
 -- constructor for SetpointProfileCSV
-public SetpointProfileCSV: seq of char ==> SetpointProfileCSV
+public SetpointProfileCSV: seq1 of char ==> SetpointProfileCSV
 SetpointProfileCSV(file) ==
 	SetpointProfileCSV(0.0, file);
 
@@ -38,7 +38,7 @@ SetpointProfileCSV(file) ==
 private ReadNextSetpoint: () ==> ()
 ReadNextSetpoint() ==
 (
-	let mk_(-,vals) = CSV`freadval[seq of real](filename,line) in 
+	let mk_(-,vals) = CSV`freadval[seq1 of real](filename,line) in 
 	(
 		if len vals <> 2 then quit("Incorrect number of values in %s line %s (expected: 2, actual: %s)\n", [filename,line,len vals])
 		else 
