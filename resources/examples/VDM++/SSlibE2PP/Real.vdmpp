@@ -4,6 +4,11 @@ values
 	Tolerance = 1e-8;
 	Variation = 1e-5;	
 
+types
+
+public Positive = real
+inv x == x > 0;	
+
 functions
 
 static public EQ : real -> real -> bool
@@ -113,21 +118,21 @@ post
 		let totalPrincipalAndInterest = getTotalPrincipal(Interest,year)
 		in multiple = totalPrincipalAndInterest  and RESULT = Interest;
 		
-static getInterestImplicitSpec_Computer_version : real * int -> real
+static getInterestImplicitSpec_Computer_version : Positive * int -> real
 getInterestImplicitSpec_Computer_version(multiple,years) ==
 	is not yet specified
 pre
 	multiple > 1.0 and years > 0 
 post
 	multiple > 1.0 and years > 0 and
-	exists1 Interest : real & 
+	exists1 Interest : Positive & 
 		let	totalPrincipalAndInterest = getTotalPrincipal(Interest,years)
 		in	EQ(multiple)(totalPrincipalAndInterest) and RESULT = Interest;
 
 --getInterest explicit specification
-static public getInterest: real * int -> real
+static public getInterest: Positive * int -> real
 getInterest(multiple,years) ==
-	let	f = lambda Interest : real & multiple - getTotalPrincipal(Interest,years)	in
+	let	f = lambda Interest : Positive & multiple - getTotalPrincipal(Interest,years)	in
 	NewtonMethod(f)(0);
 	
 end Real

@@ -283,7 +283,8 @@ IndexAux(e)(s)(indx) ==
 				indx + 1
 			else
 				IndexAux[@T](e)(xs)(indx+1)
-	end;
+	end
+measure len s;
 	
 static public IndexAll2[@T] : @T -> seq of @T -> set of int
 IndexAll2(e)(s) == {i | i in set inds s & s(i) = e};
