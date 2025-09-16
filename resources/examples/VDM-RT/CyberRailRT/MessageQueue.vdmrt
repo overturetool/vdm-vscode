@@ -38,7 +38,8 @@ pop() == (
 		queue := tl queue;
 		return rtn_data;
 	)
-);
+)
+pre queue <> [];
 
 sync
 per push => #fin(push) - #fin(pop) < size; 	

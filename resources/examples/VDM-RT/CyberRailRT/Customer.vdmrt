@@ -29,7 +29,7 @@ addCyberRail (cr) == cyberrail := cr;
 public addTokenDevice : TokenDevice ==> ()
 addTokenDevice(td) ==
 	--tokenDevices := td;
-	tokenDevices := tokenDevices munion { td.getTokenId() |-> td};
+	tokenDevices := tokenDevices ++ { td.getTokenId() |-> td};
 
 	public isFinished : () ==> ()
 		isFinished () == skip;
