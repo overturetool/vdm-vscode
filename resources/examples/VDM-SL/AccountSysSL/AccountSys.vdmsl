@@ -20,7 +20,7 @@ inv mk_Transaction(-,a,-) == a > 0;
    balance : real
    limit   : real
    transactions : seq of Transaction
-inv mk_Account(-,-,b,l,t) == l >= 0 and b >= l and balanceOf(t) = b
+inv mk_Account(-,-,b,l,t) == l >= 0 and b >= -l and balanceOf(t) = b
 
 state AccountSys of
   accounts : map AccNum to Account
@@ -52,8 +52,8 @@ balanceOf(transln) ==
  
  addAccount(numberIn: AccNum, detailsIn: Details, limitIn: real)
  ext wr accounts: map AccNum to Account
- pre numberIn not in set dom accounts and limitIn >= 0
- post accounts = accounts~ munion {numberIn |-> mk_Account(numberIn, detailsIn, 0, limitIn,[])};
+ pre numberIn not in set dom accounts and limitIn >= 0 
+ post accounts = accounts~ ++ {numberIn |-> mk_Account(numberIn, detailsIn, 0, limitIn,[])};
  
  removeAccount(numberIn: AccNum)
  ext wr accounts: map AccNum to Account
