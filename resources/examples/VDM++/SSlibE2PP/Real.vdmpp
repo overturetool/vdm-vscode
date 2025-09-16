@@ -18,10 +18,13 @@ numberOfDigit(x) ==
 	if x = i then
 		aNumberOfIntegerPartDigit(i)
 	else
-		aNumberOfIntegerPartDigit(i) + 1 + getNumberOfDigitsAfterTheDecimalPoint(x);
+		aNumberOfIntegerPartDigit(i) + 1 + getNumberOfDigitsAfterTheDecimalPoint(x)
+pre x>=0;
 
 static public aNumberOfIntegerPartDigit : int -> nat
-aNumberOfIntegerPartDigit(i) == aNumberOfIntegerPartDigitAux(i, 1);
+aNumberOfIntegerPartDigit(i) == 
+  aNumberOfIntegerPartDigitAux(i, 1)
+pre i>=0;
 
 static public aNumberOfIntegerPartDigitAux : int * nat -> nat
 aNumberOfIntegerPartDigitAux(i, numberOfDigit) ==
@@ -30,10 +33,12 @@ aNumberOfIntegerPartDigitAux(i, numberOfDigit) ==
 		0		-> numberOfDigit,
 		others	-> Real`aNumberOfIntegerPartDigitAux(q, numberOfDigit + 1)
 	end
+pre i >= 0
 measure idiv10;
 
 static idiv10 : int * nat +> nat
-idiv10(i, -) == i div 10;
+idiv10(i, -) == i div 10
+pre i >=0;
 
 static public isNDigitsAfterTheDecimalPoint : real * nat -> bool
 isNDigitsAfterTheDecimalPoint(x,numberOfDigit) == 

@@ -38,7 +38,7 @@ asStringZ(cobolStrConversionCommand)(i) ==
 		else
 			asStringZAux(cobolStrConversionCommand)(i, true) ;
  		
- static public asStringZAux: seq of char -> nat * bool -> seq1 of char 
+ static public asStringZAux: seq1 of char -> nat * bool -> seq1 of char 
  asStringZAux(cobolStrConversionCommand)(n, wasZero) == 
   	let	cobolStrConversionCommandStrLen = len cobolStrConversionCommand,
   		cobolStrConversionCommandChar = cobolStrConversionCommand(cobolStrConversionCommandStrLen),
