@@ -1,5 +1,5 @@
--- @NoPOG
-class CSV is subclass of IO
+-- @NoPOG - do not generate obligations for this class
+class CSV
 
 --  Overture STANDARD LIBRARY: INPUT/OUTPUT
 --      --------------------------------------------
@@ -32,7 +32,7 @@ functions
  *  else <append> will append output to the existing file
  * @return true if successful else false
  */
-public static fwriteval:seq1 of char * seq of ? * filedirective -> bool
+public static fwriteval:seq1 of char * seq of ? * (<start>|<append>) -> bool
 fwriteval(filename,val,fdir) == is not yet specified;
 
 /**
@@ -55,9 +55,9 @@ freadval(f,index) == is not yet specified;
  *
  * @param filename the name of the file
  * @return mk_(success,@p) if successful success will be 
- * set to true else false. @p will hold nil if unsuccessful or the line count.
+ * set to true else false. @p will hold nil if unsuccessful.
  */
-public static flinecount: seq1 of char -> bool * int
+public static flinecount: seq1 of char -> bool * [nat]
 flinecount(f) == is not yet specified;
 
 operations
