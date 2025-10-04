@@ -67,7 +67,7 @@ protected dotProduct : Vector * Vector -> real
 dotProduct(v1,v2) ==
   v1.X * v2.X + v1.Y * v2.Y;
   
-protected angleBetweenVectors : Vector * Vector -> real
+public angleBetweenVectors : Vector * Vector -> real
 angleBetweenVectors(v1,v2) ==
   let uv1 = unitVector(v1),
       uv2 = unitVector(v2),
@@ -83,7 +83,7 @@ radians2degree(r) ==
 protected atan2 : real * real -> real
 atan2(y,x) == 
   2 * MATH`atan(y/(MATH`sqrt(x**2+y**2)+x))
-pre not (x = 0 and y = 0);
+pre not (y = 0);
 
 protected signedVectorAngle : Vector * Vector -> real
 signedVectorAngle(v1,v2) ==

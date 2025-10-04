@@ -5,7 +5,7 @@ class Environment
 
 types 
 
-public outline = [TransportPlan] * TransportPlan`Route * nat;
+public outline = [TransportPlan] * [TransportPlan`Route] * nat;
 public inline = [CyberRail`NavigationInput] * [nat] * [nat] * nat;
 
 instance variables

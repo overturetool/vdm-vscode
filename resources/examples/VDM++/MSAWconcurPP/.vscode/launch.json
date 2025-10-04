@@ -1,12 +1,20 @@
 {
     "configurations": [
-	{
-	    "name": "Launch MSAWconcurPP Debug 1",
-	    "type": "vdm",
-	    "request": "launch",
-	    "noDebug": false,
-	    "defaultName": "World",
-	    "command": "print new World().Run()"
-	}
-    ]
+		{
+			"name": "Launch MSAWconcurPP Debug 1",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "World",
+			"command": "print new World().Run()"
+		},
+		{
+			"name": "Lens config: Debug Test`MyTest",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "Test",
+			"command": "p new Test().MyTest()"
+		}
+	]
 }

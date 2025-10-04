@@ -56,7 +56,7 @@ registerHistory(fo) ==
     then history := history ++ {id |-> addHistory(history(id),
                                                   fo.getCoordinates(),
                                                   fo.getAltitude())}
-    else history := history munion {id |-> addHistory([],
+    else history := history ++ {id |-> addHistory([],
                                                       fo.getCoordinates(),
                                                       fo.getAltitude())}
  );
@@ -132,7 +132,11 @@ detectedByTwoRadars(radars) ==
     
 public detectedByAllRadars : set of Radar -> set of FO
 detectedByAllRadars(radars) ==
-  dinter {r.getDetected() | r in set radars};    
+  let s ={r.getDetected() | r in set radars}
+  in
+    if s = {}
+    then {}
+    else dinter s;    
 
 
 functions
@@ -231,7 +235,7 @@ calculateNeighborhood(pos) ==
 private predictAltitude : seq of nat -> nat
 predictAltitude(alts) ==
   alts(1) + (alts(1) - alts(2)) 
-pre len alts = 2;  
+pre len alts = 2 and alts(1) >= alts(2);  
  
  
 operations  

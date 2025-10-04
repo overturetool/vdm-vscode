@@ -1,12 +1,20 @@
 {
     "configurations": [
-	{
-	    "name": "Launch HASLSL Debug 1",
-	    "type": "vdm",
-	    "request": "launch",
-	    "noDebug": false,
-	    "defaultName": "DEFAULT",
-	    "command": "print HomeAutomation([mk_(true,20,19,60,62),mk_(false,20,20,60,60),mk_(true,20,19,60,60)])"
-	}
-    ]
+		{
+			"name": "Launch HASLSL Debug 1",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": false,
+			"defaultName": "DEFAULT",
+			"command": "print HomeAutomation([mk_(true,20,19,60,62),mk_(false,20,20,60,60),mk_(true,20,19,60,60)])"
+		},
+		{
+			"name": "Lens config: Launch DEFAULT`ChangeHA",
+			"type": "vdm",
+			"request": "launch",
+			"noDebug": true,
+			"defaultName": "DEFAULT",
+			"command": "p ChangeHA([mk_(false,0,0,0,0 )], [mk_(<CloseWindow>,0] , 0)"
+		}
+	]
 }

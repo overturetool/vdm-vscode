@@ -31,7 +31,8 @@ functions
     then []
     elseif n < 10
     then [nat2char(n)]
-    else (nat2chars(n div 10)) ^ [ nat2char(n mod 10)];
+    else (nat2chars(n div 10)) ^ [ nat2char(n mod 10)]
+  measure n;
 
   nat2string : nat -> seq of char
   nat2string(n) ==

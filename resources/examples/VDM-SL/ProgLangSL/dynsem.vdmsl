@@ -112,10 +112,14 @@ contains the updated global variables.
 
   EvalRepeatStmt : AST`RepeatStmt * DynEnv -> DynEnv
   EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv) ==
-    let denv' = EvalStmt(repeat, denv) in
-    if EvalExpr(until, denv').val
+    let denv' = EvalStmt(repeat, denv),
+    test_v = EvalExpr(until, denv').val
+    in 
+    if is_bool(test_v) and test_v = true 
       then denv'
-      else EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv')
+      elseif is_bool(test_v) and test_v = false
+      then EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv')
+      else undefined
   pre pre_EvalStmt(repeat, denv) and
       pre_EvalExpr(until, EvalStmt(repeat, denv));
 \end{vdm_al}
@@ -187,10 +191,17 @@ made.
   EvalForLoop(mk_AST`Variable(id), val, stmt, denv) ==
     if denv(id).val <= val.val
       then let denv' = EvalStmt(stmt, denv)
-           in EvalForLoop(mk_AST`Variable(id), val, stmt, 
+           in 
+             if id in set dom denv' and 
+                is_AST`IntVal(denv'(id).val)
+             then EvalForLoop(mk_AST`Variable(id), val, stmt, 
                           denv' ++ {id |-> mk_AST`IntVal(denv'(id).val + 1)})
+             else undefined
       else denv
-  pre pre_EvalStmt(stmt, denv)
+  pre id in set dom denv and 
+      is_AST`IntVal(val) and
+      is_AST`IntVal(denv(id)) and
+      pre_EvalStmt(stmt, denv)
   measure LoopParInc;
   
   LoopParInc: AST`Variable * AST`Value * AST`Stmt * DynEnv -> nat
@@ -213,7 +224,8 @@ level in the definition hierarchy.
       mk_AST`Variable(id)      -> denv(id),
       mk_AST`BinaryExpr(-,-,-) -> EvalBinaryExpr(ex, denv)
     end
-  pre is_AST`BinaryExpr(ex) => pre_EvalBinaryExpr(ex, denv);
+  pre is_AST`BinaryExpr(ex) => pre_EvalBinaryExpr(ex, denv) and
+      is_AST`Variable(ex)   => ex.id in set dom denv;
 
   EvalBinaryExpr : AST`BinaryExpr * DynEnv -> AST`Value
   EvalBinaryExpr(mk_AST`BinaryExpr(lhs, op, rhs), denv) ==

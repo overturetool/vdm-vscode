@@ -1,6 +1,6 @@
 types
 
-array = seq1 of int;
+array = seq1 of nat;
 
 values
 
@@ -39,7 +39,8 @@ lupsl(a) ==
 
 ascending : array * set of int -> bool
 ascending(a,s) ==
-   forall i,j in set s & i<j => a(i)<=a(j) pre s subset (inds a);
+   forall i,j in set s & i<j => a(i)<=a(j) 
+pre s subset (inds a);
 
 lupslSpec : array -> int
 lupslSpec(a) ==
@@ -54,6 +55,7 @@ lupslOp1Laski(a) ==
       lupsls := lupsls union {lupsltok(a,k)};
    return MaxOfSet(lupsls);
   )
+pre exists e in set inds a & e >= 0 
 post lupslSpec(a) = RESULT;
 
 state lups of
@@ -193,6 +195,7 @@ post lupslSpec(a) = RESULT;
 lupsltokop2Laski : array * nat1 ==> nat
 lupsltokop2Laski(a,k) ==
   (dcl erg : int := 0; 
+   -- @LoopInvariant (erg >= 0)
    for j = 1 to k-1 do
        if a(j)<=a(k) then
           if erg < lupslarr(j) 
@@ -201,6 +204,6 @@ lupsltokop2Laski(a,k) ==
    lupslarr := lupslarr^[erg];
    return erg;
   )
-pre k in set inds a; 
+pre k in set (inds a inter inds lupslarr); 
 
  

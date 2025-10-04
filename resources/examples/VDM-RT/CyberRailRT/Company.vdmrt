@@ -10,7 +10,7 @@ instance variables
 
 operations
 
-  public Company : seq of char ==> Company
+  public Company : seq1 of char ==> Company
   Company(fname) ==
    self.Environment(fname);
 
