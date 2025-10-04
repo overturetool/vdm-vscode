@@ -128,7 +128,7 @@ operations			-- Processes that use the functions above to define how to play
 	(
 		dcl order:PlayOrder := playorder;	-- hd order is always next to play
 
-		-- @LoopInvariant(elems GHOST$ = dom game union {m})
+		-- @LoopInvariant(elems SO_FAR = dom game union {m}, SO_FAR)
 		-- @LoopInvariant(elems order = elems playorder)
 		for m in moves do
 			let player = hd order in
