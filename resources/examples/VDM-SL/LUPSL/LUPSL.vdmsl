@@ -52,9 +52,9 @@ lupslOp1Laski : array ==> nat
 lupslOp1Laski(a) == 
   (dcl lupsls : set of nat := {};
    -- @LoopInvariant (k >1 => card lupsls > 0)
+   -- @LoopInvariant (card lupsls > 0)
    for all k in set inds a do
       lupsls := lupsls union {lupsltok(a,k)};
-   -- @LoopInvariant (card lupsls > 0)
     return MaxOfSet(lupsls);
   )
 pre exists e in set inds a & e >= 0 
