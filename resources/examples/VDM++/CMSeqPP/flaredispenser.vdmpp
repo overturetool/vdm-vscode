@@ -57,6 +57,7 @@ Step() ==
            )
     );
 
+-- @NoPOG
 pure public GetAngle: () ==> nat
 GetAngle() ==
   return aperture;

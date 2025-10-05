@@ -23,7 +23,7 @@ MaxOfSet(s) ==
  post RESULT in set s and forall e in set s & e <= RESULT
  measure card s;
 
-lupsltok : array * nat1 -> nat
+lupsltok : array * nat1 -> nat1
 lupsltok(a,k) ==
  let compatible = {lupsltok(a,j) | j in set{1,...,k-1} & a(j)<=a(k)} 
  in
@@ -51,9 +51,11 @@ operations
 lupslOp1Laski : array ==> nat
 lupslOp1Laski(a) == 
   (dcl lupsls : set of nat := {};
+   -- @LoopInvariant (k >1 => card lupsls > 0)
    for all k in set inds a do
       lupsls := lupsls union {lupsltok(a,k)};
-   return MaxOfSet(lupsls);
+   -- @LoopInvariant (card lupsls > 0)
+    return MaxOfSet(lupsls);
   )
 pre exists e in set inds a & e >= 0 
 post lupslSpec(a) = RESULT;

@@ -118,7 +118,7 @@ post
 		let totalPrincipalAndInterest = getTotalPrincipal(Interest,year)
 		in multiple = totalPrincipalAndInterest  and RESULT = Interest;
 		
-static getInterestImplicitSpec_Computer_version : Positive * int -> real
+static getInterestImplicitSpec_Computer_version : Positive * nat -> real
 getInterestImplicitSpec_Computer_version(multiple,years) ==
 	is not yet specified
 pre
@@ -130,7 +130,7 @@ post
 		in	EQ(multiple)(totalPrincipalAndInterest) and RESULT = Interest;
 
 --getInterest explicit specification
-static public getInterest: Positive * int -> real
+static public getInterest: Positive * nat1 -> real
 getInterest(multiple,years) ==
 	let	f = lambda Interest : Positive & multiple - getTotalPrincipal(Interest,years)	in
 	NewtonMethod(f)(0);

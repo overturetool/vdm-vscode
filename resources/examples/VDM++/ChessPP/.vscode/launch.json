@@ -7,6 +7,14 @@
             "noDebug": true,
             "defaultName": "RunAll",
             "command": "p new RunAll().Run()"
+        },
+        {
+            "name": "Lens config: Launch PGNUT`test_str_to_move_with_x1",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": true,
+            "defaultName": "PGNUT",
+            "command": "p new PGNUT().test_str_to_move_with_x1()"
         }
     ]
 }
