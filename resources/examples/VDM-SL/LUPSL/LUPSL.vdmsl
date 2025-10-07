@@ -163,9 +163,9 @@ post lupslSpec(a) = RESULT;
  
 lupsm4kop3Gries : array * nat1 ==> ()
 lupsm4kop3Gries(a,k) ==
-  (dcl li : int,
-       re : int,
-       m  : int; 
+  (dcl li : nat1,
+       re : nat1,
+       m  : nat1; 
    if lupslarr(len lupslarr)<=a(k) then
           lupslarr := lupslarr^[a(k)]
    elseif a(k)< lupslarr(1) then 
@@ -198,7 +198,7 @@ post lupslSpec(a) = RESULT;
  
 lupsltokop2Laski : array * nat1 ==> nat
 lupsltokop2Laski(a,k) ==
-  (dcl erg : int := 0; 
+  (dcl erg : nat := 0; 
    -- @LoopInvariant (erg >= 0)
    for j = 1 to k-1 do
        if a(j)<=a(k) then

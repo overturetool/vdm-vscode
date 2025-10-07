@@ -39,10 +39,11 @@ functions
 
   EvalProgram : AST`Program -> DynEnv
   EvalProgram(mk_AST`Program(decls, stmt)) ==
-   let senv = STATSEM`get_Declarations(decls
-    EvalStmt(stmt, EvalDeclarations(decls))
+   let senv = STATSEM`get_Declarations(decls)
+   in
+    EvalStmt(stmt, EvalDeclarations(decls),senv)
   pre STATSEM`wf_Program(mk_AST`Program(decls, stmt)) and 
-      pre_EvalStmt(stmt, EvalDeclarations(decls));
+      pre_EvalStmt(stmt, EvalDeclarations(decls),STATSEM`get_Declarations(decls));
 \end{vdm_al}
 Evaluating uninitiated variable declarations, a proper default value
 is assigned: {\tt false} for Boolean values and {\tt 0} for Integer values.
@@ -65,65 +66,81 @@ overridden by the local environment. The returning environment
 contains the updated global variables.   
 
 \begin{vdm_al}
-  EvalStmt : AST`Stmt * DynEnv -> DynEnv
-  EvalStmt(stmt, denv) ==
+  EvalStmt : AST`Stmt * DynEnv * STATSEM`StatEnv -> DynEnv
+  EvalStmt(stmt, denv, senv) ==
     cases true :
-      (is_AST`BlockStmt(stmt))  -> EvalBlockStmt(stmt, denv),
-      (is_AST`AssignStmt(stmt)) -> EvalAssignStmt(stmt, denv),
-      (is_AST`CondStmt(stmt))   -> EvalCondStmt(stmt, denv),
-      (is_AST`ForStmt(stmt))    -> EvalForStmt(stmt, denv),
-      (is_AST`RepeatStmt(stmt)) -> EvalRepeatStmt(stmt, denv)
+      (is_AST`BlockStmt(stmt))  -> EvalBlockStmt(stmt, denv, senv),
+      (is_AST`AssignStmt(stmt)) -> EvalAssignStmt(stmt, denv, senv),
+      (is_AST`CondStmt(stmt))   -> EvalCondStmt(stmt, denv, senv),
+      (is_AST`ForStmt(stmt))    -> EvalForStmt(stmt, denv, senv),
+      (is_AST`RepeatStmt(stmt)) -> EvalRepeatStmt(stmt, denv, senv)
     end
-  pre (is_AST`BlockStmt(stmt)   => pre_EvalBlockStmt(stmt, denv)) and
-      (is_AST`AssignStmt(stmt)  => pre_EvalAssignStmt(stmt, denv)) and
-      (is_AST`CondStmt(stmt)    => pre_EvalCondStmt(stmt, denv)) and
-      (is_AST`ForStmt(stmt)     => pre_EvalForStmt(stmt, denv)) and
-      (is_AST`RepeatStmt(stmt)  => pre_EvalRepeatStmt(stmt, denv));
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      STATSEM`wf_Stmt(stmt, senv) and
+      (is_AST`BlockStmt(stmt)   => pre_EvalBlockStmt(stmt, denv, senv)) and
+      (is_AST`AssignStmt(stmt)  => pre_EvalAssignStmt(stmt, denv, senv)) and
+      (is_AST`CondStmt(stmt)    => pre_EvalCondStmt(stmt, denv, senv)) and
+      (is_AST`ForStmt(stmt)     => pre_EvalForStmt(stmt, denv, senv)) and
+      (is_AST`RepeatStmt(stmt)  => pre_EvalRepeatStmt(stmt, denv, senv));
 
-  EvalBlockStmt : AST`BlockStmt * DynEnv -> DynEnv
-  EvalBlockStmt(mk_AST`BlockStmt(decls, stmts), denv) ==
+  EvalBlockStmt : AST`BlockStmt * DynEnv * STATSEM`StatEnv-> DynEnv
+  EvalBlockStmt(mk_AST`BlockStmt(decls, stmts), denv, senv) ==
     let ldenv = EvalDeclarations(decls) in
-      let denv' = EvalStmts(stmts, denv ++ ldenv) in
+      let denv' = EvalStmts(stmts, denv ++ ldenv, senv) in
         denv ++ dom ldenv <-: denv'
-  pre let ldenv = EvalDeclarations(decls) 
-      in pre_EvalStmts(stmts, denv ++ ldenv);
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      STATSEM`wf_BlockStmt(mk_AST`BlockStmt(decls, stmts), senv) and 
+      let ldenv = EvalDeclarations(decls) 
+      in pre_EvalStmts(stmts, denv ++ ldenv, senv);
 
-  EvalStmts : seq of AST`Stmt * DynEnv -> DynEnv
-  EvalStmts(stmts, denv) ==
+  EvalStmts : seq of AST`Stmt * DynEnv * STATSEM`StatEnv-> DynEnv
+  EvalStmts(stmts, denv, senv) ==
     cases stmts :
       [] -> denv,
-      others -> EvalStmts(tl stmts, EvalStmt(hd stmts, denv))
+      others -> EvalStmts(tl stmts, EvalStmt(hd stmts, denv, senv), senv)
     end
-  pre stmts <> [] => pre_EvalStmt(hd stmts, denv)
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      STATSEM`wf_Stmts(stmts, senv) and
+      (stmts <> [] => 
+       (pre_EvalStmt(hd stmts, denv, senv) and
+        pre_EvalStmts(tl stmts, EvalStmt(hd stmts, denv, senv), senv)))
   measure len stmts;
 
-  EvalAssignStmt : AST`AssignStmt * DynEnv -> DynEnv
-  EvalAssignStmt(mk_AST`AssignStmt(lhs, rhs), denv) ==
-    denv ++ {lhs.id |-> EvalExpr(rhs, denv)}
-  pre pre_EvalExpr(rhs, denv);
+  EvalAssignStmt : AST`AssignStmt * DynEnv * STATSEM`StatEnv -> DynEnv
+  EvalAssignStmt(mk_AST`AssignStmt(lhs, rhs), denv, senv) ==
+    denv ++ {lhs.id |-> EvalExpr(rhs, denv, senv)}
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      let mk_(b,-) = STATSEM`wf_AssignStmt(mk_AST`AssignStmt(lhs, rhs), senv) 
+      in b and
+      pre_EvalExpr(rhs, denv, senv) and
+      lhs.id in set dom denv;
 
-  EvalCondStmt : AST`CondStmt * DynEnv -> DynEnv
-  EvalCondStmt(mk_AST`CondStmt(guard, thenst, elsest), denv) ==
-    if EvalExpr(guard, denv).val
-    then EvalStmt(thenst, denv) 
-    else EvalStmt(elsest, denv)
-  pre pre_EvalExpr(guard, denv) and
-      if EvalExpr(guard, denv).val
-      then pre_EvalStmt(thenst, denv) 
-      else pre_EvalStmt(elsest, denv);
+  EvalCondStmt : AST`CondStmt * DynEnv * STATSEM`StatEnv -> DynEnv
+  EvalCondStmt(mk_AST`CondStmt(guard, thenst, elsest), denv, senv) ==
+    if EvalExpr(guard, denv, senv).val
+    then EvalStmt(thenst, denv, senv) 
+    else EvalStmt(elsest, denv, senv)
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      STATSEM`wf_CondStmt(mk_AST`CondStmt(guard, thenst, elsest), senv) and
+      pre_EvalExpr(guard, denv, senv) and
+      if EvalExpr(guard, denv, senv).val
+      then pre_EvalStmt(thenst, denv, senv) 
+      else pre_EvalStmt(elsest, denv, senv);
 
-  EvalRepeatStmt : AST`RepeatStmt * DynEnv -> DynEnv
-  EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv) ==
-    let denv' = EvalStmt(repeat, denv),
-    test_v = EvalExpr(until, denv').val
+  EvalRepeatStmt : AST`RepeatStmt * DynEnv * STATSEM`StatEnv -> DynEnv
+  EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv, senv) ==
+    let denv' = EvalStmt(repeat, denv, senv),
+        test_v = EvalExpr(until, denv', senv).val
     in 
     if is_bool(test_v) and test_v = true 
       then denv'
       elseif is_bool(test_v) and test_v = false
-      then EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv')
+      then EvalRepeatStmt(mk_AST`RepeatStmt(repeat, until), denv', senv)
       else undefined
-  pre pre_EvalStmt(repeat, denv) and
-      pre_EvalExpr(until, EvalStmt(repeat, denv));
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      STATSEM`wf_RepeatStmt(mk_AST`RepeatStmt(repeat, until), senv) and
+      pre_EvalStmt(repeat, denv, senv) and
+      pre_EvalExpr(until, EvalStmt(repeat, denv, senv), senv);
 \end{vdm_al}
  
 Note that it is impossible to write a measure for this function bacause this 
@@ -182,36 +199,41 @@ evaluated once. Furthermore, no restrictions in the usage of variables are
 made.
 
 \begin{vdm_al}
-  EvalForStmt : AST`ForStmt * DynEnv -> DynEnv
-  EvalForStmt(mk_AST`ForStmt(start, stop, stmt), denv) ==
-    let denv' = EvalAssignStmt(start, denv) in
-    EvalForLoop(start.lhs, EvalExpr(stop, denv'), stmt, denv')
-  pre pre_EvalAssignStmt(start, denv) and
-      pre_EvalExpr(stop, EvalAssignStmt(start, denv));
+  EvalForStmt : AST`ForStmt * DynEnv * STATSEM`StatEnv -> DynEnv
+  EvalForStmt(mk_AST`ForStmt(start, stop, stmt), denv, senv) ==
+    let denv' = EvalAssignStmt(start, denv, senv) in
+    EvalForLoop(start.lhs, EvalExpr(stop, denv', senv), stmt, denv', senv)
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      STATSEM`wf_ForStmt(mk_AST`ForStmt(start, stop, stmt), senv) and
+      pre_EvalAssignStmt(start, denv, senv) and
+      pre_EvalExpr(stop, EvalAssignStmt(start, denv, senv), senv) and
+      pre_EvalStmt(stmt, denv, senv);
 
-  EvalForLoop : AST`Variable * AST`Value * AST`Stmt * DynEnv -> DynEnv
-  EvalForLoop(mk_AST`Variable(id), val, stmt, denv) ==
+  EvalForLoop : AST`Variable * AST`Value * AST`Stmt * DynEnv * STATSEM`StatEnv -> DynEnv
+  EvalForLoop(mk_AST`Variable(id), val, stmt, denv, senv) ==
     if denv(id).val <= val.val
-      then let denv' = EvalStmt(stmt, denv)
+      then let denv' = EvalStmt(stmt, denv, senv)
            in 
              if id in set dom denv' and 
                 is_AST`IntVal(denv'(id).val)
              then EvalForLoop(mk_AST`Variable(id), val, stmt, 
-                          denv' ++ {id |-> mk_AST`IntVal(denv'(id).val + 1)})
+                          denv' ++ {id |-> mk_AST`IntVal(denv'(id).val + 1)}, senv)
              else undefined
       else denv
-  pre id in set dom denv and 
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      id in set dom denv and 
       is_AST`IntVal(val) and
       is_AST`IntVal(denv(id)) and
-      pre_EvalStmt(stmt, denv)
+      pre_EvalStmt(stmt, denv, senv)
   measure LoopParInc;
   
-  LoopParInc: AST`Variable * AST`Value * AST`Stmt * DynEnv -> nat
-  LoopParInc(mk_AST`Variable(id), val, -, denv) ==
+  LoopParInc: AST`Variable * AST`Value * AST`Stmt * DynEnv * STATSEM`StatEnv -> nat
+  LoopParInc(mk_AST`Variable(id), val, -, denv, -) ==
     val.val - denv(id).val
   pre id in set dom denv and 
       is_AST`IntVal(val) and
-      is_AST`IntVal(denv(id));
+      is_AST`IntVal(denv(id)) and
+      denv(id).val <= val.val;
 \end{vdm_al}
 The evaluation of binary expressions is straightforward. An 
 exception is the
@@ -221,21 +243,24 @@ This  pre-condition has to be added to every function on a higher
 level in the definition hierarchy. 
 
 \begin{vdm_al}
-  EvalExpr : AST`Expr * DynEnv -> AST`Value
-  EvalExpr(ex, denv) ==
+  EvalExpr : AST`Expr * DynEnv * STATSEM`StatEnv -> AST`Value
+  EvalExpr(ex, denv, senv) ==
     cases ex :
       mk_AST`BoolVal(-),
       mk_AST`IntVal(-)         -> ex,
       mk_AST`Variable(id)      -> denv(id),
-      mk_AST`BinaryExpr(-,-,-) -> EvalBinaryExpr(ex, denv)
+      mk_AST`BinaryExpr(-,-,-) -> EvalBinaryExpr(ex, denv, senv)
     end
-  pre is_AST`BinaryExpr(ex) => pre_EvalBinaryExpr(ex, denv) and
-      is_AST`Variable(ex)   => ex.id in set dom denv;
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      IdsDefined(ex, denv) and
+      let mk_(b,-) = STATSEM`wf_Expr(ex, senv) in b and
+      (is_AST`BinaryExpr(ex) => pre_EvalBinaryExpr(ex, denv, senv) and
+       is_AST`Variable(ex)   => ex.id in set dom denv);
 
-  EvalBinaryExpr : AST`BinaryExpr * DynEnv -> AST`Value
-  EvalBinaryExpr(mk_AST`BinaryExpr(lhs, op, rhs), denv) ==
-    let v1 = EvalExpr(lhs, denv).val,
-        v2 = EvalExpr(rhs, denv).val 
+  EvalBinaryExpr : AST`BinaryExpr * DynEnv * STATSEM`StatEnv -> AST`Value
+  EvalBinaryExpr(mk_AST`BinaryExpr(lhs, op, rhs), denv, senv) ==
+    let v1 = EvalExpr(lhs, denv, senv).val,
+        v2 = EvalExpr(rhs, denv, senv).val
     in cases op :
        <Add> -> mk_AST`IntVal(v1 + v2),
        <Sub> -> mk_AST`IntVal(v1 - v2),
@@ -247,8 +272,27 @@ level in the definition hierarchy.
        <And> -> mk_AST`BoolVal(v1 and v2),
        <Or> ->  mk_AST`BoolVal(v1 or v2)
     end
-  pre STATSEM`wf_BinaryExpr(mk_AST`BinaryExpr(lhs, op, rhs), senv)
-      and op = <Div> => EvalExpr(rhs, denv).val <> 0;
+  pre DEnvAndSEnvsAgree(denv, senv) and
+      IdsDefined(lhs, denv) and IdsDefined(rhs, denv) and
+      let mk_(b,-) = STATSEM`wf_BinaryExpr(mk_AST`BinaryExpr(lhs, op, rhs), senv)
+      in b and
+      (op = <Div> => EvalExpr(rhs, denv, senv).val <> 0);
 
+  IdsDefined: AST`Expr * DynEnv -> bool
+  IdsDefined(ex, denv) ==
+    cases ex :
+      mk_AST`BoolVal(-),
+      mk_AST`IntVal(-)         -> true,
+      mk_AST`Variable(id)      -> id in set dom denv,
+      mk_AST`BinaryExpr(lhs, -, rhs) -> IdsDefined(lhs, denv) and IdsDefined(rhs, denv)
+    end;
+  
+  DEnvAndSEnvsAgree: DynEnv * STATSEM`StatEnv -> bool
+  DEnvAndSEnvsAgree(denv, senv) ==
+    dom denv = dom senv and
+    forall id in set dom denv &
+      let tp = senv(id) in
+        (tp = <BoolType> => is_AST`BoolVal(denv(id))) and
+        (tp = <IntType>  => is_AST`IntVal(denv(id)));
 end DYNSEM
 \end{vdm_al}
