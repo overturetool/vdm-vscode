@@ -39,6 +39,7 @@ functions
 
   EvalProgram : AST`Program -> DynEnv
   EvalProgram(mk_AST`Program(decls, stmt)) ==
+   let senv = STATSEM`get_Declarations(decls
     EvalStmt(stmt, EvalDeclarations(decls))
   pre STATSEM`wf_Program(mk_AST`Program(decls, stmt)) and 
       pre_EvalStmt(stmt, EvalDeclarations(decls));
@@ -54,7 +55,8 @@ is assigned: {\tt false} for Boolean values and {\tt 0} for Integer values.
             elseif tp = <BoolType> 
             then mk_AST`BoolVal(false)
             else mk_AST`IntVal(0)  
-        | mk_AST`Declaration(id, tp, val) in seq decls};
+        | mk_AST`Declaration(id, tp, val) in seq decls}
+  pre STATSEM`wf_Declarations(decls);
 
 \end{vdm_al}
 The evaluation of the statements is rather simple to specify. Only for the block statement the scoping rules have to be considered:
@@ -206,7 +208,10 @@ made.
   
   LoopParInc: AST`Variable * AST`Value * AST`Stmt * DynEnv -> nat
   LoopParInc(mk_AST`Variable(id), val, -, denv) ==
-    val.val - denv(id).val;
+    val.val - denv(id).val
+  pre id in set dom denv and 
+      is_AST`IntVal(val) and
+      is_AST`IntVal(denv(id));
 \end{vdm_al}
 The evaluation of binary expressions is straightforward. An 
 exception is the
@@ -242,7 +247,8 @@ level in the definition hierarchy.
        <And> -> mk_AST`BoolVal(v1 and v2),
        <Or> ->  mk_AST`BoolVal(v1 or v2)
     end
-  pre op = <Div> => EvalExpr(rhs, denv).val <> 0;
+  pre STATSEM`wf_BinaryExpr(mk_AST`BinaryExpr(lhs, op, rhs), senv)
+      and op = <Div> => EvalExpr(rhs, denv).val <> 0;
 
 end DYNSEM
 \end{vdm_al}
