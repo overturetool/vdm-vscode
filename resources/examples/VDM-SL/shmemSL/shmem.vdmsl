@@ -45,7 +45,7 @@ least(a, b) ==
   then a 
   else b;
 	
-spacefor: nat1 * Quadrant -> nat1
+spacefor: nat1 * seq of M -> nat1
 spacefor(size, Q) ==
   cases Q:
     []         -> MAXMEM + 1,
@@ -55,11 +55,11 @@ spacefor(size, Q) ==
   end
 measure QuadrantLen;
 	
-QuadrantLen:  nat1 * Quadrant -> nat
+QuadrantLen:  nat1 * seq of M -> nat
 QuadrantLen(-,list) == 
   len list;
 
-bestfit: nat1 * Quadrant -> nat1
+bestfit: nat1 * seq of M -> nat1
 bestfit(size, Q) ==
   cases Q:
     -- as we're looking for the smallest
