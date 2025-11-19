@@ -171,7 +171,9 @@ pre rme_id in set dom in_model.datasec;
                 let rme_ref = FindAllReferencesToEntity(rmes_id) \ {rml_id} in
                    for all rme_id in set rme_ref do
                      res := res union TransformRmEdge(rme_id);
-              return SortPoints(res)
+              if res <> {}
+              then return SortPoints(res)
+              else error
             )
         pre rml_id in set dom in_model.datasec;
 
@@ -180,7 +182,9 @@ pre rme_id in set dom in_model.datasec;
           let rmls = FindAllInstances("RM_LOOP") in
             ( dcl res : set of seq of nat := {};
               for all rml in set rmls do
-                 res := res union {TransformRmLoop(rml)};
+                 if rml in set dom in_model.datasec
+                 then res := res union {TransformRmLoop(rml)}
+                 else error;
               return res
             );
 
@@ -192,13 +196,16 @@ pre rme_id in set dom in_model.datasec;
            for all ent in set Collect(AbstrMod) do
              ( last_id := last_id + 1;
                LookUpTable := LookUpTable ++ { ent |-> last_id };
-               let mk_SimpleRecord(-,parms) = LookUpEntityInstance(ent) in
-                 ds := ds ++ { last_id |-> mk_(nil, 
-                   mk_SimpleRecord("VERTEX",[parms(3)]))}
+               if ent in set dom in_model.datasec
+               then let mk_SimpleRecord(-,parms) = LookUpEntityInstance(ent) in
+                      ds := ds ++ { last_id |-> mk_(nil, 
+                            mk_SimpleRecord("VERTEX",[parms(3)]))}
+                else error
              );
            for all poly in set AbstrMod do
              ( last_id := last_id + 1;
-               ds := ds ++ { last_id |-> mk_(nil,
+               if pre_MapInToOut(poly,LookUpTable)
+               then ds := ds ++ { last_id |-> mk_(nil,
                  mk_SimpleRecord("POLYLINE",[mk_ListParameter(
                    MapInToOut(poly,LookUpTable))]))};
                polylist := polylist ^ [mk_EntityInstanceName(last_id)]
@@ -263,7 +270,8 @@ pre rme_id in set dom in_model.datasec;
                 SortInnerRight(theSet\{mk_(a,b)}, b)
              else []
 
-         end;
+         end
+      measure card theSet;
 
       SortInnerRight: set of (nat * nat) * nat -> seq of nat
       SortInnerRight (theSet,goal) ==
@@ -274,13 +282,14 @@ pre rme_id in set dom in_model.datasec;
              then let mk_(a,b) in set theSet be st b = goal in
                 [b] ^ SortInnerLeft(theSet\{mk_(a,b)}, a)
              else []
-         end;
+         end
+      measure card theSet;
 
       SortPoints : set of (nat * nat) -> seq of nat
       SortPoints (theSet) ==
          let mk_(a,b) in set theSet in
            SortInnerRight(theSet\{mk_(a,b)},b)
-      pre theSet <> {}
+      pre theSet <> {} 
 
     state Kernel of
       in_model : PhysicalFile
