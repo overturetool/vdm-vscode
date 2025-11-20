@@ -26,7 +26,8 @@ TransHDFD(hdfd,mss,style) ==
   let mk_(-,-,-,dfdmap,-)=hdfd in
   let mods= dunion {TransHDFD(dfd,mss,style)
                    | dfd in set rng dfdmap} in
-  {mainmod} union mods;
+  {mainmod} union mods
+pre pre_MakeDFDModule(hdfd,mss,style);
 \end{vdm_al}
 For each module the interface and the body (the definitions) of 
 the module must be created.
@@ -39,7 +40,8 @@ MakeDFDModule(mk_(dfdid,dss,dfdtopo,dfdmap,dfdsig),
       defs = MakeDefinitions(dfdid,dss,dfdtopo,
                              dfdsig,mss,style) 
   in
-    mk_(ModIdConf(dfdid),i,defs);
+    mk_(ModIdConf(dfdid),i,defs)
+pre pre_MakeInterface(dfdid,dss,dfdtopo,dfdsig,dfdmap);
 \end{vdm_al}
 
 \noindent The name of the module (the first component of the
@@ -144,7 +146,8 @@ MakeDefinitions(dfdid,dss,dfdtopo,dfdsig,mss,style) ==
       dfdop = MakeDFDOp(dfdid,dfdtopo,dfdsig,style) in
    if dst=nil 
    then {dfdop} union msdescs
-   else {dst,dfdop} union msdescs;
+   else {dst,dfdop} union msdescs
+pre pre_MakeDFDOp(dfdid,dfdtopo,dfdsig,style);
 \end{vdm_al}
 
 \subsection{Functions for the state definition}
@@ -169,11 +172,7 @@ MakeFieldList(ids) ==
   else let id in set ids 
        in
          [MakeField(id)]^MakeFieldList(ids \ {id})
-  measure Card;
-
-Card: set of StId -> nat
-Card(s) ==
-  card s;
+  measure card ids;
   
 MakeField : StId -> Field
 MakeField(id) ==
@@ -617,7 +616,9 @@ MakePrePred : DFDTopo * DFDSig * IntM * IntM -> Expr
 MakePrePred(dfdtopo,dfdsig,intm,maxm) ==
   let eos=ExecutionOrders(dfdtopo) in
   DBinOp(<OR>,{MakePreForEO(piseq,dfdsig,intm,maxm)
-              |piseq in set eos});
+              | piseq in set eos
+              & pre_MakePreForEO(piseq,dfdsig,intm,maxm)});
+--pre ExecutionOrders(dfdtopo) subset dom dfdsig;
 \end{vdm_al}
 
 The function $MakePreForEO$ generates a pre-expression for a specific
@@ -652,7 +653,8 @@ MakePreForEO(piseq,dfdsig,intm,maxm) ==
         in
           mk_BinaryExpr(pred,<AND>,
                         MakePreForEO(tl piseq,dfdsig,
-                                     intm',maxm));
+                                     intm',maxm))
+pre elems piseq subset dom dfdsig;
 \end{vdm_al}
 
 $MakePostExpr$ is used to generate the post-condition of an implicit operation.
@@ -674,7 +676,8 @@ MakePostExpr(dfdid,dfdtopo,dfdsig,intm,maxm) ==
     if len out<= 1
     then body
     else mk_LetExpr(MakePattern(out),ResultIdConf(),body)
-pre let mk_(-,out,dst)=dfdsig(dfdid),
+pre dfdid in set dom dfdsig and
+    let mk_(-,out,dst)=dfdsig(dfdid),
         fids = NeedsQuant(dfdtopo,dfdsig, elems out,{}) 
     in
       pre_MakeInExpr(out,dst,fids,dfdtopo,dfdsig,
@@ -693,7 +696,8 @@ MakeInExpr: seq of FlowId * State * set of FlowId *
 MakeInExpr(out,dst,fids,dfdtopo,dfdsig,intm,maxm) ==
   let pred=MakePostPred(dfdtopo,dfdsig,intm,maxm) 
   in
-    if QuantNec(out,dst,fids,intm,maxm)
+    if pre_QuantNec(out,dst,fids,intm,maxm) and 
+       QuantNec(out,dst,fids,intm,maxm)
     then let bind = MakeExistsBind(fids,dst,intm,maxm,
                                    <POST>)
          in
@@ -717,7 +721,8 @@ MakePostPred(dfdtopo,dfdsig,intm,maxm) ==
   let eos=ExecutionOrders(dfdtopo) 
   in
     DBinOp(<OR>,{MakePostForEO(piseq,dfdsig,intm,maxm)
-                |piseq in set eos});
+                |piseq in set eos
+                & pre_MakePostForEO(piseq,dfdsig,intm,maxm)});
 \end{vdm_al}
 
 The function $MakePostForEO$ generates a post-expression for a specific
@@ -748,8 +753,10 @@ MakePostForEO(piseq,dfdsig,intm,maxm) ==
    if len piseq=1
   then mk_BinaryExpr(dpre,<AND>,dpost)
   else let pred=mk_BinaryExpr(dpre,<AND>,dpost) in
-  mk_BinaryExpr(pred,<AND>,MakePostForEO(tl piseq,dfdsig,
+  if pre_MakePostForEO(tl piseq,dfdsig,intm',maxm)
+  then mk_BinaryExpr(pred,<AND>,MakePostForEO(tl piseq,dfdsig,
                                          intm',maxm))
+  else undefined
 pre let nid= hd piseq 
     in
       nid in set dom dfdsig and 
@@ -782,9 +789,13 @@ MakeExistsBind(fs,dst,intm,maxm,c) ==
              in
                mk_TypeBind(p,StateTypeConf(s))
             |i in seq dst 
-            & let mk_(-,m)=i in m=<READWRITE>]
+            & let mk_(s,m)=i in 
+             (m=<READWRITE> and
+              pre_MakePatternIds(s,intm(s)+1,maxm(s),c))]
   in
-    mk_MultTypeBind(outl^stl)
+    if outl^stl <> []
+    then mk_MultTypeBind(outl^stl)
+    else undefined
 pre forall mk_(s,<READWRITE>) in seq dst&
         s in set dom intm and s in set dom maxm;
 \end{vdm_al}
@@ -1024,7 +1035,7 @@ MakeDFDExplOp(dfdid,dfdtopo,dfdsig) ==
       bodys = {MakeStmtForEO(piseq,dfdid,dfdsig)
               |piseq in set eos},
       dpre  = MakePreExpr(dfdid,dfdtopo,dfdsig,intm,maxm) in
-  let body = MakeNonDetStmt(bodys) in
+  let body = if bodys = {} then <IDENT> else MakeNonDetStmt(bodys) in
       mk_ExplOp(OpIdConf(dfdid),optype,parms,body,dpre)
 pre dfdid in set dom dfdsig and 
     let intm = {stid |-> 0
@@ -1069,7 +1080,7 @@ MakeStmtForEO(piseq,dfdid,dfdsig) ==
               then let mk_Sequence(sl)=rest in
                     mk_Sequence([call]^sl)
               else mk_Sequence([call,rest])
-pre hd piseq in set dom dfdsig;
+pre (elems piseq union {dfdid}) subset dom dfdsig;
   
 MakeCallAndPat : (DFDId|MSId) * Signature -> Call * [Pattern]
 MakeCallAndPat(id,mk_(din,out,-)) ==
@@ -1092,9 +1103,11 @@ MakePattern(idl) ==
   others -> mk_TuplePattern([mk_PatternId(i) | i in seq idl])
   end;
   
-MakeResult : seq1 of Id -> Expr
+MakeResult : seq of Id -> Expr
 MakeResult(idl) ==
-  if len idl=1
+  if len idl = 0
+  then mk_BoolLit(true)
+  elseif len idl = 1
   then FlowIdVarConf( hd idl)
   else mk_TupleConstructor([FlowIdVarConf(i) | i in seq idl]);
 \end{vdm_al}
@@ -1105,8 +1118,11 @@ The function $DBinOp$ generates an expression by distributing a binary operator
 over a set of expressions.
 
 \begin{vdm_al}
-DBinOp : BinaryOp * set1 of Expr -> Expr
+DBinOp : BinaryOp * set of Expr -> Expr
 DBinOp(op,es) ==
+  if es = {}
+  then mk_BoolLit(true)
+  else 
   let e in set es in
    if  card es=1
    then e
@@ -1134,6 +1150,7 @@ NeedsQuant(dfdtopo,dfdsig,notneeded,pids) ==
    then {}
    else let pid in set dom dfdsig \ pids in
         if TransClosure(pid,top,{})={} and 
+           pre_EquivClass(top,{pid})and
            EquivClass(top,{pid})= dom dfdsig
         then NeedsQuant(dfdtopo,dfdsig,notneeded,
                         pids union {pid})
@@ -1183,7 +1200,8 @@ MakePatternIds(id, n, max, c) ==
                  then [mk_PatternId(StateVarConf(id))]
                  else [mk_PatternId(StateOldVarConf(id))],
        others -> MakePatternSeq(StateVarConf(id), n, max)
-       end;
+       end
+pre n <= max;
   
 MakePatternSeq: Id * nat * nat -> seq of PatternId
 MakePatternSeq(id, n, max) ==
@@ -1192,19 +1210,15 @@ MakePatternSeq(id, n, max) ==
   else [mk_PatternId(id ^ "'")] ^ 
        MakePatternSeq(id ^ "'", n+1, max)
   pre n <= max
-  measure TowardsMax;
-  
-  TowardsMax: Id * nat * nat -> nat
-  TowardsMax(-,n,max) ==
-    max - n;
+  measure max - n;
 \end{vdm_al}
 
 The function $EquivClass$ collects all data transformers from a
 topology which are connected in an equivalence class.
 
 \begin{vdm_al}
-EquivClass: set of (ProcId * ProcId) * set of (MSId|DFDId) ->
-            set of (MSId|DFDId)
+EquivClass: set of (ProcId * ProcId) * set of (MSId|DFDId|EPId) ->
+            set of (MSId|DFDId|EPId)
 EquivClass(top,ids) ==
    if exists mk_(fid,tid) in set top&
    (fid in set ids and tid not in set ids) or 
@@ -1214,7 +1228,9 @@ EquivClass(top,ids) ==
            (tid in set ids and fid not in set ids)
        in
          EquivClass(top,ids union {fid,tid})
-  else ids;
+  else ids
+pre card ids <= 2 * card top
+measure 2 * card top - card ids;
 \end{vdm_al}
 
 $MakeNonDetStmt$ takes a set of statements, and
@@ -1690,11 +1706,11 @@ MSs = map MSId to MS;
   
 MS = OpDef;
   
-DFDId :: seq of char;
+DFDId :: seq1 of char;
   
-EPId :: seq of char;
+EPId :: seq1 of char;
   
-MSId :: seq of char
+MSId :: seq1 of char
 \end{vdm_al}
 
 \subsubsection*{Auxiliary Functions for Invariants}
@@ -1972,7 +1988,7 @@ Sequence :: stmts: seq1 of Stmt;
 Return :: val:[Expr];
   
 Expr = LetExpr|IfExpr|QuantExpr|BinaryExpr|
-       TupleConstructor|Apply|Id|BoolLit; 
+       TupleConstructor|Apply|Id|BoolLit|IntLit; 
        --| ... 
   
 LetExpr :: lhs:Pattern
@@ -2001,6 +2017,8 @@ Apply :: name:Expr
          arg: seq of Expr;
   
 BoolLit:: bool;
+  
+IntLit:: int;
   
 MultTypeBind :: mtb: seq1 of TypeBind;
   
