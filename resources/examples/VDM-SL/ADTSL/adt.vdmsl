@@ -1019,8 +1019,15 @@ STrees_Info ::
      tree: STrees_Tree
      current: [STrees_Node]
 inv mk_STrees_Info(t, c) == 
+     InvSTreesInfo(t, c);
+
+ functions 
+ 
+ InvSTreesInfo: STrees_Tree * [STrees_Node] -> bool
+ InvSTreesInfo(t, c) ==
      (c = nil <=> t = {}) and
-     (c <> nil <=> (c in set t and let r = STrees_Root(t) in r.position = 1));
+     (c <> nil <=> (c in set t and 
+     let r = STrees_Root(t) in r.position = 1));
 \end{vdm_al}
 {\tt STrees\_Info} stores both the tree and the current node.  The current node is a node which enables the tree user to move around the tree.  Functions for this are specified later.  The invariant states that the current node has a node value if and only if the tree is non-empty.  The second part of the invariant states that, if and only  if the tree is not empty then, the current node is a node in the tree and the position of the root is 1.  Notice that this second part prevents the tree from being a subtree.\\
 \\
@@ -1047,7 +1054,7 @@ pre inv_STrees_Tree(tree);
 STrees_MkInfo: STrees_Tree * STrees_Node -> STrees_Info
 STrees_MkInfo(tree, current) ==
      mk_STrees_Info(tree, current)
-pre inv_STrees_Info(mk_STrees_Info(tree, current));
+pre InvSTreesInfo(tree, current);
 \end{vdm_al}
 The {\tt STrees\_Mk...} functions construct one of the binary tree data structures defined above.
 \\
@@ -1119,9 +1126,11 @@ STrees_Insert(mk_STrees_Info(tree, current), data, direction) ==
           mk_(nil, <ToRoot>)  -> STrees_InsertRoot(data),
           mk_(-, <ToLeft>)    -> STrees_InsertLeft(tree, current, data),
 
-          mk_(-, <ToRight>)   -> STrees_InsertRight(tree, current, data)
+          mk_(-, <ToRight>)   -> STrees_InsertRight(tree, current, data),
+          others -> undefined
      end
 pre 
+     (current <> nil) and
      (direction = <ToRoot> => tree = {}) and
      (direction = <ToLeft> => not STrees_HasLeftChild(tree, current)) and 
      (direction = <ToRight> => not STrees_HasRightChild(tree, current))
@@ -1141,14 +1150,16 @@ STrees_InsertLeft(tree, current, data) ==
      let mk_STrees_Node(-, position) = current in 
      let new = mk_STrees_Node(data, 2*position) in
           mk_STrees_Info(tree union {new}, new)
-pre not STrees_HasLeftChild(tree, current);
+pre pre_STrees_HasLeftChild(tree, current) and
+    not STrees_HasLeftChild(tree, current);
 
 STrees_InsertRight: STrees_Tree * STrees_Node * STrees_Data -> STrees_Info
 STrees_InsertRight(tree, current, data) ==
      let mk_STrees_Node(-, position) = current in 
      let new = mk_STrees_Node(data, 2*position + 1) in
           mk_STrees_Info(tree union {new}, new)
-pre not STrees_HasRightChild(tree, current);
+pre pre_STrees_HasRightChild(tree, current) and
+    not STrees_HasRightChild(tree, current);
 
 STrees_Traverse: STrees_Info * (STrees_Data -> STrees_Data) -> STrees_Info
 STrees_Traverse(treeinfo, traversal) ==
@@ -1190,7 +1201,9 @@ pre STrees_ExistsNode(mk_STrees_Info(tree, current), position);
 STrees_MoveToParent: STrees_Info -> STrees_Info
 STrees_MoveToParent(mk_STrees_Info(tree, current)) ==
      mk_STrees_Info(tree, STrees_Parent(tree, current))
-pre not STrees_IsRoot(tree, current);
+pre current <> nil and
+    pre_STrees_IsRoot(tree, current) and
+    not STrees_IsRoot(tree, current);
 \end{vdm_al}
 {\tt STrees\_MoveToParent} moves the current node to the parent of the current node.  Of course, the current node must not already be at the root.
 \\
@@ -1278,7 +1291,9 @@ STrees_Size(mk_STrees_Info(tree, -)) == card tree;
 \begin{vdm_al}
 
 STrees_GetCurrentNode: STrees_Info -> STrees_Node
-STrees_GetCurrentNode(mk_STrees_Info(-, current)) == current;
+STrees_GetCurrentNode(mk_STrees_Info(-, current)) == 
+  current
+pre current <> nil;
 
 STrees_SetCurrentNode: STrees_Info * STrees_Node -> STrees_Info
 STrees_SetCurrentNode(mk_STrees_Info(tree, -), newcurrent) == 
@@ -1324,7 +1339,9 @@ pre node in set tree and STrees_HasLeftChild(tree, node);
 
 STrees_Delete: STrees_Info -> STrees_Info
 STrees_Delete(mk_STrees_Info(tree, current)) ==
-  let old = STrees_Subtree(tree, current) 
+  if tree = {current}
+  then mk_STrees_Info({}, nil)
+  else let old = STrees_Subtree(tree, current) 
   in
    if STrees_HasRightChild(tree, current) and 
       STrees_HasLeftChild(tree, current) 
@@ -1389,7 +1406,10 @@ STrees_MoveNode(tree, mk_STrees_Node(d, p), oldRootPos, newRootPos) ==
 
      let n = (iota n in set {0, ..., card tree} 
                & p >= oldRootPos*2**n and p < (oldRootPos + 1)*2**n) in
-          mk_STrees_Node(d, newRootPos*2**n + p - oldRootPos*2**n);
+          mk_STrees_Node(d, newRootPos*2**n + p - oldRootPos*2**n)
+pre tree <> {} and 
+    exists1 n in set {0, ..., card tree} & 
+       p >= oldRootPos*2**n and p < (oldRootPos + 1)*2**n;
 \end{vdm_al}
 {\tt STrees\_MoveNode} moves the input node in such a way that its new position has the same relationship to {\tt newRootPos} as its old position had to {\tt oldRootPos}.  To understand why $n$ is said to be in the finite set $\{0, ..., card\ tree\}$ refer to the previous discussion about {\tt STrees\_InOrderPredecessor}.
 \\
