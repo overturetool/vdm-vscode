@@ -86,7 +86,7 @@ indexAll(aStr,c) == Sequence`IndexAll2[char](c)(aStr);
 static public IndexAll2 : char -> seq of char -> set of int
 IndexAll2(c)(aStr) == Sequence`IndexAll2[char](c)(aStr);
 
-static public isInclude : seq of char -> seq of char -> bool
+static public isInclude : seq1 of char -> seq of char -> bool
 isInclude(aStr)(aTargetStr) ==
 	let	indexSet = indexAll(aStr,aTargetStr(1))
 	in	exists i in set indexSet & 
@@ -99,7 +99,7 @@ static public subStr :
 	seq1 of char * nat * nat -> seq of char
 subStr(aStr,fromPos,length) == aStr(fromPos,...,fromPos+length-1);
 
-static public SubStr : nat -> nat -> seq1 of char -> seq of char
+static public SubStr : nat -> nat1 -> seq1 of char -> seq of char
 SubStr(fromPos)(length)(aStr) == aStr(fromPos,...,fromPos+length-1);
 
 static public GetToken : seq of char * set of char -> seq of char
