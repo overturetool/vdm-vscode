@@ -1229,7 +1229,7 @@ EquivClass(top,ids) ==
        in
          EquivClass(top,ids union {fid,tid})
   else ids
-pre card ids <= 2 * card top
+pre ids subset dunion { {fid, tid} | mk_(fid, tid) in set top }
 measure 2 * card top - card ids;
 \end{vdm_al}
 
@@ -1663,7 +1663,7 @@ inv dfdtopo ==
   forall flowid in set dom dfdtopo & 
      FlowConnectOK(dfdtopo(flowid));
   
-FlowId = seq of char;
+FlowId = seq1 of char;
   
 ProcId = DFDId|MSId|EPId;
   
