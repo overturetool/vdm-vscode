@@ -148,9 +148,9 @@ functions
 
     string_remove_all: String * String -> String
     string_remove_all(str, rm) ==
-        if len str = 0 or str = rm then
+        if len str = 0 or len rm = 0 or str = rm then
             ""
-        elseif forall i in set inds rm & str(i) = rm(i) then
+        elseif forall i in set (inds rm inter inds str) & str(i) = rm(i) then
             string_remove_all(
                 [str(i) | i in set inds str & i > len rm], -- Recurse without the `rm` part of the seq
                 rm
@@ -160,7 +160,6 @@ functions
                 [str(i) | i in set inds str & i > 1], -- Recurse with the first index as result
                 rm
             )
-    pre len str >= len rm 
     measure len str;
 
     private string_remove_all_seq : String * seq of String -> String
