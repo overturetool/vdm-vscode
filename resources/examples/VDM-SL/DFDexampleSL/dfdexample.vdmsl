@@ -722,7 +722,8 @@ MakePostPred(dfdtopo,dfdsig,intm,maxm) ==
   in
     DBinOp(<OR>,{MakePostForEO(piseq,dfdsig,intm,maxm)
                 |piseq in set eos
-                & pre_MakePostForEO(piseq,dfdsig,intm,maxm)});
+                & pre_MakePostForEO(piseq,dfdsig,intm,maxm)
+					and elems piseq subset dom dfdsig});
 \end{vdm_al}
 
 The function $MakePostForEO$ generates a post-expression for a specific
