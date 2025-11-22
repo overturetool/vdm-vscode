@@ -172,17 +172,18 @@ post 	(exists i,j in set usedIds(dB) & i<>j and iscomplete(dB,i)
 	and recordtype(dB,i)=recordtype(dB,j) and
 	forall x in set required(recordtype(dB,i)) 
 	& getvalue(x,dB,i)=getvalue(x,dB,j)) <=> RESULT
-;--measure card dB;
+measure card dB;
 
 isidentical2: set of Record*set of Record*set of Record*Record +>bool
 isidentical2(dB1,dB2,olddB,record1)==
-	if dB2={} then isidentical(dB1\{record1}) 
+	if dB2={} and dB1={} then true
+	elseif dB2={} then isidentical(dB1\{record1}) 
 	else let record2 in set dB2 in
 	if pre_iscomplete(olddB,record1.id) and iscomplete(olddB,record2.id) then
 	isidentical3(dB1,dB2,olddB,record1,record2,
 	required(recordtype(olddB,record1.id)))
 	else isidentical2(dB1,dB2\{record2},olddB,record1)
-;--measure card dB2;
+measure card dB1 + card dB2;
 
 isidentical3: set of Record*set of Record*set of Record*Record*
               Record*set of Valuetype +> bool
@@ -195,7 +196,7 @@ isidentical3(dB1,dB2,olddB,record1,record2,requiredfields)==
 	   getvalue(field,olddB,record2.id) 
 	then isidentical2(dB1,dB2\{record2},olddB,record1)
 	else isidentical3(dB1,dB2,olddB,record1,record2,requiredfields\{field})
-;--measure card requiredfields;
+measure card dB1 + card dB2 + card requiredfields;
 
 ismonth: Value +> bool
 ismonth(v)==
@@ -233,7 +234,8 @@ issubstring(string1,string2)==
 post (string1 = [] or ((not (string2=<nil>) and
                         not (string1=<nil>) and 
 						(exists i,j in set inds(string2) 
-	& substring(string2,i,j)=string1)))) <=> RESULT;
+	& substring(string2,i,j)=string1)))) <=> RESULT
+measure len string2 + len string1;
 
 issubstring2: String*String*String +> bool
 issubstring2(string1,string2,oldstring1)==
@@ -241,7 +243,8 @@ issubstring2(string1,string2,oldstring1)==
 	elseif string2=[] or string1 = <nil> or string2 = <nil> then false
 	elseif hd(string1)=hd(string2) 
 	then issubstring2(tl(string1),tl(string2),oldstring1)
-	else issubstring(oldstring1,string2);
+	else issubstring(oldstring1,string2)
+measure len string2 + len string1 + len oldstring1;
 
 
 
