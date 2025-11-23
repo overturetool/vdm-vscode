@@ -27,22 +27,23 @@ private busy : bool := true;
 --
 types   
 inline  = Types`Event;
-InputTP   = seq of inline;
+InputTP   = seq1 of inline;
 --
 -- Operations definition section
 --
 operations
 
-public Environment: seq of char ==> Environment
+public Environment: seq1 of char ==> Environment
 Environment(filename) ==
 (
  	Printer`OutWithTS("Environment created: "  
  					 ^ "Some aren't used to an environment"  
 					 ^ "where excellence is expected");
 
-	def mk_(-,input) = io.freadval[InputTP](filename) in
+	def mk_(rb,input) = io.freadval[seq1 of inline](filename) in
 	(
-	inlines := input;
+	if rb
+    then inlines := input;
 	);	 
 );
 
