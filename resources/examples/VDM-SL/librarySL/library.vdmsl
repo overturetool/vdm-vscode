@@ -108,7 +108,7 @@ get(dB,i)==
 	if record.id=i 
 	then record 
 	else get(dB\{record},i)	
-pre	i in set usedIds(dB) 
+pre i in set usedIds(dB) 
 post RESULT.id=i and RESULT in set dB
 measure card dB;
   
@@ -172,7 +172,7 @@ post 	(exists i,j in set usedIds(dB) & i<>j and iscomplete(dB,i)
 	and recordtype(dB,i)=recordtype(dB,j) and
 	forall x in set required(recordtype(dB,i)) 
 	& getvalue(x,dB,i)=getvalue(x,dB,j)) <=> RESULT
-measure card dB;
+;--measure card dB;
 
 isidentical2: set of Record*set of Record*set of Record*Record +>bool
 isidentical2(dB1,dB2,olddB,record1)==
@@ -183,7 +183,7 @@ isidentical2(dB1,dB2,olddB,record1)==
 	isidentical3(dB1,dB2,olddB,record1,record2,
 	required(recordtype(olddB,record1.id)))
 	else isidentical2(dB1,dB2\{record2},olddB,record1)
-measure card dB1 + card dB2;
+;--measure card dB1 + card dB2;
 
 isidentical3: set of Record*set of Record*set of Record*Record*
               Record*set of Valuetype +> bool
@@ -196,7 +196,7 @@ isidentical3(dB1,dB2,olddB,record1,record2,requiredfields)==
 	   getvalue(field,olddB,record2.id) 
 	then isidentical2(dB1,dB2\{record2},olddB,record1)
 	else isidentical3(dB1,dB2,olddB,record1,record2,requiredfields\{field})
-measure card dB1 + card dB2 + card requiredfields;
+;--measure card dB1 + card dB2 + card requiredfields;
 
 ismonth: Value +> bool
 ismonth(v)==
@@ -235,7 +235,7 @@ post (string1 = [] or ((not (string2=<nil>) and
                         not (string1=<nil>) and 
 						(exists i,j in set inds(string2) 
 	& substring(string2,i,j)=string1)))) <=> RESULT
-measure len string2 + len string1;
+;--measure len string2 + len string1;
 
 issubstring2: String*String*String +> bool
 issubstring2(string1,string2,oldstring1)==
@@ -244,7 +244,7 @@ issubstring2(string1,string2,oldstring1)==
 	elseif hd(string1)=hd(string2) 
 	then issubstring2(tl(string1),tl(string2),oldstring1)
 	else issubstring(oldstring1,string2)
-measure len string2 + len string1 + len oldstring1;
+;--measure len string2 + len string1 + len oldstring1;
 
 
 
@@ -497,17 +497,17 @@ SEARCH(a)==
  (dcl ids:set of Id:={};
   for all record in set dB do
     if issubstring(a,record.author) 
-    then ids:=ids union {record.id}
-    else ids:=ids;
+    then ids:=ids union {record.id};
 	return ids)
 pre  a <> <nil>
 post a <> <nil> and
     forall i in set RESULT & issubstring(a,get(dB,i).author)
 	and not exists record in set dB & 
 	(record.id not in set RESULT and 
-     issubstring(a,get(dB,i).author));
+     (pre_get(dB,i) =>
+	 issubstring(a,get(dB,i).author)));
 
-GET: Id ==> Record
+GET: Id ==> Record 
 GET(i)==
 	return get(dB,i)
 pre 	i in set usedIds(dB)
