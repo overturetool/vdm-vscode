@@ -72,7 +72,7 @@ angleBetweenVectors(v1,v2) ==
   let uv1 = unitVector(v1),
       uv2 = unitVector(v2),
       dvs = dotProduct(uv1,uv2),
-      angle = MATH`acos(dvs)  
+      angle = MATH`acos(floor abs dvs)  
   in
     radians2degree(angle);
 
