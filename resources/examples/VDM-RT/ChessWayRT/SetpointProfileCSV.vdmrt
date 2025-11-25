@@ -22,8 +22,8 @@ SetpointProfileCSV(init, file) ==
 	line := 1;
 	let mk_(success,l) = CSV`flinecount(file) in
 	(
-		if not success then quit("Failed to read input file '%s': %s.", [file, new CSV().ferror()]);
-		lines := l
+		if not success then quit("Failed to read input file '%s': %s.", [file, new CSV().ferror()])
+		else lines := l
 	);	
 	setpoint := init;
 	next_setpoint := nil
