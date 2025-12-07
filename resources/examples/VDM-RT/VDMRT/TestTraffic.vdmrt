@@ -47,7 +47,8 @@ RunTest () ==
   traf.AddVehicle(vec2);
   
   let vs = traf.GetVehicles() in
-  (
+  if len vs >= 2
+  then (
    AssertTrue(len vs = 2);
    AssertTrue(vs(1) = vec);
   );

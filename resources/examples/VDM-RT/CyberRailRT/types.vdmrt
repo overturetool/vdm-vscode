@@ -12,7 +12,7 @@ public REQUESTPLAN ::
 		navi : CyberRail`NavigationInput 
 		tokdev : TokenDevice;
 public RETURNPLAN :: 
-		plan : TransportPlan`DTO 
+		plan : [TransportPlan`DTO] 
 		tokdev : TokenDevice;
 public CALCPLAN :: 
 		navi : CyberRail`NavigationInput 
