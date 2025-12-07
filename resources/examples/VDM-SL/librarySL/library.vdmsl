@@ -501,11 +501,14 @@ SEARCH(a)==
 	return ids)
 pre  a <> <nil>
 post a <> <nil> and
-    forall i in set RESULT & issubstring(a,get(dB,i).author)
+    forall i in set RESULT & 
+	  let author = get(dB,i).author in 
+	   (author <> nil => issubstring(a,get(dB,i).author))
 	and not exists record in set dB & 
 	(record.id not in set RESULT and 
      (pre_get(dB,i) =>
-	 issubstring(a,get(dB,i).author)));
+	 let author = get(dB,i).author in 
+	   author <> nil => issubstring(a,author)));
 
 GET: Id ==> Record 
 GET(i)==

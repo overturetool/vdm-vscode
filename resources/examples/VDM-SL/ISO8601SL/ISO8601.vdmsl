@@ -575,7 +575,8 @@ functions
 
   -- Given a date, find the previous date on which the day of month is the same.
   previousDateForYM: Date +> Date
-  previousDateForYM(date) == previousDateForDay(date, date.day)
+  previousDateForYM(date) == 
+  previousDateForDay(date, date.day)
   pre date <> mk_Date(0, 1, 1);
   --post RESULT = maxDate({ dt | dt:Date & dt  date and dt.day = date.day });
 
