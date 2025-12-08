@@ -31,7 +31,8 @@ IncTemp() ==
 
 public DecTemp: () ==> ()
 DecTemp() ==
-  envTemp := envTemp - 1;
+  envTemp := envTemp - 1
+pre envTemp >0;
 
 pure public ReadHumid: () ==> nat
 ReadHumid() ==
@@ -43,7 +44,8 @@ IncHumid() ==
 
 public DecHumid: () ==> ()
 DecHumid() ==
-  envHumid := envHumid - 1;
+  envHumid := envHumid - 1
+pre envHumid >0;
 
 sync
 
