@@ -292,7 +292,7 @@ wfArrayLookup(mk_ArrayLookup(id, index),env) ==
   then let tp = env.GetSType(id) in  -- get the type of Id in env
            if tp = <B> or tp = <I> or tp = <U>
            then return <Err> -- Id is not an array in the env 
-           elseif index in set dom env.GetSenv()(id) -- assuming Id points to an array in senv
+           elseif index in set dom (env.GetSenv()(id)) -- assuming Id points to an array in senv
 				then return env.GetAType(id,index) -- Get type of index in map
 				else return <Err>
   else return <Err>;  
