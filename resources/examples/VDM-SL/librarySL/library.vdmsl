@@ -495,6 +495,7 @@ post	dB~=dB union {get(dB~,i)};
 SEARCH: String ==> set of Id
 SEARCH(a)==
  (dcl ids:set of Id:={};
+  -- @LoopInvariant(ids subset usedIds(dB))
   for all record in set dB do
     if issubstring(a,record.author) 
     then ids:=ids union {record.id};
@@ -503,12 +504,12 @@ pre  a <> <nil>
 post a <> <nil> and
     forall i in set RESULT & 
 	  let author = get(dB,i).author in 
-	   (author <> nil => issubstring(a,get(dB,i).author))
+	   (author <> <nil> => issubstring(a,get(dB,i).author))
 	and not exists record in set dB & 
 	(record.id not in set RESULT and 
      (pre_get(dB,i) =>
 	 let author = get(dB,i).author in 
-	   author <> nil => issubstring(a,author)));
+	   author <> <nil> => issubstring(a,author)));
 
 GET: Id ==> Record 
 GET(i)==
