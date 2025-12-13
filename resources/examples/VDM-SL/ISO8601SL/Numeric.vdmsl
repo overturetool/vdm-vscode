@@ -110,10 +110,10 @@ functions
 
   -- Measure functions.
 
-  size1: nat +> nat
-  size1(n) == n;
+--   size1: nat +> nat
+--   size1(n) == n;
 
-  size2: seq1 of char +> nat
-  size2(s) == len s;
+--   size2: seq1 of char +> nat
+--   size2(s) == len s;
 
 end Numeric

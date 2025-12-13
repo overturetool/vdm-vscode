@@ -577,7 +577,7 @@ functions
   previousDateForYM: Date +> Date
   previousDateForYM(date) == 
   previousDateForDay(date, date.day)
-  pre date <> mk_Date(0, 1, 1);
+  pre date.year <> 0;
   --post RESULT = maxDate({ dt | dt:Date & dt  date and dt.day = date.day });
 
   -- Given a date and specific day, find the closest previous date on which the day of month is
@@ -585,7 +585,7 @@ functions
   previousDateForDay: Date * Day +> Date
   previousDateForDay(date, day) == 
     previousYMDForDay(date.year, date.month, date.day, day)
-  pre date <> mk_Date(0, 1, 1) and day <= MAX_DAYS_PER_MONTH;
+  pre date.year <> 0 and day <= MAX_DAYS_PER_MONTH;
   --post RESULT = maxDate({ dt | dt:Date & dt < date and dt.day = day });
 
   -- Given a date, find the closest later date on which the day of month is the same.
@@ -600,7 +600,7 @@ functions
        else if prevy < 0
                then mk_Date(yy, mm, day) -- No earlier date possible
                else previousYMDForDay(prevy, prevm, 1, day)
-  pre dd <= daysInMonth(yy, mm)
+  pre yy <> 0 and dd <= daysInMonth(yy, mm)
   --post RESULT = maxDate({ date | date:Date & date < mk_Date(yy, mm, dd) and
   --                                           date.day = day })
   measure yy*MONTHS_PER_YEAR + mm;

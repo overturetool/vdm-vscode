@@ -233,10 +233,11 @@ functions
 
   -- Create a sequence of identical elements.
   replicate[@a]: nat * @a +> seq of @a
-  replicate(n,x) == [ x | i in set {1,...,n} ]
+  replicate(n,x) == [ x | - in set {1,...,n} ]
   post len RESULT = n and forall y in seq RESULT & y = x;
 
   -- Pad a sequence on the left with a given item up to a specified length.
+  -- @QuickCheck @a = char;
   padLeft[@a]: seq of @a * @a * nat +> seq of @a
   padLeft(sq,x,n) == 
     if n >= len sq
@@ -245,6 +246,7 @@ functions
   post postSeq[@a](sq, RESULT);
 
   -- Pad a sequence on the right with a given item up to a specified length.
+  -- @QuickCheck @a = char;
   padRight[@a]: seq of @a * @a * nat +> seq of @a
   padRight(sq,x,n) == sq ^ replicate[@a](n-len sq, x)
   pre n >= len sq
@@ -252,9 +254,11 @@ functions
 
   -- Pad a sequence with a given item such that it is centred in a specified length.
   -- If padded by an odd number, add the extra item on the right.
+  -- @QuickCheck @a = char;
   padCentre[@a]: seq of @a * @a * nat +> seq of @a
   padCentre(sq,x,n) == let space = if n <= len sq then 0 else n - len sq
-                       in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n);
+                       in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n)
+  pre n >= len sq;
 
   -- Drop items from a sequence while a predicate is true.
   dropWhile[@a]: (@a +> bool) * seq of @a +> seq of @a
