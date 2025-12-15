@@ -223,7 +223,15 @@ isstring(v)==
        else false
   else false
 pre v <> nil;
-	
+
+issubstring: String*String +> bool
+issubstring(string1,string2)==
+	if string1 = [] then true 
+	elseif string2 = [] or string1 = <nil> or string2 = <nil> then false
+	else exists i, j in set inds string2 &
+		string2(i, ..., j) = string1;
+
+/****
 issubstring: String*String +> bool
 issubstring(string1,string2)==
 	if string1=[] then true 
@@ -245,7 +253,7 @@ issubstring2(string1,string2,oldstring1)==
 	then issubstring2(tl(string1),tl(string2),oldstring1)
 	else issubstring(oldstring1,string2)
 ;--measure len string2 + len string1 + len oldstring1;
-
+***/
 
 
 isvalueoffield: Value*Valuetype +> bool
@@ -356,6 +364,7 @@ post 	rt = <article>
 	rt = <techreport>	
 	and RESULT={<title>,<author>,<institution>,<year>};
 
+/***
 substring(s:String,i:nat1,j:nat1) r:String
 pre	s <> <nil> and i<j and j<=len(s)
 post	exists s1,s2:String & s1 <> <nil> and
@@ -364,6 +373,7 @@ post	exists s1,s2:String & s1 <> <nil> and
                               len(s1)=i-1 and 
 							  len(s2)=len(s)-j and 
 							  s=s1^r^s2;
+***/
 
 usedIds: set of Record +> set of Id
 usedIds(dB)==
