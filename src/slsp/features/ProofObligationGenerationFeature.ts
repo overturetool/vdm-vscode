@@ -55,7 +55,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         this._onDidChangeProofObligations = new EventEmitter<boolean>();
         this._disposables.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
         let provider: ProofObligationProvider = {
-            provideProofObligations: (uri: Uri) => this.requestPOG(uri),
+            provideProofObligations: (uri: Uri, poIds?: number[]) => this.requestPOG(uri, poIds),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
             runQuickCheck: (
@@ -65,7 +65,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
                 progress?: Progress<{
                     message?: string;
                     increment?: number;
-                }>
+                }>,
             ) => this.runQuickCheck(wsFolder, poIds, token, progress),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
@@ -77,7 +77,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         if (this._onDidChangeProofObligations) this._onDidChangeProofObligations.dispose();
     }
 
-    private requestPOG(uri: Uri): Promise<CodeProofObligation[]> {
+    private requestPOG(uri: Uri, poIds?: number[]): Promise<CodeProofObligation[]> {
         return new Promise((resolve, reject) => {
             // Abort if not for this client
             if (!util.match(this._selector, uri)) return reject();
@@ -87,6 +87,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             // Setup message parameters
             let params: GeneratePOParams = {
                 uri: this._client.code2ProtocolConverter.asUri(uri),
+                obligations: poIds,
             };
 
             // Send request
@@ -108,7 +109,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         progress?: Progress<{
             message?: string;
             increment?: number;
-        }>
+        }>,
     ): Thenable<QuickCheckInfo[]> {
         let workDoneToken = null;
         if (progress) {

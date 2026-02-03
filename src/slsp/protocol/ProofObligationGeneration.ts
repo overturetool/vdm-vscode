@@ -129,7 +129,7 @@ export namespace GeneratePORequest {
     export type MiddlewareSignature = (
         params: GeneratePOParams,
         token: CancellationToken,
-        next: HandlerSignature
+        next: HandlerSignature,
     ) => HandlerResult<ProofObligation[] | null, void>;
 }
 
@@ -142,6 +142,12 @@ export interface GeneratePOParams {
      * should be generated.
      */
     uri: DocumentUri;
+    /**
+     * Optional list of specific proof obligation IDs to generate.
+     * If not provided, all proof obligations for the specification
+     * should be generated.
+     */
+    obligations?: number[];
 }
 
 /**
@@ -180,7 +186,7 @@ export namespace RunQuickCheckRequest {
     export type MiddlewareSignature = (
         params: RunQuickCheckRequestParams,
         token: CancellationToken,
-        next: HandlerSignature
+        next: HandlerSignature,
     ) => HandlerResult<QuickCheckInfo[], void>;
 }
 

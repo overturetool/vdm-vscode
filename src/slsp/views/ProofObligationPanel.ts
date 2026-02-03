@@ -41,7 +41,7 @@ export interface ProofObligation {
 
 export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
-    provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
+    provideProofObligations(uri: Uri, poIds?: number[]): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
     runQuickCheck(
         wsFolder: Uri,
@@ -50,7 +50,7 @@ export interface ProofObligationProvider {
         progress?: Progress<{
             message?: string;
             increment?: number;
-        }>
+        }>,
     ): Thenable<QuickCheckInfo[]>;
 }
 
@@ -62,7 +62,10 @@ interface Message {
 class OnReady {
     private _used: boolean;
 
-    constructor(private _resolve: () => void, private _reject: (error: any) => void) {
+    constructor(
+        private _resolve: () => void,
+        private _reject: (error: any) => void,
+    ) {
         this._used = false;
     }
 
@@ -93,7 +96,10 @@ export class ProofObligationPanel implements Disposable {
     private onReady: Promise<void>;
     private _onReadyCallbacks: OnReady;
 
-    constructor(private readonly _context: ExtensionContext, clientManager: ClientManager) {
+    constructor(
+        private readonly _context: ExtensionContext,
+        clientManager: ClientManager,
+    ) {
         this.onReady = new Promise<void>((resolve, reject) => {
             this._onReadyCallbacks = new OnReady(resolve, reject);
         });
@@ -119,7 +125,7 @@ export class ProofObligationPanel implements Disposable {
                 async (uri: Uri) => {
                     if (Object.values(uri).length === 0) {
                         window.showWarningMessage(
-                            "Proof Obligation Generation failed. POG cannot be run on multiple folders in a multi-root workspace, choose a more specific target."
+                            "Proof Obligation Generation failed. POG cannot be run on multiple folders in a multi-root workspace, choose a more specific target.",
                         );
                         return;
                     }
@@ -135,10 +141,24 @@ export class ProofObligationPanel implements Disposable {
                     }
                     this.onRunPog(uri);
                 },
-                this
-            )
+                this,
+            ),
         );
         this._disposables.push(commands.registerCommand(`vdm-vscode.pog.update`, this.onUpdate, this));
+        this._disposables.push(
+            commands.registerCommand(
+                `vdm-vscode.showPODependencies`,
+                async (...poIds: number[]) => {
+                    if (!poIds.length) {
+                        window.showWarningMessage("Cannot show filtered Proof Obligations, missing PO IDs.");
+                        return;
+                    }
+                    const uri = this._lastUri;
+                    this.onShowFilteredPog(uri, poIds);
+                },
+                this,
+            ),
+        );
     }
 
     public get viewType(): string {
@@ -178,7 +198,6 @@ export class ProofObligationPanel implements Disposable {
 
     protected async onRunPog(uri: Uri) {
         this._pos = [];
-
         const poProvider = this.getPOProvider(uri);
         try {
             let res = await poProvider.provider.provideProofObligations(uri);
@@ -204,7 +223,7 @@ export class ProofObligationPanel implements Disposable {
         progress?: Progress<{
             message?: string;
             increment?: number;
-        }>
+        }>,
     ) {
         const poProvider = this.getPOProvider(uri);
 
@@ -239,6 +258,24 @@ export class ProofObligationPanel implements Disposable {
                 this.displayWarning();
             }
         }
+    }
+
+    protected async onShowFilteredPog(uri: Uri, poIds: number[]) {
+        const poProvider = this.getPOProvider(uri);
+
+        try {
+            // Request only the filtered POs
+            let res = await poProvider.provider.provideProofObligations(uri, poIds);
+            this._pos = [...res];
+        } catch (e) {
+            this.displayWarning();
+            console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
+        }
+
+        if (!this._panel) {
+            this.createWebView(poProvider.provider.quickCheckProvider, uri);
+        }
+        this.updateContent();
     }
 
     private deleteQcInfo(po: ProofObligation): ProofObligation {
@@ -316,7 +353,7 @@ export class ProofObligationPanel implements Disposable {
                         enableScripts: true, // Enable javascript in the webview
                         localResourceRoots: [this._resourcesUri, this._webviewsUri], // Restrict the webview to only load content from the extension's `resources` directory.
                         retainContextWhenHidden: true, // Retain state when PO view goes into the background
-                    }
+                    },
                 );
 
             // Listen for when the panel is disposed
@@ -370,7 +407,7 @@ export class ProofObligationPanel implements Disposable {
                                             this._lastUri,
                                             message.data.poIds ?? [],
                                             _token,
-                                            _progress
+                                            _progress,
                                         );
                                         const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
 
@@ -379,14 +416,14 @@ export class ProofObligationPanel implements Disposable {
                                         await this._panel.webview.postMessage({ command: "newPOs", pos: this._pos });
                                         throw err;
                                     }
-                                }
+                                },
                             );
 
                             break;
                     }
                 },
                 null,
-                this._disposables
+                this._disposables,
             );
 
             // Generate the html for the webview
