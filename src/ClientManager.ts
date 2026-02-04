@@ -21,7 +21,7 @@ export class ClientManager extends AutoDisposable {
     constructor(
         private _serverFactory: ServerFactory,
         private _acceptedLanguageIds: Set<string>,
-        private _languageIdFilePatternFunc: (fsPath: string) => RelativePattern
+        private _languageIdFilePatternFunc: (fsPath: string) => RelativePattern,
     ) {
         super();
         this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
@@ -60,7 +60,8 @@ export class ClientManager extends AutoDisposable {
         let client = this.get(wsFolder);
         if (client) {
             this.delete(wsFolder);
-            client.stop().then(() => this.startClient(wsFolder, getDialectFromAlias(client.languageId)));
+            await client.stop();
+            this.startClient(wsFolder, getDialectFromAlias(client.languageId));
         }
     }
 
@@ -97,7 +98,7 @@ export class ClientManager extends AutoDisposable {
 
             // Stop client
             if (client.needsStop()) {
-                client.stop();
+                await client.stop();
             }
         });
     }
@@ -111,8 +112,8 @@ export class ClientManager extends AutoDisposable {
             await workspace.openTextDocument(files[0]);
 
             const client: SpecificationLanguageClient = this.get(wsFolder);
-            // Wait for the client to be ready - i.e. completed initialization phase.
-            await client.onReady();
+            // Start client if not already started.
+            if (client.needsStart) await client.start();
 
             return client;
         }
@@ -147,7 +148,7 @@ export class ClientManager extends AutoDisposable {
         this._clients.set(ClientManager.getKey(wsFolder), client);
     }
 
-    private startClient(wsFolder: WorkspaceFolder, dialect: VdmDialect) {
+    private async startClient(wsFolder: WorkspaceFolder, dialect: VdmDialect) {
         // Abort if client already exists
         if (this.has(wsFolder)) {
             return;
@@ -168,7 +169,7 @@ export class ClientManager extends AutoDisposable {
             `vdm-vscode`,
             dialect,
             this._serverFactory.createServerOptions(wsFolder, dialect),
-            clientOptions
+            clientOptions,
         );
 
         // Save client
@@ -181,22 +182,19 @@ export class ClientManager extends AutoDisposable {
         // XXX Look here if unexpected client restart behaviour starts to happen
         this.addDisposable(
             wsFolder,
-            client.onDidChangeState((e) => this.checkForClientCrash(e, wsFolder), this)
+            client.onDidChangeState((e) => this.checkForClientCrash(e, wsFolder), this),
         );
 
         // Setup DAP
-        client.onReady().then(() => {
-            const port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
-            if (port) {
-                dapSupport.addPort(wsFolder, port);
-            } else {
-                console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
-            }
-        });
-
         // Start the client
         console.info(`[${this.name}] Launching client for the folder ${wsFolder.name} with language ID ${dialect}`);
         client.start();
+        const port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
+        if (port) {
+            dapSupport.addPort(wsFolder, port);
+        } else {
+            console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
+        }
     }
 
     private checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
