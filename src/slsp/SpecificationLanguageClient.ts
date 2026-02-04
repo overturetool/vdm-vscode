@@ -12,7 +12,7 @@ export class SpecificationLanguageClient extends LanguageClient {
         public readonly languageId: string,
         serverOptions: ServerOptions,
         clientOptions: LanguageClientOptions,
-        forceDebug?: boolean
+        forceDebug?: boolean,
     ) {
         super(name, serverOptions, clientOptions, forceDebug);
     }

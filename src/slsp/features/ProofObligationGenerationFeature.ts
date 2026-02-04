@@ -10,6 +10,7 @@ import {
     Disposable,
     CancellationToken,
     WorkDoneProgress,
+    FeatureState,
 } from "vscode-languageclient";
 import { ProofObligationPanel, ProofObligationProvider } from "../views/ProofObligationPanel";
 import {
@@ -69,6 +70,9 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             ) => this.runQuickCheck(wsFolder, poIds, token, progress),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
+    }
+    getState(): FeatureState {
+        return { kind: "static" };
     }
     dispose(): void {
         this._disposables.forEach((l) => l.dispose());
