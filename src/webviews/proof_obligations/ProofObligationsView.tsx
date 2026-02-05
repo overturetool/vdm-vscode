@@ -53,6 +53,8 @@ interface ProofObligationsHeaderMenuProps {
     filterState: FilterState;
     onClickQuickCheck?: () => void;
     disableQuickCheck: boolean;
+    lensFilterMessage?: string | null;
+    onClearLensFilter?: () => void;
 }
 
 const ProofObligationsHeaderMenu = ({
@@ -63,6 +65,8 @@ const ProofObligationsHeaderMenu = ({
     filterState,
     onClickQuickCheck,
     disableQuickCheck,
+    onClearLensFilter,
+    lensFilterMessage,
 }: ProofObligationsHeaderMenuProps) => {
     return (
         <div
@@ -74,15 +78,32 @@ const ProofObligationsHeaderMenu = ({
                 alignItems: "end",
             }}
         >
-            <VSCodeTextField
-                css={{ flexShrink: 1 }}
-                onInput={(e) => {
-                    onFilterChanged((e.target as HTMLInputElement).value);
-                }}
-                type="text"
-            >
-                Filter {filterState.isFiltering ? `(Showing ${filterState.matchingRows} of ${filterState.totalRows} rows.)` : null}
-            </VSCodeTextField>
+            {lensFilterMessage ? (
+                <div
+                    css={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5em",
+                        flex: 1,
+                    }}
+                >
+                    <strong>Dependent POs</strong>
+                    <span>{lensFilterMessage}</span>
+                    <VSCodeButton appearance="icon" onClick={onClearLensFilter}>
+                        x
+                    </VSCodeButton>
+                </div>
+            ) : (
+                <VSCodeTextField
+                    css={{ flexShrink: 1 }}
+                    onInput={(e) => {
+                        onFilterChanged((e.target as HTMLInputElement).value);
+                    }}
+                    type="text"
+                >
+                    Filter {filterState.isFiltering ? `(Showing ${filterState.matchingRows} of ${filterState.totalRows} rows.)` : null}
+                </VSCodeTextField>
+            )}
             <div css={{ flexShrink: 0 }}>
                 <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
                     {openPos.size === filterState.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
@@ -125,6 +146,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     const [openPos, setOpenPos] = useState<Set<number>>(new Set<number>());
     const [filterText, setFilterText] = useState<string>("");
     const [runningQuickCheck, setRunningQuickCheck] = useState<boolean>(false);
+    const [lensFilterMessage, setLensFilterMessage] = useState<string | null>(null);
 
     const filteredPos = useMemo(() => filterPOs(pos, filterText), [filterText, pos]);
     const currentFilterState: FilterState =
@@ -189,6 +211,12 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         setOpenPos(new Set(pos.map((po) => po.id)));
     };
 
+    const handleClearLensFilter = () => {
+        vscodeApi.postMessage({
+            command: "clearFilter",
+        });
+    }
+
     const onMessage = (e: MessageEvent) => {
         console.log("new message", e.data.command);
         switch (e.data.command) {
@@ -196,6 +224,8 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 setPos(formatProofObligations(e.data.pos));
                 setProofObligation(null);
                 setRunningQuickCheck(false);
+                setLensFilterMessage(e.data.filterMessage ?? null);
+                if (!e.data.filterMessage) setFilterText("");
                 break;
             case "rebuildPOview":
                 setPos(formatProofObligations(e.data.pos));
@@ -240,6 +270,8 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 filterState={currentFilterState}
                 onClickQuickCheck={handleQuickCheck}
                 disableQuickCheck={runningQuickCheck}
+                lensFilterMessage={lensFilterMessage}
+                onClearLensFilter={handleClearLensFilter}
             />
 
             <div

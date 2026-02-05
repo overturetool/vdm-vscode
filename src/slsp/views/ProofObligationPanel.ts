@@ -91,7 +91,9 @@ export class ProofObligationPanel implements Disposable {
     private _lastWsFolder: WorkspaceFolder;
     private _lastUri: Uri;
     private _disposables: Disposable[] = [];
+    private _allPos: ProofObligation[] = [];
     private _pos: ProofObligation[];
+    private _filterMessage?: string;
 
     private onReady: Promise<void>;
     private _onReadyCallbacks: OnReady;
@@ -201,6 +203,7 @@ export class ProofObligationPanel implements Disposable {
         const poProvider = this.getPOProvider(uri);
         try {
             let res = await poProvider.provider.provideProofObligations(uri);
+            this._allPos = [...res];
             this._pos = [...res];
             this.clearWarning();
         } catch (e) {
@@ -272,6 +275,8 @@ export class ProofObligationPanel implements Disposable {
             console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
         }
 
+        // TODO: message from CodeLens
+        this._filterMessage = "Dependent POs";
         if (!this._panel) {
             this.createWebView(poProvider.provider.quickCheckProvider, uri);
         }
@@ -420,6 +425,12 @@ export class ProofObligationPanel implements Disposable {
                             );
 
                             break;
+                        case "clearFilter":
+                            this._pos = [...this._allPos];
+                            this._filterMessage = undefined;
+                            this.updateContent();
+
+                            break;
                     }
                 },
                 null,
@@ -453,7 +464,7 @@ export class ProofObligationPanel implements Disposable {
 
     protected updateContent() {
         this.onReady.then(() => {
-            this._panel.webview.postMessage({ command: "newPOs", pos: this._pos });
+            this._panel.webview.postMessage({ command: "newPOs", pos: this._pos, filterMessage: this._filterMessage });
         });
     }
 
