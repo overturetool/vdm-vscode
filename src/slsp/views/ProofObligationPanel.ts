@@ -276,7 +276,7 @@ export class ProofObligationPanel implements Disposable {
         }
 
         // TODO: message from CodeLens
-        this._filterMessage = "Dependent POs";
+        this._filterMessage = "CodeLens message";
         if (!this._panel) {
             this.createWebView(poProvider.provider.quickCheckProvider, uri);
         }
@@ -416,9 +416,17 @@ export class ProofObligationPanel implements Disposable {
                                         );
                                         const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
 
-                                        await this._panel.webview.postMessage({ command: "newPOs", pos: posWithQc });
+                                        await this._panel.webview.postMessage({
+                                            command: "newPOs",
+                                            pos: posWithQc,
+                                            filterMessage: this._filterMessage,
+                                        });
                                     } catch (err) {
-                                        await this._panel.webview.postMessage({ command: "newPOs", pos: this._pos });
+                                        await this._panel.webview.postMessage({
+                                            command: "newPOs",
+                                            pos: this._pos,
+                                            filterMessage: this._filterMessage,
+                                        });
                                         throw err;
                                     }
                                 },
@@ -446,6 +454,7 @@ export class ProofObligationPanel implements Disposable {
         this._panel = undefined;
         this._lastWsFolder = undefined;
         this._lastUri = undefined;
+        this._filterMessage = undefined;
     }
 
     private displayWarning() {

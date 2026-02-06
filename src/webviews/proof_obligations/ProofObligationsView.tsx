@@ -83,14 +83,36 @@ const ProofObligationsHeaderMenu = ({
                     css={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "0.5em",
+                        justifyContent: "space-between",
                         flex: 1,
+                        padding: "0.5em 0.75em",
+                        borderRadius: "6px",
+                        backgroundColor: "var(--vscode-editor-inactiveSelectionBackground",
                     }}
                 >
-                    <strong>Dependent POs</strong>
-                    <span>{lensFilterMessage}</span>
-                    <VSCodeButton appearance="icon" onClick={onClearLensFilter}>
-                        x
+                    <div
+                        css={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.2em",
+                        }}
+                    >
+                        <strong>Dependent POs</strong>
+                        <span
+                            css={{
+                                fontSize: "0.85em",
+                                opacity: 0.8,
+                            }}
+                        >
+                            {lensFilterMessage}
+                        </span>
+                    </div>
+                    <VSCodeButton
+                        appearance="icon"
+                        onClick={onClearLensFilter}
+                        aria-label="Clear dependent POs"
+                    >
+                        <span className="codicon codicon-close" />
                     </VSCodeButton>
                 </div>
             ) : (
