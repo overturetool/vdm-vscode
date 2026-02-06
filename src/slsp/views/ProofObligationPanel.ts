@@ -150,11 +150,13 @@ export class ProofObligationPanel implements Disposable {
         this._disposables.push(
             commands.registerCommand(
                 `vdm-vscode.showPODependencies`,
-                async (...poIds: number[]) => {
+                async (message: string, ...poIds: number[]) => {
                     if (!poIds.length) {
                         window.showWarningMessage("Cannot show filtered Proof Obligations, missing PO IDs.");
                         return;
                     }
+
+                    this._filterMessage = message;
                     const uri = this._lastUri;
                     this.onShowFilteredPog(uri, poIds);
                 },
@@ -275,8 +277,6 @@ export class ProofObligationPanel implements Disposable {
             console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
         }
 
-        // TODO: message from CodeLens
-        this._filterMessage = "CodeLens message";
         if (!this._panel) {
             this.createWebView(poProvider.provider.quickCheckProvider, uri);
         }

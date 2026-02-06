@@ -75,7 +75,7 @@ const ProofObligationsHeaderMenu = ({
                 flexDirection: "row",
                 justifyContent: "space-between",
                 margin: "0.5em 1em 1em 0.5em",
-                alignItems: "end",
+                alignItems: "center",
             }}
         >
             {lensFilterMessage ? (
