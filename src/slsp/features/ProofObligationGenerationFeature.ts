@@ -48,7 +48,9 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         this._selector = documentSelector;
 
         // Not supported
-        if (!pogCapabilities?.experimental?.proofObligationProvider) return;
+        if (!pogCapabilities?.experimental?.proofObligationProvider) {
+            return;
+        }
 
         // If the QuickCheck plugin isn't installed or any error occured in loading the plugin, QuickCheck will not be enabled in the client.
         const quickCheckEnabled = pogCapabilities.experimental.proofObligationProvider?.quickCheckProvider ?? false;
@@ -60,8 +62,8 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
                 uri: Uri,
                 poIds?: number[],
                 progress?: Progress<{ message?: string; increment?: number }>,
-                token?: CancellationToken,
-            ) => this.requestPOG(uri, poIds, progress, token),
+                cancellationToken?: CancellationToken,
+            ) => this.requestPOG(uri, poIds, progress, cancellationToken),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
             runQuickCheck: (
@@ -83,14 +85,16 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         this._disposables.forEach((l) => l.dispose());
         this._disposables = [];
 
-        if (this._onDidChangeProofObligations) this._onDidChangeProofObligations.dispose();
+        if (this._onDidChangeProofObligations) {
+            this._onDidChangeProofObligations.dispose();
+        }
     }
 
     private requestPOG(
         uri: Uri,
         poIds?: number[],
         progress?: Progress<{ message?: string; increment?: number }>,
-        token?: CancellationToken,
+        cancellationToken?: CancellationToken,
     ): Promise<CodeProofObligation[]> {
         let workDoneToken = null;
         if (progress) {
@@ -119,7 +123,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
 
             // Send request
             this._client
-                .sendRequest(GeneratePORequest.type, params, token)
+                .sendRequest(GeneratePORequest.type, params, cancellationToken)
                 .then((POs) => {
                     return resolve(POs.map((po) => this.asCodeProofObligation(po), this));
                 })

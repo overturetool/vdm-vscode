@@ -45,7 +45,7 @@ export interface ProofObligationProvider {
         uri: Uri,
         poIds?: number[],
         progress?: Progress<{ message?: string; increment?: number }>,
-        token?: CancellationToken,
+        cancellationToken?: CancellationToken,
     ): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
     runQuickCheck(
@@ -208,15 +208,16 @@ export class ProofObligationPanel implements Disposable {
     protected async onRunPog(uri: Uri) {
         this._pos = [];
         const poProvider = this.getPOProvider(uri);
+        this.createWebView(poProvider.provider.quickCheckProvider, uri);
         try {
             let res = await window.withProgress(
                 {
-                    location: ProgressLocation.Window,
+                    location: ProgressLocation.Notification,
                     title: "Generating Proof Obligations",
-                    cancellable: true, // TODO: true
+                    cancellable: true,
                 },
-                async (progress, token) => {
-                    return await poProvider.provider.provideProofObligations(uri, undefined, progress, token);
+                async (progress, cancellationToken) => {
+                    return await poProvider.provider.provideProofObligations(uri, undefined, progress, cancellationToken);
                 },
             );
             this._allPos = [...res];
@@ -228,7 +229,6 @@ export class ProofObligationPanel implements Disposable {
         }
 
         let wsFolder = workspace.getWorkspaceFolder(uri);
-        this.createWebView(poProvider.provider.quickCheckProvider, uri);
         this.updateContent();
 
         this._lastUri = uri;
