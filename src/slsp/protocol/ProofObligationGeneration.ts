@@ -148,6 +148,10 @@ export interface GeneratePOParams {
      * should be generated.
      */
     obligations?: number[];
+    /**
+     * An optional token that the server can use to report progress on the generation of the proof obligations.
+     */
+    workDoneToken?: string;
 }
 
 /**

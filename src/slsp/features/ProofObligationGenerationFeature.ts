@@ -56,7 +56,12 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         this._onDidChangeProofObligations = new EventEmitter<boolean>();
         this._disposables.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
         let provider: ProofObligationProvider = {
-            provideProofObligations: (uri: Uri, poIds?: number[]) => this.requestPOG(uri, poIds),
+            provideProofObligations: (
+                uri: Uri,
+                poIds?: number[],
+                progress?: Progress<{ message?: string; increment?: number }>,
+                token?: CancellationToken,
+            ) => this.requestPOG(uri, poIds, progress, token),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
             runQuickCheck: (
@@ -81,7 +86,24 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         if (this._onDidChangeProofObligations) this._onDidChangeProofObligations.dispose();
     }
 
-    private requestPOG(uri: Uri, poIds?: number[]): Promise<CodeProofObligation[]> {
+    private requestPOG(
+        uri: Uri,
+        poIds?: number[],
+        progress?: Progress<{ message?: string; increment?: number }>,
+        token?: CancellationToken,
+    ): Promise<CodeProofObligation[]> {
+        let workDoneToken = null;
+        if (progress) {
+            workDoneToken = this.generateToken();
+            const progressDisp = this._client.onProgress(WorkDoneProgress.type, workDoneToken, (value) => {
+                if (value.kind !== "end" && value?.percentage) {
+                    progress.report({ message: `${value.message} - ${value.percentage}%`, increment: value.percentage - this._progress });
+                    this._progress = value.percentage;
+                }
+            });
+            this._disposables.push(progressDisp);
+        }
+
         return new Promise((resolve, reject) => {
             // Abort if not for this client
             if (!util.match(this._selector, uri)) return reject();
@@ -92,11 +114,12 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             let params: GeneratePOParams = {
                 uri: this._client.code2ProtocolConverter.asUri(uri),
                 obligations: poIds,
+                workDoneToken: workDoneToken,
             };
 
             // Send request
             this._client
-                .sendRequest(GeneratePORequest.type, params)
+                .sendRequest(GeneratePORequest.type, params, token)
                 .then((POs) => {
                     return resolve(POs.map((po) => this.asCodeProofObligation(po), this));
                 })

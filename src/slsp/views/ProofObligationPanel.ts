@@ -41,7 +41,12 @@ export interface ProofObligation {
 
 export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
-    provideProofObligations(uri: Uri, poIds?: number[]): Thenable<ProofObligation[]>;
+    provideProofObligations(
+        uri: Uri,
+        poIds?: number[],
+        progress?: Progress<{ message?: string; increment?: number }>,
+        token?: CancellationToken,
+    ): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
     runQuickCheck(
         wsFolder: Uri,
@@ -204,7 +209,16 @@ export class ProofObligationPanel implements Disposable {
         this._pos = [];
         const poProvider = this.getPOProvider(uri);
         try {
-            let res = await poProvider.provider.provideProofObligations(uri);
+            let res = await window.withProgress(
+                {
+                    location: ProgressLocation.Window,
+                    title: "Generating Proof Obligations",
+                    cancellable: true, // TODO: true
+                },
+                async (progress, token) => {
+                    return await poProvider.provider.provideProofObligations(uri, undefined, progress, token);
+                },
+            );
             this._allPos = [...res];
             this._pos = [...res];
             this.clearWarning();
