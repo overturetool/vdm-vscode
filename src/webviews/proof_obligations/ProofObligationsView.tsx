@@ -85,9 +85,11 @@ const ProofObligationsHeaderMenu = ({
                         alignItems: "center",
                         justifyContent: "space-between",
                         flex: 1,
-                        padding: "0.5em 0.75em",
+                        padding: "0 0.75em",
                         borderRadius: "6px",
                         backgroundColor: "var(--vscode-editor-inactiveSelectionBackground",
+                        minHeight: "32px",
+                        boxSizing: "border-box",
                     }}
                 >
                     <div
@@ -116,15 +118,38 @@ const ProofObligationsHeaderMenu = ({
                     </VSCodeButton>
                 </div>
             ) : (
-                <VSCodeTextField
-                    css={{ flexShrink: 1 }}
-                    onInput={(e) => {
-                        onFilterChanged((e.target as HTMLInputElement).value);
+                <div
+                    css={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75em"
                     }}
-                    type="text"
                 >
-                    Filter {filterState.isFiltering ? `(Showing ${filterState.matchingRows} of ${filterState.totalRows} rows.)` : null}
-                </VSCodeTextField>
+                    <VSCodeTextField
+                        css={{
+                            height: "32px",
+                            flex: "0 0 250px",
+                            marginTop: "3px",
+                        }}
+                        placeholder="Filter POs"
+                        onInput={(e) => {
+                            onFilterChanged((e.target as HTMLInputElement).value);
+                        }}
+                        type="text"
+                    />
+                    {filterState.isFiltering && (
+                        <span
+                            css={{
+                                fontSize: "0.8em",
+                                opacity: 0.7,
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            (Showing {filterState.matchingRows} of {filterState.totalRows} rows)
+                        </span>
+                    )}
+                </div>
             )}
             <div css={{ flexShrink: 0 }}>
                 <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
