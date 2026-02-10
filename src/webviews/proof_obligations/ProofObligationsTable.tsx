@@ -61,6 +61,35 @@ const QuickCheckButton = ({ po, onClick }: QuickCheckButtonProps) => {
     );
 };
 
+const buildToolTip = (po: FormattedProofObligation): string => {
+    let output = `PO #${po.id}\n\n`;
+
+    if (po.status) {
+        output += `${po.status}`;
+    }
+
+    if (po.provedBy) {
+        output += ` by ${po.provedBy}`;
+
+    }
+
+    output += "\n";
+
+    if (po.message) {
+        output += `\n${po.message}`;
+    }
+
+    if (po.counterexample) {
+        output += `\nCounterexample available`;
+    }
+
+    if (po.witness) {
+        output += `Witness available`;
+    }
+
+    return output.trim();
+};
+
 export interface ProofObligationsTableMessageProps {
     msg: string;
 }
@@ -93,6 +122,60 @@ export interface ProofObligationsTableProps {
     selectionState: SelectionState | null;
     posInvalid: boolean;
 }
+
+interface StatusWithTooltipProps {
+    po: FormattedProofObligation;
+    onOpenQuickCheck: () => void;
+}
+
+const StatusWithToolTip = ({ po, onOpenQuickCheck }: StatusWithTooltipProps) => {
+    const [visible, setVisible] = useState(false);
+
+    const showToolTip = hasQuickCheckInfo(po);
+
+    return (
+        <div
+            css={{ position: "relative", display: "inline-block" }}
+            onMouseEnter={() => showToolTip && setVisible(true)}
+            onMouseLeave={() => setVisible(false)}
+        >
+            <QuickCheckButton
+                po={po}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onOpenQuickCheck();
+                }}
+            />
+
+            {visible && (
+                <div
+                    css={{
+                        position: "absolute",
+                        top: "50%",
+                        right: "100%",
+                        marginRight: "8px",
+                        transform: "translateY(-50%)",
+                        background: "var(--vscode-editorHoverWidget-background)",
+                        color: "var(--vscode-editorHoverWidget-foreground)",
+                        border: "1px solid var(--vscode-editorHoverWidget-border)",
+                        borderRadius: "6px",
+                        padding: "0.75em",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                        whiteSpace: "pre-wrap",
+                        zIndex: 1000,
+                        minWidth: "280px",
+                        maxWidth: "400px",
+                        fontSize: "1.15em",
+                        lineHeight: "1.4",
+                    }}
+                >
+                    {buildToolTip(po)}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const ProofObligationsTable = ({
     headers,
@@ -147,14 +230,12 @@ export const ProofObligationsTable = ({
                                 <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="3">
                                     {row.breakableName}
                                 </VSCodeDataGridCell>
-                                <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="4">
-                                    <QuickCheckButton
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
+                                <VSCodeDataGridCell css={{ position: "relative", overflow: "visible" }} grid-column="4">
+                                    <StatusWithToolTip
+                                        po={row}
+                                        onOpenQuickCheck={() => {
                                             onOpenQuickCheck(row);
                                         }}
-                                        po={row}
                                     />
                                 </VSCodeDataGridCell>
                             </VSCodeDataGridRow>
