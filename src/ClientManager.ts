@@ -11,6 +11,7 @@ import AutoDisposable from "./helper/AutoDisposable";
 import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
 import { getDialectFromAlias, VdmDialect } from "./util/DialectUtil";
+import { ErrorAction, CloseAction } from "vscode-languageclient";
 
 export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
@@ -164,6 +165,29 @@ export class ClientManager extends AutoDisposable {
             workspaceFolder: wsFolder,
             traceOutputChannel: window.createOutputChannel(`vdm-vscode LSP: ${wsFolder.name}`),
             middleware: new VdmMiddleware(),
+            errorHandler: {
+                error: () => {
+                    const isExperimental = workspace.getConfiguration("vdm-vscode.server.development")?.experimentalServer;
+                    if (isExperimental) {
+                        window
+                            .showErrorMessage("Cannot connect to experimental server. Is the debugger running?", "Open Output")
+                            .then((choice) => {
+                                if (choice == "Open Output") {
+                                    client.outputChannel.show(true);
+                                }
+                            });
+                        return { action: ErrorAction.Shutdown };
+                    }
+                    return { action: ErrorAction.Continue };
+                },
+                closed: () => {
+                    const isExperimental = workspace.getConfiguration("vdm-vscode.server.development")?.experimentalServer;
+                    if (isExperimental) {
+                        return { action: CloseAction.DoNotRestart };
+                    }
+                    return { action: CloseAction.Restart };
+                },
+            },
         };
 
         // Create the language client with the defined client options and the function to create and setup the server.
