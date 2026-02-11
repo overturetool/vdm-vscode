@@ -226,10 +226,6 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         });
     };
 
-    const handleOpenQuickCheck = (po: FormattedProofObligation) => {
-        setProofObligation(po);
-    };
-
     const handleRowClick = (row: FormattedProofObligation) => {
         const id = row.id;
         if (openPos.has(id)) {
