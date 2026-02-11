@@ -335,7 +335,6 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     onJumpToSource={handleJumpToSource}
                     onClickRow={handleRowClick}
                     openPos={openPos}
-                    onOpenQuickCheck={handleOpenQuickCheck}
                     selectionState={proofObligation}
                     posInvalid={posAreInvalid}
                 />

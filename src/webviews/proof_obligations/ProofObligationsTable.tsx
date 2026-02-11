@@ -33,39 +33,11 @@ const hasQuickCheckInfo = (po: FormattedProofObligation): boolean => {
     return po.message !== undefined || po.counterexample !== undefined || po.witness !== undefined || po.provedBy !== undefined;
 };
 
-interface QuickCheckButtonProps {
-    po: FormattedProofObligation;
-    onClick: (e: MouseEvent) => void;
-}
-
-const QuickCheckButton = ({ po, onClick }: QuickCheckButtonProps) => {
-    if (!hasQuickCheckInfo(po)) {
-        return po.status;
-    }
-
-    return (
-        <button
-            title="Open QuickCheck Panel"
-            onClick={onClick}
-            css={{
-                background: "none",
-                border: "none",
-                padding: "0",
-                color: "var(--vscode-textLink-foreground)",
-                textDecoration: "underline",
-                cursor: "pointer",
-            }}
-        >
-            {po.status}
-        </button>
-    );
-};
-
 const buildToolTip = (po: FormattedProofObligation): string => {
     let output = `PO #${po.id}\n\n`;
 
     if (po.status) {
-        output += `${po.status}`;
+        output += `Status: ${po.status.toUpperCase()}`;
     }
 
     if (po.provedBy) {
@@ -76,15 +48,7 @@ const buildToolTip = (po: FormattedProofObligation): string => {
     output += "\n";
 
     if (po.message) {
-        output += `\n${po.message}`;
-    }
-
-    if (po.counterexample) {
-        output += `\nCounterexample available`;
-    }
-
-    if (po.witness) {
-        output += `Witness available`;
+        output += `\nMessage: ${po.message}`;
     }
 
     return output.trim();
@@ -118,19 +82,16 @@ export interface ProofObligationsTableProps {
     onJumpToSource: (po: FormattedProofObligation) => void;
     openPos: Set<FormattedProofObligation["id"]>;
     onClickRow: (po: FormattedProofObligation) => void;
-    onOpenQuickCheck: (po: FormattedProofObligation) => void;
     selectionState: SelectionState | null;
     posInvalid: boolean;
 }
 
 interface StatusWithTooltipProps {
     po: FormattedProofObligation;
-    onOpenQuickCheck: () => void;
 }
 
-const StatusWithToolTip = ({ po, onOpenQuickCheck }: StatusWithTooltipProps) => {
+const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
     const [visible, setVisible] = useState(false);
-
     const showToolTip = hasQuickCheckInfo(po);
 
     return (
@@ -139,14 +100,17 @@ const StatusWithToolTip = ({ po, onOpenQuickCheck }: StatusWithTooltipProps) => 
             onMouseEnter={() => showToolTip && setVisible(true)}
             onMouseLeave={() => setVisible(false)}
         >
-            <QuickCheckButton
-                po={po}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onOpenQuickCheck();
+            <span
+                css={{
+                    color: showToolTip
+                        ? "var(--vscode-textLink-foreground)"
+                        : "inherit",
+                    textDecoration: showToolTip ? "underline" : "none",
+                    cursor: showToolTip ? "zoom-in" : "default",
                 }}
-            />
+            >
+                {po.status}
+            </span>
 
             {visible && (
                 <div
@@ -183,7 +147,6 @@ export const ProofObligationsTable = ({
     onJumpToSource,
     openPos,
     onClickRow,
-    onOpenQuickCheck,
     selectionState,
     posInvalid
 }: ProofObligationsTableProps) => {
@@ -231,12 +194,7 @@ export const ProofObligationsTable = ({
                                     {row.breakableName}
                                 </VSCodeDataGridCell>
                                 <VSCodeDataGridCell css={{ position: "relative", overflow: "visible" }} grid-column="4">
-                                    <StatusWithToolTip
-                                        po={row}
-                                        onOpenQuickCheck={() => {
-                                            onOpenQuickCheck(row);
-                                        }}
-                                    />
+                                    <StatusWithToolTip po={row} />
                                 </VSCodeDataGridCell>
                             </VSCodeDataGridRow>
                             {openPos.has(row.id) ? (
