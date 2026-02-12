@@ -141,6 +141,10 @@ const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
     );
 };
 
+const formatSource = (source: string | string[]): string => {
+    return Array.isArray(source) ? source.join("\n") : source;
+}
+
 export const ProofObligationsTable = ({
     headers,
     pos,
@@ -154,6 +158,7 @@ export const ProofObligationsTable = ({
         id: "id",
         direction: "ascending",
     });
+    const [copiedId, setCopiedId] = useState<number | null>(null);
 
     const sortedPOs = sortPOs(pos, sortingState);
     const shouldRenderTable = !((pos.length === 0) && posInvalid)
@@ -198,15 +203,36 @@ export const ProofObligationsTable = ({
                                 </VSCodeDataGridCell>
                             </VSCodeDataGridRow>
                             {openPos.has(row.id) ? (
-                                <div
-                                    css={{
-                                        width: "100%",
-                                        padding: "1em 0.5em",
-                                        boxSizing: "border-box",
-                                        whiteSpace: "pre-wrap",
-                                    }}
-                                >
-                                    {row.source}
+                                <div css={{ position: "relative" }}>
+                                    <VSCodeButton
+                                        appearance="icon"
+                                        title="Copy"
+                                        css={{ position: "absolute", right: "4px", top: "16px", transition: "transform 0.15s ease", }}
+                                        onClick={async () => {
+                                            await navigator.clipboard.writeText(formatSource(row.source));
+                                            setCopiedId(row.id);
+                                            setTimeout(() => setCopiedId(null), 1000);
+                                        }}
+                                    >
+                                        <span
+                                            className={`codicon ${
+                                                copiedId === row.id ? "codicon-check" : "codicon-copy"
+                                            }`}
+                                        />
+                                    </VSCodeButton>
+                                    <pre
+                                        css={{
+                                            width: "100%",
+                                            padding: "1em 0.5em",
+                                            boxSizing: "border-box",
+                                            whiteSpace: "pre-wrap",
+                                            background: "var(--vscode-textBlockQuote-background)",
+                                            borderRadius: "4px",
+                                            overflowX: "auto",
+                                        }}
+                                    >
+                                        {row.source}
+                                    </pre>
                                 </div>
                             ) : null}
                         </React.Fragment>
