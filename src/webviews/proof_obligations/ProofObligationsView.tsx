@@ -194,6 +194,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     const [filterText, setFilterText] = useState<string>("");
     const [runningQuickCheck, setRunningQuickCheck] = useState<boolean>(false);
     const [lensFilterMessage, setLensFilterMessage] = useState<string | null>(null);
+    const [missingPOsWarning, setMissingPOsWarning] = useState<string[]>([]);
 
     const filteredPos = useMemo(() => filterPOs(pos, filterText), [filterText, pos]);
     const currentFilterState: FilterState =
@@ -264,7 +265,19 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         console.log("new message", e.data.command);
         switch (e.data.command) {
             case "newPOs":
-                setPos(formatProofObligations(e.data.pos));
+                const formattedPOs = formatProofObligations(e.data.pos);
+                
+                const missingPOs = formattedPOs.filter(po => po.id == 0);
+                const realPOs = formattedPOs.filter(po => po.id !== 0);
+
+                if (missingPOs.length) {
+                    const warning = missingPOs.map(po => po.source.toString());
+                    setMissingPOsWarning(warning);
+                } else {
+                    setMissingPOsWarning([]);
+                }
+
+                setPos(realPOs);
                 setProofObligation(null);
                 setRunningQuickCheck(false);
                 setLensFilterMessage(e.data.filterMessage ?? null);
@@ -316,6 +329,23 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 lensFilterMessage={lensFilterMessage}
                 onClearLensFilter={handleClearLensFilter}
             />
+
+            {missingPOsWarning.map((warning, index) => (
+                <div
+                    key={`missing-po-${index}`}
+                    css={{
+                        margin: "0 1em 0.5em 0.5em",
+                        padding: "0.75em",
+                        borderRadius: "6px",
+                        backgroundColor: "var(--vscode-editorWarning-background)",
+                        color: "var(--vscode-editorWarning-foreground)",
+                        border: "1px solid var(--vscode-editorWarning-border)",
+                        fontSize: "1em",
+                    }}
+                >
+                    {warning}
+                </div>
+            ))}
 
             <div
                 css={{
