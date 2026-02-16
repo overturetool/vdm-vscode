@@ -33,23 +33,22 @@ const hasQuickCheckInfo = (po: FormattedProofObligation): boolean => {
     return po.message !== undefined || po.counterexample !== undefined || po.witness !== undefined || po.provedBy !== undefined;
 };
 
+const prettyFieldName = (name: string): string =>
+    name
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (c) => c.toUpperCase());
+
 const buildToolTip = (po: FormattedProofObligation): string => {
+    const fields = po.hovers;
+
     let output = `PO #${po.id}\n\n`;
 
-    if (po.status) {
-        output += `Status: ${po.status.toUpperCase()}`;
-    }
-
-    if (po.provedBy) {
-        output += ` by ${po.provedBy}`;
-
-    }
-
-    output += "\n";
-
-    if (po.message) {
-        output += `\nMessage: ${po.message}`;
-    }
+    fields?.forEach((fieldName) => {
+        const value = (po as any)[fieldName];
+        if(value !== undefined) {
+            output += `${prettyFieldName(fieldName)}: ${value}\n`
+        }
+    });
 
     return output.trim();
 };

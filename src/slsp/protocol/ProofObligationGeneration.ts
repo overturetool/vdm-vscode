@@ -60,6 +60,7 @@ export interface ProofObligationCounterExample {
 export type ProofObligationWitness = ProofObligationCounterExample;
 
 export interface ProofObligation extends Omit<QuickCheckInfo, "status" | "id"> {
+    type: string;
     /**
      * Unique identifier of the PO.
      */
@@ -89,6 +90,10 @@ export interface ProofObligation extends Omit<QuickCheckInfo, "status" | "id"> {
      * An optional status of the PO, e.g., "Unproved" or "Proved".
      */
     status?: string;
+    /**
+     * Contains all the fields to be shown in the QuickCheck hover
+     */
+    hovers: string[];
 }
 
 export interface QuickCheckInfo {

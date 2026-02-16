@@ -265,19 +265,21 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         console.log("new message", e.data.command);
         switch (e.data.command) {
             case "newPOs":
-                const formattedPOs = formatProofObligations(e.data.pos);
-                
-                const missingPOs = formattedPOs.filter(po => po.id == 0);
-                const realPOs = formattedPOs.filter(po => po.id !== 0);
+                const entries = e.data.pos;
+
+                const missingPOs = entries.filter((e: any) => e.type == "missing");
+                const realPOs = entries.filter((e: any) => e.type == "PO");
+
+                const formattedPOs = formatProofObligations(realPOs);
 
                 if (missingPOs.length) {
-                    const warning = missingPOs.map(po => po.source.toString());
+                    const warning = missingPOs.map((m: any) => m.message);
                     setMissingPOsWarning(warning);
                 } else {
                     setMissingPOsWarning([]);
                 }
 
-                setPos(realPOs);
+                setPos(formattedPOs);
                 setProofObligation(null);
                 setRunningQuickCheck(false);
                 setLensFilterMessage(e.data.filterMessage ?? null);
