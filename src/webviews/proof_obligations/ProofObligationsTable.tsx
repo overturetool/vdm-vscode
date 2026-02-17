@@ -1,7 +1,8 @@
-import React, { MouseEvent, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FormattedProofObligation, SelectionState } from "./ProofObligationsView";
 import { VSCodeButton, VSCodeDataGrid, VSCodeDataGridCell, VSCodeDataGridRow } from "@vscode/webview-ui-toolkit/react";
 import { TableHeader, SortingState } from "./ProofObligationsTableHeader";
+import { createPortal } from "react-dom";
 
 /**
  *
@@ -91,52 +92,76 @@ interface StatusWithTooltipProps {
 
 const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
     const [visible, setVisible] = useState(false);
+    const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
     const showToolTip = hasQuickCheckInfo(po);
+    const ref = useRef<HTMLDivElement>(null);
+
+    const handleMouseEnter = () => {
+        if (!showToolTip || !ref.current) return;
+
+        const rect = ref.current!.getBoundingClientRect();
+
+        setPosition({
+            top: rect.top + rect.height / 2,
+            left: rect.left - 12,
+        });
+
+        setVisible(true);
+    };
+
+    const handleMouseLeave = () => {
+        setVisible(false);
+    }
 
     return (
-        <div
-            css={{ position: "relative", display: "inline-block" }}
-            onMouseEnter={() => showToolTip && setVisible(true)}
-            onMouseLeave={() => setVisible(false)}
-        >
-            <span
-                css={{
-                    color: showToolTip
-                        ? "var(--vscode-textLink-foreground)"
-                        : "inherit",
-                    textDecoration: showToolTip ? "underline" : "none",
-                    cursor: showToolTip ? "zoom-in" : "default",
-                }}
+        <>
+            <div
+                ref={ref}
+                css={{ display: "inline-block" }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
             >
-                {po.status}
-            </span>
-
-            {visible && (
-                <div
+                <span
                     css={{
-                        position: "absolute",
-                        top: "50%",
-                        right: "100%",
-                        marginRight: "8px",
-                        transform: "translateY(-50%)",
-                        background: "var(--vscode-editorHoverWidget-background)",
-                        color: "var(--vscode-editorHoverWidget-foreground)",
-                        border: "1px solid var(--vscode-editorHoverWidget-border)",
-                        borderRadius: "6px",
-                        padding: "0.75em",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-                        whiteSpace: "pre-wrap",
-                        zIndex: 1000,
-                        minWidth: "280px",
-                        maxWidth: "400px",
-                        fontSize: "1.15em",
-                        lineHeight: "1.4",
+                        color: showToolTip
+                            ? "var(--vscode-textLink-foreground)"
+                            : "inherit",
+                        textDecoration: showToolTip ? "underline" : "none",
+                        cursor: showToolTip ? "zoom-in" : "default",
                     }}
                 >
-                    {buildToolTip(po)}
-                </div>
-            )}
-        </div>
+                    {po.status}
+                </span>
+            </div>
+
+            {visible && position &&
+                createPortal(
+                    <div
+                        style={{
+                            position: "fixed",
+                            top: position.top,
+                            left: position.left,
+                            transform: "translate(-100%, -50%)",
+                            background: "var(--vscode-editorHoverWidget-background)",
+                            color: "var(--vscode-editorHoverWidget-foreground)",
+                            border: "1px solid var(--vscode-editorHoverWidget-border)",
+                            borderRadius: "6px",
+                            padding: "0.75em",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                            whiteSpace: "pre-wrap",
+                            zIndex: 99999,
+                            minWidth: "280px",
+                            maxWidth: "400px",
+                            fontSize: "1.15em",
+                            lineHeight: "1.4",
+                        }}
+                    >
+                        {buildToolTip(po)}
+                    </div>,
+                    document.body
+                )}
+        </>
     );
 };
 
