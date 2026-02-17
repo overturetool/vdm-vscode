@@ -94,30 +94,47 @@ const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
     const [visible, setVisible] = useState(false);
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
-    const showToolTip = hasQuickCheckInfo(po);
-    const ref = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);//
+
+    const showToolTip = Array.isArray(po.hovers) && po.hovers.length > 0;
 
     const handleMouseEnter = () => {
-        if (!showToolTip || !ref.current) return;
+        if (!showToolTip || !triggerRef.current) return;
 
-        const rect = ref.current!.getBoundingClientRect();
+        const rect = triggerRef.current!.getBoundingClientRect();
 
-        setPosition({
-            top: rect.top + rect.height / 2,
-            left: rect.left - 12,
-        });
+        const tooltipWidth = 400;
 
+        let top = rect.top;
+        let left = rect.left - tooltipWidth - 12;
+
+        setPosition({ top, left });
         setVisible(true);
     };
 
     const handleMouseLeave = () => {
         setVisible(false);
-    }
+    };
+
+    useEffect(() => {
+        if (!visible || !tooltipRef.current || !position) return;
+
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+        let newTop = position.top;
+
+        if (tooltipRect.bottom > window.innerHeight - 8)
+            newTop -= tooltipRect.bottom - window.innerHeight + 8;
+
+        if (newTop !== position.top)
+            setPosition((prev) => prev && { ...prev, top: newTop });
+    }, [visible]);
 
     return (
         <>
             <div
-                ref={ref}
+                ref={triggerRef}
                 css={{ display: "inline-block" }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -138,11 +155,11 @@ const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
             {visible && position &&
                 createPortal(
                     <div
+                        ref={tooltipRef}
                         style={{
                             position: "fixed",
                             top: position.top,
                             left: position.left,
-                            transform: "translate(-100%, -50%)",
                             background: "var(--vscode-editorHoverWidget-background)",
                             color: "var(--vscode-editorHoverWidget-foreground)",
                             border: "1px solid var(--vscode-editorHoverWidget-border)",
@@ -151,10 +168,13 @@ const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
                             boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
                             whiteSpace: "pre-wrap",
                             zIndex: 99999,
-                            minWidth: "280px",
-                            maxWidth: "400px",
+                            width: "400px",
+                            maxHeight: "60vh",
+                            overflowY: "auto",
                             fontSize: "1.15em",
                             lineHeight: "1.4",
+                            wordBreak: "break-word",
+                            pointerEvents: "none",
                         }}
                     >
                         {buildToolTip(po)}
