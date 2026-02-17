@@ -18,6 +18,8 @@ import {
     Progress,
     TabInputWebview,
     debug,
+    Position,
+    Range,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
@@ -452,6 +454,22 @@ export class ProofObligationPanel implements Disposable {
                             this._filterMessage = undefined;
                             this.updateContent();
 
+                            break;
+                        case "goToLocation":
+                            const loc = message.data;
+                            console.log("goToLocation loc:", loc);
+                            const targetUri = Uri.from(loc.uri);
+                            const document = await workspace.openTextDocument(targetUri);
+
+                            const start = new Position(loc.range.at(0).line, loc.range.at(0).character);
+                            const end = new Position(loc.range.at(1).line, loc.range.at(1).character);
+
+                            const range = new Range(start, end);
+
+                            await window.showTextDocument(document, {
+                                selection: range,
+                                viewColumn: ViewColumn.One,
+                            });
                             break;
                     }
                 },

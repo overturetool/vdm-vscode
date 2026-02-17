@@ -194,7 +194,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     const [filterText, setFilterText] = useState<string>("");
     const [runningQuickCheck, setRunningQuickCheck] = useState<boolean>(false);
     const [lensFilterMessage, setLensFilterMessage] = useState<string | null>(null);
-    const [missingPOsWarning, setMissingPOsWarning] = useState<string[]>([]);
+    const [missingPOsWarning, setMissingPOsWarning] = useState<{message: string; location: any}[]>([]);
 
     const filteredPos = useMemo(() => filterPOs(pos, filterText), [filterText, pos]);
     const currentFilterState: FilterState =
@@ -273,8 +273,11 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 const formattedPOs = formatProofObligations(realPOs);
 
                 if (missingPOs.length) {
-                    const warning = missingPOs.map((m: any) => m.message);
-                    setMissingPOsWarning(warning);
+                    const warnings = missingPOs.map((m: any) => ({
+                        message: m.message,
+                        location: m.location,
+                    }));
+                    setMissingPOsWarning(warnings);
                 } else {
                     setMissingPOsWarning([]);
                 }
@@ -343,9 +346,24 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                         color: "var(--vscode-editorWarning-foreground)",
                         border: "1px solid var(--vscode-editorWarning-border)",
                         fontSize: "1em",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                     }}
                 >
-                    {warning}
+                    <span>{warning.message}</span>
+                    
+                    <VSCodeButton
+                        appearance="secondary"
+                        onClick={() => {
+                            vscodeApi.postMessage({
+                                command: "goToLocation",
+                                data: warning.location,
+                            });
+                        }}
+                    >
+                        Go to operation
+                    </VSCodeButton>
                 </div>
             ))}
 
