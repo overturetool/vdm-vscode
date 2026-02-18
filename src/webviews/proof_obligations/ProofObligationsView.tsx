@@ -355,6 +355,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     
                     <VSCodeButton
                         appearance="secondary"
+                        css={{ position: "relative", left: "0.75em", width: "128px" }}
                         onClick={() => {
                             vscodeApi.postMessage({
                                 command: "goToLocation",
@@ -362,7 +363,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                             });
                         }}
                     >
-                        Go to operation
+                        Go to definition
                     </VSCodeButton>
                 </div>
             ))}
