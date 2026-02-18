@@ -78,79 +78,80 @@ const ProofObligationsHeaderMenu = ({
                 alignItems: "center",
             }}
         >
-            {lensFilterMessage ? (
+            <div
+                css={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75em",
+                }}
+            >
                 <div
                     css={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        flex: 1,
-                        padding: "0 0.75em",
-                        borderRadius: "6px",
-                        backgroundColor: "var(--vscode-editor-inactiveSelectionBackground",
-                        minHeight: "32px",
-                        boxSizing: "border-box",
+                        flex: "0 0 250px",
+                        marginTop: "3px",
                     }}
                 >
-                    <div
-                        css={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "0.2em",
-                        }}
-                    >
-                        <strong>Dependent POs</strong>
-                        <span
+                    {lensFilterMessage ? (
+                        <div
                             css={{
-                                fontSize: "0.85em",
-                                opacity: 0.8,
+                                height: "28px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "0 8px",
+                                borderRadius: "4px",
+                                background: "var(--vscode-input-background)",
+                                border: "1px solid var(--vscode-input-border)",
+                                color: "var(--vscode-input-foreground)",
+                                boxSizing: "border-box",
                             }}
                         >
-                            {lensFilterMessage}
-                        </span>
-                    </div>
-                    <VSCodeButton
-                        appearance="icon"
-                        onClick={onClearLensFilter}
-                        aria-label="Clear dependent POs"
-                    >
-                        <span className="codicon codicon-close" />
-                    </VSCodeButton>
-                </div>
-            ) : (
-                <div
-                    css={{
-                        flex: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75em"
-                    }}
-                >
-                    <VSCodeTextField
-                        css={{
-                            height: "32px",
-                            flex: "0 0 250px",
-                            marginTop: "3px",
-                        }}
-                        placeholder="Filter POs"
-                        onInput={(e) => {
-                            onFilterChanged((e.target as HTMLInputElement).value);
-                        }}
-                        type="text"
-                    />
-                    {filterState.isFiltering && (
-                        <span
+                            <span
+                                css={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                Dependent POs: {lensFilterMessage}
+                            </span>
+
+                            <VSCodeButton
+                                appearance="icon"
+                                onClick={onClearLensFilter}
+                            >
+                                <span className="codicon codicon-close" />
+                            </VSCodeButton>
+                        </div>
+                    ) : (
+                        <VSCodeTextField
                             css={{
-                                fontSize: "0.8em",
-                                opacity: 0.7,
-                                whiteSpace: "nowrap",
+                                height: "32px",
+                                width: "100%",
                             }}
-                        >
-                            (Showing {filterState.matchingRows} of {filterState.totalRows} rows)
-                        </span>
+                            placeholder="Filter POs"
+                            onInput={(e) =>
+                                onFilterChanged((e.target as HTMLInputElement).value)
+                            }
+                            type="text"
+                        />
                     )}
                 </div>
-            )}
+
+                {(filterState.isFiltering || lensFilterMessage) && (
+                    <span
+                        css={{
+                            fontSize: "0.8em",
+                            opacity: 0.7,
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        (Showing {filterState.matchingRows} of {filterState.totalRows} rows)
+                    </span>
+                )}
+            </div>
+
             <div css={{ flexShrink: 0 }}>
                 <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
                     {openPos.size === filterState.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
