@@ -80,19 +80,26 @@ export interface ProofObligationsTableProps {
     headers: Array<keyof FormattedProofObligation>;
     pos: Array<FormattedProofObligation>;
     onJumpToSource: (po: FormattedProofObligation) => void;
+    onNavigateToLocation: (po: FormattedProofObligation) => void;
     openPos: Set<FormattedProofObligation["id"]>;
     onClickRow: (po: FormattedProofObligation) => void;
     selectionState: SelectionState | null;
     posInvalid: boolean;
 }
 
-interface StatusWithTooltipProps {
+const StatusWithToolTip = ({
+    po,
+    onNavigateToLocation
+}: {
     po: FormattedProofObligation;
-}
-
-const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
+    onNavigateToLocation: () => void;
+}) => {
     const [visible, setVisible] = useState(false);
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
+    const hasLaunch =
+        po.counterexample?.launch !== undefined ||
+        po.witness?.launch !== undefined;
 
     const triggerRef = useRef<HTMLDivElement>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);//
@@ -140,12 +147,17 @@ const StatusWithToolTip = ({ po }: { po: FormattedProofObligation }) => {
                 onMouseLeave={handleMouseLeave}
             >
                 <span
+                    onClick={(e) => {
+                        if (!hasLaunch) return;
+                        e.stopPropagation();
+                        onNavigateToLocation();
+                    }}
                     css={{
                         color: showToolTip
                             ? "var(--vscode-textLink-foreground)"
                             : "inherit",
                         textDecoration: showToolTip ? "underline" : "none",
-                        cursor: showToolTip ? "zoom-in" : "default",
+                        cursor: hasLaunch ? "pointer" : showToolTip ? "zoom-in" : "default",
                     }}
                 >
                     {po.status}
@@ -193,6 +205,7 @@ export const ProofObligationsTable = ({
     headers,
     pos,
     onJumpToSource,
+    onNavigateToLocation,
     openPos,
     onClickRow,
     selectionState,
@@ -243,7 +256,13 @@ export const ProofObligationsTable = ({
                                     {row.breakableName}
                                 </VSCodeDataGridCell>
                                 <VSCodeDataGridCell css={{ position: "relative", overflow: "visible" }} grid-column="4">
-                                    <StatusWithToolTip po={row} />
+                                    <StatusWithToolTip
+                                        po={row}
+                                        onNavigateToLocation={() => {
+                                            onClickRow(row);
+                                            onNavigateToLocation(row);
+                                        }}
+                                    />
                                 </VSCodeDataGridCell>
                             </VSCodeDataGridRow>
                             {openPos.has(row.id) ? (

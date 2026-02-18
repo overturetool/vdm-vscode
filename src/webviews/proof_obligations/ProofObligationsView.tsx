@@ -227,6 +227,15 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         });
     };
 
+    const handleNavigateToLocation = (po: FormattedProofObligation) => {
+        if (!po.location) return;
+
+        vscodeApi.postMessage({
+            command: "goToLocation",
+            data: po.location,
+        });
+    };
+
     const handleRowClick = (row: FormattedProofObligation) => {
         const id = row.id;
         if (openPos.has(id)) {
@@ -380,6 +389,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     headers={["id", "kind", "name", "status"]}
                     pos={filteredPos}
                     onJumpToSource={handleJumpToSource}
+                    onNavigateToLocation={handleNavigateToLocation}
                     onClickRow={handleRowClick}
                     openPos={openPos}
                     selectionState={proofObligation}
