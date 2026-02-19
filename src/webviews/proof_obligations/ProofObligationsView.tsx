@@ -157,7 +157,7 @@ const ProofObligationsHeaderMenu = ({
                     {openPos.size === filterState.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
                 </VSCodeButton>
                 {enableQuickCheck ? (
-                    <VSCodeButton disabled={disableQuickCheck} onClick={onClickQuickCheck}>
+                    <VSCodeButton css={{ minWidth: "9.5em" }} disabled={disableQuickCheck} onClick={onClickQuickCheck}>
                         Run QuickCheck
                     </VSCodeButton>
                 ) : null}
@@ -365,7 +365,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     
                     <VSCodeButton
                         appearance="secondary"
-                        css={{ flexShrink: 0, marginLeft: "1em", minWidth: "9.4em" }}
+                        css={{ flexShrink: 0, marginLeft: "1em", minWidth: "9.5em" }}
                         onClick={() => {
                             vscodeApi.postMessage({
                                 command: "goToLocation",
