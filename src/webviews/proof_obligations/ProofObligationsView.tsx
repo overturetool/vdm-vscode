@@ -349,8 +349,8 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 <div
                     key={`missing-po-${index}`}
                     css={{
-                        margin: "0 1em 0.5em 0.5em",
-                        padding: "0.75em",
+                        margin: "0 0 0.5em 0.5em",
+                        padding: "0.75em 1em",
                         borderRadius: "6px",
                         backgroundColor: "var(--vscode-editorWarning-background)",
                         color: "var(--vscode-editorWarning-foreground)",
@@ -365,7 +365,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     
                     <VSCodeButton
                         appearance="secondary"
-                        css={{ position: "relative", left: "0.75em", width: "128px" }}
+                        css={{ flexShrink: 0, marginLeft: "1em", minWidth: "9.4em" }}
                         onClick={() => {
                             vscodeApi.postMessage({
                                 command: "goToLocation",
