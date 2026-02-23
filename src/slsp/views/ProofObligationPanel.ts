@@ -170,6 +170,23 @@ export class ProofObligationPanel implements Disposable {
                 this,
             ),
         );
+        this._disposables.push(
+            commands.registerCommand(`vdm-vscode.pog.runWorkspace`, async () => {
+                const activeEditor = window.activeTextEditor;
+                if (!activeEditor) {
+                    window.showWarningMessage("No active file to determine workspace.");
+                    return;
+                }
+
+                const wsFolder = workspace.getWorkspaceFolder(activeEditor.document.uri);
+                if (!wsFolder) {
+                    window.showWarningMessage("Cannot determine workspace folder.");
+                    return;
+                }
+
+                await this.onRunPog(wsFolder.uri);
+            }),
+        );
     }
 
     public get viewType(): string {
@@ -209,6 +226,7 @@ export class ProofObligationPanel implements Disposable {
 
     protected async onRunPog(uri: Uri) {
         this._pos = [];
+        this._filterMessage = null;
         const poProvider = this.getPOProvider(uri);
         this.createWebView(poProvider.provider.quickCheckProvider, uri);
         try {

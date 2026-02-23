@@ -334,6 +334,11 @@
                 "icon": "$(run)"
             },
             {
+                "command": "vdm-vscode.pog.runWorkspace",
+                "title": "Run Proof Obligation Generation (Workspace)",
+                "icon": "$(run)"
+            },
+            {
                 "command": "vdm-vscode.openServerLog",
                 "title": "Open Server Log",
                 "category": "VDM"
@@ -668,6 +673,11 @@
                 {
                     "command": "vdm-vscode.coverageOverlay.disable",
                     "when": "vdm-vscode.translate.coverage == true && vdm-vscode.coverageOverlay.disable",
+                    "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.pog.runWorkspace",
+                    "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
                     "group": "navigation"
                 }
             ],
