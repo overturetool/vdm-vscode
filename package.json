@@ -336,7 +336,10 @@
             {
                 "command": "vdm-vscode.pog.runWorkspace",
                 "title": "Run Proof Obligation Generation (Workspace)",
-                "icon": "$(run)"
+                "icon": {
+                    "light": "resources/icons/light/pog_light.svg",
+                    "dark": "resources/icons/dark/pog_dark.svg"
+                }
             },
             {
                 "command": "vdm-vscode.openServerLog",
