@@ -1,10 +1,12 @@
-<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <text x="50%" y="50%"
-        font-size="9"
-        font-family="monospace"
-        text-anchor="middle"
-        dominant-baseline="middle"
-        fill="#000000">
-    POG
-  </text>
+<!-- sample rectangle -->
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#000000" stroke-width="1">
+    <text x="8" y="7" text-anchor="middle" font-size="8" font-family="monospace" fill="#000000" stroke="none">
+      POG
+    </text>
+
+    <line x1="1.5" y1="9" x2="10" y2="9" />
+    <line x1="3.5" y1="11" x2="12" y2="11" />
+    <line x1="5.5" y1="13" x2="14.5" y2="13" />
+  </g>
 </svg>
