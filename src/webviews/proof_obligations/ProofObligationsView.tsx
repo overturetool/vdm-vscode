@@ -296,7 +296,6 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 setProofObligation(null);
                 setRunningQuickCheck(false);
                 setLensFilterMessage(e.data.filterMessage ?? null);
-                if (!e.data.filterMessage) setFilterText("");
                 break;
             case "rebuildPOview":
                 setPos(formatProofObligations(e.data.pos));

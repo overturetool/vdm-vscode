@@ -448,7 +448,12 @@ export class ProofObligationPanel implements Disposable {
                                             _token,
                                             _progress,
                                         );
-                                        const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
+                                        let posWithQc = this.addQuickCheckInfoToPos(this._allPos, qcInfos);
+
+                                        if (this._filterMessage) {
+                                            const posIds = this._pos.map((po) => po.id);
+                                            posWithQc = posWithQc.filter((po) => posIds.includes(po.id));
+                                        }
 
                                         await this._panel.webview.postMessage({
                                             command: "newPOs",
