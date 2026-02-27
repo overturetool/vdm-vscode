@@ -849,9 +849,15 @@
                         "type": "string",
                         "default": "vdm10",
                         "scope": "resource",
-                        "enum": ["vdm10", "classic"],
+                        "enum": [
+                            "vdm10",
+                            "classic"
+                        ],
                         "markdownDescription": "Activates the selected release of VDMJ, allowing VDMJ to parse specs that adhere to the this VDM release.",
-                        "markdownEnumDescriptions": ["Enables the `vdm10` release of VDMJ.", "Enables the `classic` release of VDMJ."]
+                        "markdownEnumDescriptions": [
+                            "Enables the `vdm10` release of VDMJ.",
+                            "Enables the `classic` release of VDMJ."
+                        ]
                     },
                     "vdm-vscode.server.extensionSearchPaths": {
                         "type": "array",
@@ -1456,8 +1462,8 @@
                                 }
                             },
                             "params": {
-                              "description": "Miscellaneous launch parameters",
-                              "type": "object"
+                                "description": "Miscellaneous launch parameters",
+                                "type": "object"
                             }
                         }
                     }
@@ -1612,6 +1618,7 @@
         "@babel/preset-react": "^7.23.3",
         "@babel/preset-typescript": "^7.23.3",
         "@emotion/babel-plugin": "^11.11.0",
+        "@types/adm-zip": "^0.5.7",
         "@types/fs-extra": "^9.0.13",
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.1.0",
@@ -1646,6 +1653,7 @@
         "@emotion/react": "^11.11.4",
         "@vscode/codicons": "^0.0.35",
         "@vscode/webview-ui-toolkit": "^1.4.0",
+        "adm-zip": "^0.5.16",
         "fs-extra": "^10.0.0",
         "iconv-lite": "^0.6.3",
         "jschardet": "^3.0.0",

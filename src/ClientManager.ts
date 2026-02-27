@@ -1,8 +1,20 @@
 /* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, RelativePattern, TextDocument, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
+import {
+    commands,
+    Diagnostic,
+    Disposable,
+    languages,
+    Range,
+    RelativePattern,
+    TextDocument,
+    Uri,
+    window,
+    workspace,
+    WorkspaceFolder,
+} from "vscode";
+import { DiagnosticSeverity, LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
@@ -12,12 +24,18 @@ import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
 import { getDialectFromAlias, VdmDialect } from "./util/DialectUtil";
 import { ErrorAction, CloseAction } from "vscode-languageclient";
+import * as crypto from "crypto";
+import * as AdmZip from "adm-zip";
+import * as fs from "fs";
+import * as path from "path";
 
 export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
     private _wsDisposables: Map<string, Disposable[]> = new Map();
     private _restartOnCrash: boolean = true;
     private _highPrecisionClients: Set<SpecificationLanguageClient> = new Set();
+    private _stdlibHashes: Map<string, string> = new Map();
+    private _stdlibDiagnostics = languages.createDiagnosticCollection("vdm-stdlib");
 
     constructor(
         private _serverFactory: ServerFactory,
@@ -26,6 +44,8 @@ export class ClientManager extends AutoDisposable {
     ) {
         super();
         this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
+        this._disposables.push(this._stdlibDiagnostics);
+        this._disposables.push(this.registerLibConsistencyCheck());
     }
 
     get name(): string {
@@ -221,6 +241,16 @@ export class ClientManager extends AutoDisposable {
         } else {
             console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
         }
+
+        // Load stdlib hashes only once
+        if (this._stdlibHashes.size === 0) {
+            const jarPath = this.findStdLibJar();
+            if (jarPath) {
+                this.loadStdLibFromJar(jarPath);
+            }
+        }
+        // Check project lib consistency
+        this.checkLibConsistency(wsFolder, dialect);
     }
 
     private async checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
@@ -260,5 +290,100 @@ export class ClientManager extends AutoDisposable {
 
     private static getKey(wsFolder: WorkspaceFolder): string {
         return wsFolder.uri.toString();
+    }
+
+    private hash(content: string): string {
+        const normalized = content.replace(/\r\n/g, "\n").trim();
+        return crypto.createHash("sha256").update(normalized).digest("hex");
+    }
+
+    private loadStdLibFromJar(jarPath: string) {
+        const zip = new AdmZip(jarPath);
+        const validExtensions = [".vdmsl", ".vdmpp", ".vdmrt"];
+
+        zip.getEntries().forEach((entry) => {
+            if (entry.isDirectory) {
+                return;
+            }
+            if (!validExtensions.some((ext) => entry.entryName.endsWith(ext))) {
+                return;
+            }
+
+            const content = entry.getData().toString("utf8");
+            this._stdlibHashes.set(entry.entryName, this.hash(content));
+        });
+    }
+
+    private async checkLibConsistency(wsFolder: WorkspaceFolder, dialect: string) {
+        const libPath = path.join(wsFolder.uri.fsPath, "lib");
+        if (!fs.existsSync(libPath)) {
+            return;
+        }
+
+        const files = fs.readdirSync(libPath);
+
+        for (const file of files) {
+            if (!file.endsWith(`.${dialect}`)) {
+                continue;
+            }
+
+            const fullPath = path.join(libPath, file);
+            const uri = Uri.file(fullPath);
+
+            if (!this._stdlibHashes.has(file)) {
+                this._stdlibDiagnostics.delete(uri);
+                continue;
+            }
+
+            const projectContent = fs.readFileSync(fullPath, "utf8");
+            const projectHash = this.hash(projectContent);
+            const stdHash = this._stdlibHashes.get(file);
+
+            if (projectHash !== stdHash) {
+                const diagnostics = new Diagnostic(
+                    new Range(0, 0, 0, 1),
+                    `Library file '${file}' differs from stdlib.jar. It may be outdated.`,
+                    DiagnosticSeverity.Error,
+                );
+                this._stdlibDiagnostics.set(uri, [diagnostics]);
+                window
+                    .showWarningMessage(`Library file '${file}' differs from the current stdlib. It may be outdated.`, "Open File")
+                    .then((choice) => {
+                        if (choice === "Open File") {
+                            workspace.openTextDocument(uri).then((doc) => window.showTextDocument(doc));
+                        }
+                    });
+            } else {
+                this._stdlibDiagnostics.delete(uri);
+            }
+        }
+    }
+
+    private findStdLibJar(): string | undefined {
+        const extensionRoot = path.resolve(__dirname, "..");
+        const libsPath = path.join(extensionRoot, "resources", "jars", "vdmj", "libs");
+        if (!fs.existsSync(libsPath)) {
+            return undefined;
+        }
+        const files = fs.readdirSync(libsPath);
+        const jarFile = files.find((f) => f.startsWith("stdlib") && f.endsWith(".jar"));
+        if (!jarFile) {
+            return undefined;
+        }
+        return path.join(libsPath, jarFile);
+    }
+
+    private registerLibConsistencyCheck(): Disposable {
+        return workspace.onDidSaveTextDocument((doc) => {
+            if (doc.uri.fsPath.includes(path.sep + "lib" + path.sep)) {
+                const wsFolder = workspace.getWorkspaceFolder(doc.uri);
+                if (wsFolder) {
+                    const client = this.get(wsFolder);
+                    if (client) {
+                        this.checkLibConsistency(wsFolder, client.languageId);
+                    }
+                }
+            }
+        });
     }
 }
