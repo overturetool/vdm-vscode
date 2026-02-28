@@ -335,7 +335,8 @@ export class ClientManager extends AutoDisposable {
                 continue;
             }
 
-            const projectContent = fs.readFileSync(fullPath, "utf8");
+            const doc = await workspace.openTextDocument(uri);
+            const projectContent = doc.getText();
             const projectHash = this.hash(projectContent);
             const stdHash = this._stdlibHashes.get(file);
 
