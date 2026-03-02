@@ -45,7 +45,7 @@ export class ClientManager extends AutoDisposable {
         super();
         this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
         this._disposables.push(this._stdlibDiagnostics);
-        this._disposables.push(this.registerLibConsistencyCheck());
+        this._disposables.push(...this.registerLibConsistencyCheck());
     }
 
     get name(): string {
@@ -374,17 +374,28 @@ export class ClientManager extends AutoDisposable {
         return path.join(libsPath, jarFile);
     }
 
-    private registerLibConsistencyCheck(): Disposable {
-        return workspace.onDidSaveTextDocument((doc) => {
-            if (doc.uri.fsPath.includes(path.sep + "lib" + path.sep)) {
-                const wsFolder = workspace.getWorkspaceFolder(doc.uri);
-                if (wsFolder) {
-                    const client = this.get(wsFolder);
-                    if (client) {
-                        this.checkLibConsistency(wsFolder, client.languageId);
-                    }
-                }
+    private registerLibConsistencyCheck(): Disposable[] {
+        const watcher = workspace.createFileSystemWatcher("**/lib/*.{vdmsl,vdmpp,vdmrt}");
+
+        const check = (uri: Uri) => {
+            const wsFolder = workspace.getWorkspaceFolder(uri);
+            if (!wsFolder) {
+                return;
             }
-        });
+            const client = this.get(wsFolder);
+            if (!client) {
+                return;
+            }
+            this.checkLibConsistency(wsFolder, client.languageId);
+        };
+
+        return [
+            watcher,
+            watcher.onDidChange(check),
+            watcher.onDidCreate(check),
+            watcher.onDidDelete((uri) => {
+                this._stdlibDiagnostics.delete(uri);
+            }),
+        ];
     }
 }
