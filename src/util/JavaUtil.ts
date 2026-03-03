@@ -1,8 +1,7 @@
 import { spawn } from "child_process";
+import * as AdmZip from "adm-zip";
 
-const MIN_JAVA_VERSION = 11;
-
-export function checkJavaVersion(): Promise<{ success: boolean; message: string }> {
+export function checkJavaVersion(minVersion: number): Promise<{ success: boolean; message: string }> {
     return new Promise((resolve) => {
         const proc = spawn("java", ["-version"], { shell: true });
         let output = "";
@@ -11,8 +10,7 @@ export function checkJavaVersion(): Promise<{ success: boolean; message: string 
         proc.stderr.on("data", (d) => (output += d.toString()));
 
         const timeout = setTimeout(() => {
-            (proc.kill(),
-                resolve({ success: false, message: `Java check timed out. Please ensure Java ${MIN_JAVA_VERSION}+ is installed.` }));
+            (proc.kill(), resolve({ success: false, message: `Java check timed out. Please ensure Java ${minVersion}+ is installed.` }));
         }, 5000);
 
         proc.on("error", () => {
@@ -35,11 +33,11 @@ export function checkJavaVersion(): Promise<{ success: boolean; message: string 
 
             const major = parseInt(match[1]);
             const version = major === 1 ? parseInt(match[2]) : major;
-
-            if (version < MIN_JAVA_VERSION) {
+            console.log(`Java ${minVersion}+ required, found Java ${version}`);
+            if (version < minVersion) {
                 resolve({
                     success: false,
-                    message: `Java ${MIN_JAVA_VERSION}+ required. Found version ${version}.`,
+                    message: `Java ${minVersion}+ required. Found version ${version}.`,
                 });
                 return;
             }
@@ -47,4 +45,19 @@ export function checkJavaVersion(): Promise<{ success: boolean; message: string 
             resolve({ success: true, message: `Java version ${version} is accessible.` });
         });
     });
+}
+
+export function getMinJavaVersion(jarPath: string): number | null {
+    try {
+        const zip = new AdmZip(jarPath);
+        const manifest = zip.getEntry("META-INF/MANIFEST.MF")?.getData().toString("utf-8");
+        if (!manifest) {
+            return null;
+        }
+
+        const match = manifest.match(/Minumum-Java-Version:\s*(\d+)/);
+        return match ? parseInt(match[1]) : 11;
+    } catch {
+        return null;
+    }
 }

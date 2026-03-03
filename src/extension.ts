@@ -41,18 +41,32 @@ import { FMUHandler } from "./handlers/FMUHandler";
 import { ManagePluginsHandler } from "./handlers/ManagePluginsHandler";
 import { ManageAnnotationsHandler } from "./handlers/ManageAnnotationsHandler";
 import { VDMJExtensionsHandler } from "./handlers/VDMJExtensionsHandler";
-import { checkJavaVersion } from "./util/JavaUtil";
+import { checkJavaVersion, getMinJavaVersion } from "./util/JavaUtil";
+import * as path from "path";
+import * as fs from "fs";
 
 let clientManager: ClientManager;
 
 export async function activate(context: ExtensionContext) {
     // Check for outdated or missing Java
-    const javaCheckPassed = await runCheck(checkJavaVersion, (message) =>
-        window.showErrorMessage(`VDM VSCode: ${message}`, "Open Requirements").then((choice) => {
-            if (choice === "Open Requirements") {
-                env.openExternal(Uri.parse("https://github.com/overturetool/vdm-vscode/wiki/Getting-Started#System-Requirements"));
-            }
-        }),
+    const serverJar = findServerJar();
+    if (!serverJar) {
+        window.showErrorMessage("Server jar not found! Aborting...");
+        return;
+    }
+    const minJavaVersion = getMinJavaVersion(serverJar);
+    if (!minJavaVersion) {
+        window.showErrorMessage("Could not determine minimum Java version from server jar");
+        return;
+    }
+    const javaCheckPassed = await runCheck(
+        () => checkJavaVersion(minJavaVersion),
+        (message) =>
+            window.showErrorMessage(`VDM VSCode: ${message}`, "Open Requirements").then((choice) => {
+                if (choice === "Open Requirements") {
+                    env.openExternal(Uri.parse("https://github.com/overturetool/vdm-vscode/wiki/Getting-Started#System-Requirements"));
+                }
+            }),
     );
     if (!javaCheckPassed) {
         return;
@@ -200,6 +214,20 @@ async function runCheck<T extends unknown[]>(
         onFailure(result.message);
     }
     return result.success;
+}
+
+function findServerJar(): string | undefined {
+    const extensionRoot = path.resolve(__dirname, "..");
+    const libsPath = path.join(extensionRoot, "resources", "jars", "vdmj");
+    if (!fs.existsSync(libsPath)) {
+        return undefined;
+    }
+    const files = fs.readdirSync(libsPath);
+    const jarFile = files.find((f) => f.startsWith("vdmj") && f.endsWith(".jar"));
+    if (!jarFile) {
+        return undefined;
+    }
+    return path.join(libsPath, jarFile);
 }
 
 export async function deactivate() {
