@@ -33,7 +33,6 @@ export function checkJavaVersion(minVersion: number): Promise<{ success: boolean
 
             const major = parseInt(match[1]);
             const version = major === 1 ? parseInt(match[2]) : major;
-            console.log(`Java ${minVersion}+ required, found Java ${version}`);
             if (version < minVersion) {
                 resolve({
                     success: false,
