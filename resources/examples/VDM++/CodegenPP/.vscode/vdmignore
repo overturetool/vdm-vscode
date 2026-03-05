@@ -1,0 +1,6 @@
+README.txt
+**/*.java
+**/*.jar
+**/*.simple
+**/*.bat
+**/*.sh
