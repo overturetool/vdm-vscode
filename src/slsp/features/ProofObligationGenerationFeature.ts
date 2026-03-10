@@ -10,6 +10,7 @@ import {
     Disposable,
     CancellationToken,
     WorkDoneProgress,
+    FeatureState,
 } from "vscode-languageclient";
 import { ProofObligationPanel, ProofObligationProvider } from "../views/ProofObligationPanel";
 import {
@@ -47,7 +48,9 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         this._selector = documentSelector;
 
         // Not supported
-        if (!pogCapabilities?.experimental?.proofObligationProvider) return;
+        if (!pogCapabilities?.experimental?.proofObligationProvider) {
+            return;
+        }
 
         // If the QuickCheck plugin isn't installed or any error occured in loading the plugin, QuickCheck will not be enabled in the client.
         const quickCheckEnabled = pogCapabilities.experimental.proofObligationProvider?.quickCheckProvider ?? false;
@@ -55,7 +58,12 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         this._onDidChangeProofObligations = new EventEmitter<boolean>();
         this._disposables.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
         let provider: ProofObligationProvider = {
-            provideProofObligations: (uri: Uri) => this.requestPOG(uri),
+            provideProofObligations: (
+                uri: Uri,
+                poIds?: number[],
+                progress?: Progress<{ message?: string; increment?: number }>,
+                cancellationToken?: CancellationToken,
+            ) => this.requestPOG(uri, poIds, progress, cancellationToken),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
             runQuickCheck: (
@@ -65,19 +73,41 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
                 progress?: Progress<{
                     message?: string;
                     increment?: number;
-                }>
+                }>,
             ) => this.runQuickCheck(wsFolder, poIds, token, progress),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
+    }
+    getState(): FeatureState {
+        return { kind: "static" };
     }
     dispose(): void {
         this._disposables.forEach((l) => l.dispose());
         this._disposables = [];
 
-        if (this._onDidChangeProofObligations) this._onDidChangeProofObligations.dispose();
+        if (this._onDidChangeProofObligations) {
+            this._onDidChangeProofObligations.dispose();
+        }
     }
 
-    private requestPOG(uri: Uri): Promise<CodeProofObligation[]> {
+    private requestPOG(
+        uri: Uri,
+        poIds?: number[],
+        progress?: Progress<{ message?: string; increment?: number }>,
+        cancellationToken?: CancellationToken,
+    ): Promise<CodeProofObligation[]> {
+        let workDoneToken = null;
+        if (progress) {
+            workDoneToken = this.generateToken();
+            const progressDisp = this._client.onProgress(WorkDoneProgress.type, workDoneToken, (value) => {
+                if (value.kind !== "end" && value?.percentage) {
+                    progress.report({ message: `${value.message} - ${value.percentage}%`, increment: value.percentage - this._progress });
+                    this._progress = value.percentage;
+                }
+            });
+            this._disposables.push(progressDisp);
+        }
+
         return new Promise((resolve, reject) => {
             // Abort if not for this client
             if (!util.match(this._selector, uri)) return reject();
@@ -87,11 +117,13 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             // Setup message parameters
             let params: GeneratePOParams = {
                 uri: this._client.code2ProtocolConverter.asUri(uri),
+                obligations: poIds,
+                workDoneToken: workDoneToken,
             };
 
             // Send request
             this._client
-                .sendRequest(GeneratePORequest.type, params)
+                .sendRequest(GeneratePORequest.type, params, cancellationToken)
                 .then((POs) => {
                     return resolve(POs.map((po) => this.asCodeProofObligation(po), this));
                 })
@@ -108,7 +140,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         progress?: Progress<{
             message?: string;
             increment?: number;
-        }>
+        }>,
     ): Thenable<QuickCheckInfo[]> {
         let workDoneToken = null;
         if (progress) {

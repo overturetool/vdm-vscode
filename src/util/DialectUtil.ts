@@ -46,7 +46,7 @@ export function vdmFilePattern(fsPath: string): RelativePattern {
 export async function guessDialect(wsFolder: WorkspaceFolder): Promise<VdmDialect> {
     for (const [dialect, extensions] of dialectToFileExtensions) {
         const commaSeparatedExtensions = extensions.join(",");
-        const pattern: RelativePattern = new RelativePattern(wsFolder.uri.path, `*.{${commaSeparatedExtensions}}`);
+        const pattern: RelativePattern = new RelativePattern(wsFolder.uri.path, `**/*.{${commaSeparatedExtensions}}`);
 
         const matchingFiles = await workspace.findFiles(pattern, null, 1);
 
