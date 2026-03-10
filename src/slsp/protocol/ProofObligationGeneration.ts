@@ -60,6 +60,7 @@ export interface ProofObligationCounterExample {
 export type ProofObligationWitness = ProofObligationCounterExample;
 
 export interface ProofObligation extends Omit<QuickCheckInfo, "status" | "id"> {
+    type: string;
     /**
      * Unique identifier of the PO.
      */
@@ -89,6 +90,10 @@ export interface ProofObligation extends Omit<QuickCheckInfo, "status" | "id"> {
      * An optional status of the PO, e.g., "Unproved" or "Proved".
      */
     status?: string;
+    /**
+     * Contains all the fields to be shown in the QuickCheck hover
+     */
+    hovers: string[];
 }
 
 export interface QuickCheckInfo {
@@ -129,7 +134,7 @@ export namespace GeneratePORequest {
     export type MiddlewareSignature = (
         params: GeneratePOParams,
         token: CancellationToken,
-        next: HandlerSignature
+        next: HandlerSignature,
     ) => HandlerResult<ProofObligation[] | null, void>;
 }
 
@@ -142,6 +147,16 @@ export interface GeneratePOParams {
      * should be generated.
      */
     uri: DocumentUri;
+    /**
+     * Optional list of specific proof obligation IDs to generate.
+     * If not provided, all proof obligations for the specification
+     * should be generated.
+     */
+    obligations?: number[];
+    /**
+     * An optional token that the server can use to report progress on the generation of the proof obligations.
+     */
+    workDoneToken?: string;
 }
 
 /**
@@ -180,7 +195,7 @@ export namespace RunQuickCheckRequest {
     export type MiddlewareSignature = (
         params: RunQuickCheckRequestParams,
         token: CancellationToken,
-        next: HandlerSignature
+        next: HandlerSignature,
     ) => HandlerResult<QuickCheckInfo[], void>;
 }
 

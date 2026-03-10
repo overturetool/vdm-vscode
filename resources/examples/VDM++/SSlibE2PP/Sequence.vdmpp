@@ -106,7 +106,7 @@ descendingOrderSort(s) == sort[@T](lambda x : @T, y : @T & if is_real(x) and is_
                                                            then x > y
                                                            else undefined)(s);
 
-static public isOrdered[@T] : seq of (@T * @T -> bool) -> seq of @T -> seq of @T -> bool
+static public isOrdered[@T] : seq1 of (@T * @T -> bool) -> seq of @T -> seq of @T -> bool
 isOrdered(decideOrderFuncSeq)(s1)(s2) ==
 	cases mk_(s1,s2):
 		mk_([],[])		-> false,
@@ -119,7 +119,8 @@ isOrdered(decideOrderFuncSeq)(s1)(s2) ==
 				false
 			else
 				Sequence`isOrdered[@T](tl decideOrderFuncSeq)(tail1)(tail2)
-	end;
+	end
+measure len decideOrderFuncSeq;
 
 static public Merge[@T] : (@T * @T -> bool) -> seq of @T -> seq of @T -> seq of @T
 Merge(decideOrderFunc)(s1)(s2) == 
@@ -223,7 +224,7 @@ Span(f)(s) ==
 static public SubSeq[@T]: nat -> nat -> seq1 of @T -> seq of @T
 SubSeq(startPos)(numOfElem)(s) == s(startPos,...,startPos+numOfElem-1);
 
-static public last[@T]: seq of @T -> @T
+static public last[@T]: seq1 of @T -> @T
 last(s) == s(len s);
 
 static public fmap[@T1,@T2]: (@T1 -> @T2) -> seq of @T1 -> seq of @T2
@@ -282,7 +283,8 @@ IndexAux(e)(s)(indx) ==
 				indx + 1
 			else
 				IndexAux[@T](e)(xs)(indx+1)
-	end;
+	end
+measure len s;
 	
 static public IndexAll2[@T] : @T -> seq of @T -> set of int
 IndexAll2(e)(s) == {i | i in set inds s & s(i) = e};

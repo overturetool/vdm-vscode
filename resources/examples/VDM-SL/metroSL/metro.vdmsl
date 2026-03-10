@@ -111,7 +111,7 @@ operations
   Accelerate: () ==> ()
   Accelerate() == 
     (train:= <Moving>)
-  pre doors = <Open>;
+  pre doors <> <Open>;
 
   Break: () ==> ()
   Break() == 

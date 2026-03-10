@@ -399,11 +399,13 @@ functions
   -- Multiply a duration by a fixed amount.
   durMultiply: Duration * nat +> Duration
   durMultiply(d, n) == mk_Duration(d.dur * n)
+  pre n <> 0
   post durDivide(RESULT, n) = d;
 
   -- Divide a duration by a fixed amount.
   durDivide: Duration * nat +> Duration
-  durDivide(d, n) == mk_Duration(d.dur div n);
+  durDivide(d, n) == mk_Duration(d.dur div n)
+  pre n <> 0;
   --post durLeq(durMultiply(RESULT, n), d) and durLess(d, durMultiply(RESULT, n+1));
 
   -- The difference between two durations.

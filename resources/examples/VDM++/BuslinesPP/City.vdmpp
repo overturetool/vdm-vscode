@@ -118,7 +118,8 @@ class City
 
 		pure private findRoadsFromRoadNumber : seq of Road`RoadNumber ==> seq of Road
 		findRoadsFromRoadNumber(route)==  
-				return [roads(elem) | elem in seq route]; 
+		  return [roads(elem) | elem in seq route]
+		pre elems route subset dom roads; 
 
 		pure public getCentralStation : () ==> Busstop
 		getCentralStation()== 

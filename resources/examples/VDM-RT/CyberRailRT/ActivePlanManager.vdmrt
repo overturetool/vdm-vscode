@@ -173,7 +173,7 @@ private handleStrategyEnd : () ==> ()
 handleStrategyEnd()== (
 	state := <run>;
 );
-private handleInactiveRoute : MessageTypes`MessageT ==> ()
+private handleInactiveRoute : MessageTypes`STRATEGYNOTIFY ==> ()
 handleInactiveRoute(msg) ==
 (
 	let mk_MessageTypes`STRATEGYNOTIFY(routeid) = msg in
@@ -182,7 +182,7 @@ handleInactiveRoute(msg) ==
 	)
 );
 
-private handleTransportPlan :  MessageTypes`MessageT ==> ()
+private handleTransportPlan :  MessageTypes`RETURNPLAN ==> ()
 handleTransportPlan(msg) ==
 (	
 	
@@ -193,7 +193,7 @@ handleTransportPlan(msg) ==
 	)
 );
 
-private handleRequestPlan : MessageTypes`MessageT ==> ()
+private handleRequestPlan : MessageTypes`REQUESTPLAN ==> ()
 handleRequestPlan(msg) ==
 (
 

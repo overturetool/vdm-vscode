@@ -108,7 +108,7 @@ operations
   pre pctvar in set reserved;
 
   -- auxiliary operation to load a simulation scenario
-  public loadScenario: seq of char ==> ()
+  public loadScenario: seq1 of char ==> ()
   loadScenario (pfname) ==
     ( -- diagnostics
       IO`printf("Reading scenario %s\n", [pfname]);
@@ -306,6 +306,7 @@ operations
       "RIGHT_VEL" -> return ChessWay`vel_in.GetValue(),
       others      -> return mValues(pName)
     end
+  pre pName = "LEFT_ACC" or pName = "RIGHT_VEL" or pName in set dom mValues;
 \end{vdm_al}
 
 The operations \texttt{getValue} and \texttt{setValue} both check whether the named

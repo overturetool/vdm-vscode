@@ -1,0 +1,184 @@
+/**
+ * VDM value created from TestXML/structural_parameter_example.xml
+ */
+values
+    structural_parameter_example =
+    mk_FmiModelDescription
+    (
+        mk_Location("structural_parameter_example.xml", 7),
+        "3.0",  -- fmiVersion
+        "",  -- modelName
+        "",  -- instantiationToken
+        "",  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        "2022-05-01T20:00:00Z",  -- generationDateAndTime
+        nil,  -- variableNamingConvention
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("structural_parameter_example.xml", 8),
+            "structural_parameter_example",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            nil,  -- canHandleVariableCommunicationStepSize
+            nil,  -- fixedInternalStepSize
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- recommendedIntermediateInputSmoothness
+            nil,  -- providesIntermediateUpdate
+            nil,  -- mightReturnEarlyFromDoStep
+            nil,  -- canReturnEarlyAfterIntermediateUpdate
+            nil,  -- hasEventMode
+            nil,  -- providesEvaluateDiscreteStates
+            nil   -- annotations
+        ),
+        nil,  -- scheduledExecution
+        nil,  -- unitDefinitions
+        nil,  -- typeDefinitions
+        nil,  -- logCategories
+        nil,  -- defaultExperiment
+        [
+            mk_UInt64
+            (
+                mk_Location("structural_parameter_example.xml", 12),
+                "len",  -- name
+                100,  -- valueReference
+                nil,  -- description
+                <structuralParameter>,  -- causality
+                <fixed>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                -- start
+                [
+                    7
+                ],
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Float32
+            (
+                mk_Location("structural_parameter_example.xml", 14),
+                "V",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    0.1,
+                    -0.2,
+                    0.3,
+                    -0.4,
+                    0.5,
+                    -0.6,
+                    0.7
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("structural_parameter_example.xml", 15),
+                        nil,  -- start
+                        100   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            ),
+            mk_Float64
+            (
+                mk_Location("structural_parameter_example.xml", 20),
+                "A",  -- name
+                2,  -- valueReference
+                nil,  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                -- start
+                [
+                    0.0,
+                    0.1,
+                    1.0,
+                    1.1,
+                    2.0,
+                    2.1
+                ],
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                -- dimension
+                [
+                    mk_Dimension
+                    (
+                        mk_Location("structural_parameter_example.xml", 21),
+                        3,  -- start
+                        nil   -- valueReference
+                    ),
+                    mk_Dimension
+                    (
+                        mk_Location("structural_parameter_example.xml", 22),
+                        2,  -- start
+                        nil   -- valueReference
+                    )
+                ],
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("structural_parameter_example.xml", 26),
+            nil,  -- output
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            nil,  -- initialUnknown
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+

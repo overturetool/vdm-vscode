@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription fmiVersion="3.0-rc.2"
+	modelName="Test FMU" instantiationToken="{111-222-333-444}">
+	<CoSimulation modelIdentifier="Test_FMU" />
+	<ModelVariables>
+		<Float64 name="vname" valueReference="0" />
+		<Float64 name="isvname" valueReference="1" />
+		<Float64 name="osvname" valueReference="2" />
+	</ModelVariables>
+	<ModelStructure>
+	</ModelStructure>
+</fmiModelDescription>

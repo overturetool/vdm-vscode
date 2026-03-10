@@ -108,7 +108,7 @@ get(dB,i)==
 	if record.id=i 
 	then record 
 	else get(dB\{record},i)	
-pre	i in set usedIds(dB) 
+pre i in set usedIds(dB) 
 post RESULT.id=i and RESULT in set dB
 measure card dB;
   
@@ -125,7 +125,14 @@ getvalue(valuetype,dB,i)==
 	end
 pre	i in set usedIds(dB) and
 	valuetype in set {<title>,<author>,<journal>,<year>,<booktitle>,
-			<institution>,<publisher>}
+			<institution>,<publisher>} and
+    (valuetype = <title> => get(dB,i).title <> <nil>) and
+	(valuetype = <author> => get(dB,i).author <> <nil>) and
+	(valuetype = <journal> => is_Article(get(dB,i))) and
+	(valuetype = <year> => get(dB,i).year <> <nil>) and
+	(valuetype = <booktitle> => is_Inproceeding(get(dB,i))) and
+	(valuetype = <institution> => is_Techreport(get(dB,i))) and
+	(valuetype = <publisher> => let x = get(dB,i) in is_Book(x) or is_Inproceeding(x))
 post 	valuetype=<title>	and RESULT=get(dB,i).title or
 	valuetype=<author>	and RESULT=get(dB,i).author or
 	valuetype=<journal>	and RESULT=get(dB,i).journal or 
@@ -138,7 +145,8 @@ iscomplete :set of Record*Id +> bool
 iscomplete(dB,i)==
   required(recordtype(dB,i))={f|f in set required(recordtype(dB,i)) 
                                & not isempty(getvalue(f,dB,i))}
-pre	i in set usedIds(dB) 
+pre	i in set usedIds(dB) and
+    forall f in set required(recordtype(dB,i)) & pre_getvalue(f,dB,i)
 post (forall x in set required(recordtype(dB,i)) & 
 	     not isempty(getvalue(x,dB,i))) <=> RESULT;
 
@@ -156,33 +164,39 @@ isidentical: set of Record +> bool
 isidentical(dB)==
 	if dB={} then false 
 	else let record1 in set dB in 
-	if iscomplete(dB,record1.id) 
+	if pre_iscomplete(dB,record1.id) and iscomplete(dB,record1.id) 
 	then isidentical2(dB,dB\{record1},dB,record1)
 	else isidentical(dB\{record1})
 post 	(exists i,j in set usedIds(dB) & i<>j and iscomplete(dB,i) 
 	and iscomplete (dB,j) 
 	and recordtype(dB,i)=recordtype(dB,j) and
 	forall x in set required(recordtype(dB,i)) 
-	& getvalue(x,dB,i)=getvalue(x,dB,j)) <=> RESULT;
+	& getvalue(x,dB,i)=getvalue(x,dB,j)) <=> RESULT
+;--measure card dB;
 
 isidentical2: set of Record*set of Record*set of Record*Record +>bool
 isidentical2(dB1,dB2,olddB,record1)==
-	if dB2={} then isidentical(dB1\{record1}) 
+	if dB2={} and dB1={} then true
+	elseif dB2={} then isidentical(dB1\{record1}) 
 	else let record2 in set dB2 in
-	if iscomplete(olddB,record2.id) then
+	if pre_iscomplete(olddB,record1.id) and iscomplete(olddB,record2.id) then
 	isidentical3(dB1,dB2,olddB,record1,record2,
 	required(recordtype(olddB,record1.id)))
-	else isidentical2(dB1,dB2\{record2},olddB,record1);
+	else isidentical2(dB1,dB2\{record2},olddB,record1)
+;--measure card dB1 + card dB2;
 
 isidentical3: set of Record*set of Record*set of Record*Record*
               Record*set of Valuetype +> bool
 isidentical3(dB1,dB2,olddB,record1,record2,requiredfields)==
 	if requiredfields={} then true
 	else let field in set requiredfields in
-	if getvalue(field,olddB,record1.id)<>
-	getvalue(field,olddB,record2.id) 
+	if pre_getvalue(field,olddB,record1.id) and 
+	   pre_getvalue(field,olddB,record2.id) and 
+	   getvalue(field,olddB,record1.id) <>
+	   getvalue(field,olddB,record2.id) 
 	then isidentical2(dB1,dB2\{record2},olddB,record1)
-	else isidentical3(dB1,dB2,olddB,record1,record2,requiredfields\{field});
+	else isidentical3(dB1,dB2,olddB,record1,record2,requiredfields\{field})
+;--measure card dB1 + card dB2 + card requiredfields;
 
 ismonth: Value +> bool
 ismonth(v)==
@@ -202,11 +216,22 @@ isstring(v)==
   if not is_real(v) 
   then if v=[] 
        then true
-       elseif is_char(hd(v)) 
+       elseif v = nil or v = <nil>
+	   then false
+	   elseif is_char(hd(v)) 
        then isstring(tl(v))
        else false
-  else false;
-	
+  else false
+pre v <> nil;
+
+issubstring: String*String +> bool
+issubstring(string1,string2)==
+	if string1 = [] then true 
+	elseif string2 = [] or string1 = <nil> or string2 = <nil> then false
+	else exists i, j in set inds string2 &
+		string2(i, ..., j) = string1;
+
+/****
 issubstring: String*String +> bool
 issubstring(string1,string2)==
 	if string1=[] then true 
@@ -214,17 +239,21 @@ issubstring(string1,string2)==
 	elseif hd(string1)=hd(string2) 
 	then issubstring2(tl(string1),tl(string2),string1)
 	else issubstring(string1,tl(string2))
-post	(not (string2=<nil>)) and (exists i,j in set inds(string2) 
-	& substring(string2,i,j)=string1) <=> RESULT;
+post (string1 = [] or ((not (string2=<nil>) and
+                        not (string1=<nil>) and 
+						(exists i,j in set inds(string2) 
+	& substring(string2,i,j)=string1)))) <=> RESULT
+;--measure len string2 + len string1;
 
 issubstring2: String*String*String +> bool
 issubstring2(string1,string2,oldstring1)==
 	if string1=[] then true 
-	elseif string2=[] then false
+	elseif string2=[] or string1 = <nil> or string2 = <nil> then false
 	elseif hd(string1)=hd(string2) 
 	then issubstring2(tl(string1),tl(string2),oldstring1)
-	else issubstring(oldstring1,string2);
-
+	else issubstring(oldstring1,string2)
+;--measure len string2 + len string1 + len oldstring1;
+***/
 
 
 isvalueoffield: Value*Valuetype +> bool
@@ -246,7 +275,8 @@ isvalueoffield(v,f)==
 		<title>	->	isstring(v),
 		<type> ->	isstring(v),
 		<volume> ->	isvolume(v),
-		<year> ->	isyear(v)
+		<year> ->	isyear(v),
+		others ->	false
 	end
 post 	((f=<address> 	and exists x:String & x=v) or
 	(f=<author> 	and exists x:String & x=v) or
@@ -334,10 +364,16 @@ post 	rt = <article>
 	rt = <techreport>	
 	and RESULT={<title>,<author>,<institution>,<year>};
 
+/***
 substring(s:String,i:nat1,j:nat1) r:String
-pre	i<j and j<=len(s)
-post	exists s1,s2:String & len(s1)=i-1 and len(s2)=len(s)-j 
-	and s=s1^r^s2;
+pre	s <> <nil> and i<j and j<=len(s)
+post	exists s1,s2:String & s1 <> <nil> and
+                              s2 <> <nil> and 
+							  r <> <nil> and
+                              len(s1)=i-1 and 
+							  len(s2)=len(s)-j and 
+							  s=s1^r^s2;
+***/
 
 usedIds: set of Record +> set of Id
 usedIds(dB)==
@@ -454,9 +490,9 @@ post	getvalue(f,dB,i)=v and
 
 COMPLETE: Id ==> bool
 COMPLETE(i)==
-	return iscomplete(dB,i)
+	return pre_iscomplete(dB,i) and iscomplete(dB,i)
 pre 	i in set usedIds(dB)
-post	iscomplete(dB,i) <=> RESULT;
+post	(pre_iscomplete(dB,i) and iscomplete(dB,i)) <=> RESULT;
 
 
 DELETE(i:Id)==
@@ -469,17 +505,23 @@ post	dB~=dB union {get(dB~,i)};
 SEARCH: String ==> set of Id
 SEARCH(a)==
  (dcl ids:set of Id:={};
+  -- @LoopInvariant(ids subset usedIds(dB))
   for all record in set dB do
     if issubstring(a,record.author) 
-    then ids:=ids union {record.id}
-    else ids:=ids;
+    then ids:=ids union {record.id};
 	return ids)
-post forall i in set RESULT & issubstring(a,get(dB,i).author)
+pre  a <> <nil>
+post a <> <nil> and
+    forall i in set RESULT & 
+	  let author = get(dB,i).author in 
+	   (author <> <nil> => issubstring(a,get(dB,i).author))
 	and not exists record in set dB & 
 	(record.id not in set RESULT and 
-     issubstring(a,get(dB,i).author));
+     (pre_get(dB,i) =>
+	 let author = get(dB,i).author in 
+	   author <> <nil> => issubstring(a,author)));
 
-GET: Id ==> Record
+GET: Id ==> Record 
 GET(i)==
 	return get(dB,i)
 pre 	i in set usedIds(dB)

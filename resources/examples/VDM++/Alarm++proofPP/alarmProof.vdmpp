@@ -44,7 +44,8 @@ functions
   ExpertToPage(a:Alarm,peri:Period,plant:Plant) r: Expert
   pre peri in set dom plant.schedule and
     a in set plant.alarms
-  post r in set plant.schedule(peri) and
+  post peri in set dom plant.schedule and
+    r in set plant.schedule(peri) and
     a.quali in set r.quali;
 
 static  QualificationOK: set of Expert * Qualification -> bool

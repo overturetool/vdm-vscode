@@ -84,9 +84,10 @@ FOCDetect (fuelswitch, startswitch, n2, aog) ==
   (n2 > DVMINN2GNDFOC) and
   aog;
   
-ReturnState : int -> StartState
+ReturnState : nat -> StartState
 ReturnState (i) ==
-  STATEMAP (i);
+  STATEMAP (i)
+pre i in set dom STATEMAP;
 
 LightupTimeOutDetect : int -> bool
 LightupTimeOutDetect (lightuptimer) ==

@@ -1,6 +1,6 @@
 -- ===============================================================================================================
 -- ItemLoader in tray allocation for a sortation system
--- By José Antonio Esparza and Kim Bjerge - spring 2010
+-- By Josï¿½ Antonio Esparza and Kim Bjerge - spring 2010
 -- ===============================================================================================================
 
 class ItemLoader
@@ -45,9 +45,13 @@ class ItemLoader
 	ItemLoader(fname) ==
 	(
 	  -- Not working in Overture version 0.1.9
-	  def mk_(-,mk_(timeval,input)) = io.freadval[InputTP](fname) 
+	  def mk_(ok,val) = io.freadval[InputTP](fname) 
 	  in
-	    (
+	    if ok 
+		then let mk_(timeval,input) = val
+			 in
+		if timeval >= 0
+		then(
 	   		numTimeSteps := timeval;
 	     	inlines := input
 	     );    

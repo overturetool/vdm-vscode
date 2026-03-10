@@ -63,7 +63,8 @@ operations
 				);
 			);
 		);
-	);
+	)
+	pre exists pigPos in set dom pigsInSty & pigPos.id = pigId;
 	--Pre inmap TODO
 
 	public AddActuator: Actuator * PigStyId ==> ()

@@ -18,7 +18,8 @@ operations
 		);
         let - = io.fecho(output_file, "", <start>) in -- Flush file
             skip;
-	);
+	)
+    pre filename <> "";
 
     public Run: () ==> ()
     Run() ==

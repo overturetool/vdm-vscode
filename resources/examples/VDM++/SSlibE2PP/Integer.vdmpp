@@ -24,7 +24,7 @@ static ndiv10 : nat +> nat
 ndiv10(n) == n div 10;
 
 -- Convert integer to COBOL type number string (like ZZZ9.ZZ). 
-static public asStringZ: seq of char -> int -> seq1 of char 
+static public asStringZ: seq1 of char -> int -> seq1 of char 
 asStringZ(cobolStrConversionCommand)(i) == 
 	let	minusSymbol = '-'	in
 	if i < 0 then
@@ -38,7 +38,7 @@ asStringZ(cobolStrConversionCommand)(i) ==
 		else
 			asStringZAux(cobolStrConversionCommand)(i, true) ;
  		
- static public asStringZAux: seq of char -> nat * bool -> seq1 of char 
+ static public asStringZAux: seq1 of char -> nat * bool -> seq1 of char 
  asStringZAux(cobolStrConversionCommand)(n, wasZero) == 
   	let	cobolStrConversionCommandStrLen = len cobolStrConversionCommand,
   		cobolStrConversionCommandChar = cobolStrConversionCommand(cobolStrConversionCommandStrLen),

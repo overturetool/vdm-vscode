@@ -35,7 +35,8 @@ operations
 
 		def mk_(-,input) = io.freadval[InputTP](filename) in
 		(
-			inlines := input;
+			if input <> nil 
+			then inlines := input;
 		);	 
 
 		--BuildCityMap();

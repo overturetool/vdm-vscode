@@ -1,6 +1,6 @@
 types
 
-array = seq1 of int;
+array = seq1 of nat;
 
 values
 
@@ -23,7 +23,7 @@ MaxOfSet(s) ==
  post RESULT in set s and forall e in set s & e <= RESULT
  measure card s;
 
-lupsltok : array * nat1 -> nat
+lupsltok : array * nat1 -> nat1
 lupsltok(a,k) ==
  let compatible = {lupsltok(a,j) | j in set{1,...,k-1} & a(j)<=a(k)} 
  in
@@ -39,7 +39,8 @@ lupsl(a) ==
 
 ascending : array * set of int -> bool
 ascending(a,s) ==
-   forall i,j in set s & i<j => a(i)<=a(j) pre s subset (inds a);
+   forall i,j in set s & i<j => a(i)<=a(j) 
+pre s subset (inds a);
 
 lupslSpec : array -> int
 lupslSpec(a) ==
@@ -50,10 +51,15 @@ operations
 lupslOp1Laski : array ==> nat
 lupslOp1Laski(a) == 
   (dcl lupsls : set of nat := {};
+   /* 
+   @LoopInvariant(card DONE = len a => 
+   lupsls = {lupsltok(a, i) | i in set inds a}, DONE)
+   */
    for all k in set inds a do
       lupsls := lupsls union {lupsltok(a,k)};
-   return MaxOfSet(lupsls);
+    return MaxOfSet(lupsls);
   )
+pre exists e in set inds a & e >= 0 
 post lupslSpec(a) = RESULT;
 
 state lups of
@@ -157,9 +163,9 @@ post lupslSpec(a) = RESULT;
  
 lupsm4kop3Gries : array * nat1 ==> ()
 lupsm4kop3Gries(a,k) ==
-  (dcl li : int,
-       re : int,
-       m  : int; 
+  (dcl li : nat1,
+       re : nat1,
+       m  : nat1; 
    if lupslarr(len lupslarr)<=a(k) then
           lupslarr := lupslarr^[a(k)]
    elseif a(k)< lupslarr(1) then 
@@ -192,7 +198,8 @@ post lupslSpec(a) = RESULT;
  
 lupsltokop2Laski : array * nat1 ==> nat
 lupsltokop2Laski(a,k) ==
-  (dcl erg : int := 0; 
+  (dcl erg : nat := 0; 
+   -- @LoopInvariant (erg >= 0)
    for j = 1 to k-1 do
        if a(j)<=a(k) then
           if erg < lupslarr(j) 
@@ -201,6 +208,6 @@ lupsltokop2Laski(a,k) ==
    lupslarr := lupslarr^[erg];
    return erg;
   )
-pre k in set inds a; 
+pre k in set (inds a inter inds lupslarr); 
 
  

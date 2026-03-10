@@ -12,6 +12,8 @@ import {
     WorkspaceFoldersChangeEvent,
     StatusBarAlignment,
     StatusBarItem,
+    Uri,
+    env,
 } from "vscode";
 import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
@@ -39,10 +41,37 @@ import { FMUHandler } from "./handlers/FMUHandler";
 import { ManagePluginsHandler } from "./handlers/ManagePluginsHandler";
 import { ManageAnnotationsHandler } from "./handlers/ManageAnnotationsHandler";
 import { VDMJExtensionsHandler } from "./handlers/VDMJExtensionsHandler";
+import { checkJavaVersion, getMinJavaVersion } from "./util/JavaUtil";
+import * as path from "path";
+import * as fs from "fs";
 
 let clientManager: ClientManager;
 
 export async function activate(context: ExtensionContext) {
+    // Check for outdated or missing Java
+    const serverJar = findServerJar();
+    if (!serverJar) {
+        window.showErrorMessage("Server jar not found! Aborting...");
+        return;
+    }
+    const minJavaVersion = getMinJavaVersion(serverJar);
+    if (!minJavaVersion) {
+        window.showErrorMessage("Could not determine minimum Java version from server jar");
+        return;
+    }
+    const javaCheckPassed = await runCheck(
+        () => checkJavaVersion(minJavaVersion),
+        (message) =>
+            window.showErrorMessage(`VDM VSCode: ${message}`, "Open Requirements").then((choice) => {
+                if (choice === "Open Requirements") {
+                    env.openExternal(Uri.parse("https://github.com/overturetool/vdm-vscode/wiki/Getting-Started#System-Requirements"));
+                }
+            }),
+    );
+    if (!javaCheckPassed) {
+        return;
+    }
+
     // Setup server factory
     let serverFactory: ServerFactory;
     try {
@@ -80,7 +109,7 @@ export async function activate(context: ExtensionContext) {
                     knownVdmFolders.delete(wsFolder);
                 }
             });
-        })
+        }),
     );
 
     // Show VDM VS Code buttons
@@ -89,7 +118,7 @@ export async function activate(context: ExtensionContext) {
     // Initialise SLSP UI items // TODO Find better place for this (perhaps create a UI class that takes care of stuff like this)
     context.subscriptions.push(new ProofObligationPanel(context, clientManager));
     context.subscriptions.push(
-        new CombinatorialTestingView(clientManager, knownVdmFolders, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler())
+        new CombinatorialTestingView(clientManager, knownVdmFolders, new VdmjCTFilterHandler(), new VdmjCTInterpreterHandler()),
     );
     context.subscriptions.push(new TranslateButton(languageId.latex, ExtensionInfo.name, clientManager));
     context.subscriptions.push(new TranslateButton(languageId.word, ExtensionInfo.name, clientManager));
@@ -138,7 +167,7 @@ export async function activate(context: ExtensionContext) {
                 const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(editor.document.uri);
                 setHighPrecisionStatus(hpStatusBarItem, wsFolder && clientManager.isHighPrecisionClient(clientManager.get(wsFolder)));
             }
-        })
+        }),
     );
 
     // Register commands and event handlers
@@ -157,7 +186,7 @@ export async function activate(context: ExtensionContext) {
             }
         },
         this,
-        context.subscriptions
+        context.subscriptions,
     );
 
     // Set high precision inidcator for any project that opens emidiatly with VS Code.
@@ -173,6 +202,32 @@ function setHighPrecisionStatus(statusBarItem: StatusBarItem, isHighPrecision: b
     } else {
         statusBarItem.hide();
     }
+}
+
+async function runCheck<T extends unknown[]>(
+    check: (...args: T) => Promise<{ success: boolean; message: string }>,
+    onFailure: (message: string) => void,
+    ...args: T
+): Promise<boolean> {
+    const result = await check(...args);
+    if (!result.success) {
+        onFailure(result.message);
+    }
+    return result.success;
+}
+
+function findServerJar(): string | undefined {
+    const extensionRoot = path.resolve(__dirname, "..");
+    const libsPath = path.join(extensionRoot, "resources", "jars", "vdmj");
+    if (!fs.existsSync(libsPath)) {
+        return undefined;
+    }
+    const files = fs.readdirSync(libsPath);
+    const jarFile = files.find((f) => f.startsWith("vdmj") && f.endsWith(".jar"));
+    if (!jarFile) {
+        return undefined;
+    }
+    return path.join(libsPath, jarFile);
 }
 
 export async function deactivate() {

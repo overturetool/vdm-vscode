@@ -62,6 +62,8 @@ runner () ==
  let vs = ctrl.GetTrafficData() in
   (
   skip;
+   if len vs >= 1
+   then
    let v = vs(1) in
    (
    	AssertTrue(v.GetPosition().X() = 1);

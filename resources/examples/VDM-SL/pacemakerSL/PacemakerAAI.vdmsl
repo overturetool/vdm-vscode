@@ -72,14 +72,15 @@ Pacemaker (inp : SenseTimeline) r : ReactionTimeline
 post let m = {i | i in set inds r & r(i) = <PULSE>}
      in len r = len inp 
         and
-        r(1) = <PULSE> 
+        len r > 0 =>
+        (r(1) = <PULSE> 
         and
         forall x in set m & (
            (exists y in set m & y > x) => 
                  (exists z in set m &  z >= x and z - x <= 60000/LRL)
                  or
                  (exists z in set inds inp &  z >= x and z - x > ARP and inp(z) = <PULSE>)
-           );
+           ));
 
 
 end PacemakerAAI

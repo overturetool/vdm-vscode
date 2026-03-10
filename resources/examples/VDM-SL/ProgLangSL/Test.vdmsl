@@ -25,7 +25,7 @@ RunTypeCheck() ==
   
 RunEval: () -> AST`Value
 RunEval() ==
-  DYNSEM`EvalExpr(binexpr,{|->})
+  DYNSEM`EvalExpr(binexpr,{|->},{|->})
   
 end Test
 \end{vdm_al}

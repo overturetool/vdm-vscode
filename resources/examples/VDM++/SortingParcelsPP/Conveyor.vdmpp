@@ -24,6 +24,7 @@ pre forall a in set inds slides & elem.getID() <> slides(a).getID();
  distributeGoods : () ==> ()
  distributeGoods() ==
  (dcl doomed : set of Colli := {};
+ -- @LoopInvariant (x in set inds goods)
   for all x in set inds goods do 
    for all y in set inds slides do 
     if goods(x).getDestination() = slides(y).getID() 

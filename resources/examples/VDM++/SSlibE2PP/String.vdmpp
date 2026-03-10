@@ -4,15 +4,17 @@ functions
 
 --Conversion functions
 static public asInteger: seq of char -> int
-asInteger(s) == String`AsIntegerAux(s)(0);
+asInteger(s) == String`AsIntegerAux(s)(0)
+pre elems s subset elems "0123456789";
 
 static private AsIntegerAux : seq of char -> int -> int
 AsIntegerAux(s)(sum) ==
 	if s = [] then
 		sum
 	else
-		AsIntegerAux(tl s)(10 * sum + Character`asDigit(hd s));
---	measure length;
+		AsIntegerAux(tl s)(10 * sum + Character`asDigit(hd s))
+pre elems s subset elems "0123456789"
+measure len s;
 
 static length : seq of char +> nat
 length(s) == len s;
@@ -34,7 +36,10 @@ static public isLetterOrDigits : seq of char -> bool
 isLetterOrDigits(s) == isSomeString(Character`isLetterOrDigit)(s);
 
 static public isSpaces : [seq of char] -> bool
-isSpaces(s) ==isSomeString(lambda c : char & c = ' ' or c = '\t')(s);
+isSpaces(s) ==
+ if s <> nil
+ then isSomeString(lambda c : char & c = ' ' or c = '\t')(s)
+ else false;
 
 static public LT : seq of char * seq of char -> bool
 LT(s1, s2) == String`LT2(s1)(s2);
@@ -81,7 +86,7 @@ indexAll(aStr,c) == Sequence`IndexAll2[char](c)(aStr);
 static public IndexAll2 : char -> seq of char -> set of int
 IndexAll2(c)(aStr) == Sequence`IndexAll2[char](c)(aStr);
 
-static public isInclude : seq of char -> seq of char -> bool
+static public isInclude : seq1 of char -> seq of char -> bool
 isInclude(aStr)(aTargetStr) ==
 	let	indexSet = indexAll(aStr,aTargetStr(1))
 	in	exists i in set indexSet & 
@@ -94,7 +99,7 @@ static public subStr :
 	seq1 of char * nat * nat -> seq of char
 subStr(aStr,fromPos,length) == aStr(fromPos,...,fromPos+length-1);
 
-static public SubStr : nat -> nat -> seq1 of char -> seq of char
+static public SubStr : nat -> nat1 -> seq1 of char -> seq of char
 SubStr(fromPos)(length)(aStr) == aStr(fromPos,...,fromPos+length-1);
 
 static public GetToken : seq of char * set of char -> seq of char
@@ -121,8 +126,8 @@ getLinesAux(s)(line) ==
 				if wTailStringCandidate <> [] and hd wTailStringCandidate = '\n' then tl wTailStringCandidate 
 				else wTailStringCandidate
 		in
-		getLinesAux(wTailString)(line ^ [wHeadLine]);
---measure length;
+		getLinesAux(wTailString)(line ^ [wHeadLine])
+measure len s;
 
 operations
 static public index: seq of char * char ==> int

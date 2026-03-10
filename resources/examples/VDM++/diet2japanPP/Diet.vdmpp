@@ -7,6 +7,12 @@ values
 public	e = 1E-10;
 public	h = 1e-5;	
 
+types
+public Positive = real inv r == r > 0;
+public	Weight = Positive;
+public	Height = Positive;
+public	BMIT = Positive;
+
 functions
 static public BMI : real* real -> real
 BMI(weight, height) ==
@@ -19,15 +25,16 @@ post
 \end{vdm_al}
 
 \begin{vdm_al}
-static public getWeightFromBMI : real * real -> real
+static public getWeightFromBMI : Height * BMIT -> Weight
 getWeightFromBMI(height, aBMI) ==
 	let	
-		f = lambda weight : real & aBMI - BMI(weight, height) 
+		f = lambda weight : Weight & aBMI - BMI(weight, height) 
 	in
 	newton(f)(60)
 pre
 	height > 0 and aBMI > 0
 post
+	pre_getWeightFromBMI(height,aBMI) and 
 	abs(aBMI - BMI(RESULT, height)) <= e;
 \end{vdm_al}
 

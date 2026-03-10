@@ -54,7 +54,8 @@ operations
          then for all env in set env_s do
 	       (PushBlkEnv(env) ;
                 let in_lv = LooseEvalExpr(in_e) in
-                ( PopBlkEnv() ;
+                ( if PrePopBlkEnv() 
+                  then PopBlkEnv() ;
                   lval := lval union Consistent(in_lv,m)
                 )
               )
@@ -173,11 +174,13 @@ must be present.
     let left_lv  = LooseEvalExpr(left_e),
         right_lv = LooseEvalExpr(right_e)
     in
-      if opr = <SETMINUS>
+      if opr = <SETMINUS> and TCSetBinaryExpr(left_lv, right_lv)
       then LooseEvalSetBinaryExpr(left_lv, right_lv)
       elseif opr = <EQ>
       then LooseEvalEqBinaryExpr(left_lv, right_lv)
-      else LooseEvalNumBinaryExpr(left_lv, opr, right_lv);
+      elseif TCEvalNumBinaryExpr(left_lv, right_lv)
+      then LooseEvalNumBinaryExpr(left_lv, opr, right_lv)
+      else error;
 \end{vdm_al}
 
 Since all the binary operators we have selected in our subset are
@@ -195,8 +198,15 @@ operators which are included).
       for all mk_(mk_SET(rv),rm) in set Consistent(r_lv,lm) do
         lval := lval union {mk_(mk_SET(lv \ rv),rm munion lm)};
     return lval)
-  pre forall mk_(v,-) in set l_lv union r_lv & is_SET(v);
+  pre TCSetBinaryExpr(l_lv, r_lv);
+  
+  functions
+  
+  TCSetBinaryExpr: LVAL * LVAL -> bool
+  TCSetBinaryExpr(l_lv, r_lv) ==
+    forall mk_(v,-) in set l_lv union r_lv & is_SET(v);
 
+  operations
   LooseEvalEqBinaryExpr: LVAL * LVAL ==> LVAL
   LooseEvalEqBinaryExpr(l_lv, r_lv) ==
    (dcl lval : LVAL := {};
@@ -216,12 +226,19 @@ operators which are included).
           <NUMMULT>  -> lval := lval union {mk_(mk_NUM(lv * rv),rm munion lm)}
     end;
     return lval)
-  pre forall mk_(v,-) in set l_lv union r_lv & is_NUM(v);
+  pre TCEvalNumBinaryExpr(l_lv, r_lv);
+  
+  functions
+  
+  TCEvalNumBinaryExpr: LVAL * LVAL -> bool
+  TCEvalNumBinaryExpr(l_lv, r_lv) ==
+    forall mk_(v,-) in set l_lv union r_lv & is_NUM(v);
 \end{vdm_al}
 
 \subsection{Set Enumeration Expressions}
 
 \begin{vdm_al}
+operations
   LooseEvalSetEnumerationExpr: SetEnumerationExpr ==> LVAL
   LooseEvalSetEnumerationExpr(mk_SetEnumerationExpr(els)) ==
     (dcl sm_s : set of ((set of VAL) * Model) := {};
@@ -268,7 +285,8 @@ updated to include larger set values and larger corresponding models
 	         lval := lval union Consistent(ap_lv,m))));
            LeaveCurFn());
     PopEnvL();
-    return lval);
+    return lval)
+  pre fct_e in set dom fn_m;
 \end{vdm_al}
 Here it is worth noting how function application is treated. For all
 possible matches of the argument value against the formal parameter

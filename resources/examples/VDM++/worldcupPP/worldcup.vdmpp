@@ -145,7 +145,9 @@ SecondRound_expl () ==
   def winners = { gp |-> GroupWinner_expl(gp) | gp in set dom gps };
       runners_up = { gp |-> GroupRunnerUp_expl(gp) | gp in set dom gps}
   in return ([mk_(winners(secondRoundWinners(i)),
-                  runners_up(secondRoundRunnersUp(i))) | i in set {1,...,8}]);
+                  runners_up(secondRoundRunnersUp(i))) | i in set {1,...,8}])
+pre len secondRoundWinners >= 8 and
+    len secondRoundRunnersUp >= 8;
 
 
 -- assignment to state designator

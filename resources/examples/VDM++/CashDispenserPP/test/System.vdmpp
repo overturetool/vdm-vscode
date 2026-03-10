@@ -34,7 +34,8 @@ operations
 
   public GetTill: TillId ==> Till
   GetTill(tid) ==
-    return tills(tid);
+    return tills(tid)
+  pre tid in set dom tills;
 
   public GetResource: () ==> CentralResource
   GetResource() ==

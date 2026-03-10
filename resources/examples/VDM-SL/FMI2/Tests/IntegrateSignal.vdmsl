@@ -1,0 +1,237 @@
+/**
+ * VDM value created from fmus/2.0/me/win64/FMIToolbox_MATLAB/2.3/IntegrateSignal/IntegrateSignal.fmu
+ */
+values
+    integrateSignal =
+    mk_FmiModelDescription
+    (
+        mk_Location("modelDescription.xml", 12),
+        "2.0",  -- fmiVersion
+        "IntegrateSignal",  -- modelName
+        "30423e8a999432ec45b9295b1fc6a0c6",  -- guid
+        "[]",  -- description
+        "bengt-arne_032",  -- author
+        "1.2",  -- version
+        nil,  -- copyright
+        nil,  -- license
+        "FMI Toolbox 2.3 from Modelon run at MATLAB (R2014b) win64",  -- generationTool
+        "2016-03-10T10:47:20",  -- generationDateAndTime
+        <structured>,  -- variableNamingConvention
+        1,  -- numberOfEventIndicators
+        mk_ModelExchange
+        (
+            mk_Location("modelDescription.xml", 17),
+            "IntegrateSignal",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- completedIntegratorStepNotNeeded
+            true,  -- canBeInstantiatedOnlyOncePerProcess
+            false,  -- canNotUseMemoryManagementFunctions
+            nil,  -- canGetAndSetFMUstate
+            nil,  -- canSerializeFMUstate
+            nil,  -- providesDirectionalDerivative
+            nil   -- sourceFiles
+        ),
+        nil,  -- coSimulation
+        nil,  -- unitDefinitions
+        nil,  -- typeDefinitions
+        nil,  -- logCategories
+        mk_DefaultExperiment
+        (
+            mk_Location("modelDescription.xml", 27),
+            0.0,  -- startTime
+            10.0,  -- stopTime
+            0.000010,  -- tolerance
+            nil   -- stepSize
+        ),
+        nil,  -- vendorAnnotations
+        [
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 31),
+                "In1",  -- name
+                0,  -- valueReference
+                nil,  -- description
+                <input>,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 32),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 36),
+                "Out1",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                <output>,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 37),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 41),
+                "ContinuousState[0]",  -- name
+                2,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 42),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 47),
+                "der(ContinuousState[0])",  -- name
+                3,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 48),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    3,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 52),
+                "Integrator_IC",  -- name
+                4,  -- valueReference
+                nil,  -- description
+                <parameter>,  -- causality
+                <fixed>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 53),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("modelDescription.xml", 59),
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 61),
+                    2,  -- index
+                    -- dependencies
+                    [
+                        3
+                    ],
+                    nil   -- dependenciesKind
+                )
+            ],
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 65),
+                    4,  -- index
+                    nil,  -- dependencies
+                    nil   -- dependenciesKind
+                )
+            ],
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 69),
+                    2,  -- index
+                    nil,  -- dependencies
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 70),
+                    3,  -- index
+                    nil,  -- dependencies
+                    nil   -- dependenciesKind
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 71),
+                    4,  -- index
+                    nil,  -- dependencies
+                    nil   -- dependenciesKind
+                )
+            ] 
+        ) 
+    );

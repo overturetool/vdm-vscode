@@ -5,6 +5,7 @@ import {
     CancellationToken,
     ClientCapabilities,
     DocumentSelector,
+    FeatureState,
     InitializeParams,
     LSPErrorCodes,
     Protocol2CodeConverter,
@@ -99,7 +100,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                             var partialResultHandlerDisposable = this._client.onProgress(
                                 protocol.CTExecuteRequest.resultType,
                                 partialResultToken,
-                                (tests) => this._onDidGetPartialResult.fire(this._p2c.asTestCaseArray(tests))
+                                (tests) => this._onDidGetPartialResult.fire(this._p2c.asTestCaseArray(tests)),
                             );
                         }
 
@@ -111,7 +112,7 @@ export class CombinantorialTestingFeature implements StaticFeature {
                             var workDoneProgressHandlerDisposable = this._client.onProgress(
                                 WorkDoneProgress.type,
                                 workDoneTokenToken,
-                                (value) => this.handleExecuteWorkDoneProgress(value, progress)
+                                (value) => this.handleExecuteWorkDoneProgress(value, progress),
                             );
                         }
 
@@ -143,7 +144,9 @@ export class CombinantorialTestingFeature implements StaticFeature {
         };
         this._disposables.push(CTViewDataStorage.registerTestProvider(this._client.clientOptions.workspaceFolder, provider));
     }
-
+    getState(): FeatureState {
+        return { kind: "static" };
+    }
     dispose(): void {
         while (this._disposables.length) this._disposables.pop().dispose();
     }

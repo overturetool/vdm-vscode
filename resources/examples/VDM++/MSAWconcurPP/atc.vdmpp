@@ -32,7 +32,7 @@ getDirectionVectors(id) ==
                       p2.coord.Y - p3.coord.Y)]
 pre id in set dom history and len history(id) = 3;
 
-public getAltitudeHistory : FOId ==> seq of nat
+public getAltitudeHistory : FOId ==> seq1 of nat
 getAltitudeHistory(id) ==
   let hist = history(id),
       lastHist = hist(1,...,2)
@@ -224,9 +224,9 @@ calculateNeighborhood(pos) ==
   mk_Position(addVectorToPoint(mk_Vector(0,-2),pos),pos.altitude)
  };
 
-private predictAltitude : seq of nat -> nat
+private predictAltitude : seq1 of nat -> nat
 predictAltitude(alts) ==
-  alts(1) + (alts(1) - alts(2)) 
+  abs(alts(1) + (alts(1) - alts(2))) 
 pre len alts = 2;  
  
  

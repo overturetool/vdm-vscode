@@ -1,0 +1,225 @@
+/**
+ * VDM value created from TestXML/build_description_complex.xml
+ */
+values
+    build_description_complex =
+    mk_FmiBuildDescription
+    (
+        mk_Location("build_description_complex.xml", 2),
+        "3.0",  -- fmiVersion
+        -- buildConfiguration
+        [
+            mk_BuildConfiguration
+            (
+                mk_Location("build_description_complex.xml", 4),
+                "PlantModel",  -- modelIdentifier
+                nil,  -- platform
+                "Build configuration for desktop platforms",  -- description
+                -- sourceFileSet
+                [
+                    mk_SourceFileSet
+                    (
+                        mk_Location("build_description_complex.xml", 5),
+                        nil,  -- name
+                        "C99",  -- language
+                        nil,  -- compiler
+                        nil,  -- compilerOptions
+                        -- sourceFile
+                        [
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_complex.xml", 6),
+                                "fmi3Functions.c",  -- name
+                                nil   -- annotations
+                            ),
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_complex.xml", 7),
+                                "solver.c",  -- name
+                                nil   -- annotations
+                            )
+                        ],
+                        nil,  -- preprocessorDefinition
+                        nil,  -- includeDirectory
+                        nil   -- annotations
+                    ),
+                    mk_SourceFileSet
+                    (
+                        mk_Location("build_description_complex.xml", 9),
+                        nil,  -- name
+                        "C++11",  -- language
+                        nil,  -- compiler
+                        nil,  -- compilerOptions
+                        -- sourceFile
+                        [
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_complex.xml", 10),
+                                "model.c",  -- name
+                                nil   -- annotations
+                            ),
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_complex.xml", 11),
+                                "logging/src/logger.c",  -- name
+                                nil   -- annotations
+                            )
+                        ],
+                        -- preprocessorDefinition
+                        [
+                            mk_PreprocessorDefinition
+                            (
+                                mk_Location("build_description_complex.xml", 12),
+                                "FMI_VERSION",  -- name
+                                nil,  -- optional
+                                "3",  -- value
+                                nil,  -- description
+                                nil,  -- option
+                                nil   -- annotations
+                            ),
+                            mk_PreprocessorDefinition
+                            (
+                                mk_Location("build_description_complex.xml", 13),
+                                "LOG_TO_FILE",  -- name
+                                true,  -- optional
+                                nil,  -- value
+                                nil,  -- description
+                                nil,  -- option
+                                nil   -- annotations
+                            ),
+                            mk_PreprocessorDefinition
+                            (
+                                mk_Location("build_description_complex.xml", 14),
+                                "LOG_LEVEL",  -- name
+                                true,  -- optional
+                                "0",  -- value
+                                nil,  -- description
+                                -- option
+                                [
+                                    mk_Option
+                                    (
+                                        mk_Location("build_description_complex.xml", 15),
+                                        "0",  -- value
+                                        "Log infos, warnings and errors"   -- description
+                                    ),
+                                    mk_Option
+                                    (
+                                        mk_Location("build_description_complex.xml", 16),
+                                        "1",  -- value
+                                        "Log warnings and errors"   -- description
+                                    ),
+                                    mk_Option
+                                    (
+                                        mk_Location("build_description_complex.xml", 17),
+                                        "2",  -- value
+                                        "Log only errors"   -- description
+                                    )
+                                ],
+                                nil   -- annotations
+                            )
+                        ],
+                        -- includeDirectory
+                        [
+                            mk_IncludeDirectory
+                            (
+                                mk_Location("build_description_complex.xml", 19),
+                                "logging/include",  -- name
+                                nil   -- annotations
+                            )
+                        ],
+                        nil   -- annotations
+                    )
+                ],
+                -- library
+                [
+                    mk_Library
+                    (
+                        mk_Location("build_description_complex.xml", 21),
+                        "hdf5",  -- name
+                        ">=1.8,!=1.8.17,<1.10",  -- version
+                        true,  -- external
+                        "HDF5",  -- description
+                        nil   -- annotations
+                    )
+                ],
+                nil   -- annotations
+            ),
+            mk_BuildConfiguration
+            (
+                mk_Location("build_description_complex.xml", 24),
+                "PlantModel",  -- modelIdentifier
+                "aarch64-linux",  -- platform
+                nil,  -- description
+                -- sourceFileSet
+                [
+                    mk_SourceFileSet
+                    (
+                        mk_Location("build_description_complex.xml", 25),
+                        nil,  -- name
+                        "C99",  -- language
+                        nil,  -- compiler
+                        nil,  -- compilerOptions
+                        -- sourceFile
+                        [
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_complex.xml", 26),
+                                "fmi3Functions.c",  -- name
+                                nil   -- annotations
+                            )
+                        ],
+                        nil,  -- preprocessorDefinition
+                        nil,  -- includeDirectory
+                        nil   -- annotations
+                    ),
+                    mk_SourceFileSet
+                    (
+                        mk_Location("build_description_complex.xml", 28),
+                        nil,  -- name
+                        "C++11",  -- language
+                        "clang++",  -- compiler
+                        "-fno-rtti",  -- compilerOptions
+                        -- sourceFile
+                        [
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_complex.xml", 29),
+                                "model.c",  -- name
+                                nil   -- annotations
+                            )
+                        ],
+                        -- preprocessorDefinition
+                        [
+                            mk_PreprocessorDefinition
+                            (
+                                mk_Location("build_description_complex.xml", 30),
+                                "NO_FILE_SYSTEM",  -- name
+                                nil,  -- optional
+                                nil,  -- value
+                                nil,  -- description
+                                nil,  -- option
+                                nil   -- annotations
+                            )
+                        ],
+                        nil,  -- includeDirectory
+                        nil   -- annotations
+                    )
+                ],
+                -- library
+                [
+                    mk_Library
+                    (
+                        mk_Location("build_description_complex.xml", 32),
+                        "libm.a",  -- name
+                        nil,  -- version
+                        nil,  -- external
+                        "OpenLibm math library",  -- description
+                        nil   -- annotations
+                    )
+                ],
+                nil   -- annotations
+            )
+        ],
+        nil   -- annotations
+    );
+

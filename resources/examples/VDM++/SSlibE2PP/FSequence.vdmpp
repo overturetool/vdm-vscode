@@ -149,7 +149,7 @@ post
 
 IsOrderedは、decideOrderFunc列fsで与えられた順序であればtrue、そうでなければfalseを返す。
 \begin{vdm_al}
-static public IsOrdered[@T] : seq of (@T * @T -> bool) -> seq of @T -> seq of @T -> bool
+static public IsOrdered[@T] : seq1 of (@T * @T -> bool) -> seq of @T -> seq of @T -> bool
 IsOrdered(f)(s1)(s2) ==
 	cases mk_(s1,s2):
 		mk_([],[])			-> false,
@@ -162,7 +162,8 @@ IsOrdered(f)(s1)(s2) ==
 				false
 			else
 				IsOrdered[@T](tl f)(xs1)(xs2)
-	end;
+	end
+measure len f;
 \end{vdm_al}
 
 Mergeは、関数fで与えられた順序で、列s1,s2の要素をマージする。
@@ -309,7 +310,7 @@ SubSeq(i)(numOfElems)(s) == s(i,...,i + numOfElems - 1);
 
 Lastは、列sの最後の要素を返す。
 \begin{vdm_al}
-static public Last[@T]: seq of @T -> @T
+static public Last[@T]: seq1 of @T -> @T
 Last(s) == s(len s);
 \end{vdm_al}
 
@@ -363,7 +364,8 @@ IsAnyMember(es)(s) ==
 	cases es :
 	[x]^xs		->  IsMember[@T] (x)(s) or IsAnyMember[@T] (xs)(s) ,
 	[]		-> false
-	end;
+	end
+measure len es;
 \end{vdm_al}
 
 IsDupは、列s中に同じ要素があるか否かを返す。
@@ -395,7 +397,8 @@ IndexAux(e)(s)(i) ==
 				i + 1
 			else
 				IndexAux[@T](e)(xs)(i+1)
-	end;
+	end
+measure len s;
 \end{vdm_al}
 	
 IndexAllは、指定された要素eが列sの何番目にあるかを持つ自然数集合を返す。

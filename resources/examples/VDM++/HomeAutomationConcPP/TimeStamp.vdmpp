@@ -49,7 +49,8 @@ public UnRegisterThread : () ==> ()
 UnRegisterThread() ==
  (barrierCount := barrierCount - 1;
   --registeredThreads := registeredThreads \ {t};
- );
+ )
+pre barrierCount > 0;
  
 public IsInitialising: () ==> bool
 IsInitialising() ==

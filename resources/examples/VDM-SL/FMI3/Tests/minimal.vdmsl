@@ -1,0 +1,270 @@
+/**
+ * VDM value created from TestXML/minimal.xml
+ */
+values
+    minimal =
+    mk_FmiModelDescription
+    (
+        mk_Location("minimal.xml", 3),
+        "3.0-rc.2",  -- fmiVersion
+        "Test FMU",  -- modelName
+        "{111-222-333-444}",  -- instantiationToken
+        nil,  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        nil,  -- generationDateAndTime
+        nil,  -- variableNamingConvention
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("minimal.xml", 4),
+            "Test_FMU",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            nil,  -- canHandleVariableCommunicationStepSize
+            nil,  -- fixedInternalStepSize
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- recommendedIntermediateInputSmoothness
+            nil,  -- providesIntermediateUpdate
+            nil,  -- mightReturnEarlyFromDoStep
+            nil,  -- canReturnEarlyAfterIntermediateUpdate
+            nil,  -- hasEventMode
+            nil,  -- providesEvaluateDiscreteStates
+            nil   -- annotations
+        ),
+        nil,  -- scheduledExecution
+        [
+            mk_Unit
+            (
+                mk_Location("minimal.xml", 6),
+                "rad",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("minimal.xml", 7),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    1,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                -- displayUnit
+                [
+                    mk_DisplayUnit
+                    (
+                        mk_Location("minimal.xml", 8),
+                        "deg",  -- name
+                        57.2957795130823,  -- factor
+                        nil,  -- offset
+                        nil,  -- inverse
+                        nil   -- annotations
+                    )
+                ],
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("minimal.xml", 10),
+                "rad/s",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("minimal.xml", 11),
+                    nil,  -- kg
+                    nil,  -- m
+                    -1,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    1,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("minimal.xml", 13),
+                "kg.m2",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("minimal.xml", 14),
+                    1,  -- kg
+                    2,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("minimal.xml", 16),
+                "N.m",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("minimal.xml", 17),
+                    1,  -- kg
+                    2,  -- m
+                    -2,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            )
+        ],
+        [
+            mk_Float64Type
+            (
+                mk_Location("minimal.xml", 21),
+                "Modelica.Units.SI.Inertia",  -- name
+                nil,  -- description
+                "MomentOfInertia",  -- quantity
+                "kg.m2",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                0.0,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            ),
+            mk_Float64Type
+            (
+                mk_Location("minimal.xml", 22),
+                "Modelica.Units.SI.Torque",  -- name
+                nil,  -- description
+                "Torque",  -- quantity
+                "N.m",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            ),
+            mk_Float64Type
+            (
+                mk_Location("minimal.xml", 23),
+                "Modelica.Units.SI.AngularVelocity",  -- name
+                nil,  -- description
+                "AngularVelocity",  -- quantity
+                "rad/s",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            ),
+            mk_Float64Type
+            (
+                mk_Location("minimal.xml", 24),
+                "Modelica.Units.SI.Angle",  -- name
+                nil,  -- description
+                "Angle",  -- quantity
+                "rad",  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil   -- annotations
+            )
+        ],
+        nil,  -- logCategories
+        nil,  -- defaultExperiment
+        [
+            mk_Float64
+            (
+                mk_Location("minimal.xml", 27),
+                "varname",  -- name
+                0,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                "Modelica.Units.SI.Inertia",  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil,  -- start
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            ),
+            mk_Int16
+            (
+                mk_Location("minimal.xml", 28),
+                "short",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- min
+                nil,  -- max
+                nil,  -- start
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("minimal.xml", 30),
+            nil,  -- output
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            nil,  -- initialUnknown
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+

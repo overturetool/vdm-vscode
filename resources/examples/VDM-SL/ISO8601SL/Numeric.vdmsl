@@ -38,7 +38,7 @@ functions
   formatNat(n) == if n < 10
                   then [toChar(n)]
                   else formatNat(n div 10) ^ formatNat(n mod 10)
-  measure size1;
+  measure n;
 
   -- Create a natural number from a sequence of digit characters.
   decodeNat: seq1 of char +> nat
@@ -46,23 +46,24 @@ functions
                     [c] -> fromChar(c),
                     u^[c] -> 10*decodeNat(u)+fromChar(c)
                   end
-  measure size2;
+  pre forall c in set elems s & c in set elems DIGITS
+  measure len s;
 
   -- Convert a character digit to the corresponding natural number.
   fromChar: char +> nat
   fromChar(c) == Seq`indexOf[char](c,DIGITS)-1
-  pre c in set elems DIGITS
-  post toChar(RESULT) = c;
+  pre c in set elems DIGITS;
 
   -- Convert a numeric digit to the corresponding character.
   toChar: nat +> char
   toChar(n) == DIGITS(n+1)
-  pre n <= 9;
-  --post fromChar(RESULT) = n
+  pre n <= 9
+  post fromChar(RESULT) = n;
 
   -- Format a natural number as a string with leading zeros up to a specified length.
   zeroPad: nat * nat1 +> seq1 of char
-  zeroPad(n,w) == Seq`padLeft[char](formatNat(n),'0',w);
+  zeroPad(n,w) == 
+    Seq`padLeft[char](formatNat(n),'0',w);
 
   /*
     The following are simple functions that are of limited value in their own right.
@@ -109,10 +110,10 @@ functions
 
   -- Measure functions.
 
-  size1: nat +> nat
-  size1(n) == n;
+--   size1: nat +> nat
+--   size1(n) == n;
 
-  size2: seq1 of char +> nat
-  size2(s) == len s;
+--   size2: seq1 of char +> nat
+--   size2(s) == len s;
 
 end Numeric

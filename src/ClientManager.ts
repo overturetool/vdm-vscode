@@ -1,8 +1,20 @@
 /* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, Disposable, RelativePattern, TextDocument, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
+import {
+    commands,
+    Diagnostic,
+    Disposable,
+    languages,
+    Range,
+    RelativePattern,
+    TextDocument,
+    Uri,
+    window,
+    workspace,
+    WorkspaceFolder,
+} from "vscode";
+import { DiagnosticSeverity, LanguageClientOptions, State, StateChangeEvent } from "vscode-languageclient";
 import VdmMiddleware from "./lsp/VdmMiddleware";
 import { ServerFactory } from "./server/ServerFactory";
 import { SpecificationLanguageClient } from "./slsp/SpecificationLanguageClient";
@@ -11,20 +23,29 @@ import AutoDisposable from "./helper/AutoDisposable";
 import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
 import { getDialectFromAlias, VdmDialect } from "./util/DialectUtil";
+import { ErrorAction, CloseAction } from "vscode-languageclient";
+import * as crypto from "crypto";
+import * as AdmZip from "adm-zip";
+import * as fs from "fs";
+import * as path from "path";
 
 export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
     private _wsDisposables: Map<string, Disposable[]> = new Map();
     private _restartOnCrash: boolean = true;
     private _highPrecisionClients: Set<SpecificationLanguageClient> = new Set();
+    private _stdlibHashes: Map<string, string> = new Map();
+    private _stdlibDiagnostics = languages.createDiagnosticCollection("vdm-stdlib");
 
     constructor(
         private _serverFactory: ServerFactory,
         private _acceptedLanguageIds: Set<string>,
-        private _languageIdFilePatternFunc: (fsPath: string) => RelativePattern
+        private _languageIdFilePatternFunc: (fsPath: string) => RelativePattern,
     ) {
         super();
         this._disposables.push(commands.registerCommand("vdm-vscode.restartActiveClient", () => this.restartActiveClient()));
+        this._disposables.push(this._stdlibDiagnostics);
+        this._disposables.push(...this.registerLibConsistencyCheck());
     }
 
     get name(): string {
@@ -56,11 +77,12 @@ export class ClientManager extends AutoDisposable {
         return true;
     }
 
-    restart(wsFolder: WorkspaceFolder): void {
+    async restart(wsFolder: WorkspaceFolder): Promise<void> {
         let client = this.get(wsFolder);
         if (client) {
             this.delete(wsFolder);
-            client.stop().then(() => this.startClient(wsFolder, getDialectFromAlias(client.languageId)));
+            await client.stop();
+            await this.startClient(wsFolder, getDialectFromAlias(client.languageId));
         }
     }
 
@@ -83,7 +105,7 @@ export class ClientManager extends AutoDisposable {
         }
     }
 
-    dispose() {
+    async dispose() {
         super.dispose();
 
         // Dispose of server factory
@@ -91,15 +113,15 @@ export class ClientManager extends AutoDisposable {
 
         // Dispose of clients
         console.info(`[${this.name}] Stopping all clients`);
-        this._clients.forEach((client, wsFolderKey) => {
+        for (const [wsFolderKey, client] of this._clients.entries()) {
             // Dispose of client specific subscriptions
             this._clients.delete(wsFolderKey);
 
             // Stop client
             if (client.needsStop()) {
-                client.stop();
+                await client.stop();
             }
-        });
+        }
     }
 
     async launchClientForWorkspace(wsFolder: WorkspaceFolder): Promise<SpecificationLanguageClient> {
@@ -111,8 +133,10 @@ export class ClientManager extends AutoDisposable {
             await workspace.openTextDocument(files[0]);
 
             const client: SpecificationLanguageClient = this.get(wsFolder);
-            // Wait for the client to be ready - i.e. completed initialization phase.
-            await client.onReady();
+            // Start client if not already started.
+            if (client.needsStart()) {
+                await client.start();
+            }
 
             return client;
         }
@@ -136,7 +160,7 @@ export class ClientManager extends AutoDisposable {
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
         const wsFolder = getOuterMostWorkspaceFolder(folder);
         console.log("Launching client", document.languageId);
-        this.startClient(wsFolder, getDialectFromAlias(document.languageId));
+        void this.startClient(wsFolder, getDialectFromAlias(document.languageId));
     }
 
     private addClient(wsFolder: WorkspaceFolder, client: SpecificationLanguageClient): void {
@@ -147,7 +171,7 @@ export class ClientManager extends AutoDisposable {
         this._clients.set(ClientManager.getKey(wsFolder), client);
     }
 
-    private startClient(wsFolder: WorkspaceFolder, dialect: VdmDialect) {
+    private async startClient(wsFolder: WorkspaceFolder, dialect: VdmDialect) {
         // Abort if client already exists
         if (this.has(wsFolder)) {
             return;
@@ -161,6 +185,29 @@ export class ClientManager extends AutoDisposable {
             workspaceFolder: wsFolder,
             traceOutputChannel: window.createOutputChannel(`vdm-vscode LSP: ${wsFolder.name}`),
             middleware: new VdmMiddleware(),
+            errorHandler: {
+                error: () => {
+                    const isExperimental = workspace.getConfiguration("vdm-vscode.server.development")?.experimentalServer;
+                    if (isExperimental) {
+                        window
+                            .showErrorMessage("Cannot connect to experimental server. Is the debugger running?", "Open Output")
+                            .then((choice) => {
+                                if (choice == "Open Output") {
+                                    client.outputChannel.show(true);
+                                }
+                            });
+                        return { action: ErrorAction.Shutdown };
+                    }
+                    return { action: ErrorAction.Continue };
+                },
+                closed: () => {
+                    const isExperimental = workspace.getConfiguration("vdm-vscode.server.development")?.experimentalServer;
+                    if (isExperimental) {
+                        return { action: CloseAction.DoNotRestart };
+                    }
+                    return { action: CloseAction.Restart };
+                },
+            },
         };
 
         // Create the language client with the defined client options and the function to create and setup the server.
@@ -168,12 +215,12 @@ export class ClientManager extends AutoDisposable {
             `vdm-vscode`,
             dialect,
             this._serverFactory.createServerOptions(wsFolder, dialect),
-            clientOptions
+            clientOptions,
         );
 
         // Save client
         this.addClient(wsFolder, client);
-        if (workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision == true ?? false) {
+        if (workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ?? false) {
             this._highPrecisionClients.add(client);
         }
 
@@ -181,25 +228,32 @@ export class ClientManager extends AutoDisposable {
         // XXX Look here if unexpected client restart behaviour starts to happen
         this.addDisposable(
             wsFolder,
-            client.onDidChangeState((e) => this.checkForClientCrash(e, wsFolder), this)
+            client.onDidChangeState(async (e) => await this.checkForClientCrash(e, wsFolder), this),
         );
 
         // Setup DAP
-        client.onReady().then(() => {
-            const port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
-            if (port) {
-                dapSupport.addPort(wsFolder, port);
-            } else {
-                console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
-            }
-        });
-
         // Start the client
         console.info(`[${this.name}] Launching client for the folder ${wsFolder.name} with language ID ${dialect}`);
-        client.start();
+        await client.start();
+        const port = client?.initializeResult?.capabilities?.experimental?.dapServer?.port;
+        if (port) {
+            dapSupport.addPort(wsFolder, port);
+        } else {
+            console.warn(`[${this.name}] Did not receive a DAP port on start up, debugging is not activated`);
+        }
+
+        // Load stdlib hashes only once
+        if (this._stdlibHashes.size === 0) {
+            const jarPath = this.findStdLibJar();
+            if (jarPath) {
+                this.loadStdLibFromJar(jarPath);
+            }
+        }
+        // Check project lib consistency
+        this.checkLibConsistency(wsFolder, dialect);
     }
 
-    private checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
+    private async checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
         if (e.newState == State.Stopped && e.oldState == State.Running) {
             // Check for un-intentional stop
             if (this._restartOnCrash && this.has(wsFolder)) {
@@ -214,7 +268,7 @@ export class ClientManager extends AutoDisposable {
                 });
 
                 this.delete(wsFolder);
-                this.startClient(wsFolder, getDialectFromAlias(client.languageId));
+                await this.startClient(wsFolder, getDialectFromAlias(client.languageId));
             }
         }
     }
@@ -236,5 +290,112 @@ export class ClientManager extends AutoDisposable {
 
     private static getKey(wsFolder: WorkspaceFolder): string {
         return wsFolder.uri.toString();
+    }
+
+    private hash(content: string): string {
+        const normalized = content.replace(/\r\n/g, "\n").trim();
+        return crypto.createHash("sha256").update(normalized).digest("hex");
+    }
+
+    private loadStdLibFromJar(jarPath: string) {
+        const zip = new AdmZip(jarPath);
+        const validExtensions = [".vdmsl", ".vdmpp", ".vdmrt"];
+
+        zip.getEntries().forEach((entry) => {
+            if (entry.isDirectory) {
+                return;
+            }
+            if (!validExtensions.some((ext) => entry.entryName.endsWith(ext))) {
+                return;
+            }
+
+            const content = entry.getData().toString("utf8");
+            this._stdlibHashes.set(entry.entryName, this.hash(content));
+        });
+    }
+
+    private async checkLibConsistency(wsFolder: WorkspaceFolder, dialect: string) {
+        const libPath = path.join(wsFolder.uri.fsPath, "lib");
+        if (!fs.existsSync(libPath)) {
+            return;
+        }
+
+        const files = fs.readdirSync(libPath);
+
+        for (const file of files) {
+            if (!file.endsWith(`.${dialect}`)) {
+                continue;
+            }
+
+            const fullPath = path.join(libPath, file);
+            const uri = Uri.file(fullPath);
+
+            if (!this._stdlibHashes.has(file)) {
+                this._stdlibDiagnostics.delete(uri);
+                continue;
+            }
+
+            const doc = await workspace.openTextDocument(uri);
+            const projectContent = doc.getText();
+            const projectHash = this.hash(projectContent);
+            const stdHash = this._stdlibHashes.get(file);
+
+            if (projectHash !== stdHash) {
+                const diagnostics = new Diagnostic(
+                    new Range(0, 0, 0, 1),
+                    `Library file '${file}' differs from stdlib.jar. It may be outdated.`,
+                    DiagnosticSeverity.Error,
+                );
+                this._stdlibDiagnostics.set(uri, [diagnostics]);
+                window
+                    .showWarningMessage(`Library file '${file}' differs from the current stdlib. It may be outdated.`, "Open File")
+                    .then((choice) => {
+                        if (choice === "Open File") {
+                            workspace.openTextDocument(uri).then((doc) => window.showTextDocument(doc));
+                        }
+                    });
+            } else {
+                this._stdlibDiagnostics.delete(uri);
+            }
+        }
+    }
+
+    private findStdLibJar(): string | undefined {
+        const extensionRoot = path.resolve(__dirname, "..");
+        const libsPath = path.join(extensionRoot, "resources", "jars", "vdmj", "libs");
+        if (!fs.existsSync(libsPath)) {
+            return undefined;
+        }
+        const files = fs.readdirSync(libsPath);
+        const jarFile = files.find((f) => f.startsWith("stdlib") && f.endsWith(".jar"));
+        if (!jarFile) {
+            return undefined;
+        }
+        return path.join(libsPath, jarFile);
+    }
+
+    private registerLibConsistencyCheck(): Disposable[] {
+        const watcher = workspace.createFileSystemWatcher("**/lib/*.{vdmsl,vdmpp,vdmrt}");
+
+        const check = (uri: Uri) => {
+            const wsFolder = workspace.getWorkspaceFolder(uri);
+            if (!wsFolder) {
+                return;
+            }
+            const client = this.get(wsFolder);
+            if (!client) {
+                return;
+            }
+            this.checkLibConsistency(wsFolder, client.languageId);
+        };
+
+        return [
+            watcher,
+            watcher.onDidChange(check),
+            watcher.onDidCreate(check),
+            watcher.onDidDelete((uri) => {
+                this._stdlibDiagnostics.delete(uri);
+            }),
+        ];
     }
 }

@@ -53,6 +53,8 @@ interface ProofObligationsHeaderMenuProps {
     filterState: FilterState;
     onClickQuickCheck?: () => void;
     disableQuickCheck: boolean;
+    lensFilterMessage?: string | null;
+    onClearLensFilter?: () => void;
 }
 
 const ProofObligationsHeaderMenu = ({
@@ -63,6 +65,8 @@ const ProofObligationsHeaderMenu = ({
     filterState,
     onClickQuickCheck,
     disableQuickCheck,
+    onClearLensFilter,
+    lensFilterMessage,
 }: ProofObligationsHeaderMenuProps) => {
     return (
         <div
@@ -71,24 +75,89 @@ const ProofObligationsHeaderMenu = ({
                 flexDirection: "row",
                 justifyContent: "space-between",
                 margin: "0.5em 1em 1em 0.5em",
-                alignItems: "end",
+                alignItems: "center",
             }}
         >
-            <VSCodeTextField
-                css={{ flexShrink: 1 }}
-                onInput={(e) => {
-                    onFilterChanged((e.target as HTMLInputElement).value);
+            <div
+                css={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75em",
                 }}
-                type="text"
             >
-                Filter {filterState.isFiltering ? `(Showing ${filterState.matchingRows} of ${filterState.totalRows} rows.)` : null}
-            </VSCodeTextField>
+                <div
+                    css={{
+                        flex: "0 0 250px",
+                        marginTop: "3px",
+                    }}
+                >
+                    {lensFilterMessage ? (
+                        <div
+                            css={{
+                                height: "28px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "0 8px",
+                                borderRadius: "4px",
+                                background: "var(--vscode-input-background)",
+                                border: "1px solid var(--vscode-input-border)",
+                                color: "var(--vscode-input-foreground)",
+                                boxSizing: "border-box",
+                            }}
+                        >
+                            <span
+                                css={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                Dependent POs: {lensFilterMessage}
+                            </span>
+
+                            <VSCodeButton
+                                appearance="icon"
+                                onClick={onClearLensFilter}
+                            >
+                                <span className="codicon codicon-close" />
+                            </VSCodeButton>
+                        </div>
+                    ) : (
+                        <VSCodeTextField
+                            css={{
+                                height: "32px",
+                                width: "100%",
+                            }}
+                            placeholder="Filter POs"
+                            onInput={(e) =>
+                                onFilterChanged((e.target as HTMLInputElement).value)
+                            }
+                            type="text"
+                        />
+                    )}
+                </div>
+
+                {(filterState.isFiltering || lensFilterMessage) && (
+                    <span
+                        css={{
+                            fontSize: "0.8em",
+                            opacity: 0.7,
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        (Showing {filterState.matchingRows} of {filterState.totalRows} rows)
+                    </span>
+                )}
+            </div>
+
             <div css={{ flexShrink: 0 }}>
                 <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
                     {openPos.size === filterState.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
                 </VSCodeButton>
                 {enableQuickCheck ? (
-                    <VSCodeButton disabled={disableQuickCheck} onClick={onClickQuickCheck}>
+                    <VSCodeButton css={{ minWidth: "9.5rem" }} disabled={disableQuickCheck} onClick={onClickQuickCheck}>
                         Run QuickCheck
                     </VSCodeButton>
                 ) : null}
@@ -125,6 +194,8 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     const [openPos, setOpenPos] = useState<Set<number>>(new Set<number>());
     const [filterText, setFilterText] = useState<string>("");
     const [runningQuickCheck, setRunningQuickCheck] = useState<boolean>(false);
+    const [lensFilterMessage, setLensFilterMessage] = useState<string | null>(null);
+    const [missingPOsWarning, setMissingPOsWarning] = useState<{message: string; location: any}[]>([]);
 
     const filteredPos = useMemo(() => filterPOs(pos, filterText), [filterText, pos]);
     const currentFilterState: FilterState =
@@ -157,8 +228,13 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         });
     };
 
-    const handleOpenQuickCheck = (po: FormattedProofObligation) => {
-        setProofObligation(po);
+    const handleNavigateToLocation = (po: FormattedProofObligation) => {
+        if (!po.location) return;
+
+        vscodeApi.postMessage({
+            command: "goToLocation",
+            data: po.location,
+        });
     };
 
     const handleRowClick = (row: FormattedProofObligation) => {
@@ -189,13 +265,37 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
         setOpenPos(new Set(pos.map((po) => po.id)));
     };
 
+    const handleClearLensFilter = () => {
+        vscodeApi.postMessage({
+            command: "clearFilter",
+        });
+    }
+
     const onMessage = (e: MessageEvent) => {
         console.log("new message", e.data.command);
         switch (e.data.command) {
             case "newPOs":
-                setPos(formatProofObligations(e.data.pos));
+                const entries = e.data.pos;
+
+                const missingPOs = entries.filter((e: any) => e.type == "missing");
+                const realPOs = entries.filter((e: any) => e.type == "PO");
+
+                const formattedPOs = formatProofObligations(realPOs);
+
+                if (missingPOs.length) {
+                    const warnings = missingPOs.map((m: any) => ({
+                        message: m.message,
+                        location: m.location,
+                    }));
+                    setMissingPOsWarning(warnings);
+                } else {
+                    setMissingPOsWarning([]);
+                }
+
+                setPos(formattedPOs);
                 setProofObligation(null);
                 setRunningQuickCheck(false);
+                setLensFilterMessage(e.data.filterMessage ?? null);
                 break;
             case "rebuildPOview":
                 setPos(formatProofObligations(e.data.pos));
@@ -240,7 +340,43 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 filterState={currentFilterState}
                 onClickQuickCheck={handleQuickCheck}
                 disableQuickCheck={runningQuickCheck}
+                lensFilterMessage={lensFilterMessage}
+                onClearLensFilter={handleClearLensFilter}
             />
+
+            {missingPOsWarning.map((warning, index) => (
+                <div
+                    key={`missing-po-${index}`}
+                    css={{
+                        margin: "0 0 0.5em 0.5em",
+                        padding: "0.75em 1em",
+                        borderRadius: "6px",
+                        backgroundColor: "var(--vscode-editorWarning-background)",
+                        color: "var(--vscode-editorWarning-foreground)",
+                        border: "1px solid var(--vscode-editorWarning-border)",
+                        fontSize: "1em",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        minWidth: "606px",
+                    }}
+                >
+                    <span>{warning.message}</span>
+                    
+                    <VSCodeButton
+                        appearance="secondary"
+                        css={{ flexShrink: 0, marginLeft: "1em", minWidth: "9.5rem" }}
+                        onClick={() => {
+                            vscodeApi.postMessage({
+                                command: "goToLocation",
+                                data: warning.location,
+                            });
+                        }}
+                    >
+                        Go to definition
+                    </VSCodeButton>
+                </div>
+            ))}
 
             <div
                 css={{
@@ -254,9 +390,9 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     headers={["id", "kind", "name", "status"]}
                     pos={filteredPos}
                     onJumpToSource={handleJumpToSource}
+                    onNavigateToLocation={handleNavigateToLocation}
                     onClickRow={handleRowClick}
                     openPos={openPos}
-                    onOpenQuickCheck={handleOpenQuickCheck}
                     selectionState={proofObligation}
                     posInvalid={posAreInvalid}
                 />

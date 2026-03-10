@@ -361,7 +361,7 @@ int2string(i) ==
   if i = 0
   then "0"
   elseif i < 0
-  then "-"^int2string(-i)
+  then "-"^int2stringR(-i)
   else  int2stringR(i)
 measure Abs;
 

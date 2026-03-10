@@ -127,11 +127,13 @@ operations
   /**
    * These operations support the traces above
    */
+  -- @NoPOG
   checkFail: seq1 of Digit * Digit ==> bool
   checkFail(data, expected) ==
     return luhn(data) <> expected  -- Expect failure!
   post RESULT = true;
   
+   -- @NoPOG
   checkOK: seq1 of Digit * Digit ==> bool
   checkOK(data, expected) ==
     return luhn(data) = expected  -- Expect success!

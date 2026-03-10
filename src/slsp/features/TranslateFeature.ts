@@ -2,7 +2,7 @@
 
 import * as util from "../../util/Util";
 import { Uri } from "vscode";
-import { ClientCapabilities, Disposable, DocumentSelector, ServerCapabilities, StaticFeature } from "vscode-languageclient";
+import { ClientCapabilities, Disposable, DocumentSelector, FeatureState, ServerCapabilities, StaticFeature } from "vscode-languageclient";
 import { TranslateClientCapabilities, TranslateParams, TranslateRequest, TranslateServerCapabilities } from "../protocol/Translate";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { TranslateProvider, TranslateProviderManager } from "../views/translate/TranslateProviderManager";
@@ -12,7 +12,10 @@ export default class TranslateFeature implements StaticFeature {
     private _selector: DocumentSelector;
     // private _supportWorkDone: boolean = false;
 
-    constructor(private _client: SpecificationLanguageClient, private _language: string) {}
+    constructor(
+        private _client: SpecificationLanguageClient,
+        private _language: string,
+    ) {}
 
     fillClientCapabilities(capabilities: ClientCapabilities): void {
         capabilities.experimental = capabilities.experimental || {};
@@ -42,6 +45,9 @@ export default class TranslateFeature implements StaticFeature {
         // if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
         // this._supportWorkDone = translateCapabilities.workDoneProgress;
     }
+    getState(): FeatureState {
+        return { kind: "static" };
+    }
     dispose(): void {
         while (this._disposables.length) this._disposables.pop().dispose();
     }
@@ -65,7 +71,7 @@ export default class TranslateFeature implements StaticFeature {
                 },
                 (e) => {
                     return reject(`Translation failed with error: ${e}`);
-                }
+                },
             );
         });
     }

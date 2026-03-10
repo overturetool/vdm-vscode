@@ -1,0 +1,92 @@
+/*********************************************************************************
+ *
+ *	Copyright (c) 2017-2022, INTO-CPS Association,
+ *	c/o Professor Peter Gorm Larsen, Department of Engineering
+ *	Finlandsgade 22, 8200 Aarhus N.
+ *
+ *	MIT Licence:
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to use,
+ *	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+ *	Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ *	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ *	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *	SPDX-License-Identifier: MIT
+ *
+ *********************************************************************************/
+functions
+
+-- @DocLink("<FMI3_STANDARD>#definition-of-types", "<FMI3_STANDARD>#table-type-details")
+validTypeDefinitionNames: [TypeDefinitions] +> bool
+validTypeDefinitionNames(tdefs) ==
+	tdefs <> nil =>
+		-- @OnFail("%NAME: TypeDefinition names must be unique")
+		( let names = [ td.name | td in seq tdefs ] in
+			len names = card elems names );
+
+-- @DocLink("<FMI3_STANDARD>#table-type-details")
+validTypeMinMax: fmi3TypeDefinition +> bool
+validTypeMinMax(tdef) ==
+	let mk_(kmin, kmax) = minMaxOfKind(kindOf(tdef)) in allOf
+	([
+		-- @OnFail("%NAME: max %s is not a valid value of this type", tdef.max)
+		( tdef.max <> nil => tdef.max <= kmax and tdef.max >= kmin ),
+
+		-- @OnFail("%NAME: min %s is not a valid value of this type", tdef.min)
+		( tdef.min <> nil => tdef.min <= kmax and tdef.min >= kmin ),
+
+		-- @OnFail("%NAME: max %s not >= min %s", tdef.max, tdef.min)
+		( tdef.min <> nil and tdef.max <> nil => tdef.max >= tdef.min )
+	])
+	pre is_(kindOf(tdef), NumericKind);
+
+-- @DocLink("<FMI3_STANDARD>#table-type-details")
+validTypeDisplayUnit: fmi3TypeDefinition +> bool
+validTypeDisplayUnit(tdef) ==
+	-- @OnFail("%NAME: Type %s, unit must be defined for displayUnit %s",
+	-- tdef.name, tdef.displayUnit)
+	( tdef.displayUnit <> nil => tdef.unit <> nil )
+pre is_(kindOf(tdef), FloatKind);
+
+-- @DocLink("<FMI3_STANDARD>#figure-schema-EnumerationType")
+validEnumerationTypeBijection: EnumerationType +> bool
+validEnumerationTypeBijection(tdef) ==
+	-- @OnFail("%NAME: Type %s, Enumeration item name/values do not form a bijection", tdef.name)
+	(
+		card { i.name | i in seq tdef.item } = len tdef.item
+		and	card { i.value | i in seq tdef.item } = len tdef.item
+	);
+
+-- @DocLink("<FMI3_STANDARD>#figure-schema-ClockType")
+validClockType: ClockType +> bool
+validClockType(tdef) ==
+	let periodic = clockIsPeriodic(tdef) in allOf
+	([
+		--@OnFail("%NAME: resolution can only be used with periodic clocks")
+		( tdef.resolution <> nil => periodic ),
+
+		--@OnFail("%NAME: Periodic supportsFraction and intervalCounter must define resolution")
+		( periodic and tdef.supportsFraction = true and tdef.intervalCounter <> nil =>
+			tdef.resolution <> nil  ),
+
+		--@OnFail("%NAME: intervalCounter must be >0")
+		( tdef.intervalCounter <> nil => tdef.intervalCounter > 0 ),
+
+		--@OnFail("%NAME: Cannot use intervalCounter unless periodic and supportsFraction")
+		( tdef.intervalCounter <> nil => tdef.supportsFraction = true and periodic ),
+
+		--@OnFail("%NAME: shiftCounter requires an intervalCounter")
+		( tdef.shiftCounter <> nil => tdef.intervalCounter <> nil )
+	]);

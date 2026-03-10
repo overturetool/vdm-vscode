@@ -35,8 +35,8 @@ UpdateValues() ==
  (for all r in set rng NodeList 
   do
    (if (r = <HUMIDSENSOR>)
-    then Humid := HA`HumidNode.ReadValue();
-    if (r = <TEMPSENSOR>)
+    then Humid := HA`HumidNode.ReadValue()
+    else if (r = <TEMPSENSOR>)
     then Temp := HA`TempNode.ReadValue();
    );
  );

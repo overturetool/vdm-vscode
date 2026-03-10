@@ -199,8 +199,9 @@ Warshall(Q) ==
        if mk_(i,j) not in set R 
        then if mk_(i,k) in set R and mk_(k,j) in set R
              then R := R union {mk_(i,j)};
- return R;
-);
+ return R
+ )
+ pre Q <> {};
 
 
 -- Testing functions&operations
@@ -215,7 +216,9 @@ test_PowerList(R)==
       n = card field(R)
   in 
   (forall i in set inds L & L(i)=Power_rel(R,i))
-     and len L<n => Power_rel(R, len L +1) ={};
+     and len L<n => Power_rel(R, len L +1) ={}
+pre R<>{};
+
 -- For "normal" applications pre_PowerList(R) <=> R<>{} should be observed.
 -- However, PowerList should also be tested for R={}.
 -- Such a STRESS TEST shows the function's behaviour for invalid data.

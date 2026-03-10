@@ -9,9 +9,9 @@ functions
     private static Track: nat * nat * InterlockingSystem`TrackKind * nat1 -> InterlockingSystem`Track
                    Track(x, y, kind, capacity) == mk_InterlockingSystem`Track(mk_(x, y), kind, capacity);
     
-    private static Line: InterlockingSystem`MetroLineName * seq of InterlockingSystem`Track -> InterlockingSystem`MetroLine
+    private static Line: InterlockingSystem`MetroLineName * seq1 of InterlockingSystem`Track -> InterlockingSystem`MetroLine
                    Line(name, tracks) == InterlockingSystem`CreateLinearLine(name, tracks);
-    
+ 
 operations
     public setUp: () ==> ()
            setUp() ==
@@ -43,7 +43,8 @@ operations
                 system.AddLine(lines(6));
                 system.AddLine(lines(7));
                 system.AddLine(lines(8));
-            );
+            )
+            pre len lines >= 8;
     
     private AddUnits: () ==> ()
             AddUnits() ==
@@ -56,7 +57,8 @@ operations
                 system.AddUnit(units(6));
                 system.AddUnit(units(7));
                 system.AddUnit(units(8));
-            );
+            )
+            pre len units >= 8;
     
     private RelocateUnits: () ==> ()
             RelocateUnits() ==
@@ -69,7 +71,8 @@ operations
                 units(6).Relocate(lines(6), 1);
                 units(7).Relocate(lines(7), 1);
                 units(8).Relocate(lines(8), 1);
-            );
+            )
+            pre len units >= 8 and len lines >= 8;
     
     private TickAll: () ==> ()
             TickAll() ==
@@ -83,7 +86,8 @@ operations
                 units(6).Tick();
                 units(7).Tick();
                 units(8).Tick();
-            );
+            )
+            pre len units >= 8;
     
     private States: () ==> seq of MetroUnit`MetroUnitState
             States() == return [ u.GetState() | u in seq units ];
@@ -104,8 +108,9 @@ operations
                     assertTrue(prioritisedUnits(6) in set { units(3), units(7) } \ { prioritisedUnits(5) });
                     assertTrue(prioritisedUnits(7) in set { units(4), units(8) } \ { prioritisedUnits(8) });
                     assertTrue(prioritisedUnits(8) in set { units(4), units(8) } \ { prioritisedUnits(7) });
-                );
-    
+                )
+                pre len units >= 8;
+
     public testPrioritiseUnits2: () ==> ()
            testPrioritiseUnits2() ==
                 def priorities = [ <Overground>, <Underground>, <Underwater>, <Elevated> ];
@@ -120,8 +125,9 @@ operations
                     assertTrue(prioritisedUnits(6) in set { units(1), units(5) } \ { prioritisedUnits(5) });
                     assertTrue(prioritisedUnits(7) in set { units(4), units(8) } \ { prioritisedUnits(8) });
                     assertTrue(prioritisedUnits(8) in set { units(4), units(8) } \ { prioritisedUnits(7) });
-                );
-    
+                )
+                pre len units >= 8;
+
     public testPrioritiseUnits3: () ==> ()
            testPrioritiseUnits3() ==
                 def priorities = [ <Underground>, <Elevated>, <Overground>, <Underwater> ];
@@ -136,8 +142,9 @@ operations
                     assertTrue(prioritisedUnits(6) in set { units(3), units(7) } \ { prioritisedUnits(5) });
                     assertTrue(prioritisedUnits(7) in set { units(1), units(5) } \ { prioritisedUnits(8) });
                     assertTrue(prioritisedUnits(8) in set { units(1), units(5) } \ { prioritisedUnits(7) });
-                );
-        
+                )
+                pre len units >= 8;
+
     -- // Tick //
     public testTick1: () ==> ()
            testTick1() ==

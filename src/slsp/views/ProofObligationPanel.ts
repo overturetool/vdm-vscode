@@ -18,6 +18,8 @@ import {
     Progress,
     TabInputWebview,
     debug,
+    Position,
+    Range,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
@@ -41,7 +43,12 @@ export interface ProofObligation {
 
 export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
-    provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
+    provideProofObligations(
+        uri: Uri,
+        poIds?: number[],
+        progress?: Progress<{ message?: string; increment?: number }>,
+        cancellationToken?: CancellationToken,
+    ): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
     runQuickCheck(
         wsFolder: Uri,
@@ -50,7 +57,7 @@ export interface ProofObligationProvider {
         progress?: Progress<{
             message?: string;
             increment?: number;
-        }>
+        }>,
     ): Thenable<QuickCheckInfo[]>;
 }
 
@@ -62,7 +69,10 @@ interface Message {
 class OnReady {
     private _used: boolean;
 
-    constructor(private _resolve: () => void, private _reject: (error: any) => void) {
+    constructor(
+        private _resolve: () => void,
+        private _reject: (error: any) => void,
+    ) {
         this._used = false;
     }
 
@@ -88,12 +98,17 @@ export class ProofObligationPanel implements Disposable {
     private _lastWsFolder: WorkspaceFolder;
     private _lastUri: Uri;
     private _disposables: Disposable[] = [];
+    private _allPos: ProofObligation[] = [];
     private _pos: ProofObligation[];
+    private _filterMessage?: string;
 
     private onReady: Promise<void>;
     private _onReadyCallbacks: OnReady;
 
-    constructor(private readonly _context: ExtensionContext, clientManager: ClientManager) {
+    constructor(
+        private readonly _context: ExtensionContext,
+        clientManager: ClientManager,
+    ) {
         this.onReady = new Promise<void>((resolve, reject) => {
             this._onReadyCallbacks = new OnReady(resolve, reject);
         });
@@ -119,7 +134,7 @@ export class ProofObligationPanel implements Disposable {
                 async (uri: Uri) => {
                     if (Object.values(uri).length === 0) {
                         window.showWarningMessage(
-                            "Proof Obligation Generation failed. POG cannot be run on multiple folders in a multi-root workspace, choose a more specific target."
+                            "Proof Obligation Generation failed. POG cannot be run on multiple folders in a multi-root workspace, choose a more specific target.",
                         );
                         return;
                     }
@@ -135,10 +150,43 @@ export class ProofObligationPanel implements Disposable {
                     }
                     this.onRunPog(uri);
                 },
-                this
-            )
+                this,
+            ),
         );
         this._disposables.push(commands.registerCommand(`vdm-vscode.pog.update`, this.onUpdate, this));
+        this._disposables.push(
+            commands.registerCommand(
+                `vdm-vscode.showPODependencies`,
+                async (message: string, ...poIds: number[]) => {
+                    if (!poIds.length) {
+                        window.showWarningMessage("Cannot show filtered Proof Obligations, missing PO IDs.");
+                        return;
+                    }
+
+                    this._filterMessage = message;
+                    const uri = this._lastUri;
+                    this.onShowFilteredPog(uri, poIds);
+                },
+                this,
+            ),
+        );
+        this._disposables.push(
+            commands.registerCommand(`vdm-vscode.pog.runWorkspace`, async () => {
+                const activeEditor = window.activeTextEditor;
+                if (!activeEditor) {
+                    window.showWarningMessage("No active file to determine workspace.");
+                    return;
+                }
+
+                const wsFolder = workspace.getWorkspaceFolder(activeEditor.document.uri);
+                if (!wsFolder) {
+                    window.showWarningMessage("Cannot determine workspace folder.");
+                    return;
+                }
+
+                await this.onRunPog(wsFolder.uri);
+            }),
+        );
     }
 
     public get viewType(): string {
@@ -178,10 +226,21 @@ export class ProofObligationPanel implements Disposable {
 
     protected async onRunPog(uri: Uri) {
         this._pos = [];
-
+        this._filterMessage = null;
         const poProvider = this.getPOProvider(uri);
+        this.createWebView(poProvider.provider.quickCheckProvider, uri);
         try {
-            let res = await poProvider.provider.provideProofObligations(uri);
+            let res = await window.withProgress(
+                {
+                    location: ProgressLocation.Notification,
+                    title: "Generating Proof Obligations",
+                    cancellable: true,
+                },
+                async (progress, cancellationToken) => {
+                    return await poProvider.provider.provideProofObligations(uri, undefined, progress, cancellationToken);
+                },
+            );
+            this._allPos = [...res];
             this._pos = [...res];
             this.clearWarning();
         } catch (e) {
@@ -190,7 +249,6 @@ export class ProofObligationPanel implements Disposable {
         }
 
         let wsFolder = workspace.getWorkspaceFolder(uri);
-        this.createWebView(poProvider.provider.quickCheckProvider, uri);
         this.updateContent();
 
         this._lastUri = uri;
@@ -204,7 +262,7 @@ export class ProofObligationPanel implements Disposable {
         progress?: Progress<{
             message?: string;
             increment?: number;
-        }>
+        }>,
     ) {
         const poProvider = this.getPOProvider(uri);
 
@@ -239,6 +297,24 @@ export class ProofObligationPanel implements Disposable {
                 this.displayWarning();
             }
         }
+    }
+
+    protected async onShowFilteredPog(uri: Uri, poIds: number[]) {
+        const poProvider = this.getPOProvider(uri);
+
+        try {
+            // Request only the filtered POs
+            let res = await poProvider.provider.provideProofObligations(uri, poIds);
+            this._pos = [...res];
+        } catch (e) {
+            this.displayWarning();
+            console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
+        }
+
+        if (!this._panel) {
+            this.createWebView(poProvider.provider.quickCheckProvider, uri);
+        }
+        this.updateContent();
     }
 
     private deleteQcInfo(po: ProofObligation): ProofObligation {
@@ -316,7 +392,7 @@ export class ProofObligationPanel implements Disposable {
                         enableScripts: true, // Enable javascript in the webview
                         localResourceRoots: [this._resourcesUri, this._webviewsUri], // Restrict the webview to only load content from the extension's `resources` directory.
                         retainContextWhenHidden: true, // Retain state when PO view goes into the background
-                    }
+                    },
                 );
 
             // Listen for when the panel is disposed
@@ -370,23 +446,58 @@ export class ProofObligationPanel implements Disposable {
                                             this._lastUri,
                                             message.data.poIds ?? [],
                                             _token,
-                                            _progress
+                                            _progress,
                                         );
-                                        const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
+                                        let posWithQc = this.addQuickCheckInfoToPos(this._allPos, qcInfos);
 
-                                        await this._panel.webview.postMessage({ command: "newPOs", pos: posWithQc });
+                                        if (this._filterMessage) {
+                                            const posIds = this._pos.map((po) => po.id);
+                                            posWithQc = posWithQc.filter((po) => posIds.includes(po.id));
+                                        }
+
+                                        await this._panel.webview.postMessage({
+                                            command: "newPOs",
+                                            pos: posWithQc,
+                                            filterMessage: this._filterMessage,
+                                        });
                                     } catch (err) {
-                                        await this._panel.webview.postMessage({ command: "newPOs", pos: this._pos });
+                                        await this._panel.webview.postMessage({
+                                            command: "newPOs",
+                                            pos: this._pos,
+                                            filterMessage: this._filterMessage,
+                                        });
                                         throw err;
                                     }
-                                }
+                                },
                             );
 
+                            break;
+                        case "clearFilter":
+                            this._pos = [...this._allPos];
+                            this._filterMessage = undefined;
+                            this.updateContent();
+
+                            break;
+                        case "goToLocation":
+                            const loc = message.data;
+                            console.log("goToLocation loc:", loc);
+                            const targetUri = Uri.from(loc.uri);
+                            const document = await workspace.openTextDocument(targetUri);
+
+                            const start = new Position(loc.range.at(0).line, loc.range.at(0).character);
+                            const end = new Position(loc.range.at(1).line, loc.range.at(1).character);
+
+                            const range = new Range(start, end);
+
+                            await window.showTextDocument(document, {
+                                selection: range,
+                                viewColumn: ViewColumn.One,
+                            });
                             break;
                     }
                 },
                 null,
-                this._disposables
+                this._disposables,
             );
 
             // Generate the html for the webview
@@ -398,6 +509,7 @@ export class ProofObligationPanel implements Disposable {
         this._panel = undefined;
         this._lastWsFolder = undefined;
         this._lastUri = undefined;
+        this._filterMessage = undefined;
     }
 
     private displayWarning() {
@@ -416,7 +528,7 @@ export class ProofObligationPanel implements Disposable {
 
     protected updateContent() {
         this.onReady.then(() => {
-            this._panel.webview.postMessage({ command: "newPOs", pos: this._pos });
+            this._panel.webview.postMessage({ command: "newPOs", pos: this._pos, filterMessage: this._filterMessage });
         });
     }
 

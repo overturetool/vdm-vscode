@@ -5,7 +5,7 @@ class Environment
 
 types 
 
-public outline = [TransportPlan] * [nat] * nat;
+public outline = [TransportPlan] * [TransportPlan`Route] * nat;
 public inline = [CyberRail`NavigationInput] * [nat] * [nat] * nat;
 
 instance variables
@@ -36,7 +36,7 @@ operations
   public Environment : seq of char ==> Environment
   Environment(fname) ==(
      def mk_ (-,input) = io.freadval[seq of inline](fname) in
-   inlines := input;
+   if input <> nil then inlines := input;
 	outfileName := "Results for " ^ fname;
 )
 

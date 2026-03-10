@@ -1,0 +1,137 @@
+/**
+ * VDM value created from TestXML/terminals_and_icons.xml
+ */
+values
+    terminals_and_icons =
+    mk_FmiTerminalsAndIcons
+    (
+        mk_Location("terminals_and_icons.xml", 2),
+        "3.0",  -- fmiVersion
+        mk_GraphicalRepresentation
+        (
+            mk_Location("terminals_and_icons.xml", 3),
+            mk_CoordinateSystem
+            (
+                mk_Location("terminals_and_icons.xml", 4),
+                1,  -- x1
+                11,  -- y1
+                2,  -- x2
+                22,  -- y2
+                123   -- suggestedScalingFactorTo_mm
+            ),
+            mk_Icon
+            (
+                mk_Location("terminals_and_icons.xml", 5),
+                1,  -- x1
+                11,  -- y1
+                2,  -- x2
+                22   -- y2
+            ),
+            [
+                mk_Annotation
+                (
+                    mk_Location("terminals_and_icons.xml", 7),
+                    "tool1",  -- type
+                    -- any
+                    [
+                        mk_token("stuff")
+                    ] 
+                )
+            ] 
+        ),
+        [
+            mk_Terminal
+            (
+                mk_Location("terminals_and_icons.xml", 13),
+                "nnn",  -- name
+                "rule",  -- matchingRule
+                "kind",  -- terminalKind
+                nil,  -- description
+                -- terminalMemberVariable
+                [
+                    mk_TerminalMemberVariable
+                    (
+                        mk_Location("terminals_and_icons.xml", 15),
+                        "vname",  -- variableName
+                        "mname",  -- memberName
+                        "k1",  -- variableKind
+                        nil   -- annotations
+                    ),
+                    mk_TerminalMemberVariable
+                    (
+                        mk_Location("terminals_and_icons.xml", 17),
+                        "vname",  -- variableName
+                        "mname",  -- memberName
+                        "k2",  -- variableKind
+                        nil   -- annotations
+                    )
+                ],
+                -- terminalStreamMemberVariable
+                [
+                    mk_TerminalStreamMemberVariable
+                    (
+                        mk_Location("terminals_and_icons.xml", 20),
+                        "inmname",  -- inStreamMemberName
+                        "omname",  -- outStreamMemberName
+                        "isvname",  -- inStreamVariableName
+                        "osvname",  -- outStreamVariableName
+                        nil   -- annotations
+                    )
+                ],
+                -- terminal
+                [
+                    mk_Terminal
+                    (
+                        mk_Location("terminals_and_icons.xml", 21),
+                        "subterm1",  -- name
+                        "rule2",  -- matchingRule
+                        "kind2",  -- terminalKind
+                        nil,  -- description
+                        nil,  -- terminalMemberVariable
+                        nil,  -- terminalStreamMemberVariable
+                        nil,  -- terminal
+                        nil,  -- terminalGraphicalRepresentation
+                        nil   -- annotations
+                    ),
+                    mk_Terminal
+                    (
+                        mk_Location("terminals_and_icons.xml", 22),
+                        "subterm2",  -- name
+                        "rule3",  -- matchingRule
+                        "kind3",  -- terminalKind
+                        nil,  -- description
+                        nil,  -- terminalMemberVariable
+                        nil,  -- terminalStreamMemberVariable
+                        nil,  -- terminal
+                        nil,  -- terminalGraphicalRepresentation
+                        nil   -- annotations
+                    )
+                ],
+                mk_TerminalGraphicalRepresentation
+                (
+                    mk_Location("terminals_and_icons.xml", 23),
+                    nil,  -- defaultConnectionColor
+                    nil,  -- defaultConnectionStrokeSize
+                    1,  -- x1
+                    11,  -- y1
+                    2,  -- x2
+                    22,  -- y2
+                    "icons",  -- iconBaseName
+                    [
+                        mk_Annotation
+                        (
+                            mk_Location("terminals_and_icons.xml", 25),
+                            "tool1",  -- type
+                            -- any
+                            [
+                                mk_token("stuff")
+                            ] 
+                        )
+                    ] 
+                ),
+                nil   -- annotations
+            )
+        ],
+        nil   -- annotations
+    );
+

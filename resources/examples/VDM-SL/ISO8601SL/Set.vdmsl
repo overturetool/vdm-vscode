@@ -6,7 +6,7 @@
 */
 module Set
 imports from Numeric all,
-        from Seq all,
+        -- from Seq all,
         from Ord all
 exports functions sum: set of real +> real;
                   prod: set of real +> real;

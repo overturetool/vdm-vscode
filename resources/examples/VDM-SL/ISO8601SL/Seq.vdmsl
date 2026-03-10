@@ -182,6 +182,7 @@ functions
   lexicographic[@a]: seq of @a * seq of @a +> bool
   lexicographic(s, t) ==
     cases mk_(s, t):
+      mk_([],[])          -> false,
       mk_([], [-])        -> true,
       mk_([], -^-)        -> true,
       mk_([x], [y])       -> x < y,
@@ -216,7 +217,7 @@ functions
                                t1 = t(i+1,...,len t)
                            in s1 = [] and t1 <> [] or
                               s1 <> [] and t1 <> [] and o(hd s1, hd t1)
-  measure size8;
+  measure len s + len t;
 
   -- Is one sequence a prefix of another?
   preSeq[@a]: seq of @a * seq of @a +> bool
@@ -232,16 +233,20 @@ functions
 
   -- Create a sequence of identical elements.
   replicate[@a]: nat * @a +> seq of @a
-  replicate(n,x) == [ x | i in set {1,...,n} ]
+  replicate(n,x) == [ x | - in set {1,...,n} ]
   post len RESULT = n and forall y in seq RESULT & y = x;
 
   -- Pad a sequence on the left with a given item up to a specified length.
+  -- @QuickCheck @a = char;
   padLeft[@a]: seq of @a * @a * nat +> seq of @a
-  padLeft(sq,x,n) == replicate[@a](n-len sq, x) ^ sq
-  pre n >= len sq
-  post len RESULT = n and postSeq[@a](sq, RESULT);
+  padLeft(sq,x,n) == 
+    if n >= len sq
+    then replicate[@a](n-len sq, x) ^ sq
+    else sq
+  post postSeq[@a](sq, RESULT);
 
   -- Pad a sequence on the right with a given item up to a specified length.
+  -- @QuickCheck @a = char;
   padRight[@a]: seq of @a * @a * nat +> seq of @a
   padRight(sq,x,n) == sq ^ replicate[@a](n-len sq, x)
   pre n >= len sq
@@ -249,9 +254,11 @@ functions
 
   -- Pad a sequence with a given item such that it is centred in a specified length.
   -- If padded by an odd number, add the extra item on the right.
+  -- @QuickCheck @a = char;
   padCentre[@a]: seq of @a * @a * nat +> seq of @a
   padCentre(sq,x,n) == let space = if n <= len sq then 0 else n - len sq
-                       in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n);
+                       in padRight[@a](padLeft[@a](sq,x,len sq + (space div 2)),x,n)
+  pre n >= len sq;
 
   -- Drop items from a sequence while a predicate is true.
   dropWhile[@a]: (@a +> bool) * seq of @a +> seq of @a
@@ -331,43 +338,5 @@ functions
   -- Set of sequence elements.
   setOf[@a]: seq of @a +> set of @a
   setOf(s) == elems(s);
-
-  -- Measure functions.
-
-  size0[@a]: @a * seq1 of @a +> nat
-  size0(-, s) == len s;
-
-  size1[@a]: (@a * @a +> @a) * seq1 of @a +> nat
-  size1(-, s) == len s;
-
-  size2[@a]: (@a * @a +> @a) * @a * seq of @a +> nat
-  size2(-, -, s) == len s;
-
-  size3[@a]: seq1 of @a * seq1 of @a +> nat
-  size3(-, s) == len s;
-
-  size4[@a]: (@a +> seq of char) * seq of char * seq of @a +> nat
-  size4(-, -, s) == len s;
-
-  size5[@a]: (@a +> bool) * seq of @a +> nat
-  size5(-, s) == len s;
-
-  size6[@a]: (@a * @a +> bool) +> @a * seq of @a +> nat
-  size6(-)(-, s) == len s;
-
-  size7[@a]: (@a * @a +> bool) +> seq of @a +> nat
-  size7(-)(s) == len s;
-
-  size8[@a]: (@a * @a +> bool) +> seq of @a * seq of @a +> nat
-  size8(-)(s, t) == len s + len t;  
-
-  size9[@a]: @a * seq of @a +> nat
-  size9(-,s) == len s;
-
-  size10[@a]: seq of @a +> nat
-  size10(s) == len s;
-
-  size11[@a]: seq of @a * seq of @a +> nat
-  size11(-, s) == len s;
 
 end Seq

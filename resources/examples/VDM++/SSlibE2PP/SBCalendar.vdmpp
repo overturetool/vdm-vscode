@@ -20,11 +20,11 @@ public timeOfSystem : [Time] := nil;	-- This value express now for test.
 
 functions
 
-static public isCorrectContractMonth: seq of char -> bool
+static public isCorrectContractMonth: seq1 of char -> bool
 isCorrectContractMonth(aContractMonth) ==
 	calendar.getDateFromString(aContractMonth ^ "01") <> false;
 
-static public getExerciseDate :  seq of char -> Date
+static public getExerciseDate :  seq1 of char -> Date
 getExerciseDate(aContractMonth) ==
 	let	firstDayOfContractMonth = calendar.getDateFromString(aContractMonth ^ "01"),
 		designatedYear = firstDayOfContractMonth.Year(),

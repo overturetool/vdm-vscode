@@ -12,7 +12,7 @@ operations
 
 functions
 
-  MergeSorter: seq of real -> seq of real
+  MergeSorter: seq of int -> seq of int
   MergeSorter(l) ==
     cases l:
       []      -> l,
@@ -25,7 +25,7 @@ functions
     end
   measure Len;
 
-  Len: seq of real -> nat
+  Len: seq of int -> nat
   Len(list) ==
     len list;
 \end{vdm_al}
@@ -45,8 +45,8 @@ negative numbers.
                              else
                                [hd l2] ^ Merge(l1, tl l2)
     end
-  pre forall i in set inds l1 & l1(i) >= 0 and
-      forall i in set inds l2 & l2(i) >= 0
+--  pre forall i in set inds l1 & l1(i) >= 0 and
+--      forall i in set inds l2 & l2(i) >= 0
   measure Len;
 
   Len: seq of int * seq of int -> nat

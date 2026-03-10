@@ -43,6 +43,7 @@ pred(G,n) ==
 
 existspath: Flowgraph * Node * Node -> bool
 existspath(MFG,n1,n2) == 
+  MFG.A <> {} and
   mk_(n1,n2) in set relations`Warshall(MFG.A);
 
 

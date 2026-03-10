@@ -60,7 +60,7 @@ types
 {-- -- \bf 4.1.1 General definitions}
 \begin{vdm_al}
 
-   Double_Number = seq of Number
+   Double_Number = seq1 of Number
    inv d ==  len d  = 2;
 
    Key = Double_Number;
@@ -102,13 +102,15 @@ functions
     then [Form_Number(M)]  
     else [Form_Number(Get_head_in_bits(M,Word_Length))] ^ 
          Form_Message_into_blocks(Get_tail_in_bits(M,Word_Length))
-   pre ( len M  >= Word_Length) and ( len M mod Word_Length  = 0);
+   pre ( len M  >= Word_Length) and ( len M mod Word_Length  = 0)
+   measure len M;
       
    Form_Number: Message_in_bits -> Number
    Form_Number(M) ==   
     if  len M  = 1 then  hd M  
     else  hd M + 2 * Form_Number( tl M)
-   pre  len M  <= Word_Length;
+   pre  len M  <= Word_Length
+   measure len M;
       
 \end{vdm_al}
 {\ \\[-0.3cm]}
@@ -125,13 +127,15 @@ functions
    AND(X,Y) ==   
     if (X  = 0) or (Y  = 0)  
     then 0  
-    else X mod 2 * Y mod 2 + 2 * AND(X div 2,Y div 2);
+    else X mod 2 * Y mod 2 + 2 * AND(X div 2,Y div 2)
+  measure X+Y;
       
    OR: Number * Number -> Number
    OR(X,Y) ==   
     if (X  = 0) or (Y  = 0)  
     then X + Y  
-    else max(X mod 2,Y mod 2) + 2 * OR(X div 2,Y div 2);
+    else max(X mod 2,Y mod 2) + 2 * OR(X div 2,Y div 2)
+  measure X+Y;
       
    max: int * int -> int
    max(X,Y) ==   
@@ -143,7 +147,8 @@ functions
    XOR(X,Y) ==   
     if (X  = 0) or (Y  = 0)  
     then X + Y  
-    else (X + Y) mod 2 + 2 * XOR(X div 2,Y div 2);
+    else (X + Y) mod 2 + 2 * XOR(X div 2,Y div 2)
+  measure X + Y;
       
    ADD: Number * Number -> Number
    ADD(X,Y) ==   
@@ -217,14 +222,16 @@ functions
     if B  = 0  
     then N mod 2 **8  
     else Byte(N div 2 **8,B - 1)
-   pre (B  >= 0) and (B  <= 3);
+   pre (B  >= 0) and (B  <= 3)
+   measure B;
       
    Condition_Sequence: Message_in_blocks * Number -> Message_in_blocks
    Condition_Sequence(M,P) ==   
     if  len M  = 1  
     then [Condition_value( hd M,P)]  
     else [Condition_value( hd M,P)] ^ 
-         Condition_Sequence( tl M,Changes( hd M,P));
+         Condition_Sequence( tl M,Changes( hd M,P))
+   measure len M;
       
    Condition_value: Number * Number -> Number
    Condition_value(B,P) ==   
@@ -247,7 +254,8 @@ functions
    Convert_Bytes_to_Number(M) ==   
     if  len M  = 1  
     then  hd M  
-    else Convert_Bytes_to_Number( tl M) +  hd M * 2 **(8 * ( len M - 1));
+    else Convert_Bytes_to_Number( tl M) +  hd M * 2 **(8 * ( len M - 1))
+  measure len M;
       
    PAT: Double_Number -> Number
    PAT(D) ==   
@@ -263,7 +271,8 @@ functions
    Record_Changes(M,P) ==   
     if  len M  = 1  
     then Changes( hd M,P)  
-    else Record_Changes( tl M,Changes( hd M,P));
+    else Record_Changes( tl M,Changes( hd M,P))
+  measure len M;
       
 \end{vdm_al}
 \newpage
@@ -333,7 +342,8 @@ functions
              G'' = AND(G',D) in   
          let X'' = MUL1(X',F''),
              Y'' = MUL2A(Y',G'') in   
-   Main_loop( tl M,mk_Key_Constant(X'',Y'',V',W,S,T));
+   Main_loop( tl M,mk_Key_Constant(X'',Y'',V',W,S,T))
+  measure len M;
       
 
 \end{vdm_al}
@@ -371,7 +381,8 @@ functions
     then Z(M,K)  
     else let M' = [Z(Get_head_in_blocks(M,No_blocks),K)]  ^   
                Get_tail_in_blocks(M,No_blocks) in   
-       Z_of_SEG(M',K,No_blocks);
+       Z_of_SEG(M',K,No_blocks)
+  measure len M;
       
 \end{vdm_al}
 {\ \\[-0.3cm]}
@@ -384,28 +395,31 @@ functions
     if No_bits  = 0  
     then M  
     else Get_tail_in_bits( tl M,No_bits - 1)
-   pre  len M  >= No_bits;
+   pre  len M  >= No_bits
+   measure len M;
       
    Get_head_in_bits: Message_in_bits * nat -> Message_in_bits
    Get_head_in_bits(M,No_bits) ==   
     if No_bits  = 0  
     then [ hd M]  
     else [ hd M]  ^  Get_head_in_bits( tl M,No_bits - 1)
-   pre ( len M  >= No_bits) and (No_bits  >= 1);
+   pre ( len M  >= No_bits) and (No_bits  >= 1)
+   measure len M;
       
    Get_tail_in_blocks: Message_in_blocks * nat -> Message_in_blocks
    Get_tail_in_blocks(M,No_blocks) ==   
     if No_blocks  = 0  
     then M  
     else Get_tail_in_blocks( tl M,No_blocks - 1)
-   pre  len M  >= No_blocks;
+   pre  len M  >= No_blocks
+   measure len M;
       
    Get_head_in_blocks: Message_in_blocks * nat -> Message_in_blocks
    Get_head_in_blocks(M,No_blocks) ==   
     if No_blocks  = 0  
     then [ hd M]  
-    else [ hd M]  ^  Get_head_in_blocks( tl M,No_blocks - 1)
+    else [ hd M]  ^  if No_blocks > 0 then Get_head_in_blocks( tl M,No_blocks - 1) else []
    pre ( len M  >= No_blocks) and (No_blocks  >= 1)
-
+   measure len M;
 \end{vdm_al}
 

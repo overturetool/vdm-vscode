@@ -60,7 +60,8 @@ private getThreat: () ==> EventId * MissileType * Angle * Time
 getThreat () ==
   (dcl res : EventId * MissileType * Angle * Time := hd threats;
    threats := tl threats;
-   return res );
+   return res )
+pre threats <> [];
 
 public isFinished: () ==> ()
 isFinished () ==

@@ -14,7 +14,7 @@ next_setpoint: [(real * real)]
 operations
 
 -- constructor for SetpointProfileCSV
-public SetpointProfileCSV: real * seq of char ==> SetpointProfileCSV
+public SetpointProfileCSV: real * seq1 of char ==> SetpointProfileCSV
 SetpointProfileCSV(init, file) ==
 (
 	-- count lines in file
@@ -22,15 +22,15 @@ SetpointProfileCSV(init, file) ==
 	line := 1;
 	let mk_(success,l) = CSV`flinecount(file) in
 	(
-		if not success then quit("Failed to read input file '%s': %s.", [file, new CSV().ferror()]);
-		lines := l
+		if not success then quit("Failed to read input file '%s': %s.", [file, new CSV().ferror()])
+		else lines := l
 	);	
 	setpoint := init;
 	next_setpoint := nil
 );
 
 -- constructor for SetpointProfileCSV
-public SetpointProfileCSV: seq of char ==> SetpointProfileCSV
+public SetpointProfileCSV: seq1 of char ==> SetpointProfileCSV
 SetpointProfileCSV(file) ==
 	SetpointProfileCSV(0.0, file);
 
@@ -38,7 +38,7 @@ SetpointProfileCSV(file) ==
 private ReadNextSetpoint: () ==> ()
 ReadNextSetpoint() ==
 (
-	let mk_(-,vals) = CSV`freadval[seq of real](filename,line) in 
+	let mk_(-,vals) = CSV`freadval[seq1 of real](filename,line) in 
 	(
 		if len vals <> 2 then quit("Incorrect number of values in %s line %s (expected: 2, actual: %s)\n", [filename,line,len vals])
 		else 

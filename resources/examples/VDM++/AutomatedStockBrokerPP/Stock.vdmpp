@@ -44,7 +44,8 @@ class Stock is subclass of GLOBAL
 
   pure public GetCurrentValue : () ==> StockValue 
   GetCurrentValue() == 
-   return hd valueHistory; 
+   return hd valueHistory
+pre valueHistory <> []; 
 
   pure public GetValueHistory : () ==> seq of StockValue 
   GetValueHistory() == (

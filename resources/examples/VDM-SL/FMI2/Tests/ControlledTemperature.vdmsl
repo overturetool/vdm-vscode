@@ -1,0 +1,2722 @@
+/**
+ * VDM value created from /home/nick/Digital Twins/fmi-cross-check-master/fmus/2.0/me/win64/CATIA/R2016x/ControlledTemperature/ControlledTemperature.fmu
+ */
+values
+    controlledTemperature =
+    mk_FmiModelDescription
+    (
+        mk_Location("modelDescription.xml", 10),
+        "2.0",  -- fmiVersion
+        "ControlledTemperature",  -- modelName
+        "{88025937-2522-4b5e-a2e7-8746e6bdb9d9}",  -- guid
+        "Control temperature of a resistor",  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        "2016-10-04T14:08:51Z",  -- generationDateAndTime
+        <structured>,  -- variableNamingConvention
+        6,  -- numberOfEventIndicators
+        mk_ModelExchange
+        (
+            mk_Location("modelDescription.xml", 14),
+            "ControlledTemperature",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- completedIntegratorStepNotNeeded
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canNotUseMemoryManagementFunctions
+            true,  -- canGetAndSetFMUstate
+            nil,  -- canSerializeFMUstate
+            true,  -- providesDirectionalDerivative
+            [
+                "all.c"
+            ] 
+        ),
+        nil,  -- coSimulation
+        [
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 22),
+                "1/K",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 23),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    -1,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 26),
+                "A",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 27),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    1,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 30),
+                "J/K",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 34),
+                    1,  -- kg
+                    2,  -- m
+                    -2,  -- s
+                    nil,  -- a
+                    -1,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 37),
+                "K",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 38),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    1,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 41),
+                "K/s",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 43),
+                    nil,  -- kg
+                    nil,  -- m
+                    -1,  -- s
+                    nil,  -- a
+                    1,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 46),
+                "Ohm",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 50),
+                    1,  -- kg
+                    2,  -- m
+                    -3,  -- s
+                    -2,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 53),
+                "S",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 57),
+                    -1,  -- kg
+                    -2,  -- m
+                    3,  -- s
+                    2,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 60),
+                "V",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 64),
+                    1,  -- kg
+                    2,  -- m
+                    -3,  -- s
+                    -1,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 67),
+                "W",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 70),
+                    1,  -- kg
+                    2,  -- m
+                    -3,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 73),
+                "W/K",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 77),
+                    1,  -- kg
+                    2,  -- m
+                    -3,  -- s
+                    nil,  -- a
+                    -1,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 80),
+                "degC",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 82),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    1,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    273.15   -- offset
+                ),
+                nil   -- displayUnit
+            ),
+            mk_Unit
+            (
+                mk_Location("modelDescription.xml", 85),
+                "s",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("modelDescription.xml", 86),
+                    nil,  -- kg
+                    nil,  -- m
+                    1,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil   -- displayUnit
+            )
+        ],
+        [
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 91),
+                "Modelica.Blocks.Interfaces.BooleanInput",  -- name
+                nil,  -- description
+                mk_BooleanType
+                (
+                    mk_Location("modelDescription.xml", 92) 
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 95),
+                "Modelica.Blocks.Interfaces.BooleanOutput",  -- name
+                nil,  -- description
+                mk_BooleanType
+                (
+                    mk_Location("modelDescription.xml", 96) 
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 99),
+                "Modelica.Blocks.Interfaces.RealInput",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 100),
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 103),
+                "Modelica.Blocks.Interfaces.RealOutput",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 104),
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 107),
+                "Modelica.SIunits.Conductance",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 110),
+                    "Conductance",  -- quantity
+                    "S",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 113),
+                "Modelica.SIunits.Current",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 116),
+                    "ElectricCurrent",  -- quantity
+                    "A",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 119),
+                "Modelica.SIunits.HeatCapacity",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 122),
+                    "HeatCapacity",  -- quantity
+                    "J/K",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 125),
+                "Modelica.SIunits.HeatFlowRate",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 128),
+                    "Power",  -- quantity
+                    "W",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 131),
+                "Modelica.SIunits.LinearTemperatureCoefficient",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 134),
+                    "LinearTemperatureCoefficient",  -- quantity
+                    "1/K",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 137),
+                "Modelica.SIunits.Power",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 140),
+                    "Power",  -- quantity
+                    "W",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 143),
+                "Modelica.SIunits.Resistance",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 146),
+                    "Resistance",  -- quantity
+                    "Ohm",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 149),
+                "Modelica.SIunits.Temperature",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 154),
+                    "ThermodynamicTemperature",  -- quantity
+                    "K",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    0.0,  -- min
+                    nil,  -- max
+                    300.0,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 157),
+                "Modelica.SIunits.TemperatureDifference",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 161),
+                    "ThermodynamicTemperature",  -- quantity
+                    "K",  -- unit
+                    nil,  -- displayUnit
+                    true,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 164),
+                "Modelica.SIunits.TemperatureSlope",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 167),
+                    "TemperatureSlope",  -- quantity
+                    "K/s",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 170),
+                "Modelica.SIunits.ThermalConductance",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 173),
+                    "ThermalConductance",  -- quantity
+                    "W/K",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 176),
+                "Modelica.SIunits.Time",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 179),
+                    "Time",  -- quantity
+                    "s",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            ),
+            mk_SimpleType
+            (
+                mk_Location("modelDescription.xml", 182),
+                "Modelica.SIunits.Voltage",  -- name
+                nil,  -- description
+                mk_RealType
+                (
+                    mk_Location("modelDescription.xml", 185),
+                    "ElectricPotential",  -- quantity
+                    "V",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil   -- unbounded
+                ) 
+            )
+        ],
+        nil,  -- logCategories
+        mk_DefaultExperiment
+        (
+            mk_Location("modelDescription.xml", 190),
+            0.0,  -- startTime
+            10.0,  -- stopTime
+            0.0001,  -- tolerance
+            nil   -- stepSize
+        ),
+        nil,  -- vendorAnnotations
+        [
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 198),
+                "TAmb",  -- name
+                16777216,  -- valueReference
+                "Ambient Temperature",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 201),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    293.15,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 209),
+                "TDif",  -- name
+                16777217,  -- valueReference
+                "Error in Temperature",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 212),
+                    "Modelica.SIunits.TemperatureDifference",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    2,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 219),
+                "TRes",  -- name
+                335544320,  -- valueReference
+                "Resulting Temperature",  -- description
+                <output>,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 221),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 228),
+                "ground.p.v",  -- name
+                100663296,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 231),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 238),
+                "ground.p.i",  -- name
+                905969665,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 241),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 249),
+                "constantVoltage.V",  -- name
+                16777218,  -- valueReference
+                "Value of constant voltage",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 252),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    10,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 258),
+                "constantVoltage.v",  -- name
+                16777218,  -- valueReference
+                "Voltage drop between the two pins (= p.v - n.v)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 260),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 266),
+                "constantVoltage.i",  -- name
+                637534210,  -- valueReference
+                "Current flowing from pin p to pin n",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 268),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 275),
+                "constantVoltage.p.v",  -- name
+                16777218,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                <fixed>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 277),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 283),
+                "constantVoltage.p.i",  -- name
+                637534210,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 285),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 292),
+                "constantVoltage.n.v",  -- name
+                100663299,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 295),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 301),
+                "constantVoltage.n.i",  -- name
+                637534212,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 303),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 311),
+                "heatCapacitor.C",  -- name
+                16777219,  -- valueReference
+                "Heat capacity of element (= cp*m)",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 314),
+                    "Modelica.SIunits.HeatCapacity",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    1,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 320),
+                "heatCapacitor.T",  -- name
+                33554432,  -- valueReference
+                "Temperature of element",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 322),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 328),
+                "der(heatCapacitor.T)",  -- name
+                587202560,  -- valueReference
+                "der(Temperature of element)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 331),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    "K/s",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    14,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 337),
+                "heatCapacitor.der_T",  -- name
+                587202560,  -- valueReference
+                "Time derivative of temperature (= der(T))",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 339),
+                    "Modelica.SIunits.TemperatureSlope",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 345),
+                "heatCapacitor.port.T",  -- name
+                33554432,  -- valueReference
+                "Port temperature",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 347),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 353),
+                "heatCapacitor.port.Q_flow",  -- name
+                637534213,  -- valueReference
+                "Heat flow rate (positive if flowing from outside into the component)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 355),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 363),
+                "heatingResistor.R_ref",  -- name
+                16777220,  -- valueReference
+                "Resistance at temperature T_ref",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 366),
+                    "Modelica.SIunits.Resistance",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    10,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 374),
+                "heatingResistor.T_ref",  -- name
+                16777221,  -- valueReference
+                "Reference temperature",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 377),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    293.15,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 385),
+                "heatingResistor.alpha",  -- name
+                16777222,  -- valueReference
+                "Temperature coefficient of resistance (R = R_ref*(1 + alpha*(heatPort.T - T_ref))",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 388),
+                    "Modelica.SIunits.LinearTemperatureCoefficient",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.00392156862745098,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 394),
+                "heatingResistor.v",  -- name
+                637534214,  -- valueReference
+                "Voltage drop between the two pins (= p.v - n.v)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 396),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 402),
+                "heatingResistor.i",  -- name
+                637534212,  -- valueReference
+                "Current flowing from pin p to pin n",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 404),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 410),
+                "heatingResistor.p.v",  -- name
+                637534214,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 412),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 418),
+                "heatingResistor.p.i",  -- name
+                637534212,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 420),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 427),
+                "heatingResistor.n.v",  -- name
+                100663303,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 430),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 436),
+                "heatingResistor.n.i",  -- name
+                637534210,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 438),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 445),
+                "heatingResistor.T",  -- name
+                100663305,  -- valueReference
+                "Fixed device temperature if useHeatPort = false",  -- description
+                nil,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 447),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 453),
+                "heatingResistor.heatPort.T",  -- name
+                33554432,  -- valueReference
+                "Port temperature",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 455),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 461),
+                "heatingResistor.heatPort.Q_flow",  -- name
+                637534218,  -- valueReference
+                "Heat flow rate (positive if flowing from outside into the component)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 463),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 469),
+                "heatingResistor.LossPower",  -- name
+                637534219,  -- valueReference
+                "Loss power leaving component via HeatPort",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 471),
+                    "Modelica.SIunits.Power",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 477),
+                "heatingResistor.T_heatPort",  -- name
+                33554432,  -- valueReference
+                "Temperature of HeatPort",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 479),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 485),
+                "heatingResistor.R",  -- name
+                637534220,  -- valueReference
+                "Resistance = R_ref*(1 + alpha*(T_heatPort - T_ref))",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 487),
+                    "Modelica.SIunits.Resistance",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 494),
+                "fixedTemperature.T",  -- name
+                100663309,  -- valueReference
+                "Fixed temperature at port",  -- description
+                nil,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 496),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 502),
+                "fixedTemperature.port.T",  -- name
+                100663309,  -- valueReference
+                "Port temperature",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 504),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 510),
+                "fixedTemperature.port.Q_flow",  -- name
+                637534222,  -- valueReference
+                "Heat flow rate (positive if flowing from outside into the component)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 512),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 518),
+                "temperatureSensor.T",  -- name
+                335544321,  -- valueReference
+                "Absolute temperature in degree Celsius as output signal",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 521),
+                    "Modelica.Blocks.Interfaces.RealOutput",  -- declaredType
+                    nil,  -- quantity
+                    "degC",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 527),
+                "temperatureSensor.port.T",  -- name
+                33554432,  -- valueReference
+                "Port temperature",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 529),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 536),
+                "temperatureSensor.port.Q_flow",  -- name
+                100663311,  -- valueReference
+                "Heat flow rate (positive if flowing from outside into the component)",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 539),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 545),
+                "thermalConductor.Q_flow",  -- name
+                637534222,  -- valueReference
+                "Heat flow rate from port_a -> port_b",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 547),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 553),
+                "thermalConductor.dT",  -- name
+                637534224,  -- valueReference
+                "port_a.T - port_b.T",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 555),
+                    "Modelica.SIunits.TemperatureDifference",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 561),
+                "thermalConductor.port_a.T",  -- name
+                33554432,  -- valueReference
+                "Port temperature",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 563),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 569),
+                "thermalConductor.port_a.Q_flow",  -- name
+                637534222,  -- valueReference
+                "Heat flow rate (positive if flowing from outside into the component)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 571),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 577),
+                "thermalConductor.port_b.T",  -- name
+                100663309,  -- valueReference
+                "Port temperature",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 579),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 585),
+                "thermalConductor.port_b.Q_flow",  -- name
+                637534225,  -- valueReference
+                "Heat flow rate (positive if flowing from outside into the component)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 587),
+                    "Modelica.SIunits.HeatFlowRate",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 595),
+                "thermalConductor.G",  -- name
+                16777223,  -- valueReference
+                "Constant thermal conductance of material",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 598),
+                    "Modelica.SIunits.ThermalConductance",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.1,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 604),
+                "idealSwitch.v",  -- name
+                637534226,  -- valueReference
+                "Voltage drop between the two pins (= p.v - n.v)",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 606),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 612),
+                "idealSwitch.i",  -- name
+                637534212,  -- valueReference
+                "Current flowing from pin p to pin n",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 614),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 620),
+                "idealSwitch.p.v",  -- name
+                16777218,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 622),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 628),
+                "idealSwitch.p.i",  -- name
+                637534212,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 630),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 636),
+                "idealSwitch.n.v",  -- name
+                637534214,  -- valueReference
+                "Potential at the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 638),
+                    "Modelica.SIunits.Voltage",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 644),
+                "idealSwitch.n.i",  -- name
+                637534210,  -- valueReference
+                "Current flowing into the pin",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 646),
+                    "Modelica.SIunits.Current",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 654),
+                "idealSwitch.Ron",  -- name
+                16777224,  -- valueReference
+                "Closed switch resistance",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 658),
+                    "Modelica.SIunits.Resistance",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    0.0,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.00001,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 666),
+                "idealSwitch.Goff",  -- name
+                16777225,  -- valueReference
+                "Opened switch conductance",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 670),
+                    "Modelica.SIunits.Conductance",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    0.0,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    0.00001,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 677),
+                "idealSwitch.T",  -- name
+                100663316,  -- valueReference
+                "Fixed device temperature if useHeatPort = false",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 680),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    293.15,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 686),
+                "idealSwitch.LossPower",  -- name
+                905969685,  -- valueReference
+                "Loss power leaving component via HeatPort",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 688),
+                    "Modelica.SIunits.Power",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 695),
+                "idealSwitch.T_heatPort",  -- name
+                100663318,  -- valueReference
+                "Temperature of HeatPort",  -- description
+                nil,  -- causality
+                <constant>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 698),
+                    "Modelica.SIunits.Temperature",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    293.15,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 705),
+                "idealSwitch.control",  -- name
+                335544322,  -- valueReference
+                "true => switch open, false => p--n connected",  -- description
+                nil,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 707),
+                    "Modelica.Blocks.Interfaces.BooleanInput",  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 715),
+                "ramp.height",  -- name
+                16777226,  -- valueReference
+                "Height of ramps",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 716),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    25,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 724),
+                "ramp.duration",  -- name
+                16777227,  -- valueReference
+                "Duration of ramp (= 0.0 gives a Step)",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 728),
+                    "Modelica.SIunits.Time",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    0.0,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    6,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 736),
+                "ramp.offset",  -- name
+                16777228,  -- valueReference
+                "Offset of output signal",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 737),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    25,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 745),
+                "ramp.startTime",  -- name
+                16777229,  -- valueReference
+                "Output = offset for time < startTime",  -- description
+                <parameter>,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 748),
+                    "Modelica.SIunits.Time",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    2,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 754),
+                "ramp.y",  -- name
+                369098778,  -- valueReference
+                "Connector of Real output signal",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 756),
+                    "Modelica.Blocks.Interfaces.RealOutput",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 762),
+                "onOffController.reference",  -- name
+                369098778,  -- valueReference
+                "Connector of Real input signal used as reference signal",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 764),
+                    "Modelica.Blocks.Interfaces.RealInput",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 770),
+                "onOffController.u",  -- name
+                335544321,  -- valueReference
+                "Connector of Real input signal used as measurement signal",  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 772),
+                    "Modelica.Blocks.Interfaces.RealInput",  -- declaredType
+                    nil,  -- quantity
+                    nil,  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 779),
+                "onOffController.y",  -- name
+                369098779,  -- valueReference
+                "Connector of Real output signal used as actuator signal",  -- description
+                nil,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 781),
+                    "Modelica.Blocks.Interfaces.BooleanOutput",  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 788),
+                "onOffController.bandwidth",  -- name
+                100663324,  -- valueReference
+                "Bandwidth around reference signal",  -- description
+                nil,  -- causality
+                <tunable>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 790),
+                    nil,  -- declaredType
+                    nil,  -- quantity
+                    "K",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 798),
+                "onOffController.pre_y_start",  -- name
+                16777230,  -- valueReference
+                "Value of pre(y) at initial time",  -- description
+                <parameter>,  -- causality
+                <fixed>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 799),
+                    nil,  -- declaredType
+                    false   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 806),
+                "logicalNot.u",  -- name
+                369098779,  -- valueReference
+                "Connector of Boolean input signal",  -- description
+                nil,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 808),
+                    "Modelica.Blocks.Interfaces.BooleanInput",  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 815),
+                "logicalNot.y",  -- name
+                335544322,  -- valueReference
+                "Connector of Boolean output signal",  -- description
+                nil,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 817),
+                    "Modelica.Blocks.Interfaces.BooleanOutput",  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 824),
+                "heatCapacitor_T",  -- name
+                335544321,  -- valueReference
+                "Absolute temperature in degree Celsius as output signal",  -- description
+                <output>,  -- causality
+                nil,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Real
+                (
+                    mk_Location("modelDescription.xml", 827),
+                    "Modelica.Blocks.Interfaces.RealOutput",  -- declaredType
+                    nil,  -- quantity
+                    "degC",  -- unit
+                    nil,  -- displayUnit
+                    nil,  -- relativeQuantity
+                    nil,  -- min
+                    nil,  -- max
+                    nil,  -- nominal
+                    nil,  -- unbounded
+                    nil,  -- start
+                    nil,  -- derivative
+                    nil   -- reinit
+                ),
+                nil   -- vendorAnnotations
+            ),
+            mk_ScalarVariable
+            (
+                mk_Location("modelDescription.xml", 835),
+                "switch_Controll",  -- name
+                335544322,  -- valueReference
+                "Connector of Boolean output signal",  -- description
+                <output>,  -- causality
+                <discrete>,  -- variability
+                nil,  -- initial
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                mk_Boolean
+                (
+                    mk_Location("modelDescription.xml", 837),
+                    "Modelica.Blocks.Interfaces.BooleanOutput",  -- declaredType
+                    nil   -- start
+                ),
+                nil   -- vendorAnnotations
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("modelDescription.xml", 840),
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 844),
+                    3,  -- index
+                    -- dependencies
+                    [
+                        14
+                    ],
+                    -- dependenciesKind
+                    [
+                        <fixed>
+                    ] 
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 847),
+                    71,  -- index
+                    -- dependencies
+                    [
+                        14
+                    ],
+                    -- dependenciesKind
+                    [
+                        <fixed>
+                    ] 
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 850),
+                    72,  -- index
+                    -- dependencies
+                    [
+                        14
+                    ],
+                    -- dependenciesKind
+                    [
+                        <dependent>
+                    ] 
+                )
+            ],
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 855),
+                    15,  -- index
+                    -- dependencies
+                    [
+                        14
+                    ],
+                    -- dependenciesKind
+                    [
+                        <fixed>
+                    ] 
+                )
+            ],
+            [
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 860),
+                    3,  -- index
+                    -- dependencies
+                    [
+                        1,
+                        20,
+                        21
+                    ],
+                    -- dependenciesKind
+                    [
+                        <dependent>,
+                        <dependent>,
+                        <dependent>
+                    ] 
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 863),
+                    14,  -- index
+                    -- dependencies
+                    [
+                        1,
+                        20,
+                        21
+                    ],
+                    -- dependenciesKind
+                    [
+                        <dependent>,
+                        <dependent>,
+                        <dependent>
+                    ] 
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 866),
+                    15,  -- index
+                    -- dependencies
+                    [
+                        1,
+                        2,
+                        6,
+                        13,
+                        19,
+                        20,
+                        21,
+                        46,
+                        53,
+                        54,
+                        59,
+                        60,
+                        61,
+                        62,
+                        68
+                    ],
+                    -- dependenciesKind
+                    [
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>
+                    ] 
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 869),
+                    71,  -- index
+                    -- dependencies
+                    [
+                        1,
+                        20,
+                        21
+                    ],
+                    -- dependenciesKind
+                    [
+                        <dependent>,
+                        <dependent>,
+                        <dependent>
+                    ] 
+                ),
+                mk_Unknown
+                (
+                    mk_Location("modelDescription.xml", 872),
+                    72,  -- index
+                    -- dependencies
+                    [
+                        1,
+                        2,
+                        20,
+                        21,
+                        59,
+                        60,
+                        61,
+                        62,
+                        68
+                    ],
+                    -- dependenciesKind
+                    [
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>,
+                        <dependent>
+                    ] 
+                )
+            ] 
+        ) 
+    );

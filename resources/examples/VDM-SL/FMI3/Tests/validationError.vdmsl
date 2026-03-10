@@ -1,0 +1,7 @@
+/**
+ * This is a file to define the validationError symbol for when the model is
+ * being tested locally, rather than via VDMCheck. Note that it is defined in
+ * the Tests folder, so not included with the distribution.
+ */
+values
+	validationError : [seq of char] = nil;

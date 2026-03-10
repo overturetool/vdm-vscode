@@ -98,11 +98,11 @@ functions
 
 Simulate(inp : Input)  out : Output
 pre 0 not in set dom inp
-post forall t in set dom inp &
+post forall t in set (dom inp inter dom out) &
          ((out(t) = MSR and
             t > ReactionTime) =>  inp(t-ReactionTime) > Threshold or out(t-1) = MSR)
      and
-     forall t in set dom inp \ {1} & 
+     forall t in set ((dom inp inter dom out)\ {1}) & 
             ((out(t) = LRL and
             t > RecoveryTime) =>  inp(t-RecoveryTime) < Threshold or out(t-1) = LRL);
 

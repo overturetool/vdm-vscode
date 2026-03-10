@@ -13,7 +13,7 @@ public Customer : seq of char ==> Customer
 Customer(fname) ==
 (
 	def mk_ (-,input) = io.freadval[seq of inline](fname) in
-		inlines := input;
+		if input <> nil then inlines := input;
 		
 	outfileName := "Results for " ^ fname
 );
@@ -29,7 +29,7 @@ addCyberRail (cr) == cyberrail := cr;
 public addTokenDevice : TokenDevice ==> ()
 addTokenDevice(td) ==
 	--tokenDevices := td;
-	tokenDevices := tokenDevices munion { td.getTokenId() |-> td};
+	tokenDevices := tokenDevices ++ { td.getTokenId() |-> td};
 
 	public isFinished : () ==> ()
 		isFinished () == skip;

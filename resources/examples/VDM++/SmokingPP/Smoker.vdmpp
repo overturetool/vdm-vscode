@@ -31,7 +31,8 @@ Smoke() ==(
   IO`print("and smoking \n"); 
   cigarettes := cigarettes - 1;
   elements := {orig_element};
-);
+)
+pre cigarettes > 0;-- this should not be necessary
 
 thread
   while true do (

@@ -31,7 +31,8 @@ functions
     then []
     elseif n < 10
     then [nat2char(n)]
-    else (nat2chars(n div 10)) ^ [ nat2char(n mod 10)];
+    else (nat2chars(n div 10)) ^ [ nat2char(n mod 10)]
+  measure n;
 
   nat2string : nat -> seq of char
   nat2string(n) ==
@@ -43,7 +44,8 @@ operations
 
   pure public GetTill: TillId ==> Till
   GetTill(tid) ==
-    return tills(tid);
+    return tills(tid)
+  pre tid in set dom tills;
 
   public Main: () ==> Main
   Main() ==
@@ -146,12 +148,15 @@ operations
     public Fail : nat ==> ()
     Fail(tillNum) ==
       (ltills(tillNum).Fail();
-       mb.put(tStr(tillNum) ^ "LocalTill Fail"));
+       mb.put(tStr(tillNum) ^ "LocalTill Fail"))
+    pre tillNum in set dom ltills;
 
     public ReturnCard : nat ==> ()
     ReturnCard(tillNum) ==
      (tills(tillNum).ReturnCard();
-      mb.put(tStr(tillNum) ^"Card Returned"));
+      mb.put(tStr(tillNum) ^"Card Returned"))
+    pre tillNum in set dom ltills;
+
 
     Wait: () ==> ()
     Wait () == skip;

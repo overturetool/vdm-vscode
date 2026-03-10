@@ -1,0 +1,47 @@
+/**
+ * VDM value created from TestXML/build_description_simple.xml
+ */
+values
+    build_description_simple =
+    mk_FmiBuildDescription
+    (
+        mk_Location("build_description_simple.xml", 2),
+        "3.0",  -- fmiVersion
+        -- buildConfiguration
+        [
+            mk_BuildConfiguration
+            (
+                mk_Location("build_description_simple.xml", 4),
+                "PIDContoller",  -- modelIdentifier
+                nil,  -- platform
+                nil,  -- description
+                -- sourceFileSet
+                [
+                    mk_SourceFileSet
+                    (
+                        mk_Location("build_description_simple.xml", 5),
+                        nil,  -- name
+                        nil,  -- language
+                        nil,  -- compiler
+                        nil,  -- compilerOptions
+                        -- sourceFile
+                        [
+                            mk_SourceFile
+                            (
+                                mk_Location("build_description_simple.xml", 6),
+                                "PIDContoller.c",  -- name
+                                nil   -- annotations
+                            )
+                        ],
+                        nil,  -- preprocessorDefinition
+                        nil,  -- includeDirectory
+                        nil   -- annotations
+                    )
+                ],
+                nil,  -- library
+                nil   -- annotations
+            )
+        ],
+        nil   -- annotations
+    );
+

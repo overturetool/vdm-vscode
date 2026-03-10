@@ -4,6 +4,11 @@ values
 	Tolerance = 1e-8;
 	Variation = 1e-5;	
 
+types
+
+public Positive = real
+inv x == x > 0;	
+
 functions
 
 static public EQ : real -> real -> bool
@@ -18,10 +23,13 @@ numberOfDigit(x) ==
 	if x = i then
 		aNumberOfIntegerPartDigit(i)
 	else
-		aNumberOfIntegerPartDigit(i) + 1 + getNumberOfDigitsAfterTheDecimalPoint(x);
+		aNumberOfIntegerPartDigit(i) + 1 + getNumberOfDigitsAfterTheDecimalPoint(x)
+pre x>=0;
 
 static public aNumberOfIntegerPartDigit : int -> nat
-aNumberOfIntegerPartDigit(i) == aNumberOfIntegerPartDigitAux(i, 1);
+aNumberOfIntegerPartDigit(i) == 
+  aNumberOfIntegerPartDigitAux(i, 1)
+pre i>=0;
 
 static public aNumberOfIntegerPartDigitAux : int * nat -> nat
 aNumberOfIntegerPartDigitAux(i, numberOfDigit) ==
@@ -30,10 +38,12 @@ aNumberOfIntegerPartDigitAux(i, numberOfDigit) ==
 		0		-> numberOfDigit,
 		others	-> Real`aNumberOfIntegerPartDigitAux(q, numberOfDigit + 1)
 	end
+pre i >= 0
 measure idiv10;
 
 static idiv10 : int * nat +> nat
-idiv10(i, -) == i div 10;
+idiv10(i, -) == i div 10
+pre i >=0;
 
 static public isNDigitsAfterTheDecimalPoint : real * nat -> bool
 isNDigitsAfterTheDecimalPoint(x,numberOfDigit) == 
@@ -108,21 +118,21 @@ post
 		let totalPrincipalAndInterest = getTotalPrincipal(Interest,year)
 		in multiple = totalPrincipalAndInterest  and RESULT = Interest;
 		
-static getInterestImplicitSpec_Computer_version : real * int -> real
+static getInterestImplicitSpec_Computer_version : Positive * nat -> real
 getInterestImplicitSpec_Computer_version(multiple,years) ==
 	is not yet specified
 pre
 	multiple > 1.0 and years > 0 
 post
 	multiple > 1.0 and years > 0 and
-	exists1 Interest : real & 
+	exists1 Interest : Positive & 
 		let	totalPrincipalAndInterest = getTotalPrincipal(Interest,years)
 		in	EQ(multiple)(totalPrincipalAndInterest) and RESULT = Interest;
 
 --getInterest explicit specification
-static public getInterest: real * int -> real
+static public getInterest: Positive * nat1 -> real
 getInterest(multiple,years) ==
-	let	f = lambda Interest : real & multiple - getTotalPrincipal(Interest,years)	in
+	let	f = lambda Interest : Positive & multiple - getTotalPrincipal(Interest,years)	in
 	NewtonMethod(f)(0);
 	
 end Real

@@ -46,7 +46,7 @@ SuccessAll(m) ==
 
 FailureAllは、全体失敗メッセージをファイルに追加し、標準出力に表示し、falseを返す。
 \begin{vdm_al}	
-static public FailureAll :  seq of char +> bool
+static public FailureAll :  seq1 of char +> bool
 FailureAll(m) ==
 	let	message = m ^ "\tNG!!\n",
 		- = Fprint( message),

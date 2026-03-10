@@ -18,7 +18,8 @@ operations
   Lookup : Command`Direction * Command`Direction * Command`Direction ==> 
            ThrusterControl`ThrSel
   Lookup(dir1, dir2, dir3) ==
-    return selections(mk_(dir1, dir2, dir3));
+    return selections(mk_(dir1, dir2, dir3))
+  pre mk_(dir1, dir2, dir3) in set dom selections;
 
   public
   MakeTable : ThrSelMap ==> ()

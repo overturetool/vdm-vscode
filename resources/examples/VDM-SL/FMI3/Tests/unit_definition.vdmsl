@@ -1,0 +1,215 @@
+/**
+ * VDM value created from TestXML/unit_definition.xml
+ */
+values
+    unit_definition =
+    mk_FmiModelDescription
+    (
+        mk_Location("unit_definition.xml", 7),
+        "3.0",  -- fmiVersion
+        "",  -- modelName
+        "",  -- instantiationToken
+        "",  -- description
+        nil,  -- author
+        nil,  -- version
+        nil,  -- copyright
+        nil,  -- license
+        nil,  -- generationTool
+        "2022-05-01T13:06:01Z",  -- generationDateAndTime
+        nil,  -- variableNamingConvention
+        nil,  -- modelExchange
+        mk_CoSimulation
+        (
+            mk_Location("unit_definition.xml", 8),
+            "example",  -- modelIdentifier
+            nil,  -- needsExecutionTool
+            nil,  -- canBeInstantiatedOnlyOncePerProcess
+            nil,  -- canGetAndSetFMUState
+            nil,  -- canSerializeFMUState
+            nil,  -- providesDirectionalDerivatives
+            nil,  -- providesAdjointDerivatives
+            nil,  -- providesPerElementDependencies
+            nil,  -- any
+            nil,  -- canHandleVariableCommunicationStepSize
+            nil,  -- fixedInternalStepSize
+            nil,  -- maxOutputDerivativeOrder
+            nil,  -- recommendedIntermediateInputSmoothness
+            nil,  -- providesIntermediateUpdate
+            nil,  -- mightReturnEarlyFromDoStep
+            nil,  -- canReturnEarlyAfterIntermediateUpdate
+            nil,  -- hasEventMode
+            nil,  -- providesEvaluateDiscreteStates
+            nil   -- annotations
+        ),
+        nil,  -- scheduledExecution
+        [
+            mk_Unit
+            (
+                mk_Location("unit_definition.xml", 11),
+                "rad/s",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("unit_definition.xml", 12),
+                    nil,  -- kg
+                    nil,  -- m
+                    -1,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    1,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                -- displayUnit
+                [
+                    mk_DisplayUnit
+                    (
+                        mk_Location("unit_definition.xml", 13),
+                        "deg/s",  -- name
+                        57.29577951308232,  -- factor
+                        nil,  -- offset
+                        nil,  -- inverse
+                        nil   -- annotations
+                    ),
+                    mk_DisplayUnit
+                    (
+                        mk_Location("unit_definition.xml", 14),
+                        "rev/min",  -- name
+                        9.549296585513721,  -- factor
+                        nil,  -- offset
+                        nil,  -- inverse
+                        nil   -- annotations
+                    )
+                ],
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("unit_definition.xml", 16),
+                "bar",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("unit_definition.xml", 17),
+                    1,  -- kg
+                    -1,  -- m
+                    -2,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    1E+5,  -- factor
+                    0   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("unit_definition.xml", 19),
+                "L/100km",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("unit_definition.xml", 20),
+                    nil,  -- kg
+                    2,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    1E-8,  -- factor
+                    nil   -- offset
+                ),
+                -- displayUnit
+                [
+                    mk_DisplayUnit
+                    (
+                        mk_Location("unit_definition.xml", 21),
+                        "mpg",  -- name
+                        235.214583,  -- factor
+                        nil,  -- offset
+                        true,  -- inverse
+                        nil   -- annotations
+                    )
+                ],
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("unit_definition.xml", 23),
+                "Re",  -- name
+                mk_BaseUnit
+                (
+                    mk_Location("unit_definition.xml", 24),
+                    nil,  -- kg
+                    nil,  -- m
+                    nil,  -- s
+                    nil,  -- a
+                    nil,  -- k
+                    nil,  -- mol
+                    nil,  -- cd
+                    nil,  -- rad
+                    nil,  -- factor
+                    nil   -- offset
+                ),
+                nil,  -- displayUnit
+                nil   -- annotations
+            ),
+            mk_Unit
+            (
+                mk_Location("unit_definition.xml", 27),
+                "Euro/PersonYear",  -- name
+                nil,  -- baseUnit
+                nil,  -- displayUnit
+                nil   -- annotations
+            )
+        ],
+        nil,  -- typeDefinitions
+        nil,  -- logCategories
+        nil,  -- defaultExperiment
+        [
+            mk_Float64
+            (
+                mk_Location("unit_definition.xml", 31),
+                "u",  -- name
+                1,  -- valueReference
+                nil,  -- description
+                nil,  -- causality
+                nil,  -- variability
+                nil,  -- canHandleMultipleSetPerTimeInstant
+                nil,  -- clocks
+                nil,  -- intermediateUpdate
+                nil,  -- previous
+                nil,  -- declaredType
+                nil,  -- initial
+                nil,  -- quantity
+                nil,  -- unit
+                nil,  -- displayUnit
+                nil,  -- relativeQuantity
+                nil,  -- unbounded
+                nil,  -- min
+                nil,  -- max
+                nil,  -- nominal
+                nil,  -- start
+                nil,  -- derivative
+                nil,  -- reinit
+                nil,  -- annotations
+                nil,  -- dimension
+                nil   -- alias
+            )
+        ],
+        mk_ModelStructure
+        (
+            mk_Location("unit_definition.xml", 33),
+            nil,  -- output
+            nil,  -- continuousStateDerivative
+            nil,  -- clockedState
+            nil,  -- initialUnknown
+            nil   -- eventIndicator
+        ),
+        nil   -- annotations
+    );
+

@@ -575,15 +575,17 @@ functions
 
   -- Given a date, find the previous date on which the day of month is the same.
   previousDateForYM: Date +> Date
-  previousDateForYM(date) == previousDateForDay(date, date.day)
-  pre date <> mk_Date(0, 1, 1);
+  previousDateForYM(date) == 
+  previousDateForDay(date, date.day)
+  pre date.year <> 0;
   --post RESULT = maxDate({ dt | dt:Date & dt  date and dt.day = date.day });
 
   -- Given a date and specific day, find the closest previous date on which the day of month is
   -- the same as the specified day.
   previousDateForDay: Date * Day +> Date
-  previousDateForDay(date, day) == previousYMDForDay(date.year, date.month, date.day, day)
-  pre date <> mk_Date(0, 1, 1) and day <= MAX_DAYS_PER_MONTH;
+  previousDateForDay(date, day) == 
+    previousYMDForDay(date.year, date.month, date.day, day)
+  pre date.year <> 0 and day <= MAX_DAYS_PER_MONTH;
   --post RESULT = maxDate({ dt | dt:Date & dt < date and dt.day = day });
 
   -- Given a date, find the closest later date on which the day of month is the same.
@@ -593,10 +595,12 @@ functions
         prevy = if mm > 1 then yy else yy-1
     in if day < dd
        then mk_Date(yy, mm, day)
-       elseif day <= daysInMonth(prevy, prevm)
+       elseif day <= daysInMonth(yy, prevm)
        then mk_Date(prevy, prevm, day)
-       else previousYMDForDay(prevy, prevm, 1, day)
-  pre dd <= daysInMonth(yy, mm)
+       else if prevy < 0
+               then mk_Date(yy, mm, day) -- No earlier date possible
+               else previousYMDForDay(prevy, prevm, 1, day)
+  pre yy <> 0 and dd <= daysInMonth(yy, mm)
   --post RESULT = maxDate({ date | date:Date & date < mk_Date(yy, mm, dd) and
   --                                           date.day = day })
   measure yy*MONTHS_PER_YEAR + mm;
@@ -609,7 +613,8 @@ functions
                         baseDtg = mk_DTG(dtg.date, ntime)
                     in cases pm:
                          <PLUS>  -> subtract(baseDtg, ONE_DAY),
-                         <MINUS> -> add(baseDtg, ONE_DAY)
+                         <MINUS> -> add(baseDtg, ONE_DAY),
+                         others -> undefined
                        end;
 
   -- Normalise a time value with a time zone offset to the UTC value, wrapping across the day

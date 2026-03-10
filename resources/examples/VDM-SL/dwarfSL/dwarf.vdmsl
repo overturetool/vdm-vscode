@@ -103,13 +103,9 @@ operations
                                  NoCorrection(com,errdwarf,failures)
                           else NoCorrection(com,dwarf,failures),
              <dark>    -> NoCorrection(com,dwarf,failures),
-             <stop>    -> let errdwarf = NormalTrans(<warning>)
-                          in
-                            NoCorrection(com,errdwarf,failures),
+             <stop>    -> NoCorrection(com,dwarf,failures),
              <warning> -> NoCorrection(com,dwarf,failures),
-             <drive>   -> let errdwarf = NormalTrans(<warning>)
-                          in
-                            NoCorrection(com,errdwarf,failures),
+             <drive>   -> NoCorrection(com,dwarf,failures),
              others -> error
            end;
           )
@@ -119,8 +115,8 @@ operations
   NoCorrection: [LogCom] * Dwarf * set of LampId ==> 
                 Message * Errors * Trace
   NoCorrection(com,mk_Dwarf(newtr,newsignals),failures) ==
-    (trace := trace ^ newtr;
-     lampstate := newsignals;
+    (--trace := trace ^ newtr;
+     --lampstate := newsignals;
      let m = if failures <> {}
              then <port_failure>
              elseif com = nil

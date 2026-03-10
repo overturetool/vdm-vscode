@@ -31,14 +31,14 @@ class WorkSpace is subclass of Vector
       screen := {qid} <-: screen
     pre qid in set dom screen;
 
-    Move: Token * (nat * nat) * (nat * nat) ==> ()
-    Move(qid, p1, p2) ==
-    ( dcl scrn : Quadrilateral := screen(qid);
-      UnDisplay (qid);
-      scrn.Move (p1,p2);
-      Display (qid, scrn)
-    )
-    pre qid in set dom screen
+    --Move: Token * (nat * nat) * (nat * nat) ==> ()
+    --Move(qid, p1, p2) ==
+    --( dcl scrn : Quadrilateral := screen(qid);
+    --  UnDisplay (qid);
+    --  scrn.Move (p1,p2);
+    --  Display (qid, scrn)
+    --)
+    --pre qid in set dom screen
   
 end WorkSpace
 

@@ -180,7 +180,7 @@ handleCalcPlan(navi, tokenDevice)==(
 	      calculateTransportPlan(navi, tokenDevice), tokenDevice))
 );
 
-private handleInactiveRoute : MessageTypes`MessageT ==> ()
+private handleInactiveRoute : MessageTypes`INACTIVEROUTE ==> ()
 handleInactiveRoute(msg) ==
 (	
 	normalState := false;

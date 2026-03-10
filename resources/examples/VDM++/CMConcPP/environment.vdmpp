@@ -31,11 +31,14 @@ simtime : Time;
 
 operations
 
-public Environment: seq of char * [ThreadDef] ==> Environment
+public Environment: seq1 of char * [ThreadDef] ==> Environment
 Environment (fname, tDef) ==
- (def mk_ (-,mk_(timeval,input)) = io.freadval[InputTP](fname) in
-    (inlines := input;
-     simtime := timeval);
+ (def mk_ (-,res) = io.freadval[InputTP](fname) in
+    (if res = nil
+    then error
+    else let mk_(timeval,input) = res 
+         in (inlines := input;
+             simtime := timeval));
      
   if tDef <> nil
   then (period := tDef.p;

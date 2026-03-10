@@ -82,15 +82,21 @@ administrate number of tries stored for each card.
 
   pure public NumberOfTriesExceeded : Card`CardId ==> bool
   NumberOfTriesExceeded(cardId) ==
-    return numberOfTries(cardId) >= maxNumberOfTries;
+    return cardId in set dom numberOfTries => 
+           numberOfTries(cardId) >= maxNumberOfTries
+  pre cardId in set GetAllCardIds();
 
   public ResetNumberOfTries : Card`CardId ==> ()
   ResetNumberOfTries(cardId) ==
-    numberOfTries(cardId) := 0;
+    numberOfTries(cardId) := 0
+  pre cardId in set GetAllCardIds();
 
   public IncrNumberOfTries : Card`CardId ==> ()
   IncrNumberOfTries(cardId) ==
-    numberOfTries(cardId) := numberOfTries(cardId) + 1;
+    numberOfTries(cardId) := if cardId in set dom numberOfTries
+                             then 1
+                             else numberOfTries(cardId) + 1
+  pre cardId in set GetAllCardIds();
 \end{vdm_al}
 
 The two operations below are used to update the central resource. 
@@ -107,7 +113,12 @@ The two operations below are used to update the central resource.
 
   public AddIllegalCard : Card`CardId ==> ()
   AddIllegalCard(cId) ==
-    illegalCards := illegalCards union {cId};
+    illegalCards := illegalCards union {cId}
+    pre cId in set GetAllCardIds();
+
+  pure public GetAllCardIds: () ==> set of Card`CardId
+  GetAllCardIds() ==
+    return dunion {acc.GetCardIds() | acc in set rng accounts};
 
 end CentralResource
 \end{vdm_al}
