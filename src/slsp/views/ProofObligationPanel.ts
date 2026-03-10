@@ -480,7 +480,6 @@ export class ProofObligationPanel implements Disposable {
                             break;
                         case "goToLocation":
                             const loc = message.data;
-                            console.log("goToLocation loc:", loc);
                             const targetUri = Uri.from(loc.uri);
                             const document = await workspace.openTextDocument(targetUri);
 
