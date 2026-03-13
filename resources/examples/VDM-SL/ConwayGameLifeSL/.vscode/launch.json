@@ -1,52 +1,39 @@
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
     "configurations": [
-		{
-			"name": "Remote Control",
-			"type": "vdm",
-			"request": "launch",
-			"noDebug": false,
-			"dynamicTypeChecks": true,
-			"invariantsChecks": true,
-			"preConditionChecks": true,
-			"postConditionChecks": true,
-			"measureChecks": true,
-			"defaultName": null,
-			"remoteControl": "Conway"
-		},
-		{
-			"name": "Launch ConwayGameLifeSL Debug 1",
-			"type": "vdm",
-			"request": "launch",
-			"noDebug": false,
-			"defaultName": "Conway",
-			"command": "print periodN(PULSAR,3)"
-		}
-		,
-		{
-			"name": "Launch ConwayGameLifeSL Debug 2",
-			"type": "vdm",
-			"request": "launch",
-			"noDebug": false,
-			"defaultName": "Conway",
-			"command": "print tests()"
-		}
-		,
-		{
-			"name": "Launch ConwayGameLifeSL Debug 3",
-			"type": "vdm",
-			"request": "launch",
-			"noDebug": false,
-			"defaultName": "Conway",
-			"command": "print generations(130,DIEHARD)"
-		}
-		,
-		{
-			"name": "Launch ConwayGameLifeSL Debug 4",
-			"type": "vdm",
-			"request": "launch",
-			"noDebug": false,
-			"defaultName": "gui_Graphics",
-			"command": "print generations_animate(130,DIEHARD)"
-		}
+        {
+            "name": "RemoteControl",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "defaultName": null,
+            "remoteControl": "Conway"
+        },
+        {
+            "name": "Console",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "defaultName": null
+        },
+        {
+            "name": "Launch VDM Debug from Code Lens",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": true,
+            "defaultName": "Conway",
+            "command": "p tests()"
+        },
+        {
+            "name": "Lens config: Launch Conway`around",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": true,
+            "defaultName": "Conway",
+            "command": "p around(mk_Point(1,1))"
+        }
     ]
 }
