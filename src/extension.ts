@@ -44,6 +44,7 @@ import { VDMJExtensionsHandler } from "./handlers/VDMJExtensionsHandler";
 import { checkJavaVersion, getMinJavaVersion } from "./util/JavaUtil";
 import * as path from "path";
 import * as fs from "fs";
+import VdmMiddleware from "./lsp/VdmMiddleware";
 
 let clientManager: ClientManager;
 
@@ -175,6 +176,22 @@ export async function activate(context: ExtensionContext) {
     workspace.textDocuments.forEach((document: TextDocument) => clientManager.launchClient(document));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => clientManager.stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
+    context.subscriptions.push(
+        workspace.onDidSaveTextDocument((document: TextDocument) => {
+            if (!vdmFileExtensions.has(document.languageId)) {
+                return;
+            }
+            const wsFolder = workspace.getWorkspaceFolder(document.uri);
+            if (!wsFolder) {
+                return;
+            }
+            const client = clientManager.get(wsFolder);
+            if (!client) {
+                return;
+            }
+            (client.middleware as VdmMiddleware).notifyOutlineRefreshOnSave(document.uri.toString());
+        }),
+    );
 
     // Add settings watch
     workspace.onDidChangeConfiguration(
