@@ -124,7 +124,7 @@ export class ServerFactory implements Disposable {
             args.push(`-Dlsp.encoding=${javaEncoding}`);
         } else {
             console.warn(
-                `[Extension] Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`
+                `[Extension] Could not recognize encoding (files.encoding: ${encodingSetting}) the -Dlsp.encoding server argument is NOT set`,
             );
         }
 
@@ -137,7 +137,7 @@ export class ServerFactory implements Disposable {
         const pluginClassPathAdditions = await ManagePluginsHandler.getClasspathAdditions(
             wsFolder,
             dialect,
-            serverConfig.get("highPrecision", false) ? "high" : "standard"
+            serverConfig.get("highPrecision", false) ? "high" : "standard",
         );
 
         pluginClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
@@ -146,27 +146,28 @@ export class ServerFactory implements Disposable {
         const annotationClassPathAdditions = await ManageAnnotationsHandler.getClasspathAdditions(
             wsFolder,
             dialect,
-            serverConfig.get("highPrecision", false) ? "high" : "standard"
+            serverConfig.get("highPrecision", false) ? "high" : "standard",
         );
 
         annotationClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
 
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {
-            const pathToCheck: string = cp.endsWith(path.sep + "*") ? cp.substr(0, cp.length - 2) : cp;
+            const resolvedCp: string = cp.replace("${workspaceFolder}", wsFolder.uri.fsPath);
+            const pathToCheck: string = resolvedCp.endsWith(path.sep + "*") ? resolvedCp.substr(0, resolvedCp.length - 2) : resolvedCp;
             if (!fs.existsSync(pathToCheck)) {
                 const msg: string = "Invalid path in class path additions: " + cp;
                 window.showWarningMessage(msg);
                 console.warn("[Extension] " + msg);
             } else {
-                classPath += cp + path.delimiter;
+                classPath += resolvedCp + path.delimiter;
             }
         });
 
         // Add vdmj jars folders
         // Note: Added in the end to allow overriding annotations in user defined annotations, such as overriding "@printf" *(see issue #69)
         classPath +=
-            path.resolve(serverConfig?.highPrecision === true ?? false ? this._jarPathVdmjHp : this._jarPathVdmj, "*") + path.delimiter;
+            path.resolve((serverConfig?.highPrecision === true ?? false) ? this._jarPathVdmjHp : this._jarPathVdmj, "*") + path.delimiter;
 
         // Set strict
         const setStrict = serverConfig.get("strict", false);
@@ -199,10 +200,10 @@ export class ServerFactory implements Disposable {
             if (stdoutLogPath != "") {
                 ensureDirectoryExistence(stdoutLogPath + path.sep + wsFolder.name.toString());
                 server.stdout.addListener("data", (chunk) =>
-                    util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk)
+                    util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stdout.log", chunk),
                 );
                 server.stderr.addListener("data", (chunk) =>
-                    util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk)
+                    util.writeToLog(stdoutLogPath + path.sep + wsFolder.name.toString() + "_stderr.log", chunk),
                 );
             }
             // Log to terminal
