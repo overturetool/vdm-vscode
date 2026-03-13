@@ -255,22 +255,40 @@ export class ClientManager extends AutoDisposable {
 
     private async checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
         if (e.newState == State.Stopped && e.oldState == State.Running) {
-            // Check for un-intentional stop
             if (this._restartOnCrash && this.has(wsFolder)) {
-                let client = this.get(wsFolder);
+                const client = this.get(wsFolder);
 
-                let m = `Client stopped unexpectantly, restarting client..`;
+                let m = `Client stopped unexpectedly.`;
                 console.warn(`[${this.name}] ${m}`);
-                window.showWarningMessage(m, "Don't restart again", "Ok").then((press) => {
+                window.showWarningMessage(m, "Restart", "Don't restart again").then(async (press) => {
                     if (press == "Don't restart again") {
                         this._restartOnCrash = false;
+                        return;
+                    }
+                    // re-check after dialog
+                    if (press == "Restart" && this.has(wsFolder)) {
+                        await this.restartClean(wsFolder, client);
                     }
                 });
-
-                this.delete(wsFolder);
-                await this.startClient(wsFolder, getDialectFromAlias(client.languageId));
             }
         }
+    }
+
+    private async restartClean(wsFolder: WorkspaceFolder, oldClient: SpecificationLanguageClient) {
+        console.log(`[${this.name}] Performing clean restart`);
+
+        this.delete(wsFolder);
+
+        try {
+            if (oldClient.needsStop()) {
+                await oldClient.stop();
+            }
+        } catch (e) {
+            console.warn("Error stopping client: ", e);
+        }
+
+        await new Promise((r) => setTimeout(r, 300));
+        await this.startClient(wsFolder, getDialectFromAlias(oldClient.languageId));
     }
 
     private addDisposable(wsFolder: WorkspaceFolder, disposable: Disposable) {
