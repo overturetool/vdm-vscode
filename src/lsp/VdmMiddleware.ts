@@ -1,35 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { ProviderResult, TextDocument, CancellationToken, CodeLens, workspace, Uri, Diagnostic, window, commands } from "vscode";
-import { HandleDiagnosticsSignature, Middleware, ProvideCodeLensesSignature, ProvideDocumentSymbolsSignature } from "vscode-languageclient";
+import { ProviderResult, TextDocument, CancellationToken, CodeLens, workspace, commands } from "vscode";
+import { Middleware, ProvideCodeLensesSignature, ProvideDocumentSymbolsSignature } from "vscode-languageclient";
 
 export default class VdmMiddleware implements Middleware {
-    private _pendingSaveUris: Set<string> = new Set();
     private _pendingUndoUris: Set<string> = new Set();
 
-    notifyOutlineRefreshOnSave(uri: string) {
-        this._pendingSaveUris.add(uri);
-    }
-
-    handleDiagnostics(uri: Uri, diagnostics: Diagnostic[], next: HandleDiagnosticsSignature): void {
-        next(uri, diagnostics);
-        const key = uri.toString();
-        if (!this._pendingSaveUris.has(key)) {
-            return;
-        }
-        this._pendingSaveUris.delete(key);
-
-        const editor = window.visibleTextEditors.find((e) => e.document.uri.toString() === key);
-        if (!editor) {
-            return;
-        }
-
-        const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
-        editor
-            .edit((edit) => edit.insert(end, " "), { undoStopBefore: false, undoStopAfter: false })
-            .then(() => {
-                this._pendingUndoUris.add(key);
-            });
+    schedulePendingUndo(uri: string) {
+        this._pendingUndoUris.add(uri);
     }
 
     provideDocumentSymbols(document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature): ProviderResult<any> {

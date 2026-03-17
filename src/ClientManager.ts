@@ -251,6 +251,19 @@ export class ClientManager extends AutoDisposable {
         }
         // Check project lib consistency
         this.checkLibConsistency(wsFolder, dialect);
+
+        // Outline refresh triggered by TC notification
+        client.onNotification("slsp/checked", () => {
+            window.visibleTextEditors
+                .filter((e) => e.document.languageId === dialect)
+                .forEach((editor) => {
+                    const key = editor.document.uri.toString();
+                    const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
+                    editor
+                        .edit((edit) => edit.insert(end, " "), { undoStopBefore: false, undoStopAfter: false })
+                        .then(() => (client.middleware as VdmMiddleware).schedulePendingUndo(key));
+                });
+        });
     }
 
     private async checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {
