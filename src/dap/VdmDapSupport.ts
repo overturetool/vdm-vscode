@@ -30,6 +30,8 @@ export namespace VdmDapSupport {
     let sessions: string[] = new Array(); // Array of running sessions
     let debugSessions: vscode.DebugSession[] = [];
     let outputChannel: any;
+    let functionBreakpointDecorationType: vscode.TextEditorDecorationType | undefined;
+    let functionBreakpointDecorations: Map<string, vscode.Range[]> = new Map();
 
     export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
         if (!initialized) {
@@ -47,12 +49,30 @@ export namespace VdmDapSupport {
             vscode.languages.registerEvaluatableExpressionProvider([...vdmFileExtensions], {
                 provideEvaluatableExpression(
                     document: vscode.TextDocument,
-                    position: vscode.Position
+                    position: vscode.Position,
                 ): vscode.ProviderResult<vscode.EvaluatableExpression> {
                     // This regex captures anything until: a whitespace, ';', ',' '=' or ':'. This works as VDMJ will show an error if the variable name is not valid.
                     const wordRange = document.getWordRangeAtPosition(position, /[^ ;,:=]+/);
                     return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
                 },
+            });
+
+            // Decoration type inizialization
+            functionBreakpointDecorationType = vscode.window.createTextEditorDecorationType({
+                gutterIconPath: context.asAbsolutePath("resources/icons/function-breakpoint.svg"),
+                gutterIconSize: "contain",
+            });
+
+            // Handles editors opened/made visible after response arrives
+            vscode.window.onDidChangeVisibleTextEditors((editors) => {
+                if (!functionBreakpointDecorationType) {
+                    return;
+                }
+                for (const editor of editors) {
+                    const filePath = editor.document.uri.fsPath;
+                    const ranges = functionBreakpointDecorations.get(filePath) ?? [];
+                    editor.setDecorations(functionBreakpointDecorationType, ranges);
+                }
             });
         }
     }
@@ -81,9 +101,37 @@ export namespace VdmDapSupport {
                             if ((m.message = "connection closed")) {
                                 sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
                                 debugSessions = debugSessions.filter(
-                                    (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString()
+                                    (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString(),
                                 );
                             }
+                        },
+                        onDidSendMessage: (m: any) => {
+                            if (m.type === "response" && m.command === "setFunctionBreakpoints" && m.success) {
+                                functionBreakpointDecorations.clear();
+
+                                for (const bp of m.body?.breakpoints ?? []) {
+                                    if (bp.verified && bp.source?.path && bp.line) {
+                                        const path = bp.source.path;
+                                        const range = new vscode.Range(bp.line - 1, 0, bp.line - 1, 0);
+                                        if (!functionBreakpointDecorations.has(path)) {
+                                            functionBreakpointDecorations.set(path, []);
+                                        }
+                                        functionBreakpointDecorations.get(path).push(range);
+                                    }
+                                }
+
+                                for (const editor of vscode.window.visibleTextEditors) {
+                                    const filePath = editor.document.uri.fsPath;
+                                    const ranges = functionBreakpointDecorations.get(filePath) ?? [];
+                                    editor.setDecorations(functionBreakpointDecorationType, ranges);
+                                }
+                            }
+                        },
+                        onWillStopSession: () => {
+                            for (const editor of vscode.window.visibleTextEditors) {
+                                editor.setDecorations(functionBreakpointDecorationType, []);
+                            }
+                            functionBreakpointDecorations.clear();
                         },
                     };
 
@@ -95,8 +143,12 @@ export namespace VdmDapSupport {
                         outputChannel = vscode.window.createOutputChannel(`vdm-vscode DAP: ${session.name}`);
                         debugAdapterTracker.onWillReceiveMessage = (m) =>
                             outputChannel.appendLine(`[${new Date().toLocaleTimeString()}]:\n${JSON.stringify(m, undefined, 2)}\n`);
-                        debugAdapterTracker.onDidSendMessage = (m) =>
+
+                        const existingOnDidSendMessage = debugAdapterTracker.onDidSendMessage;
+                        debugAdapterTracker.onDidSendMessage = (m) => {
                             outputChannel.appendLine(`[${new Date().toLocaleTimeString()}]:\n${JSON.stringify(m, undefined, 2)}\n`);
+                            existingOnDidSendMessage(m);
+                        };
                     }
 
                     return debugAdapterTracker;
@@ -110,7 +162,7 @@ export namespace VdmDapSupport {
         resolveDebugConfiguration(
             folder: vscode.WorkspaceFolder | undefined,
             inConfig: vscode.DebugConfiguration,
-            _token?: vscode.CancellationToken
+            _token?: vscode.CancellationToken,
         ): vscode.ProviderResult<vscode.DebugConfiguration> {
             let uri = folder.uri.toString();
             let config: VdmDebugConfiguration = inConfig;
@@ -123,7 +175,7 @@ export namespace VdmDapSupport {
             // Check if there is a debug session running and if one of those sessions are for the specification
             if (vscode.debug.activeDebugSession && sessions.includes(uri)) {
                 vscode.window.showInformationMessage(
-                    "Debug session already running, cannot launch multiple sessions for the same specification"
+                    "Debug session already running, cannot launch multiple sessions for the same specification",
                 );
                 return undefined; // Abort launch
             }
@@ -147,8 +199,8 @@ export namespace VdmDapSupport {
                     logPath,
                     `${config.name.replace(/\W+/g, "_")}_${`${date.toLocaleDateString()}_${date.toLocaleTimeString()}`.replace(
                         /[: \\/]/g,
-                        "_"
-                    )}.rtlog`
+                        "_",
+                    )}.rtlog`,
                 );
             }
 
@@ -168,7 +220,7 @@ export namespace VdmDapSupport {
 
         async createDebugAdapterDescriptor(
             session: vscode.DebugSession,
-            _executable: vscode.DebugAdapterExecutable | undefined
+            _executable: vscode.DebugAdapterExecutable | undefined,
         ): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
             let dapPort: number = this.dapPorts.get(session.workspaceFolder.uri);
             // Check if server has not been launched
@@ -196,23 +248,23 @@ export namespace VdmDapSupport {
                                     } else {
                                         // Warn the user of the error.
                                         vscode.window.showWarningMessage(
-                                            "Cannot begin debug session as the specification failed to parse/check."
+                                            "Cannot begin debug session as the specification failed to parse/check.",
                                         );
 
                                         // Remove sessions from active sessions
                                         sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
                                         debugSessions = debugSessions.filter(
-                                            (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString()
+                                            (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString(),
                                         );
                                         return resolve(new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session)));
                                     }
-                                }
+                                },
                             );
                             // Notify the user if the server takes longer than ~3 seconds to finish the initial parse/check.
                             const timer: NodeJS.Timeout = setTimeout(() => {
                                 if (disposable) {
                                     vscode.window.showInformationMessage(
-                                        "Delaying the debug session until the initial parse/check of the specification has finished.."
+                                        "Delaying the debug session until the initial parse/check of the specification has finished..",
                                     );
                                 }
                                 clearTimeout(timer);
@@ -230,7 +282,7 @@ export namespace VdmDapSupport {
                     // Remove sessions from active sessions
                     sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
                     debugSessions = debugSessions.filter(
-                        (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString()
+                        (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString(),
                     );
                     return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session));
                 }
@@ -254,7 +306,7 @@ export namespace VdmDapSupport {
 
                 return undefined;
             },
-            () => undefined
+            () => undefined,
         );
     }
 
@@ -262,7 +314,7 @@ export namespace VdmDapSupport {
         command: string | undefined,
         folder: vscode.WorkspaceFolder | undefined,
         stopOnEntry?: boolean,
-        adHoc: boolean = false
+        adHoc: boolean = false,
     ): Thenable<boolean> {
         var debugConfiguration: VdmDebugConfiguration = {
             type: "vdm", // The type of the debug session.
