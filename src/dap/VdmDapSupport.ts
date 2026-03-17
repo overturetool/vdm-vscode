@@ -33,6 +33,27 @@ export namespace VdmDapSupport {
     let functionBreakpointDecorationType: vscode.TextEditorDecorationType | undefined;
     let functionBreakpointDecorations: Map<string, vscode.Range[]> = new Map();
 
+    function resolveWorkspaceFolder(folder: vscode.WorkspaceFolder | undefined): vscode.WorkspaceFolder | undefined {
+        if (folder) {
+            return folder;
+        }
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders?.length) {
+            return undefined;
+        }
+        if (folders.length === 1) {
+            return folders[0];
+        }
+        const activeUri = vscode.window.activeTextEditor?.document?.uri;
+        if (activeUri) {
+            const match = vscode.workspace.getWorkspaceFolder(activeUri);
+            if (match) {
+                return match;
+            }
+        }
+        return folders[0];
+    }
+
     export function initDebugConfig(context: vscode.ExtensionContext, clientManager: ClientManager) {
         if (!initialized) {
             initialized = true;
@@ -88,20 +109,25 @@ export namespace VdmDapSupport {
             // When a session is started, add it to the array of running sessions
             vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
                 if (session.type === "vdm") {
-                    sessions.push(session.workspaceFolder.uri.toString());
-                    debugSessions.push(session);
+                    const resolvedFolder = resolveWorkspaceFolder(session.workspaceFolder);
+                    if (resolvedFolder) {
+                        sessions.push(resolvedFolder.uri.toString());
+                        debugSessions.push(session);
+                    }
                 }
             });
 
             vscode.debug.registerDebugAdapterTrackerFactory("vdm", {
                 createDebugAdapterTracker(session: vscode.DebugSession) {
+                    const resolvedFolder = resolveWorkspaceFolder(session.workspaceFolder);
+                    const folderUri = resolvedFolder?.uri.toString();
                     const debugAdapterTracker: vscode.ProviderResult<vscode.DebugAdapterTracker> = {
                         // When a session terminates, remove it from the array of running sessions
                         onError: (m) => {
-                            if ((m.message = "connection closed")) {
-                                sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                            if (m.message === "connection closed") {
+                                sessions = sessions.filter((value) => value != folderUri);
                                 debugSessions = debugSessions.filter(
-                                    (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString(),
+                                    (value) => resolveWorkspaceFolder(value.workspaceFolder)?.uri.toString() != folderUri,
                                 );
                             }
                         },
@@ -135,7 +161,7 @@ export namespace VdmDapSupport {
                         },
                     };
 
-                    if (vscode.workspace.getConfiguration("vdm-vscode.trace", session.workspaceFolder)?.debug ?? false) {
+                    if (vscode.workspace.getConfiguration("vdm-vscode.trace", resolvedFolder)?.debug ?? false) {
                         // If tracing is enabled create a new output channel and log to it
                         if (outputChannel) {
                             outputChannel.dispose();
@@ -164,7 +190,12 @@ export namespace VdmDapSupport {
             inConfig: vscode.DebugConfiguration,
             _token?: vscode.CancellationToken,
         ): vscode.ProviderResult<vscode.DebugConfiguration> {
-            let uri = folder.uri.toString();
+            const resolvedFolder = resolveWorkspaceFolder(folder);
+            if (!resolvedFolder) {
+                vscode.window.showErrorMessage("Cannot start a debug session: no workspace folder is available.");
+                return undefined;
+            }
+            let uri = resolvedFolder.uri.toString();
             let config: VdmDebugConfiguration = inConfig;
 
             // Check for remote control violation
@@ -192,7 +223,7 @@ export namespace VdmDapSupport {
             if (config?.enableLogging == true) {
                 // If logging of RT events is enabled then make sure the logging path exists and
                 // set the "logging" property on the configuration that is to be passed to the server.
-                const logPath: string = Path.join(Util.generatedDataPath(folder).fsPath, "rtlogs");
+                const logPath: string = Path.join(Util.generatedDataPath(resolvedFolder).fsPath, "rtlogs");
                 Fs.ensureDirSync(logPath);
                 const date = new Date();
                 config.logging = Path.join(
@@ -222,15 +253,20 @@ export namespace VdmDapSupport {
             session: vscode.DebugSession,
             _executable: vscode.DebugAdapterExecutable | undefined,
         ): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
-            let dapPort: number = this.dapPorts.get(session.workspaceFolder.uri);
+            const resolvedFolder = resolveWorkspaceFolder(session.workspaceFolder);
+            if (!resolvedFolder) {
+                vscode.window.showWarningMessage("Cannot start a debug session: no workspace folder could be resolved.");
+                return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session));
+            }
+            let dapPort: number = this.dapPorts.get(resolvedFolder.uri);
             // Check if server has not been launched
             if (!dapPort) {
                 let errMsg: string = "";
 
                 // Start the client which launches the server
-                const client: SpecificationLanguageClient = await this._clientManager.launchClientForWorkspace(session.workspaceFolder);
+                const client: SpecificationLanguageClient = await this._clientManager.launchClientForWorkspace(resolvedFolder);
                 if (client) {
-                    dapPort = this.dapPorts.get(session.workspaceFolder.uri);
+                    dapPort = this.dapPorts.get(resolvedFolder.uri);
                     if (!dapPort) {
                         // The client did not receive a dap port so the server probably does not support DAP.
                         errMsg = `[${this._clientManager.name}] Did not receive a DAP port from the language server on start up, debugging is not activated`;
@@ -252,9 +288,11 @@ export namespace VdmDapSupport {
                                         );
 
                                         // Remove sessions from active sessions
-                                        sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                                        sessions = sessions.filter((value) => value != resolvedFolder.uri.toString());
                                         debugSessions = debugSessions.filter(
-                                            (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString(),
+                                            (value) =>
+                                                resolveWorkspaceFolder(value.workspaceFolder)?.uri.toString() !=
+                                                resolvedFolder.uri.toString(),
                                         );
                                         return resolve(new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session)));
                                     }
@@ -272,7 +310,7 @@ export namespace VdmDapSupport {
                         });
                     }
                 } else {
-                    errMsg = `Unable to launch a debug session for the workspace folder ${session.workspaceFolder.name} without any VDM files`;
+                    errMsg = `Unable to launch a debug session for the workspace folder ${resolvedFolder.name} without any VDM files`;
                 }
 
                 if (errMsg) {
@@ -280,9 +318,9 @@ export namespace VdmDapSupport {
                     vscode.window.showWarningMessage(errMsg);
 
                     // Remove sessions from active sessions
-                    sessions = sessions.filter((value) => value != session.workspaceFolder.uri.toString());
+                    sessions = sessions.filter((value) => value != resolvedFolder.uri.toString());
                     debugSessions = debugSessions.filter(
-                        (value) => value.workspaceFolder.uri.toString() != session.workspaceFolder.uri.toString(),
+                        (value) => resolveWorkspaceFolder(value.workspaceFolder)?.uri.toString() != resolvedFolder.uri.toString(),
                     );
                     return new vscode.DebugAdapterInlineImplementation(new StoppingDebugAdapter(session));
                 }
