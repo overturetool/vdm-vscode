@@ -7,11 +7,16 @@ import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";
 import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
 import { ClientManager } from "../../../ClientManager";
+import { guessDialect, VdmDialect } from "../../../util/DialectUtil";
 
 export class TranslateButton implements Disposable {
     protected _commandDisposable: Disposable;
 
-    constructor(protected _language: string, protected _extensionName: string, clientManager: ClientManager) {
+    constructor(
+        protected _language: string,
+        protected _extensionName: string,
+        clientManager: ClientManager,
+    ) {
         this._commandDisposable = commands.registerCommand(
             `${_extensionName}.translate.${this._language}`,
             async (uri) => {
@@ -24,11 +29,19 @@ export class TranslateButton implements Disposable {
                 }
                 this.translate(uri, wsFolder);
             },
-            this
+            this,
         );
     }
 
     protected async translate(uri: Uri, wsFolder: WorkspaceFolder): Promise<void> {
+        // If translating a folder, check dialect supports UML
+        if (this._language === "vdm2uml" && isDir(uri.fsPath)) {
+            const dialect = await guessDialect(wsFolder);
+            if (dialect === VdmDialect.VDMSL) {
+                window.showInformationMessage("Translate to UML is not supported for VDM-SL projects.");
+                return;
+            }
+        }
         // Check timestamp setting
         const translateConfig = workspace.getConfiguration([this._extensionName, "translate", "general"].join("."), wsFolder);
         const timestamped = translateConfig?.get("storeAllTranslations", false);
@@ -48,7 +61,7 @@ export class TranslateButton implements Disposable {
                     // Perform translation and handle result
                     const languageConfig = workspace.getConfiguration(
                         [this._extensionName, "translate", this._language].join("."),
-                        wsFolder
+                        wsFolder,
                     );
                     p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig)).then(async (mainFileUri) => {
                         // Check if a file has been returned
