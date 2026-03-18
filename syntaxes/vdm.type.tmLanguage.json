@@ -18,6 +18,9 @@
             "include": "#tuple"
         },
         {
+            "include": "#chars"
+        },
+        {
             "include": "#strings"
         }
     ],
@@ -41,6 +44,10 @@
         "tuple": {
             "name": "support.type.tuple.vdm",
             "match": "\\bmk_"
+        },
+        "chars": {
+            "name": "string.quoted.single.vdm",
+            "match": "'(?:[^'\\\\]|\\\\(?:['\"\\\\rntfea]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|c.|[0-7]{3}))'"
         },
         "strings": {
             "name": "string.quoted.double.vdm",
