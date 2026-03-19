@@ -86,8 +86,9 @@ export class TranslateButton implements Disposable {
         // Create save location in "...<worksapcefolder>/.generate/<language>"
         const saveLocation = createDirectorySync(location, timestamped);
 
-        // Make sure the directory is empty
-        Fs.emptyDirSync(saveLocation.fsPath);
+        // Remove the directory entirely and recreate it empty
+        Fs.removeSync(saveLocation.fsPath);
+        Fs.ensureDirSync(saveLocation.fsPath);
 
         return saveLocation;
     }
