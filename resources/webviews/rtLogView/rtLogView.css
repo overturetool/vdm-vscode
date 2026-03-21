@@ -89,13 +89,31 @@ table {
 .mainContainer {
     overflow: scroll;
     width: 100%;
+    flex: 1 1 0;
+    min-height: 50px;
 }
 
 .secondaryContainer {
-    overflow: scroll;
+    overflow: auto;
     padding-top: 10px;
-    height: fit-content;
+    flex: 1 1 0;
+    min-height: 50px;
     width: fit-content;
+}
+
+.divider {
+    height: 6px;
+    width: 100%;
+    background: var(--vscode-editor-foreground);
+    opacity: 0.2;
+    cursor: row-resize;
+    flex-shrink: 0;
+    transition: opacity 0.1s;
+}
+
+.divider:hover,
+.divider.dragging {
+    opacity: 0.6;
 }
 
 .viewContainer {

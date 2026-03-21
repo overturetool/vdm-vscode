@@ -284,6 +284,38 @@ function handleWorkerResponse(event) {
 
     // Add conjeture table if the view is the execeution view and it has conjectures
     if (data.msg == execViewId && conjectures && conjectures.length > 0) {
+        // Divider
+        const divider = document.createElement("div");
+        divider.classList.add("divider");
+
+        // Drag logic
+        divider.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            divider.classList.add("dragging");
+            const startY = e.clientY;
+            const startMainHeight = mainContainer.getBoundingClientRect().height;
+            const startSecondHeight = secondContainer.getBoundingClientRect().height;
+
+            const onMouseMove = (e) => {
+                const delta = e.clientY - startY;
+                const newMainHeight = Math.max(50, startMainHeight + delta);
+                const newSecondHeight = Math.max(50, startSecondHeight - delta);
+                mainContainer.style.flex = "none";
+                mainContainer.style.height = `${newMainHeight}px`;
+                secondContainer.style.flex = "none";
+                secondContainer.style.height = `${newSecondHeight}px`;
+            };
+
+            const onMouseUp = () => {
+                divider.classList.remove("dragging");
+                window.removeEventListener("mousemove", onMouseMove);
+                window.removeEventListener("mouseup", onMouseUp);
+            };
+
+            window.addEventListener("mousemove", onMouseMove);
+            window.addEventListener("mouseup", onMouseUp);
+        });
+
         const secondContainer = document.createElement("div");
         secondContainer.classList.add("secondaryContainer");
 
@@ -296,6 +328,9 @@ function handleWorkerResponse(event) {
         tableContainer.appendChild(tableHeader);
         tableContainer.appendChild(generateConjectureTable(conjectures));
         secondContainer.appendChild(tableContainer);
+        view.containers.push(secondContainer);
+
+        view.containers.push(divider);
         view.containers.push(secondContainer);
     }
 
