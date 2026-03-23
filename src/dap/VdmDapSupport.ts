@@ -266,6 +266,13 @@ export namespace VdmDapSupport {
                 // Start the client which launches the server
                 const client: SpecificationLanguageClient = await this._clientManager.launchClientForWorkspace(resolvedFolder);
                 if (client) {
+                    const portTimeout = 10000;
+                    const portInterval = 100;
+                    let elapsed = 0;
+                    while (!this.dapPorts.get(resolvedFolder.uri) && elapsed < portTimeout) {
+                        await new Promise((r) => setTimeout(r, portInterval));
+                        elapsed += portInterval;
+                    }
                     dapPort = this.dapPorts.get(resolvedFolder.uri);
                     if (!dapPort) {
                         // The client did not receive a dap port so the server probably does not support DAP.

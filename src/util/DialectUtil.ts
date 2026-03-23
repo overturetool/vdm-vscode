@@ -40,7 +40,7 @@ export function vdmFilePattern(fsPath: string): RelativePattern {
         .flatMap((extensions) => extensions)
         .join(",");
 
-    return new RelativePattern(fsPath, `*.{${allExtensionsCommaSeparated}}`);
+    return new RelativePattern(fsPath, `**/*.{${allExtensionsCommaSeparated}}`);
 }
 
 export async function guessDialect(wsFolder: WorkspaceFolder): Promise<VdmDialect> {
