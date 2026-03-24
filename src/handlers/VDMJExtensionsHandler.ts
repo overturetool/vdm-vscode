@@ -25,10 +25,10 @@ export class VDMJExtensionsHandler extends AutoDisposable {
     constructor() {
         super();
         Util.registerCommand(this._disposables, "vdm-vscode.addExtensionJarFolders", () =>
-            Util.addToSettingsArray(true, "Extension Search Path", "vdm-vscode.server", "extensionSearchPaths")
+            Util.addToSettingsArray(true, "Extension Search Path", "vdm-vscode.server", "extensionSearchPaths"),
         );
         Util.registerCommand(this._disposables, "vdm-vscode.addExtensionJars", () =>
-            Util.addToSettingsArray(false, "Extension Search Path", "vdm-vscode.server", "extensionSearchPaths")
+            Util.addToSettingsArray(false, "Extension Search Path", "vdm-vscode.server", "extensionSearchPaths"),
         );
     }
 
@@ -86,19 +86,19 @@ export class VDMJExtensionsHandler extends AutoDisposable {
             jarPathsFromSettings.push(
                 ...this.resolveJarPathsFromSettings(userOrWorkspaceSettings, resolveFailedPaths).filter((uwsPath: string) => {
                     const existingJarPath: string = jarPathsFromSettings.find(
-                        (fsPath: string) => Path.basename(fsPath) === Path.basename(uwsPath)
+                        (fsPath: string) => Path.basename(fsPath) === Path.basename(uwsPath),
                     );
                     if (existingJarPath) {
                         return false;
                     }
                     return true;
-                })
+                }),
             );
         }
 
         if (resolveFailedPaths.length > 0) {
             const msg: string = `Unable to resolve the following VDM extension jar/folder paths: <${resolveFailedPaths.reduce(
-                (prev, curr) => (curr += `> <${prev}`)
+                (prev, curr) => (curr += `> <${prev}`),
             )}>. These can be changed in the settings.`;
             window
                 .showInformationMessage(msg, ...["Go to settings"])
@@ -185,8 +185,8 @@ export class VDMJExtensionsHandler extends AutoDisposable {
             getExtensionPath(),
             "resources",
             "jars",
-            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : "vdmj" ?? "vdmj",
-            "libs"
+            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : ("vdmj" ?? "vdmj"),
+            "libs",
         );
 
         if (!Fs.existsSync(libPath)) {
@@ -233,8 +233,8 @@ export class VDMJExtensionsHandler extends AutoDisposable {
             getExtensionPath(),
             "resources",
             "jars",
-            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : "vdmj" ?? "vdmj",
-            "plugins"
+            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : ("vdmj" ?? "vdmj"),
+            "plugins",
         );
 
         if (!Fs.existsSync(pluginPath)) {
@@ -280,8 +280,8 @@ export class VDMJExtensionsHandler extends AutoDisposable {
             getExtensionPath(),
             "resources",
             "jars",
-            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : "vdmj" ?? "vdmj",
-            "annotations"
+            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : ("vdmj" ?? "vdmj"),
+            "annotations",
         );
 
         if (!Fs.existsSync(annotationsPath)) {
@@ -304,7 +304,7 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     public static getDefaultAnnotationSources(
         wsFolder: WorkspaceFolder,
-        userDefinedAnnotationSources: AnnotationSource[]
+        userDefinedAnnotationSources: AnnotationSource[],
     ): AnnotationSource[] {
         const defaultAnnotationsPath = this.getIncludedAnnotationsFolderPath(wsFolder);
 
@@ -322,5 +322,16 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         const defaultAnnotations = this.getDefaultAnnotationSources(wsFolder, extensionAnnotations);
 
         return userAnnotations.concat(defaultAnnotations, extensionAnnotations);
+    }
+
+    public static getExtensionClasspathSources(): String[] {
+        return extensions.all.reduce((jarPaths, ext) => {
+            const { success, data } = packageJsonSchema.safeParse(ext.packageJSON);
+            if (!success || !data["vdmjEnhancements"]) {
+                return jarPaths;
+            }
+            const resolvedPaths = data["vdmjEnhancements"].map((relPath) => Uri.joinPath(ext.extensionUri, relPath).fsPath);
+            return [...jarPaths, ...resolvedPaths];
+        }, []);
     }
 }

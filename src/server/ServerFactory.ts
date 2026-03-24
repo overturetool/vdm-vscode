@@ -151,6 +151,9 @@ export class ServerFactory implements Disposable {
 
         annotationClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
 
+        // Add all jars from add-on extensions (support jars with no metadata)
+        VDMJExtensionsHandler.getExtensionClasspathSources().forEach((jarPath) => (classPath += jarPath + path.delimiter));
+
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {
             const resolvedCp: string = cp.replace("${workspaceFolder}", wsFolder.uri.fsPath);
