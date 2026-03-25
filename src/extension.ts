@@ -14,6 +14,9 @@ import {
     StatusBarItem,
     Uri,
     env,
+    Range,
+    TextEdit,
+    languages,
 } from "vscode";
 import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import { VdmjCTFilterHandler } from "./vdmj/VdmjCTFilterHandler";
@@ -44,6 +47,7 @@ import { VDMJExtensionsHandler } from "./handlers/VDMJExtensionsHandler";
 import { checkJavaVersion, getMinJavaVersion } from "./util/JavaUtil";
 import * as path from "path";
 import * as fs from "fs";
+import { formatVDM } from "./formatter/vdmFormatter";
 
 let clientManager: ClientManager;
 
@@ -194,6 +198,23 @@ export async function activate(context: ExtensionContext) {
         const wsFolder: WorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
         setHighPrecisionStatus(hpStatusBarItem, wsFolder && clientManager.isHighPrecisionClient(clientManager.get(wsFolder)));
     }
+
+    context.subscriptions.push(
+        languages.registerDocumentRangeFormattingEditProvider(["vdmsl", "vdmpp", "vdmrt"], {
+            provideDocumentRangeFormattingEdits(document) {
+                const wsFolder = workspace.getWorkspaceFolder(document.uri);
+
+                const dialect: VdmDialect = wsFolder ? knownVdmFolders.get(wsFolder) : undefined;
+
+                const text = document.getText();
+                const formatted = formatVDM(text, dialect);
+
+                const fullRange = new Range(document.positionAt(0), document.positionAt(text.length));
+
+                return [TextEdit.replace(fullRange, formatted)];
+            },
+        }),
+    );
 }
 
 function setHighPrecisionStatus(statusBarItem: StatusBarItem, isHighPrecision: boolean) {
