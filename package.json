@@ -1229,6 +1229,16 @@
                         "description": "Activate the VDMJ -verbose flag that sends detailed information to the VDMJ console."
                     }
                 }
+            },
+            {
+                "title": "Formatter",
+                "properties": {
+                    "vdm-vscode.format.enable": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Enable or disable VDM formatter"
+                    }
+                }
             }
         ],
         "debuggers": [
