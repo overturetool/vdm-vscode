@@ -1,3 +1,6 @@
+### 2.0.0
+- Release candidate for 2.0.0
+
 ### 1.5.1
 - Add support for PO code lenses.
 - Subsequent launches of polymorphic code lenses now prefill type arguments.
