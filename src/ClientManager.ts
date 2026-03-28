@@ -28,6 +28,7 @@ import * as crypto from "crypto";
 import * as AdmZip from "adm-zip";
 import * as fs from "fs";
 import * as path from "path";
+import { CompletedParsingNotification, CompletedParsingParams } from "./server/ServerNotifications";
 
 export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
@@ -253,15 +254,38 @@ export class ClientManager extends AutoDisposable {
         this.checkLibConsistency(wsFolder, dialect);
 
         // Outline refresh triggered by TC notification
-        client.onNotification("slsp/checked", () => {
+        client.onNotification(CompletedParsingNotification.type, (_params: CompletedParsingParams) => {
             window.visibleTextEditors
                 .filter((e) => e.document.languageId === dialect)
-                .forEach((editor) => {
+                .forEach(async (editor) => {
                     const key = editor.document.uri.toString();
                     const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
-                    editor
-                        .edit((edit) => edit.insert(end, " "), { undoStopBefore: false, undoStopAfter: false })
-                        .then(() => (client.middleware as VdmMiddleware).schedulePendingUndo(key));
+
+                    // Notify server to ignore the insert
+                    client.sendNotification("$/ignoreNextChange", {
+                        uri: editor.document.uri.toString(),
+                        range: {
+                            start: { line: end.line, character: end.character },
+                            end: { line: end.line, character: end.character },
+                        },
+                        text: " ",
+                    });
+
+                    // Insert space
+                    await editor.edit((edit) => edit.insert(end, " "), { undoStopBefore: false, undoStopAfter: false });
+
+                    // Notify server to ignore the delete
+                    client.sendNotification("$/ignoreNextChange", {
+                        uri: editor.document.uri.toString(),
+                        range: {
+                            start: { line: end.line, character: end.character },
+                            end: { line: end.line, character: end.character + 1 },
+                        },
+                        text: "",
+                    });
+
+                    // Undo the space via middleware
+                    (client.middleware as VdmMiddleware).schedulePendingUndo(key);
                 });
         });
     }
