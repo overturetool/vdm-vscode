@@ -37,6 +37,7 @@ export class ClientManager extends AutoDisposable {
     private _highPrecisionClients: Set<SpecificationLanguageClient> = new Set();
     private _stdlibHashes: Map<string, string> = new Map();
     private _stdlibDiagnostics = languages.createDiagnosticCollection("vdm-stdlib");
+    private _pendingSaveUris: Set<string> = new Set();
 
     constructor(
         private _serverFactory: ServerFactory,
@@ -257,7 +258,9 @@ export class ClientManager extends AutoDisposable {
         client.onNotification(CompletedParsingNotification.type, (_params: CompletedParsingParams) => {
             window.visibleTextEditors
                 .filter((e) => e.document.languageId === dialect)
+                .filter((e) => this._pendingSaveUris.has(e.document.uri.toString()))
                 .forEach(async (editor) => {
+                    this._pendingSaveUris.delete(editor.document.uri.toString());
                     const key = editor.document.uri.toString();
                     const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
 
@@ -452,5 +455,9 @@ export class ClientManager extends AutoDisposable {
                 this._stdlibDiagnostics.delete(uri);
             }),
         ];
+    }
+
+    flagSavedUri(uri: string) {
+        this._pendingSaveUris.add(uri);
     }
 }

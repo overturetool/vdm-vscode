@@ -175,6 +175,22 @@ export async function activate(context: ExtensionContext) {
     workspace.textDocuments.forEach((document: TextDocument) => clientManager.launchClient(document));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders((e) => clientManager.stopClients(e.removed), this));
     context.subscriptions.push(workspace.onDidChangeWorkspaceFolders(() => resetSortedWorkspaceFolders()));
+    context.subscriptions.push(
+        workspace.onDidSaveTextDocument((document: TextDocument) => {
+            if (!vdmFileExtensions.has(document.languageId)) {
+                return;
+            }
+            const wsFolder = workspace.getWorkspaceFolder(document.uri);
+            if (!wsFolder) {
+                return;
+            }
+            const client = clientManager.get(wsFolder);
+            if (!client) {
+                return;
+            }
+            clientManager.flagSavedUri(document.uri.toString());
+        }),
+    );
 
     // Add settings watch
     workspace.onDidChangeConfiguration(
