@@ -264,27 +264,17 @@ export class ClientManager extends AutoDisposable {
                     const key = editor.document.uri.toString();
                     const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
 
-                    // Notify server to ignore the insert
-                    client.sendNotification("$/ignoreNextChange", {
-                        uri: editor.document.uri.toString(),
-                        range: {
-                            start: { line: end.line, character: end.character },
-                            end: { line: end.line, character: end.character },
-                        },
-                        text: " ",
-                    });
+                    // Empty document
+                    if (end.character === 0 && end.line === 0) {
+                        return;
+                    }
 
-                    // Insert space
-                    await editor.edit((edit) => edit.insert(end, " "), { undoStopBefore: false, undoStopAfter: false });
+                    const lastChar = editor.document.getText(new Range(end.translate(0, -1), end));
 
-                    // Notify server to ignore the delete
-                    client.sendNotification("$/ignoreNextChange", {
-                        uri: editor.document.uri.toString(),
-                        range: {
-                            start: { line: end.line, character: end.character },
-                            end: { line: end.line, character: end.character + 1 },
-                        },
-                        text: "",
+                    // Non-changing replacement of last character
+                    await editor.edit((edit) => edit.replace(new Range(end.translate(0, -1), end), lastChar), {
+                        undoStopBefore: false,
+                        undoStopAfter: false,
                     });
 
                     // Undo the space via middleware

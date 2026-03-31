@@ -23,30 +23,3 @@ export interface CompletedParsingParams {
      */
     successful: boolean;
 }
-
-/**
- * The `$/ignoreNextChange` notification is sent from the client to the server to indicate
- * that the next document change at the specified location should be ignored by the server.
- * This is used to trigger a VSCode outline refresh after a typecheck completes, by inserting
- * and immediately removing a space at the end of the file. Since these edits are not real
- * changes to the specification, the server should ignore them.
- * Two notifications are sent: one for the insert and one for the subsequent delete.
- */
-export namespace IgnoreNextChangeNotification {
-    export const type = new NotificationType<IgnoreNextChangeParams>("$/ignoreNextChange");
-}
-
-/**
- * The parameters of a `$/ignoreNextChange` notification.
- */
-export interface IgnoreNextChangeParams {
-    /** The URI of the document being changed. */
-    uri: string;
-    /** The range of the change to ignore, matching the range in the corresponding didChange message. */
-    range: {
-        start: { line: number; character: number };
-        end: { line: number; character: number };
-    };
-    /** The text of the change to ignore. Empty string for a deletion. */
-    text: string;
-}
