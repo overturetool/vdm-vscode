@@ -261,23 +261,30 @@ export class ClientManager extends AutoDisposable {
                 .filter((e) => this._pendingSaveUris.has(e.document.uri.toString()))
                 .forEach(async (editor) => {
                     this._pendingSaveUris.delete(editor.document.uri.toString());
+
                     const key = editor.document.uri.toString();
-                    const end = editor.document.lineAt(editor.document.lineCount - 1).range.end;
+                    const text = editor.document.getText();
+                    const firstNonWhitespaceIndex = text.search(/\S/);
 
                     // Empty document
-                    if (end.character === 0 && end.line === 0) {
+                    if (firstNonWhitespaceIndex === -1) {
                         return;
                     }
 
-                    const lastChar = editor.document.getText(new Range(end.translate(0, -1), end));
+                    const firstNonWhitespacePos = editor.document.positionAt(firstNonWhitespaceIndex);
+                    const firstNonWhitespaceRange = new Range(
+                        firstNonWhitespacePos,
+                        editor.document.positionAt(firstNonWhitespaceIndex + 1),
+                    );
+                    const firstNonWhitespaceChar = text[firstNonWhitespaceIndex];
 
-                    // Non-changing replacement of last character
-                    await editor.edit((edit) => edit.replace(new Range(end.translate(0, -1), end), lastChar), {
+                    // Non-changing replacement of first non-whitespace character
+                    await editor.edit((edit) => edit.replace(firstNonWhitespaceRange, firstNonWhitespaceChar), {
                         undoStopBefore: false,
                         undoStopAfter: false,
                     });
 
-                    // Undo the space via middleware
+                    // Undo the replacement via middleware
                     (client.middleware as VdmMiddleware).schedulePendingUndo(key);
                 });
         });
