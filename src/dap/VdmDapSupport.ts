@@ -143,6 +143,8 @@ export namespace VdmDapSupport {
                                             functionBreakpointDecorations.set(path, []);
                                         }
                                         functionBreakpointDecorations.get(path).push(range);
+                                    } else if (!bp.verified && bp.message) {
+                                        vscode.window.showWarningMessage(`Function breakpoint: ${bp.message}`);
                                     }
                                 }
 
