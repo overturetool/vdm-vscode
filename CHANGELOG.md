@@ -1,5 +1,51 @@
 ### 2.0.0
-- Release candidate for 2.0.0
+- Added:
+  - QuickCheck integration in the POG view
+  - Toolbar button to run POG on entire project
+  - Hover panel with QuickCheck details
+  - Inline editor warnings for PO results
+  - PO #nnn CodeLens for counterexample/witness execution
+  - Dep POs CodeLens for dependency filtering
+  - Copy button for proof obligations
+  - Function breakpoints support
+  - Automatic typechecking on interpreter cold start
+  - Launch|Debug CodeLens support for curried and polymorphic functions
+  - Draggable divider in RT Log View
+- Changed:
+  - Improved POG generation workflow and UX
+  - Enhanced handling of large POG executions (progress bar and cancel support)
+  - Outline view now refreshed automatically on save
+  - Improved navigation for missing proof obligations
+- Fixed:
+  - Various stability improvements
+  - Multiple crash handling fixes
+
+VDMJ 4.7.0 Release Features:
+- Various minor bug fixes
+  - VDMUnit has @NoPOG annotation
+  - forall and exists expressions now work with undefined values
+  - Bugs #76 and #77 fixed
+- New features:
+  - @TypeBind, @MaximalTypes and @SetProperty annotations added
+  - "RemoteControl" example added
+  - MATH`defined function added
+- POG developments:
+  - Operation POG considerably improved
+  - Adds @LoopInvariant, @LoopMeasure and @OperationMeasure
+  - New "constants", "reasons" and "undefined" QC strategies
+  - POG support for specification statements and implicit func/ops
+  - QC counterexamples now listed within the PO listing
+  - "pogdep" command added
+  - QC timeout is now in milliseconds
+- VDM-VSCode support:
+  - Stacks show hidden variables correctly
+  - lsp.IgnoreWarnings property added for unused files
+  - "pog" and "pogdep" commands added
+  - New "Free Variables" scope in stack of lambda expressions
+  - Support for POG GUI progress and cancel
+  - New "Dep POs" code lens to list dependent obligations
+  - New "PO #n" code lens to launch counterexamples
+
 
 ### 1.5.1
 - Add support for PO code lenses.
