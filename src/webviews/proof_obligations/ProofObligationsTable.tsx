@@ -161,6 +161,12 @@ const StatusWithToolTip = ({
                     }}
                 >
                     {po.status}
+                    {po.status === "Failed" && (
+                        <span
+                            className="codicon codicon-warning"
+                            css={{ marginLeft: "4px", verticalAlign: "middle", color: "var(--vscode-errorForeground)" }}
+                        />
+                    )}
                 </span>
             </div>
 
