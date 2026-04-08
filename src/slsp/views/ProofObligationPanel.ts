@@ -20,6 +20,7 @@ import {
     debug,
     Position,
     Range,
+    TextDocument,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
@@ -410,10 +411,20 @@ export class ProofObligationPanel implements Disposable {
                         case "goToSymbol":
                             // Find path of po with id
                             let po = this._pos.find((d) => d.id.toString() === message.data.toString());
-                            let path = Uri.parse(po.location.uri.toString()).path;
+                            let uri = Uri.parse(po.location.uri.toString());
+
+                            // Ignore non-navigable locations (e.g. POs whose location is "console")
+                            if (uri.scheme !== "file") {
+                                break;
+                            }
 
                             // Open the specification file with the symbol responsible for the po
-                            let doc = await workspace.openTextDocument(path);
+                            let doc: TextDocument;
+                            try {
+                                doc = await workspace.openTextDocument(uri.path);
+                            } catch {
+                                break;
+                            }
 
                             // Show the file
                             window.showTextDocument(doc.uri, { selection: po.location.range, viewColumn: 1 });
@@ -481,7 +492,18 @@ export class ProofObligationPanel implements Disposable {
                         case "goToLocation":
                             const loc = message.data;
                             const targetUri = Uri.from(loc.uri);
-                            const document = await workspace.openTextDocument(targetUri);
+
+                            // Ignore non-navigable locations (e.g. POs whose location is "console")
+                            if (targetUri.scheme !== "file") {
+                                break;
+                            }
+
+                            let document: TextDocument;
+                            try {
+                                document = await workspace.openTextDocument(targetUri);
+                            } catch {
+                                break;
+                            }
 
                             const start = new Position(loc.range.at(0).line, loc.range.at(0).character);
                             const end = new Position(loc.range.at(1).line, loc.range.at(1).character);
