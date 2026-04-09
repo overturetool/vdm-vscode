@@ -442,6 +442,11 @@
                 "category": "VDM",
                 "icon": "$(clear-all)",
                 "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
+                "command": "vdm-vscode.quickInterpreter",
+                "title": "Open Quick Interpreter",
+                "category": "VDM"
             }
         ],
         "viewsContainers": {
@@ -555,6 +560,10 @@
                 {
                     "submenu": "vdm-vscode.fmusubmenu",
                     "group": "workspace@"
+                },
+                {
+                    "command": "vdm-vscode.quickInterpreter",
+                    "group": "workspace@3"
                 }
             ],
             "view/title": [
