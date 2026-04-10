@@ -7,16 +7,6 @@ import * as fs from "fs";
 import { getExtensionPath } from "../util/ExtensionUtil";
 import * as Util from "../util/Util";
 
-const QUICK_HELP =
-    "  env                                        - list the global symbols in the default environment\r\n" +
-    "  help [<command>]                           - list all commands available\r\n" +
-    "  init                                       - re-initialize the interpreter\r\n" +
-    "  plugins                                    - list the loaded plugins\r\n" +
-    "  print <expression>                         - evaluate an expression\r\n" +
-    "  quit                                       - close the session\r\n" +
-    "  set [<flag> <on|off>]                      - show or set runtime checks\r\n" +
-    "\r\n";
-
 function findVdmjJar(): string | undefined {
     const jarDir = path.resolve(getExtensionPath(), "resources", "jars", "vdmj");
     if (!fs.existsSync(jarDir)) {
@@ -35,6 +25,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
     const history: string[] = [];
     let historyIndex = -1;
     let prompt = "";
+    let killedByUser = false;
 
     proc.stdout.on("data", (data: Buffer) => {
         let text = data.toString().replace(/\r?\n/g, "\r\n");
@@ -44,11 +35,6 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
             prompt = trailingPrompt[1];
         }
 
-        // Replace VDMJ's own help listing with our curated one
-        if (/^assert\s+<file>/m.test(text)) {
-            text = QUICK_HELP + prompt;
-        }
-
         writeEmitter.fire(text);
     });
 
@@ -56,7 +42,13 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
         writeEmitter.fire(data.toString().replace(/\r?\n/g, "\r\n"));
     });
 
-    proc.on("close", (code) => closeEmitter.fire(code ?? 0));
+    proc.on("close", (code) => {
+        if (killedByUser) {
+            closeEmitter.fire(0);
+        } else {
+            closeEmitter.fire(code ?? 0);
+        }
+    });
 
     return {
         onDidWrite: writeEmitter.event,
@@ -144,7 +136,12 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
                 inputBuffer = "";
                 cursorPos = 0;
                 historyIndex = -1;
-                proc.stdin.write("\x03");
+                killedByUser = true;
+                if (process.platform === "win32") {
+                    proc.kill();
+                } else {
+                    proc.kill("SIGINT");
+                }
             } else {
                 // Regular printable character
                 inputBuffer = inputBuffer.slice(0, cursorPos) + data + inputBuffer.slice(cursorPos);
