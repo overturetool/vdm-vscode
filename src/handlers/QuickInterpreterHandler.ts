@@ -31,6 +31,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
     const closeEmitter = new vscode.EventEmitter<number>();
 
     let inputBuffer = "";
+    let cursorPos = 0;
     const history: string[] = [];
     let historyIndex = -1;
     let prompt = "";
@@ -62,8 +63,8 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
         onDidClose: closeEmitter.event,
 
         open(): void {
-            writeEmitter.fire("VDM-SL Quick Interpreter\r\n");
-            writeEmitter.fire("Type 'help' for available commands.\r\n");
+            writeEmitter.fire("--- VDM-SL Quick Interpreter ---\r\n");
+            writeEmitter.fire("Type 'help' for available commands.\r\n\r\n");
         },
 
         close(): void {
@@ -74,26 +75,42 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
         },
 
         handleInput(data: string): void {
-            // Arrow keys come in as escape sequences
             if (data === "\x1b[A") {
-                // Up arrow - go back in history
+                // Up arrow
                 if (history.length === 0) {
                     return;
                 }
                 historyIndex = Math.min(historyIndex + 1, history.length - 1);
                 const recalled = history[history.length - 1 - historyIndex];
-                // Clear the current line and rewrite with recalled command
                 writeEmitter.fire(`\r\x1b[K${prompt}${recalled}`);
                 inputBuffer = recalled;
                 return;
             }
 
             if (data === "\x1b[B") {
-                // Down arrow - go forward in history
+                // Down arrow
                 historyIndex = Math.max(historyIndex - 1, -1);
                 const recalled = historyIndex >= 0 ? history[history.length - 1 - historyIndex] : "";
                 writeEmitter.fire(`\r\x1b[K${prompt}${recalled}`);
                 inputBuffer = recalled;
+                return;
+            }
+
+            if (data === "\x1b[C") {
+                // Right arrow
+                if (cursorPos < inputBuffer.length) {
+                    cursorPos++;
+                    writeEmitter.fire("\x1b[C");
+                }
+                return;
+            }
+
+            if (data === "\x1b[D") {
+                // Left arrow
+                if (cursorPos > 0) {
+                    cursorPos--;
+                    writeEmitter.fire("\x1b[D");
+                }
                 return;
             }
 
@@ -103,7 +120,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
             }
 
             if (data === "\r") {
-                // Enter - submit the line
+                // Enter
                 writeEmitter.fire("\r\n");
                 const line = inputBuffer.trim();
                 if (line.length > 0) {
@@ -112,22 +129,32 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
                 historyIndex = -1;
                 proc.stdin.write(inputBuffer + "\n");
                 inputBuffer = "";
+                cursorPos = 0;
             } else if (data === "\x7f") {
                 // Backspace
-                if (inputBuffer.length > 0) {
-                    inputBuffer = inputBuffer.slice(0, -1);
-                    writeEmitter.fire("\b \b");
+                if (cursorPos > 0) {
+                    inputBuffer = inputBuffer.slice(0, cursorPos - 1) + inputBuffer.slice(cursorPos);
+                    cursorPos--;
+                    const tail = inputBuffer.slice(cursorPos);
+                    writeEmitter.fire(`\b${tail} \x1b[${tail.length + 1}D`);
                 }
             } else if (data === "\x03") {
-                // Ctrl+C - send interrupt and reset line
+                // Ctrl+C
                 writeEmitter.fire("^C\r\n");
                 inputBuffer = "";
+                cursorPos = 0;
                 historyIndex = -1;
                 proc.stdin.write("\x03");
             } else {
                 // Regular printable character
-                inputBuffer += data;
-                writeEmitter.fire(data);
+                inputBuffer = inputBuffer.slice(0, cursorPos) + data + inputBuffer.slice(cursorPos);
+                cursorPos++;
+                const tail = inputBuffer.slice(cursorPos);
+                if (tail.length > 0) {
+                    writeEmitter.fire(`${data}${tail}\x1b[${tail.length}D`);
+                } else {
+                    writeEmitter.fire(data);
+                }
             }
         },
     };
