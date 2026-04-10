@@ -24,21 +24,15 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
     let cursorPos = 0;
     const history: string[] = [];
     let historyIndex = -1;
-    let prompt = "";
+    const prompt = "> ";
     let killedByUser = false;
 
-    proc.stdout.on("data", (data: Buffer) => {
-        let text = data.toString().replace(/\r?\n/g, "\r\n");
-
-        const trailingPrompt = text.match(/([>] )$/);
-        if (trailingPrompt) {
-            prompt = trailingPrompt[1];
-        }
-
+    proc.stdout?.on("data", (data: Buffer) => {
+        const text = data.toString().replace(/\r?\n/g, "\r\n");
         writeEmitter.fire(text);
     });
 
-    proc.stderr.on("data", (data: Buffer) => {
+    proc.stderr?.on("data", (data: Buffer) => {
         writeEmitter.fire(data.toString().replace(/\r?\n/g, "\r\n"));
     });
 
@@ -61,7 +55,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
 
         close(): void {
             try {
-                proc.stdin.write("quit\n");
+                proc.stdin?.write("quit\n");
             } catch (_) {}
             proc.kill();
         },
@@ -76,6 +70,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
                 const recalled = history[history.length - 1 - historyIndex];
                 writeEmitter.fire(`\r\x1b[K${prompt}${recalled}`);
                 inputBuffer = recalled;
+                cursorPos = inputBuffer.length;
                 return;
             }
 
@@ -85,6 +80,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
                 const recalled = historyIndex >= 0 ? history[history.length - 1 - historyIndex] : "";
                 writeEmitter.fire(`\r\x1b[K${prompt}${recalled}`);
                 inputBuffer = recalled;
+                cursorPos = inputBuffer.length;
                 return;
             }
 
@@ -119,7 +115,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
                     history.push(line);
                 }
                 historyIndex = -1;
-                proc.stdin.write(inputBuffer + "\n");
+                proc.stdin?.write(inputBuffer + "\n");
                 inputBuffer = "";
                 cursorPos = 0;
             } else if (data === "\x7f") {
