@@ -16,7 +16,7 @@ function findVdmjJar(): string | undefined {
     return jar ? path.join(jarDir, jar) : undefined;
 }
 
-function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
+function buildPty(proc: cp.ChildProcess, cwd: string | undefined): vscode.Pseudoterminal {
     const writeEmitter = new vscode.EventEmitter<string>();
     const closeEmitter = new vscode.EventEmitter<number>();
 
@@ -50,6 +50,7 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
 
         open(): void {
             writeEmitter.fire("--- VDM-SL Quick Interpreter ---\r\n");
+            writeEmitter.fire(`Working directory: ${cwd ?? "unknown"}\r\n`);
             writeEmitter.fire("Type 'help' for available commands.\r\n\r\n");
         },
 
@@ -138,6 +139,9 @@ function buildPty(proc: cp.ChildProcess): vscode.Pseudoterminal {
                 } else {
                     proc.kill("SIGINT");
                 }
+            } else if (data === "\t") {
+                // Ignore tab
+                return;
             } else {
                 // Regular printable character
                 inputBuffer = inputBuffer.slice(0, cursorPos) + data + inputBuffer.slice(cursorPos);
@@ -190,11 +194,19 @@ export class QuickInterpreterHandler implements vscode.Disposable {
 
         // Build Java args, honouring the JVM arguments setting
         const jvmArgs = vscode.workspace.getConfiguration("vdm-vscode.server").get<string>("JVMArguments", "").trim();
+        const jvmArgsList = jvmArgs ? jvmArgs.split(/\s+/) : [];
+        if (!jvmArgsList.some((a) => a.startsWith("-Xmx"))) {
+            jvmArgsList.push("-Xmx2g");
+        }
+        const args: string[] = [...jvmArgsList, "-cp", jarPath, "VDMJ", "-i"];
 
-        const args: string[] = [...(jvmArgs ? jvmArgs.split(/\s+/) : []), "-Xmx2g", "-cp", jarPath, "VDMJ", "-i"];
+        const activeUri = vscode.window.activeTextEditor?.document?.uri;
+        const wsFolder = activeUri
+            ? vscode.workspace.getWorkspaceFolder(activeUri)?.uri.fsPath
+            : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
-        const proc = cp.spawn(javaPath, args);
-        const pty = buildPty(proc);
+        const proc = cp.spawn(javaPath, args, { cwd: wsFolder });
+        const pty = buildPty(proc, wsFolder);
         this._terminal = vscode.window.createTerminal({
             name: "VDM Quick Interpreter",
             pty,
