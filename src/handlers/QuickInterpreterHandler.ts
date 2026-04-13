@@ -195,9 +195,7 @@ export class QuickInterpreterHandler implements vscode.Disposable {
         // Build Java args, honouring the JVM arguments setting
         const jvmArgs = vscode.workspace.getConfiguration("vdm-vscode.server").get<string>("JVMArguments", "").trim();
         const jvmArgsList = jvmArgs ? jvmArgs.split(/\s+/) : [];
-        if (!jvmArgsList.some((a) => a.startsWith("-Xmx"))) {
-            jvmArgsList.push("-Xmx2g");
-        }
+
         const args: string[] = [...jvmArgsList, "-cp", jarPath, "VDMJ", "-i"];
 
         const activeUri = vscode.window.activeTextEditor?.document?.uri;
