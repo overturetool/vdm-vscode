@@ -7,8 +7,8 @@ import * as fs from "fs";
 import { getExtensionPath } from "../util/ExtensionUtil";
 import * as Util from "../util/Util";
 
-function findVdmjJar(): string | undefined {
-    const jarDir = path.resolve(getExtensionPath(), "resources", "jars", "vdmj");
+function findVdmjJar(highPrecision: boolean): string | undefined {
+    const jarDir = path.resolve(getExtensionPath(), "resources", "jars", highPrecision ? "vdmj_hp" : "vdmj");
     if (!fs.existsSync(jarDir)) {
         return undefined;
     }
@@ -180,7 +180,12 @@ export class QuickInterpreterHandler implements vscode.Disposable {
             return;
         }
 
-        const jarPath = findVdmjJar();
+        const activeUri = vscode.window.activeTextEditor?.document?.uri;
+        const wsFolder = activeUri ? vscode.workspace.getWorkspaceFolder(activeUri) : vscode.workspace.workspaceFolders?.[0];
+
+        const highPrecision: boolean = vscode.workspace.getConfiguration("vdm-vscode.server", wsFolder).get("highPrecision", false);
+
+        const jarPath = findVdmjJar(highPrecision);
         if (!jarPath) {
             vscode.window.showErrorMessage("Quick Interpreter: Could not find the VDMJ jar.");
             return;
@@ -198,13 +203,8 @@ export class QuickInterpreterHandler implements vscode.Disposable {
 
         const args: string[] = [...jvmArgsList, "-cp", jarPath, "VDMJ", "-i"];
 
-        const activeUri = vscode.window.activeTextEditor?.document?.uri;
-        const wsFolder = activeUri
-            ? vscode.workspace.getWorkspaceFolder(activeUri)?.uri.fsPath
-            : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-
-        const proc = cp.spawn(javaPath, args, { cwd: wsFolder });
-        const pty = buildPty(proc, wsFolder);
+        const proc = cp.spawn(javaPath, args, { cwd: wsFolder?.uri.fsPath });
+        const pty = buildPty(proc, wsFolder?.uri.fsPath);
         this._terminal = vscode.window.createTerminal({
             name: "VDM Quick Interpreter",
             pty,
