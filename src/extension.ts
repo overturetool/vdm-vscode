@@ -35,13 +35,14 @@ import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
 import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
-import * as Util from "./util/Util";
 import { RTLogViewHandler } from "./handlers/RTLogViewHandler";
 import { FMUHandler } from "./handlers/FMUHandler";
 import { ManagePluginsHandler } from "./handlers/ManagePluginsHandler";
 import { ManageAnnotationsHandler } from "./handlers/ManageAnnotationsHandler";
 import { VDMJExtensionsHandler } from "./handlers/VDMJExtensionsHandler";
 import { checkJavaVersion, getMinJavaVersion } from "./util/JavaUtil";
+import { QuickInterpreterHandler } from "./handlers/QuickInterpreterHandler";
+import * as Util from "./util/Util";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -144,6 +145,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
     context.subscriptions.push(new ChangeVdmjPropertiesHandler(knownVdmFolders));
     context.subscriptions.push(new FMUHandler());
+    context.subscriptions.push(new QuickInterpreterHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
