@@ -1,9 +1,6 @@
 # VDM Language Support in Visual Studio Code
 
 [![License](https://img.shields.io/:license-gpl3-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/visual-studio-marketplace/v/overturetool.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=overturetool.vdm-vscode)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/overturetool.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=overturetool.vdm-vscode)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/overturetool.vdm-vscode)](https://marketplace.visualstudio.com/items?itemName=overturetool.vdm-vscode)
 
 VDM-VSCode is an extension for Visual Studio Code (VS Code) that provides language support for the VDM dialects VDM-SL, VDM++ and VDM-RT.
 The extension utilises a [language server powered by VDMJ](https://github.com/nickbattle/vdmj/tree/master/lsp) that is developed by [Nick Battle](https://github.com/nickbattle).
@@ -56,6 +53,14 @@ Jonas K. Rask, Frederik P. Madsen, Nick Battle, Hugo D. Macedo and Peter G. Lars
 The 6th Workshop on Formal Integrated Development Environment, May 2021 [[PDF](https://cister-labs.pt/f-ide2021/images/preprints/F-IDE_2021_paper_3.pdf)]
 
 Jonas K. Rask and Frederik P. Madsen, [Decoupling of Core Analysis Support for Specification Languages from User Interfaces in Integrated Development Environments](http://dx.doi.org/10.13140/RG.2.2.21889.99686), Master's Thesis, Department of Engineering, Aarhus University, January 2021 [[PDF](http://dx.doi.org/10.13140/RG.2.2.21889.99686)]
+
+N. Battle and P. G. Larsen,
+[Towards Operation Proof Obligation Generation in VDM](https://doi.org/10.48550/arXiv.2506.12858),
+In Proceesings of the 23rd Overture Workshop, 2025 [[PDF](https://arxiv.org/pdf/2506.12858)]
+
+N.Battle and M.Ellyton,
+[QuickCheck for VDM](https://arxiv.org/abs/2410.02046),
+In Proceedings of the 22nd Overture Workshop, 2024 [[PDF](https://arxiv.org/pdf/2410.02046)]
 
 ## Change Log
 
