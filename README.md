@@ -81,9 +81,11 @@ Following is a select number of features. For the full up to date list see the [
 
 -   Syntax Highlighting
 -   Syntax- and type-checking
--   Smart navigation
--   Debugging
--   Proof Obligation Generation
+-   Smart navigation and Outline integration
+-   Debugging (including function breakpoints and improved execution)
+-   Proof Obligation Generation (POG)
+-   Integrated QuickCheck support in the POG view
+-   Interactive Proof Obligations (hover info, inline feedback, code lenses)
 -   Combinatorial Testing
 -   Translation to LaTeX and Word
 -   Java code generation
@@ -92,10 +94,13 @@ Following is a select number of features. For the full up to date list see the [
 -   Import of project examples
 -   Import of VDM libraries
 -   Snippets
+-   Quick Interpreter for evaluating standalone expressions
+-   Class hierarchy visualisation (VDM++/RT)
 
 ### Future Work
 
--   Improve syntax highlighting
--   Improve debugging execution
--   Show all workspace folders in the Combinatorial Testing view
+-   Further improvements to syntax highlighting
+-   Additional debugging enhancements
+-   Improved workspace handling in the Combinatorial Testing view
+-   Continued usability and stability improvements
 
