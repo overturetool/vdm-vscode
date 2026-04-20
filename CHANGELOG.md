@@ -1,3 +1,5 @@
+### 2.0.1
+
 ### 2.0.0
 - Added:
   - QuickCheck integration in the POG view
