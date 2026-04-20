@@ -89,7 +89,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
                 let selectedCommand: string;
-                if (dialect === VdmDialect.VDMSL) {
+                if (dialect == VdmDialect.VDMSL) {
                     selectedClass = await window.showInputBox({
                         prompt: "Input entry point Module",
                         placeHolder: "Module",
@@ -101,7 +101,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         placeHolder: "Class(args)",
                     });
                 }
-                if (selectedClass !== undefined) {
+                if (selectedClass != undefined) {
                     selectedCommand = await window.showInputBox({
                         prompt: "Input entry point function/operation",
                         placeHolder: "Run(args)",
@@ -188,7 +188,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         if (
                             AddRunConfigurationHandler.showArgumentTypeWarning &&
                             (input.applyArgs?.length > 0 || input.constructors?.some((c) => c.length > 0)) &&
-                            workspace.textDocuments?.some((doc) => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) === wsFolder)
+                            workspace.textDocuments?.some((doc) => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) == wsFolder)
                         ) {
                             window
                                 .showInformationMessage(
@@ -206,7 +206,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         let command = "p ";
 
                         // Set class
-                        if (input.constructors !== undefined) {
+                        if (input.constructors != undefined) {
                             let cIndex = 0;
 
                             // If multiple constructors to select from request the user to select one
@@ -257,7 +257,20 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     if (dialect === VdmDialect.VDMRT) {
                         // Prompt for enableLogging
                         const existingConfigs: DebugConfiguration[] = workspace.getConfiguration("launch", wsFolder).configurations ?? [];
-                        const existingLogging = existingConfigs.some((c) => c.enableLogging === true);
+                        const prevConfig = existingConfigs.find((c) => c.name === runConfig.name);
+                        const prevLogging: boolean | undefined = prevConfig?.enableLogging;
+
+                        let placeHolder: string;
+
+                        if (prevConfig) {
+                            if (prevLogging) {
+                                placeHolder = "Enabled in the existing config";
+                            } else {
+                                placeHolder = "Disabled in the existing config";
+                            }
+                        } else {
+                            placeHolder = "There is no previous configuration for this run";
+                        }
 
                         const loggingPick = await window.showQuickPick(
                             [
@@ -266,15 +279,13 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                             ],
                             {
                                 title: "Enable logging?",
-                                placeHolder: existingLogging
-                                    ? "Currently enabled in a launch.json config"
-                                    : "Currently disabled in all launch.json configs",
+                                placeHolder,
                                 ignoreFocusOut: true,
                             },
                         );
 
                         if (loggingPick === undefined) {
-                            if (existingLogging) {
+                            if (prevLogging) {
                                 runConfig.enableLogging = true;
                             }
                         } else {
@@ -451,7 +462,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             lastArgList.forEach((lastArg) => {
                 config.applyArgs.forEach((argList) => {
                     argList.forEach((arg) => {
-                        if (lastArg.name === arg.name && lastArg.type === arg.type && arg.value === null) {
+                        if (lastArg.name === arg.name && lastArg.type === arg.type && arg.value == null) {
                             arg.value = lastArg?.value;
                         }
                     });
