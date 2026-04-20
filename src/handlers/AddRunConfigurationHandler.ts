@@ -51,10 +51,10 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         super();
         commands.executeCommand("setContext", "vdm-vscode.addRunConfiguration", true);
         util.registerCommand(this._disposables, "vdm-vscode.addRunConfiguration", (inputUri: Uri) =>
-            this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri))
+            this.addRunConfiguration(workspace.getWorkspaceFolder(inputUri)),
         );
         util.registerCommand(this._disposables, "vdm-vscode.addLensRunConfiguration", (input: VdmLaunchLensConfiguration) =>
-            this.addLensRunConfiguration(input)
+            this.addLensRunConfiguration(input),
         );
     }
 
@@ -82,14 +82,14 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     (error) => {
                         console.info(`[Run Config] Add configuration failed: ${error}`);
                         window.showInformationMessage(`Add run configration failed. Could not guess language`);
-                    }
+                    },
                 );
                 if (!dialect) return reject();
 
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
                 let selectedCommand: string;
-                if (dialect == VdmDialect.VDMSL) {
+                if (dialect === VdmDialect.VDMSL) {
                     selectedClass = await window.showInputBox({
                         prompt: "Input entry point Module",
                         placeHolder: "Module",
@@ -101,7 +101,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         placeHolder: "Class(args)",
                     });
                 }
-                if (selectedClass != undefined) {
+                if (selectedClass !== undefined) {
                     selectedCommand = await window.showInputBox({
                         prompt: "Input entry point function/operation",
                         placeHolder: "Run(args)",
@@ -109,26 +109,34 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 }
 
                 // None selected
-                if (selectedClass === undefined || selectedCommand === undefined)
+                if (selectedClass === undefined || selectedCommand === undefined) {
                     return resolve(`Empty selection. Add run configuration completed.`);
+                }
 
                 // Make sure class and command has parenthesis
-                if (!selectedClass.includes("(") && !selectedClass.includes(")")) selectedClass += "()";
-                if (!selectedCommand.includes("(") && !selectedCommand.includes(")")) selectedCommand += "()";
+                if (!selectedClass.includes("(") && !selectedClass.includes(")")) {
+                    selectedClass += "()";
+                }
+                if (!selectedCommand.includes("(") && !selectedCommand.includes(")")) {
+                    selectedCommand += "()";
+                }
 
                 // Create run configuration
                 let className = selectedClass.substring(0, selectedClass.indexOf("("));
                 let debugConfiguration: DebugConfiguration = this.buildDebugConfiguration(selectedCommand, className);
 
-                if (dialect == VdmDialect.VDMSL) debugConfiguration.command = `print ${selectedCommand}`;
-                else debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
+                if (dialect === VdmDialect.VDMSL) {
+                    debugConfiguration.command = `print ${selectedCommand}`;
+                } else {
+                    debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
+                }
 
                 // Save run configuration
                 this.saveRunConfiguration(wsFolder, debugConfiguration);
 
                 // Open launch file
                 window.showTextDocument(Uri.joinPath(wsFolder.uri, ".vscode", "launch.json"), { preview: true, preserveFocus: true });
-            })
+            }),
         );
     }
 
@@ -158,7 +166,9 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     };
 
                     // Add remote control
-                    if (input.remoteControl) runConfig.remoteControl = input.remoteControl;
+                    if (input.remoteControl) {
+                        runConfig.remoteControl = input.remoteControl;
+                    }
 
                     if (input.settings) {
                         runConfig.settings = input.settings;
@@ -178,15 +188,17 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         if (
                             AddRunConfigurationHandler.showArgumentTypeWarning &&
                             (input.applyArgs?.length > 0 || input.constructors?.some((c) => c.length > 0)) &&
-                            workspace.textDocuments?.some((doc) => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) == wsFolder)
+                            workspace.textDocuments?.some((doc) => doc.isDirty && workspace.getWorkspaceFolder(doc.uri) === wsFolder)
                         ) {
                             window
                                 .showInformationMessage(
                                     "Types might be unresolved until all documents have been saved",
-                                    "Do not show again"
+                                    "Do not show again",
                                 )
                                 .then((v) => {
-                                    if (v) AddRunConfigurationHandler.showArgumentTypeWarning = false;
+                                    if (v) {
+                                        AddRunConfigurationHandler.showArgumentTypeWarning = false;
+                                    }
                                 });
                         }
 
@@ -194,7 +206,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         let command = "p ";
 
                         // Set class
-                        if (input.constructors != undefined) {
+                        if (input.constructors !== undefined) {
                             let cIndex = 0;
 
                             // If multiple constructors to select from request the user to select one
@@ -205,7 +217,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                                     },
                                     () => {
                                         throw new Error("No constructor selected");
-                                    }
+                                    },
                                 );
                             }
 
@@ -218,7 +230,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                                 },
                                 () => {
                                     throw new Error("Constructor arguments missing");
-                                }
+                                },
                             );
                         }
 
@@ -229,16 +241,45 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                                 this.lastConfigApplyArgs.set(wsFolder.name, input.applyArgs);
 
                                 Array.from(types.entries()).forEach(([typeParam, resolvedType]) =>
-                                    this.setLastApplyType(wsFolder, input.applyName, typeParam, resolvedType)
+                                    this.setLastApplyType(wsFolder, input.applyName, typeParam, resolvedType),
                                 );
                             },
                             () => {
                                 throw new Error("Operation/function arguments missing");
-                            }
+                            },
                         );
 
                         // Set command
                         runConfig.command = command;
+                    }
+
+                    const dialect = await guessDialect(wsFolder);
+                    if (dialect === VdmDialect.VDMRT) {
+                        // Prompt for enableLogging
+                        const existingConfigs: DebugConfiguration[] = workspace.getConfiguration("launch", wsFolder).configurations ?? [];
+                        const existingLogging = existingConfigs.some((c) => c.enableLogging === true);
+
+                        const loggingPick = await window.showQuickPick(
+                            [
+                                { label: "Yes", description: "Enable logging for this run", value: true },
+                                { label: "No", description: "Disable logging for this run", value: false },
+                            ],
+                            {
+                                title: "Enable logging?",
+                                placeHolder: existingLogging
+                                    ? "Currently enabled in a launch.json config"
+                                    : "Currently disabled in all launch.json configs",
+                                ignoreFocusOut: true,
+                            },
+                        );
+
+                        if (loggingPick === undefined) {
+                            if (existingLogging) {
+                                runConfig.enableLogging = true;
+                            }
+                        } else {
+                            runConfig.enableLogging = loggingPick.value;
+                        }
                     }
 
                     // Save configuration
@@ -251,7 +292,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 } catch (e) {
                     reject(e);
                 }
-            })
+            }),
         );
     }
 
@@ -261,9 +302,12 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
 
         // Only save one configuration with the same name
-        let i = rawConfigs.findIndex((c) => c.name == runConf.name || (this.isLensConfig(runConf) && this.isLensConfig(c)));
-        if (i >= 0) rawConfigs[i] = runConf;
-        else rawConfigs.push(runConf);
+        let i = rawConfigs.findIndex((c) => c.name === runConf.name || (this.isLensConfig(runConf) && this.isLensConfig(c)));
+        if (i >= 0) {
+            rawConfigs[i] = { ...rawConfigs[i], ...runConf };
+        } else {
+            rawConfigs.push(runConf);
+        }
 
         // Update settings file
         launchConfigurations.update("configurations", rawConfigs, ConfigurationTarget.WorkspaceFolder);
@@ -287,7 +331,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         types: VdmTypeParameter[],
         outlineString: string,
         wsFolder: WorkspaceFolder,
-        applyName: string
+        applyName: string,
     ): Promise<Map<VdmTypeParameter, string>> {
         const concreteTypes: Map<VdmTypeParameter, string> = new Map();
         for (const [idx, t] of types.entries()) {
@@ -357,7 +401,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         args: VdmArgument[][],
         types: VdmTypeParameter[],
         name: string,
-        wsFolder: WorkspaceFolder
+        wsFolder: WorkspaceFolder,
     ): Promise<Map<VdmTypeParameter, string>> {
         const commandString = this.getCommandOutlineString(name, args, types);
 
@@ -407,7 +451,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             lastArgList.forEach((lastArg) => {
                 config.applyArgs.forEach((argList) => {
                     argList.forEach((arg) => {
-                        if (lastArg.name === arg.name && lastArg.type === arg.type && arg.value == null) {
+                        if (lastArg.name === arg.name && lastArg.type === arg.type && arg.value === null) {
                             arg.value = lastArg?.value;
                         }
                     });
