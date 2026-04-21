@@ -272,17 +272,28 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                             placeHolder = "There is no previous configuration for this run";
                         }
 
-                        const loggingPick = await window.showQuickPick(
-                            [
-                                { label: "Yes", description: "Enable logging for this run", value: true },
-                                { label: "No", description: "Disable logging for this run", value: false },
-                            ],
-                            {
-                                title: "Enable logging?",
-                                placeHolder,
-                                ignoreFocusOut: true,
-                            },
-                        );
+                        const options = [
+                            { label: "Yes", description: "Enable logging for this run", value: true },
+                            { label: "No", description: "Disable logging for this run", value: false },
+                        ];
+
+                        const loggingPick = await new Promise<{ label: string; value: boolean } | undefined>((resolve) => {
+                            const qp = window.createQuickPick<{ label: string; description: string; value: boolean }>();
+                            qp.items = options;
+                            qp.activeItems = [options[prevLogging ? 0 : 1]];
+                            qp.title = "Enable logging?";
+                            qp.placeholder = placeHolder;
+                            qp.ignoreFocusOut = true;
+                            qp.onDidAccept(() => {
+                                resolve(qp.selectedItems[0]);
+                                qp.dispose();
+                            });
+                            qp.onDidHide(() => {
+                                resolve(undefined);
+                                qp.dispose();
+                            });
+                            qp.show();
+                        });
 
                         if (loggingPick === undefined) {
                             if (prevLogging) {
