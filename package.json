@@ -448,6 +448,12 @@
                 "command": "vdm-vscode.quickInterpreter",
                 "title": "Open Quick Interpreter",
                 "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.createProject",
+                "title": "Create VDM Project",
+                "category": "VDM",
+                "icon": "$(new-folder)"
             }
         ],
         "viewsContainers": {
@@ -478,6 +484,11 @@
             {
                 "view": "explorer",
                 "contents": "You can also import a VDM example by clicking the button below.\n[Import VDM example](command:vdm-vscode.importExample)",
+                "when": "workspaceFolderCount == 0"
+            },
+            {
+                "view": "explorer",
+                "contents": "Create a new VDM project.\n[Create VDM Project](command:vdm-vscode.createProject)",
                 "when": "workspaceFolderCount == 0"
             },
             {
@@ -667,6 +678,10 @@
                     "group": "vdm@0"
                 },
                 {
+                    "command": "vdm-vscode.createProject",
+                    "group": "vdm@0"
+                },
+                {
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
                     "group": "vdm@1"
@@ -818,6 +833,9 @@
                 {
                     "command": "vdm-vscode.javaCodeGen",
                     "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.createProject"
                 }
             ]
         },

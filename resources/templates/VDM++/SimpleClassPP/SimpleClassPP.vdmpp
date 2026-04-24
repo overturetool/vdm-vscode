@@ -1,0 +1,16 @@
+-- Simple VDM++ template
+-- This class demonstrates the basic structure of a VDM++ class definition.
+-- In VDM++, all definitions must live inside a class.
+
+class SimpleClass
+
+operations
+
+    -- Operations in VDM++ can read and write state.
+    -- This operation is pure (no side effects), but defined as an operation
+    -- so it can be called from the interpreter with 'new SimpleClass().Add(...)'.
+    public Add: nat * nat ==> nat
+    Add(a, b) ==
+        return a + b;
+
+end SimpleClass

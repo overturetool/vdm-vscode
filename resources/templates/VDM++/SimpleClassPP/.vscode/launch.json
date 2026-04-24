@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            // Launch the interpreter in debug mode.
+            // 'defaultName' is the class the interpreter starts in.
+            "name": "Launch Add",
+            "type": "vdm",
+            "request": "launch",
+            "noDebug": false,
+            "defaultName": "SimpleClass",
+            // Creates a new instance of SimpleClass and calls Add.
+            // Remove 'command' to open an interactive console instead.
+            "command": "p new SimpleClass().Add(2, 3)"
+        }
+    ]
+}

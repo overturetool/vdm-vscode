@@ -45,6 +45,7 @@ import { QuickInterpreterHandler } from "./handlers/QuickInterpreterHandler";
 import * as Util from "./util/Util";
 import * as path from "path";
 import * as fs from "fs";
+import { CreateProjectHandler } from "./handlers/CreateProjectHandler";
 
 let clientManager: ClientManager;
 
@@ -146,6 +147,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new ChangeVdmjPropertiesHandler(knownVdmFolders));
     context.subscriptions.push(new FMUHandler());
     context.subscriptions.push(new QuickInterpreterHandler());
+    context.subscriptions.push(new CreateProjectHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);

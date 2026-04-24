@@ -1,0 +1,18 @@
+-- Simple VDM-RT template
+-- VDM-RT extends VDM++ with real-time and concurrency concepts.
+-- This template is intentionally simple: a single class with one operation.
+-- Over time you can add system blocks, CPUs, buses and threads here.
+
+class SimpleClass
+
+operations
+
+    -- Operations in VDM-RT can read and write state and model timing.
+    -- This operation is pure (no side effects), but defined as an operation
+    -- so it can be called from the interpreter with 'new SimpleClass().Add(...)'.
+
+    public Add: nat * nat ==> nat
+    Add(a, b) ==
+        return a + b;
+
+end SimpleClass

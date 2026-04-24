@@ -1,0 +1,13 @@
+-- Simple VDM-SL template
+-- This function adds two numbers together.
+-- It demonstrates the basic structure of a VDM-SL function definition.
+
+-- Functions in VDM-SL are defined with a name, a type signature, and a body.
+-- The type signature specifies the input and output types.
+-- 'nat' is the type of natural numbers (non-negative integers).
+
+functions
+
+    Add: nat * nat -> nat
+    Add(a, b) ==
+        a + b;
