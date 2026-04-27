@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { commands, extensions, QuickPickItem, Uri, window } from "vscode";
+import { commands, extensions, QuickPickItem, Uri, window, workspace } from "vscode";
 import * as util from "../util/Util";
 import { Dirent, readdirSync, writeFileSync } from "fs";
 import { copySync, ensureDirSync, writeJsonSync } from "fs-extra";
@@ -51,8 +51,7 @@ export class CreateProjectHandler extends AutoDisposable {
             return;
         }
 
-        await commands.executeCommand("vscode.openFolder", projectUri, true);
-        // await this.openProject(projectUri);
+        await this.openProject(projectUri);
     }
 
     private async pickDialect(): Promise<VdmDialect | undefined> {
@@ -193,18 +192,46 @@ export class CreateProjectHandler extends AutoDisposable {
         writeJsonSync(path.join(vscodePath, "launch.json"), {});
     }
 
-    // private async openProject(projectUri: Uri): Promise<void> {
-    //     const choice = await window.showInformationMessage(
-    //         "Project created successfully. How would you like to open it?",
-    //         "Open in Current Window",
-    //         "Open in New Window",
-    //     );
+    private async openProject(projectUri: Uri): Promise<void> {
+        const workspaceFile = workspace.workspaceFile;
+        const folders = workspace.workspaceFolders ?? [];
 
-    //     if (choice === undefined) {
-    //         return;
-    //     }
-
-    //     const forceNewWindow = choice === "Open in New Window";
-    //     await commands.executeCommand("vscode.openFolder", projectUri, forceNewWindow);
-    // }
+        if (folders.length === 0) {
+            // Nothing open - new window
+            await commands.executeCommand("vscode.openFolder", projectUri, true);
+        } else if (workspaceFile && !workspaceFile.path.includes("untitled")) {
+            // Named .code-workspace is open - offer to add to it
+            const workspaceName = path.basename(workspaceFile.fsPath, ".code-workspace");
+            const choice = await window.showInformationMessage(
+                `Project created successfully. Add it to the current workspace "${workspaceName}", or open it standalone?`,
+                { modal: true },
+                "Add to workspace",
+                "Open in a new window",
+            );
+            if (choice === undefined) {
+                return;
+            }
+            if (choice === "Add to workspace") {
+                workspace.updateWorkspaceFolders(folders.length, null, { uri: projectUri });
+            } else {
+                await commands.executeCommand("vscode.openFolder", projectUri, true);
+            }
+        } else {
+            // Single folder or untitled multi-root
+            const choice = await window.showInformationMessage(
+                `Project created successfully. How would you like to open it?`,
+                { modal: true },
+                "Open in a new window",
+                "Add to current workspace",
+            );
+            if (choice === undefined) {
+                return;
+            }
+            if (choice === "Add to current workspace") {
+                workspace.updateWorkspaceFolders(folders.length, null, { uri: projectUri });
+            } else {
+                await commands.executeCommand("vscode.openFolder", projectUri, true);
+            }
+        }
+    }
 }
