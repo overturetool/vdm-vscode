@@ -499,7 +499,7 @@
         "submenus": [
             {
                 "id": "vdm-vscode.vdmsubmenu",
-                "label": "VDM"
+                "label": "VDM Options"
             },
             {
                 "id": "vdm-vscode.fmusubmenu",
