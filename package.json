@@ -454,6 +454,12 @@
                 "title": "Create VDM Project...",
                 "category": "VDM",
                 "icon": "$(new-folder)"
+            },
+            {
+                "command": "vdm-vscode.openSettings",
+                "title": "Open VDM Settings",
+                "category": "VDM",
+                "icon": "$(settings-gear)"
             }
         ],
         "viewsContainers": {
@@ -707,6 +713,11 @@
                     "command": "vdm-vscode.pog.runWorkspace",
                     "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
                     "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.openSettings",
+                    "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "group": "navigation"
                 }
             ],
             "editor/context": [
@@ -836,6 +847,9 @@
                 },
                 {
                     "command": "vdm-vscode.createProject"
+                },
+                {
+                    "command": "vdm-vscode.openSettings"
                 }
             ]
         },

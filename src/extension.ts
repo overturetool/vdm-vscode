@@ -46,6 +46,7 @@ import * as Util from "./util/Util";
 import * as path from "path";
 import * as fs from "fs";
 import { CreateProjectHandler } from "./handlers/CreateProjectHandler";
+import { OpenSettingsHandler } from "./handlers/OpenSettingsHandler";
 
 let clientManager: ClientManager;
 
@@ -148,6 +149,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new FMUHandler());
     context.subscriptions.push(new QuickInterpreterHandler());
     context.subscriptions.push(new CreateProjectHandler());
+    context.subscriptions.push(new OpenSettingsHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
