@@ -460,6 +460,12 @@
                 "title": "Open VDM Settings",
                 "category": "VDM",
                 "icon": "$(settings-gear)"
+            },
+            {
+                "command": "vdm-vscode.openSettingsPanel",
+                "title": "Open VDM Settings Panel",
+                "category": "VDM",
+                "icon": "$(settings-gear)"
             }
         ],
         "viewsContainers": {
@@ -718,6 +724,11 @@
                     "command": "vdm-vscode.openSettings",
                     "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
                     "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel",
+                    "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "group": "navigation"
                 }
             ],
             "editor/context": [
@@ -850,6 +861,9 @@
                 },
                 {
                     "command": "vdm-vscode.openSettings"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel"
                 }
             ]
         },
