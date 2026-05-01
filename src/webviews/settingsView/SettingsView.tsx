@@ -300,13 +300,16 @@ const AdvancedSection = ({
     settings,
     onChange,
     vscodeApi,
+    forceOpen,
 }: {
     groups: Record<string, [string, SchemaEntry][]>;
     settings: Settings;
     onChange: (key: string, value: SettingValue) => void;
     vscodeApi: VSCodeAPI;
+    forceOpen?: boolean;
 }) => {
     const [open, setOpen] = useState(false);
+    const isOpen = forceOpen || open;
 
     return (
         <div style={{ marginTop: "16px" }}>
@@ -325,10 +328,10 @@ const AdvancedSection = ({
                     padding: "4px 0",
                 }}
             >
-                <span className={`codicon codicon-chevron-${open ? "down" : "right"}`} />
+                <span className={`codicon codicon-chevron-${isOpen ? "down" : "right"}`} />
                 Advanced
             </button>
-            {open && (
+            {isOpen && (
                 <div style={{ marginTop: "12px" }}>
                     {Object.entries(groups).map(([group, entries]) => (
                         <GroupSection
@@ -364,6 +367,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [schema, setSchema] = useState<Record<string, SchemaEntry>>({});
     const [wsFolderName, setWsFolderName] = useState<string | null>(null);
     const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
+    const [filterText, setFilterText] = useState<string>("");
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -436,6 +440,12 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         fontWeight: 600,
     };
 
+    const matchesFilter = (entry: SchemaEntry): boolean => {
+        if (!filterText) return true;
+        const q = filterText.toLowerCase();
+        return entry.title.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
+    }
+
     const renderTabContent = () => {
         switch (activeTab) {
             case "general": {
@@ -443,8 +453,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 const advancedGroups: Record<string, [string, SchemaEntry][]> = {};
 
                 for (const [group, entries] of Object.entries(groups)) {
-                    const common = entries.filter(([, e]) => !e.advanced);
-                    const advanced = entries.filter(([, e]) => e.advanced);
+                    const common = entries.filter(([, e]) => !e.advanced && matchesFilter(e));
+                    const advanced = entries.filter(([, e]) => e.advanced && matchesFilter(e));
                     if (common.length > 0) {
                         commonGroups[group] = common;
                     }
@@ -475,7 +485,13 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                                 vscodeApi={vscodeApi}
                             />
                         ))}
-                        <AdvancedSection groups={advancedGroups} settings={settings} onChange={handleChange} vscodeApi={vscodeApi} />
+                        <AdvancedSection
+                            groups={advancedGroups}
+                            settings={settings}
+                            onChange={handleChange}
+                            vscodeApi={vscodeApi}
+                            forceOpen={filterText.length > 0 && Object.keys(advancedGroups).length > 0}
+                        />
                     </>
                 );
             }
@@ -511,6 +527,19 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             </div>
 
             <TabBar activeTab={activeTab} onSelect={setActiveTab} />
+
+            {activeTab === "general" && (
+                <div style={{ marginBottom: "20px" }}>
+                    <VSCodeTextField
+                        placeholder="Search settings..."
+                        value={filterText}
+                        onInput={(e: any) => setFilterText(e.target.value)}
+                        style={{ width: "100%" }}
+                    >
+                        <span slot="start" className="codicon codicon-search" />
+                    </VSCodeTextField>
+                </div>
+            )}
 
             {renderTabContent()}
         </div>
