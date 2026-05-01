@@ -1,0 +1,165 @@
+{
+    "vdm-vscode.server.highPrecision": {
+        "title": "High Precision",
+        "description": "Use the high precision variant of VDMJ for greater numeric accuracy.",
+        "advanced": false
+    },
+    "vdm-vscode.server.strict": {
+        "title": "Strict Mode",
+        "description": "Warn when the specification takes advantage of lenient parsing rules.",
+        "advanced": false
+    },
+    "vdm-vscode.server.release": {
+        "title": "VDM Release",
+        "description": "The VDM language release to use when parsing specifications.",
+        "advanced": false
+    },
+    "vdm-vscode.server.JVMArguments": {
+        "title": "JVM Arguments",
+        "description": "Extra arguments passed to the JVM when launching the language server.",
+        "advanced": true
+    },
+    "vdm-vscode.server.classPathAdditions": {
+        "title": "Class Path Additions",
+        "description": "Additional folders or jars added to the server class path.",
+        "advanced": true
+    },
+    "vdm-vscode.server.extensionSearchPaths": {
+        "title": "Extension Search Paths",
+        "description": "Paths to search for VDMJ plugins, libraries and annotations.",
+        "advanced": true
+    },
+    "vdm-vscode.server.plugins.enabled": {
+        "title": "Enabled Plugins",
+        "description": "Enable or disable individual VDMJ plugins.",
+        "advanced": true
+    },
+    "vdm-vscode.server.annotations.enabled": {
+        "title": "Enabled Annotations",
+        "description": "Enable or disable individual VDMJ annotations.",
+        "advanced": true
+    },
+    "vdm-vscode.javaCodeGen.disableCloning": {
+        "title": "Disable Cloning",
+        "description": "Disable cloning in generated Java code (may affect semantics).",
+        "advanced": true
+    },
+    "vdm-vscode.javaCodeGen.sequencesAsStrings": {
+        "title": "Sequences as Strings",
+        "description": "Generate character sequences as Java strings.",
+        "advanced": true
+    },
+    "vdm-vscode.javaCodeGen.concurrencyMechanisms": {
+        "title": "Concurrency Mechanisms",
+        "description": "Generate Java concurrency mechanisms.",
+        "advanced": true
+    },
+    "vdm-vscode.javaCodeGen.vdmLocationInformation": {
+        "title": "VDM Location Information",
+        "description": "Include VDM source location in generated Java code.",
+        "advanced": true
+    },
+    "vdm-vscode.javaCodeGen.outputPackage": {
+        "title": "Output Package",
+        "description": "Java package for generated code, e.g. my.code",
+        "advanced": true
+    },
+    "vdm-vscode.javaCodeGen.skipClassesModules": {
+        "title": "Skip Classes/Modules",
+        "description": "Classes or modules to skip during code generation, separated by ';'.",
+        "advanced": true
+    },
+    "vdm-vscode.translate.latex.modelOnly": {
+        "title": "LaTeX: Model Only",
+        "description": "Only include the model part in LaTeX translations.",
+        "advanced": false
+    },
+    "vdm-vscode.translate.latex.markCoverage": {
+        "title": "LaTeX: Mark Coverage",
+        "description": "Highlight coverage information in LaTeX translations.",
+        "advanced": false
+    },
+    "vdm-vscode.translate.latex.insertCoverageTables": {
+        "title": "LaTeX: Insert Coverage Tables",
+        "description": "Insert coverage tables into LaTeX translations.",
+        "advanced": false
+    },
+    "vdm-vscode.translate.general.storeAllTranslations": {
+        "title": "Store All Translations",
+        "description": "Save each translation in a timestamped folder instead of overwriting.",
+        "advanced": false
+    },
+    "vdm-vscode.translate.general.allowSingleFileTranslation": {
+        "title": "Single File Translation",
+        "description": "Translate only the selected file rather than the whole project.",
+        "advanced": false
+    },
+    "vdm-vscode.translate.isabelle.strict": { "advanced": true },
+    "vdm-vscode.translate.isabelle.maxErrors": { "advanced": true },
+    "vdm-vscode.translate.isabelle.isaVersion": { "advanced": true },
+    "vdm-vscode.translate.isabelle.reportVDMWarnings": { "advanced": true },
+    "vdm-vscode.translate.isabelle.debug": { "advanced": true },
+    "vdm-vscode.translate.isabelle.linientInvCheck": { "advanced": true },
+    "vdm-vscode.translate.isabelle.retypecheck": { "advanced": true },
+    "vdm-vscode.translate.isabelle.linientPost": { "advanced": true },
+    "vdm-vscode.translate.isabelle.printVDMComments": { "advanced": true },
+    "vdm-vscode.translate.isabelle.printIsaComments": { "advanced": true },
+    "vdm-vscode.translate.isabelle.runExu": { "advanced": true },
+    "vdm-vscode.translate.isabelle.valueAsAbbreviation": { "advanced": true },
+    "vdm-vscode.translate.isabelle.translateTypeDefMinMax": { "advanced": true },
+    "vdm-vscode.translate.isabelle.printVDMSource": { "advanced": true },
+    "vdm-vscode.translate.isabelle.printLocations": { "advanced": true },
+    "vdm-vscode.translate.isabelle.runIsapog": { "advanced": true },
+    "vdm-vscode.translate.isabelle.createPogLocaleLemmas": { "advanced": true },
+    "vdm-vscode.translate.isabelle.proofStrategy": { "advanced": true },
+    "vdm-vscode.coverage.UseHeatmapColouring": {
+        "title": "Coverage: Heatmap Colouring",
+        "description": "Use brighter green for higher hit counts in coverage overlays.",
+        "advanced": false
+    },
+    "vdm-vscode.coverage.OverlayLatestCoverage": {
+        "title": "Coverage: Overlay Latest",
+        "description": "Always use the most recently generated coverage for overlaying.",
+        "advanced": false
+    },
+    "vdm-vscode.encoding.showWarning": {
+        "title": "Encoding Warning",
+        "description": "Show a warning when a file is not encoded as UTF-8.",
+        "advanced": false
+    },
+    "vdm-vscode.combinatorialTesting.groupSize": {
+        "title": "CT Group Size",
+        "description": "Maximum number of tests per group in the combinatorial testing view.",
+        "advanced": true
+    },
+    "vdm-vscode.codeLenses.enabled": {
+        "title": "Code Lenses",
+        "description": "Show inline code lenses in VDM specification files.",
+        "advanced": false
+    },
+    "vdm-vscode.vdmtools.path.vdmpp": {
+        "title": "VDMTools Path (VDM++)",
+        "description": "Path to the VDMTools executable for VDM++.",
+        "advanced": true
+    },
+    "vdm-vscode.vdmtools.path.vdmsl": {
+        "title": "VDMTools Path (VDM-SL)",
+        "description": "Path to the VDMTools executable for VDM-SL.",
+        "advanced": true
+    },
+    "vdm-vscode.real-timeLogViewer.scaleWithEditorFont": {
+        "title": "RT Log: Scale with Editor Font",
+        "description": "Scale the real-time log viewer relative to the editor font size.",
+        "advanced": false
+    },
+    "vdm-vscode.real-timeLogViewer.matchTheme": {
+        "title": "RT Log: Match Editor Theme",
+        "description": "Apply the current editor colour theme to the real-time log viewer.",
+        "advanced": false
+    },
+    "vdm-vscode.real-timeLogViewer.fontSize": {
+        "title": "RT Log: Font Size",
+        "description": "Base font size for the real-time log viewer (used when font scaling is disabled).",
+        "advanced": false
+    }
+}

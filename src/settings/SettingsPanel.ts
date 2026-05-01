@@ -108,7 +108,10 @@ export class SettingsPanel extends AutoDisposable {
                     }
 
                     case "openNativeSettings":
-                        commands.executeCommand("workbench.action.openWorkspaceSettings", "@ext:overturetool.vdm-vscode");
+                        commands.executeCommand(
+                            "workbench.action.openWorkspaceSettings",
+                            message.data?.query ?? "@ext:overturetool.vdm-vscode",
+                        );
                         break;
                 }
             },
@@ -138,6 +141,11 @@ export class SettingsPanel extends AutoDisposable {
         const schema: Record<string, unknown> = {};
 
         for (const group of configurations) {
+            // Exclude Development group entirely
+            if (group.title === "Development") {
+                continue;
+            }
+
             // fullKey is e.g. "vdm-vscode.server.highPrecision"
             // getConfiguration("vdm-vscode") expects just "server.highPrecision"
             for (const [fullKey, def] of Object.entries<any>(group.properties ?? {})) {
@@ -152,7 +160,19 @@ export class SettingsPanel extends AutoDisposable {
                     minimum: def.minimum ?? null,
                     maximum: def.maximum ?? null,
                     group: group.title,
+                    advanced: false,
                 };
+            }
+        }
+
+        // Apply settingsUI.json overrides
+        const uiOverridesPath = Uri.joinPath(this._context.extensionUri, "resources", "settingsUI.json").fsPath;
+        if (fs.existsSync(uiOverridesPath)) {
+            const overrides = JSON.parse(fs.readFileSync(uiOverridesPath, "utf8"));
+            for (const [key, override] of Object.entries<any>(overrides)) {
+                if (schema[key]) {
+                    schema[key] = { ...(schema[key] as object), ...(override as object) };
+                }
             }
         }
 

@@ -80,6 +80,7 @@ interface SchemaEntry {
     minimum: number | null;
     maximum: number | null;
     group: string;
+    advanced: boolean;
 }
 
 // Tab bar
@@ -140,10 +141,12 @@ const SettingRow = ({
     descriptor,
     value,
     onChange,
+    vscodeApi,
 }: {
     descriptor: SettingDescriptor;
     value: SettingValue;
     onChange: (key: string, value: SettingValue) => void;
+    vscodeApi: VSCodeAPI;
 }) => {
     const rowStyle: React.CSSProperties = {
         display: "flex",
@@ -222,6 +225,22 @@ const SettingRow = ({
                         style={{ minWidth: "80px" }}
                     />
                 );
+
+            default:
+                return (
+                    <VSCodeButton
+                        appearance="icon"
+                        title="Edit in VS Code settings"
+                        onClick={() =>
+                            vscodeApi.postMessage({
+                                command: "openNativeSettings",
+                                data: { query: (descriptor as SettingDescriptorBase).key },
+                            })
+                        }
+                    >
+                        <span className="codicon codicon-link-external" />
+                    </VSCodeButton>
+                );
         }
     };
 
@@ -241,11 +260,13 @@ const GroupSection = ({
     settings,
     values,
     onChange,
+    vscodeApi,
 }: {
     group: string;
     settings: SettingDescriptor[];
     values: Settings;
     onChange: (key: string, value: SettingValue) => void;
+    vscodeApi: VSCodeAPI;
 }) => {
     const groupStyle: React.CSSProperties = {
         marginBottom: "24px",
@@ -266,10 +287,71 @@ const GroupSection = ({
             <VSCodeDivider />
             {settings.map((descriptor, i) => (
                 <React.Fragment key={descriptor.key}>
-                    <SettingRow descriptor={descriptor} value={values[descriptor.key]} onChange={onChange} />
+                    <SettingRow descriptor={descriptor} value={values[descriptor.key]} onChange={onChange} vscodeApi={vscodeApi} />
                     {i < settings.length - 1 && <VSCodeDivider role="presentation" />}
                 </React.Fragment>
             ))}
+        </div>
+    );
+};
+
+const AdvancedSection = ({
+    groups,
+    settings,
+    onChange,
+    vscodeApi,
+}: {
+    groups: Record<string, [string, SchemaEntry][]>;
+    settings: Settings;
+    onChange: (key: string, value: SettingValue) => void;
+    vscodeApi: VSCodeAPI;
+}) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div style={{ marginTop: "16px" }}>
+            <button
+                onClick={() => setOpen((o) => !o)}
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--vscode-descriptionForeground)",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "4px 0",
+                }}
+            >
+                <span className={`codicon codicon-chevron-${open ? "down" : "right"}`} />
+                Advanced
+            </button>
+            {open && (
+                <div style={{ marginTop: "12px" }}>
+                    {Object.entries(groups).map(([group, entries]) => (
+                        <GroupSection
+                            key={group}
+                            group={group}
+                            settings={entries.map(([key, entry]) => ({
+                                key,
+                                label: entry.title,
+                                description: entry.description,
+                                group: entry.group,
+                                type: (entry.enum ? "enum" : entry.type) as SettingDescriptor["type"],
+                                default: entry.default,
+                                options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
+                                min: entry.minimum ?? undefined,
+                                max: entry.maximum ?? undefined,
+                            }) as SettingDescriptor)}
+                            values={settings}
+                            onChange={onChange}
+                            vscodeApi={vscodeApi}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
@@ -356,26 +438,47 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
 
     const renderTabContent = () => {
         switch (activeTab) {
-            case "general":
-                return Object.entries(groups).map(([group, entries]) => (
-                    <GroupSection
-                        key={group}
-                        group={group}
-                        settings={entries.map(([key, entry]) => ({
-                            key,
-                            label: entry.title,
-                            description: entry.description,
-                            group: entry.group,
-                            type: (entry.enum ? "enum" : entry.type) as SettingDescriptor["type"],
-                            default: entry.default,
-                            options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
-                            min: entry.minimum ?? undefined,
-                            max: entry.maximum ?? undefined,
-                        }) as SettingDescriptor)}
-                        values={settings}
-                        onChange={handleChange}
-                    />
-                ));
+            case "general": {
+                const commonGroups: Record<string, [string, SchemaEntry][]> = {};
+                const advancedGroups: Record<string, [string, SchemaEntry][]> = {};
+
+                for (const [group, entries] of Object.entries(groups)) {
+                    const common = entries.filter(([, e]) => !e.advanced);
+                    const advanced = entries.filter(([, e]) => e.advanced);
+                    if (common.length > 0) {
+                        commonGroups[group] = common;
+                    }
+                    if (advanced.length > 0) {
+                        advancedGroups[group] = advanced;
+                    }
+                }
+
+                return (
+                    <>
+                        {Object.entries(commonGroups).map(([group, entries]) => (
+                            <GroupSection
+                                key={group}
+                                group={group}
+                                settings={entries.map(([key, entry]) => ({
+                                    key,
+                                    label: entry.title,
+                                    description: entry.description,
+                                    group: entry.group,
+                                    type: (entry.enum ? "enum" : entry.type) as SettingDescriptor["type"],
+                                    default: entry.default,
+                                    options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
+                                    min: entry.minimum ?? undefined,
+                                    max: entry.maximum ?? undefined,
+                                }) as SettingDescriptor)}
+                                values={settings}
+                                onChange={handleChange}
+                                vscodeApi={vscodeApi}
+                            />
+                        ))}
+                        <AdvancedSection groups={advancedGroups} settings={settings} onChange={handleChange} vscodeApi={vscodeApi} />
+                    </>
+                );
+            }
             case "vdmj":
                 return <ComingSoonTab label="VDMJ"/>;
             case "launch":
