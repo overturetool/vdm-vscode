@@ -69,7 +69,7 @@ export class SettingsPanel extends AutoDisposable {
         this._panel = window.createWebviewPanel(
             this.viewType,
             "VDM Settings",
-            { viewColumn: ViewColumn.One, preserveFocus: false },
+            { viewColumn: ViewColumn.Beside, preserveFocus: false },
             {
                 enableScripts: true,
                 localResourceRoots: [this._resourcesUri, this._webviewsUri],

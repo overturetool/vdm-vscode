@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     VSCodeButton,
     VSCodeCheckbox,
@@ -142,11 +142,13 @@ const SettingRow = ({
     value,
     onChange,
     vscodeApi,
+    modified,
 }: {
     descriptor: SettingDescriptor;
     value: SettingValue;
     onChange: (key: string, value: SettingValue) => void;
     vscodeApi: VSCodeAPI;
+    modified: boolean;
 }) => {
     const rowStyle: React.CSSProperties = {
         display: "flex",
@@ -173,6 +175,9 @@ const SettingRow = ({
         fontWeight: 600,
         color: "var(--vscode-foreground)",
         marginBottom: "2px",
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
     };
 
     const descStyle: React.CSSProperties = {
@@ -247,7 +252,22 @@ const SettingRow = ({
     return (
         <div style={rowStyle}>
             <div style={labelColStyle}>
-                <div style={labelStyle}>{descriptor.label}</div>
+                <div style={labelStyle}>
+                    {descriptor.label}
+                    {modified && (
+                        <span
+                            title="Modified from default"
+                            style={{
+                                width: "6px",
+                                height: "6px",
+                                borderRadius: "50%",
+                                background: "var(--vscode-focusBorder)",
+                                display: "inline-block",
+                                flexShrink: 0,
+                            }}
+                        />
+                    )}
+                </div>
                 <div style={descStyle}>{descriptor.description}</div>
             </div>
             <div style={controlColStyle}>{renderControl()}</div>
@@ -261,12 +281,14 @@ const GroupSection = ({
     values,
     onChange,
     vscodeApi,
+    modifiedKeys,
 }: {
     group: string;
     settings: SettingDescriptor[];
     values: Settings;
     onChange: (key: string, value: SettingValue) => void;
     vscodeApi: VSCodeAPI;
+    modifiedKeys: Set<string>;
 }) => {
     const groupStyle: React.CSSProperties = {
         marginBottom: "24px",
@@ -287,7 +309,7 @@ const GroupSection = ({
             <VSCodeDivider />
             {settings.map((descriptor, i) => (
                 <React.Fragment key={descriptor.key}>
-                    <SettingRow descriptor={descriptor} value={values[descriptor.key]} onChange={onChange} vscodeApi={vscodeApi} />
+                    <SettingRow descriptor={descriptor} value={values[descriptor.key]} onChange={onChange} vscodeApi={vscodeApi} modified={modifiedKeys.has(descriptor.key)} />
                     {i < settings.length - 1 && <VSCodeDivider role="presentation" />}
                 </React.Fragment>
             ))}
@@ -301,12 +323,14 @@ const AdvancedSection = ({
     onChange,
     vscodeApi,
     forceOpen,
+    modifiedKeys,
 }: {
     groups: Record<string, [string, SchemaEntry][]>;
     settings: Settings;
     onChange: (key: string, value: SettingValue) => void;
     vscodeApi: VSCodeAPI;
     forceOpen?: boolean;
+    modifiedKeys: Set<string>;
 }) => {
     const [open, setOpen] = useState(false);
     const isOpen = forceOpen || open;
@@ -351,6 +375,7 @@ const AdvancedSection = ({
                             values={settings}
                             onChange={onChange}
                             vscodeApi={vscodeApi}
+                            modifiedKeys={modifiedKeys}
                         />
                     ))}
                 </div>
@@ -446,6 +471,17 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         return entry.title.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
     }
 
+    const modifiedKeys = useMemo(() => {
+        return new Set(
+            Object.entries(schema)
+                .filter(([key, entry]) => {
+                    const current = settings[key];
+                    return current !== undefined && JSON.stringify(current) !== JSON.stringify(entry.default);
+                })
+                .map(([key]) => key)
+        );
+    }, [settings, schema]);
+
     const renderTabContent = () => {
         switch (activeTab) {
             case "general": {
@@ -483,6 +519,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                                 values={settings}
                                 onChange={handleChange}
                                 vscodeApi={vscodeApi}
+                                modifiedKeys={modifiedKeys}
                             />
                         ))}
                         <AdvancedSection
@@ -491,6 +528,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                             onChange={handleChange}
                             vscodeApi={vscodeApi}
                             forceOpen={filterText.length > 0 && Object.keys(advancedGroups).length > 0}
+                            modifiedKeys={modifiedKeys}
                         />
                     </>
                 );
