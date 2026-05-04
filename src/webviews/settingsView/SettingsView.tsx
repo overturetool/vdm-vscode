@@ -393,6 +393,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [wsFolderName, setWsFolderName] = useState<string | null>(null);
     const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
     const [filterText, setFilterText] = useState<string>("");
+    const [showModifiedOnly, setShowModifiedOnly] = useState<boolean>(false);
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -465,7 +466,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         fontWeight: 600,
     };
 
-    const matchesFilter = (entry: SchemaEntry): boolean => {
+    const matchesFilter = (entry: SchemaEntry, key: string): boolean => {
+        if (showModifiedOnly && !modifiedKeys.has(key)) return false;
         if (!filterText) return true;
         const q = filterText.toLowerCase();
         return entry.title.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
@@ -489,8 +491,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 const advancedGroups: Record<string, [string, SchemaEntry][]> = {};
 
                 for (const [group, entries] of Object.entries(groups)) {
-                    const common = entries.filter(([, e]) => !e.advanced && matchesFilter(e));
-                    const advanced = entries.filter(([, e]) => e.advanced && matchesFilter(e));
+                    const common = entries.filter(([key, e]) => !e.advanced && matchesFilter(e, key));
+                    const advanced = entries.filter(([key, e]) => e.advanced && matchesFilter(e, key));
                     if (common.length > 0) {
                         commonGroups[group] = common;
                     }
@@ -527,7 +529,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                             settings={settings}
                             onChange={handleChange}
                             vscodeApi={vscodeApi}
-                            forceOpen={filterText.length > 0 && Object.keys(advancedGroups).length > 0}
+                            forceOpen={(filterText.length > 0 || showModifiedOnly) && Object.keys(advancedGroups).length > 0}
                             modifiedKeys={modifiedKeys}
                         />
                     </>
@@ -567,15 +569,23 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             <TabBar activeTab={activeTab} onSelect={setActiveTab} />
 
             {activeTab === "general" && (
-                <div style={{ marginBottom: "20px" }}>
+                <div style={{ marginBottom: "20px", display: "flex", gap: "8px", alignItems: "center" }}>
                     <VSCodeTextField
                         placeholder="Search settings..."
                         value={filterText}
                         onInput={(e: any) => setFilterText(e.target.value)}
-                        style={{ width: "100%" }}
+                        style={{ flex: 1 }}
                     >
                         <span slot="start" className="codicon codicon-search" />
                     </VSCodeTextField>
+                    <VSCodeButton
+                        appearance={showModifiedOnly ? "primary" : "secondary"}
+                        onClick={() => setShowModifiedOnly((v) => !v)}
+                        title="Show only modified settings"
+                    >
+                        <span slot="start" className="codicon codicon-diff-modified" />
+                        Modified
+                    </VSCodeButton>
                 </div>
             )}
 
