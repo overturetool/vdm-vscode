@@ -1126,6 +1126,18 @@
                         "default": "surrender",
                         "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
                         "scope": "resource"
+                    },
+                    "vdm-vscode.translate.latex.headers": {
+                        "type": "string",
+                        "default": "auto",
+                        "scope": "resource",
+                        "enum": ["auto", "always", "never"],
+                        "markdownEnumDescriptions": [
+                            "Automatically include LaTeX headers (preamble, `\\begin{document}`, etc.) only when translating a single file. When translating a folder (multi-file project), headers are omitted from all files so that the generated main file can include them as subfiles without preamble conflicts.",
+                            "Always include LaTeX headers in every translated file.",
+                            "Never include LaTeX headers in any translated file."
+                        ],
+                        "markdownDescription": "Controls whether LaTeX document headers (preamble, `\\documentclass`, `\\begin{document}`, etc.) are included in the translation output. Use `auto` to let the extension decide based on whether a single file or a whole project is being translated."
                     }
                 }
             },
