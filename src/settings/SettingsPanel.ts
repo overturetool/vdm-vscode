@@ -14,6 +14,8 @@ import {
 import AutoDisposable from "../helper/AutoDisposable";
 import { VdmDialect } from "../util/DialectUtil";
 import * as fs from "fs";
+import * as path from "path";
+import * as Util from "../util/Util";
 
 interface Message {
     command: string;
@@ -23,6 +25,7 @@ interface Message {
 export class SettingsPanel extends AutoDisposable {
     private _panel: WebviewPanel | undefined;
     private _currentWsFolder: WorkspaceFolder | undefined;
+    private _restartMsgTimer: NodeJS.Timeout | undefined;
 
     private get _webviewsUri(): Uri {
         return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
@@ -90,6 +93,7 @@ export class SettingsPanel extends AutoDisposable {
                 switch (message.command) {
                     case "ready":
                         this._sendSettings();
+                        this._sendVdmjProperties();
                         break;
 
                     case "updateSetting": {
@@ -113,6 +117,33 @@ export class SettingsPanel extends AutoDisposable {
                             message.data?.query ?? "@ext:overturetool.vdm-vscode",
                         );
                         break;
+
+                    case "saveVdmjProperty": {
+                        const { key, value } = message.data;
+                        const projectPath = this._getPropertiesPath();
+                        if (!projectPath) {
+                            break;
+                        }
+
+                        const vscodeFolder = path.dirname(projectPath);
+                        if (!fs.existsSync(vscodeFolder)) {
+                            fs.mkdirSync(vscodeFolder, { recursive: true });
+                        }
+
+                        const existing = fs.existsSync(projectPath)
+                            ? fs.readFileSync(projectPath, "utf8")
+                            : fs.readFileSync(Uri.joinPath(this._context.extensionUri, "resources", "vdmj.properties").fsPath, "utf8");
+
+                        const updated = this._serializeProperties(existing, { [key]: value });
+                        fs.writeFileSync(projectPath, updated, "utf8");
+                        if (this._restartMsgTimer) {
+                            clearTimeout(this._restartMsgTimer);
+                        }
+                        this._restartMsgTimer = setTimeout(() => {
+                            Util.showRestartMsg("VDMJ properties changed. Please reload VS Code to enable the changes.");
+                        }, 1000);
+                        break;
+                    }
                 }
             },
             null,
@@ -216,6 +247,107 @@ export class SettingsPanel extends AutoDisposable {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
         return text;
+    }
+
+    private _inferType(value: string): "boolean" | "number" | "string" {
+        if (value === "true" || value === "false") {
+            return "boolean";
+        }
+        if (value !== "" && !isNaN(Number(value))) {
+            return "number";
+        }
+        return "string";
+    }
+
+    private _parseProperties(content: string): Record<string, string> {
+        const result: Record<string, string> = {};
+
+        for (const line of content.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("#")) {
+                continue;
+            }
+            const eq = trimmed.indexOf("=");
+            if (eq === -1) {
+                continue;
+            }
+            const key = trimmed.substring(0, eq).trim();
+            const value = trimmed.substring(eq + 1).trim();
+            result[key] = value;
+        }
+
+        return result;
+    }
+
+    private _serializeProperties(existing: string, updates: Record<string, string>): string {
+        const lines = existing.split("\n");
+        const written = new Set<string>();
+
+        const result = lines.map((line) => {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("#")) {
+                return line;
+            }
+            const eq = trimmed.indexOf("=");
+            if (eq === -1) {
+                return line;
+            }
+            const key = trimmed.substring(0, eq).trim();
+            if (key in updates) {
+                written.add(key);
+                return `${key} = ${updates[key]}`;
+            }
+            return line;
+        });
+
+        for (const [key, value] of Object.entries(updates)) {
+            if (!written.has(key)) {
+                result.push(`${key} = ${value}`);
+            }
+        }
+
+        return result.join("\n");
+    }
+
+    private _getPropertiesPath(): string | undefined {
+        if (!this._currentWsFolder) {
+            return undefined;
+        }
+        return Uri.joinPath(this._currentWsFolder.uri, ".vscode", "vdmj.properties").fsPath;
+    }
+
+    private _sendVdmjProperties() {
+        if (!this._panel) {
+            return;
+        }
+
+        const defaultPath = Uri.joinPath(this._context.extensionUri, "resources", "vdmj.properties").fsPath;
+        const defaults = this._parseProperties(fs.readFileSync(defaultPath, "utf8"));
+
+        const projectPath = this._getPropertiesPath();
+        const projectValues = projectPath && fs.existsSync(projectPath) ? this._parseProperties(fs.readFileSync(projectPath, "utf8")) : {};
+
+        const merged: Record<string, string> = { ...defaults, ...projectValues };
+
+        const uiPath = Uri.joinPath(this._context.extensionUri, "resources", "vdmjUI.json").fsPath;
+        const uiMeta = fs.existsSync(uiPath) ? JSON.parse(fs.readFileSync(uiPath, "utf8")) : {};
+
+        const schema: Record<string, { type: string; description: string; category: string; advanced: boolean; default: string }> = {};
+        for (const [key, defaultValue] of Object.entries(defaults)) {
+            const meta = uiMeta[key] ?? {};
+            schema[key] = {
+                type: this._inferType(defaultValue),
+                description: meta.description ?? "",
+                category: meta.category ?? "Other",
+                advanced: meta.advanced ?? false,
+                default: defaultValue,
+            };
+        }
+
+        this._panel.webview.postMessage({
+            command: "loadVdmjProperties",
+            data: { values: merged, schema },
+        });
     }
 
     public dispose() {

@@ -1,0 +1,182 @@
+{
+    "vdmj.parser.tabstop": {
+        "description": "Tab stop for source files.",
+        "category": "Parser",
+        "advanced": false
+    },
+    "vdmj.parser.comment_nesting": {
+        "description": "Nesting of block comments: 0=support, 1=warning, 2=error, 3=ignore.",
+        "category": "Parser",
+        "advanced": false
+    },
+    "vdmj.parser.merge_comments": {
+        "description": "Merge adjacent line comments into a single block comment.",
+        "category": "Parser",
+        "advanced": false
+    },
+    "vdmj.parser.maximal_types": {
+        "description": "Enable T! maximal type parsing.",
+        "category": "Parser",
+        "advanced": false
+    },
+    "vdmj.annotations.packages": {
+        "description": "Package list for annotation classes to load.",
+        "category": "Annotations",
+        "advanced": false
+    },
+    "vdmj.annotations.debug": {
+        "description": "Enable annotation debugging.",
+        "category": "Annotations",
+        "advanced": false
+    },
+    "vdmj.tc.skip_recursive_check": {
+        "description": "Skip the check for mutually-recursive function calls.",
+        "category": "Type Checker",
+        "advanced": false
+    },
+    "vdmj.tc.skip_cyclic_check": {
+        "description": "Skip the check for definition dependency cycles.",
+        "category": "Type Checker",
+        "advanced": false
+    },
+    "vdmj.tc.max_errors": {
+        "description": "Maximum number of type errors reported before 'Too many errors'.",
+        "category": "Type Checker",
+        "advanced": false
+    },
+    "vdmj.pog.max_alt_paths": {
+        "description": "Maximum number of paths in an operation before POG starts limiting them.",
+        "category": "POG",
+        "advanced": false
+    },
+    "vdmj.traces.max_repeats": {
+        "description": "Maximum expansions for '+' and '*' trace patterns.",
+        "category": "Traces",
+        "advanced": false
+    },
+    "vdmj.traces.save_state": {
+        "description": "Serialize the system state between trace tests.",
+        "category": "Traces",
+        "advanced": false
+    },
+    "vdmj.traces.max_arg_length": {
+        "description": "Size below which trace function args are expanded.",
+        "category": "Traces",
+        "advanced": false
+    },
+    "vdmj.scheduler.fcfs_timeslice": {
+        "description": "Default timeslice (statements executed) for the FCFS policy.",
+        "category": "Scheduler",
+        "advanced": false
+    },
+    "vdmj.scheduler.virtual_timeslice": {
+        "description": "vCPU/vBUS timeslice.",
+        "category": "Scheduler",
+        "advanced": false
+    },
+    "vdmj.scheduler.jitter": {
+        "description": "Timeslice variation (+/- jitter ticks).",
+        "category": "Scheduler",
+        "advanced": false
+    },
+    "vdmj.rt.duration_default": {
+        "description": "Default duration for RT statements.",
+        "category": "Real-Time",
+        "advanced": false
+    },
+    "vdmj.rt.duration_transactions": {
+        "description": "Enable transactional variable updates.",
+        "category": "Real-Time",
+        "advanced": false
+    },
+    "vdmj.rt.log_instvarchanges": {
+        "description": "Enable InstVarChange RT log entries.",
+        "category": "Real-Time",
+        "advanced": false
+    },
+    "vdmj.rt.max_periodic_overlaps": {
+        "description": "Maximum period thread overlaps allowed per object (0 = off).",
+        "category": "Real-Time",
+        "advanced": false
+    },
+    "vdmj.rt.diags_guards": {
+        "description": "Enable extra diagnostics for guards.",
+        "category": "Real-Time",
+        "advanced": false
+    },
+    "vdmj.rt.diags_timestep": {
+        "description": "Enable extra RT log diagnostics for timesteps.",
+        "category": "Real-Time",
+        "advanced": false
+    },
+    "vdmj.in.powerset_limit": {
+        "description": "Set size limit for power set expressions.",
+        "category": "Interpreter",
+        "advanced": false
+    },
+    "vdmj.in.typebind_limit": {
+        "description": "Type size limit for type bind expansions.",
+        "category": "Interpreter",
+        "advanced": false
+    },
+    "vdmj.in.init_checks": {
+        "description": "Perform checks during initialization.",
+        "category": "Interpreter",
+        "advanced": false
+    },
+    "vdmj.in.undefined_evals": {
+        "description": "Treat some errors as undefined values.",
+        "category": "Interpreter",
+        "advanced": false
+    },
+    "vdmj.mapping.search_path": {
+        "description": "Alternative search path for the ClassMapper.",
+        "category": "Mapping",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.ast": {
+        "description": "Plugin priority for AST phase.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.tc": {
+        "description": "Plugin priority for TC phase.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.in": {
+        "description": "Plugin priority for IN phase.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.po": {
+        "description": "Plugin priority for PO phase.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.ct": {
+        "description": "Plugin priority for CT phase.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.cmd": {
+        "description": "Plugin priority for CMD phase.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.plugin.priority.user": {
+        "description": "Plugin priority for user plugins.",
+        "category": "Plugin Priorities",
+        "advanced": true
+    },
+    "vdmj.debug.link_class": {
+        "description": "Class name for the DebugLink.",
+        "category": "Debug",
+        "advanced": true
+    },
+    "vdmj.diag.max_stack": {
+        "description": "Maximum stack depth to dump via println (0 = all).",
+        "category": "Diagnostics",
+        "advanced": true
+    }
+}

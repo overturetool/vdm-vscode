@@ -83,6 +83,14 @@ interface SchemaEntry {
     advanced: boolean;
 }
 
+interface VdmjSchemaEntry {
+    type: "boolean" | "number" | "string";
+    description: string;
+    category: string;
+    advanced: boolean;
+    default: string;
+}
+
 // Tab bar
 
 const TabBar = ({ activeTab, onSelect }: { activeTab: TabId; onSelect: (tab: TabId) => void }) => {
@@ -384,6 +392,151 @@ const AdvancedSection = ({
     );
 };
 
+const VdmjPropertyRow = ({
+    propKey,
+    schema,
+    value,
+    isModified,
+    onChange,
+}: {
+    propKey: string,
+    schema: VdmjSchemaEntry,
+    value: string,
+    isModified: boolean,
+    onChange: (key: string, value: string) => void;
+}) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px" }}>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontFamily: "var(--vscode-editor-font-family)", fontSize: "12px" }}>{propKey}</span>
+                {isModified && (
+                    <span
+                        title="Modified from default"
+                        style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--vscode-focusBorder)", display: "inline-block", flexShrink: 0 }}
+                    />
+                )}
+            </div>
+            <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{schema.description}</div>
+        </div>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+            {schema.type === "boolean" ? (
+                <VSCodeCheckbox
+                    checked={value === "true"}
+                    onChange={(e: any) => onChange(propKey, e.target.checked ? "true" : "false")}
+                />
+            ) : (
+                <VSCodeTextField
+                    value={value}
+                    onInput={(e: any) => onChange(propKey, e.target.value)}
+                    style={{ minWidth: schema.type === "number" ? "80px" : "200px" }}
+                />
+            )}
+        </div>
+    </div>
+);
+
+const VdmjTab = ({
+    values,
+    schema,
+    onChange,
+}: {
+    values: Record<string, string>;
+    schema: Record<string, VdmjSchemaEntry>;
+    onChange: (key: string, value: string) => void;
+}) => {
+    const [filterText, setFilterText] = useState("");
+    const [showModifiedOnly, setShowModifiedOnly] = useState(false);
+    const [advancedOpen, setAdvancedOpen] = useState(false);
+
+    const isModified = (key: string) => values[key] !== undefined && values[key] !== schema[key]?.default;
+
+    const matchesFilter = (key: string, entry: VdmjSchemaEntry) => {
+        if (showModifiedOnly && !isModified(key)) {
+            return false;
+        }
+        if (!filterText) {
+            return true;
+        }
+        const q = filterText.toLowerCase();
+        return key.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
+    };
+
+    const groupByCategory = (entries: [string, VdmjSchemaEntry][]) =>
+        entries.reduce<Record<string, [string, VdmjSchemaEntry][]>>((acc, [key, entry]) => {
+            if (!acc[entry.category]) {
+                acc[entry.category] = [];
+            }
+            acc[entry.category].push([key, entry]);
+            return acc;
+        }, {});
+
+    const allEntries = Object.entries(schema);
+    const commonGroups = groupByCategory(allEntries.filter(([k, e]) => !e.advanced && matchesFilter(k, e)));
+    const advancedGroups = groupByCategory(allEntries.filter(([k, e]) => e.advanced && matchesFilter(k, e)));
+    const forceAdvancedOpen = (filterText.length > 0 || showModifiedOnly) && Object.keys(advancedGroups).length > 0;
+
+    const renderGroup = (category: string, entries: [string, VdmjSchemaEntry][]) => (
+        <div key={category} style={{ marginBottom: "24px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--vscode-descriptionForeground)", marginBottom: "8px" }}>
+                {category}
+            </div>
+            <VSCodeDivider />
+            {entries.map(([key, entry], i) => (
+                <React.Fragment key={key}>
+                    <VdmjPropertyRow
+                        propKey={key}
+                        schema={entry}
+                        value={values[key] ?? entry.default}
+                        isModified={isModified(key)}
+                        onChange={onChange}
+                    />
+                    {i < entries.length - 1 && <VSCodeDivider role="presentation" />}
+                </React.Fragment>
+            ))}
+        </div>
+    );
+
+    return (
+        <div>
+            <div style={{ marginBottom: "20px", display: "flex", gap: "8px", alignItems: "center" }}>
+                <VSCodeTextField
+                    placeholder="Search properties..."
+                    value={filterText}
+                    onInput={(e: any) => setFilterText(e.target.value)}
+                    style={{ flex: 1 }}
+                >
+                    <span slot="start" className="codicon codicon-search" />
+                </VSCodeTextField>
+                <VSCodeButton
+                    appearance={showModifiedOnly ? "primary" : "secondary"}
+                    onClick={() => setShowModifiedOnly((v) => !v)}
+                    title="Show only modified properties"
+                >
+                    <span slot="start" className="codicon codicon-diff-modified" />
+                    Modified
+                </VSCodeButton>
+            </div>
+
+            {Object.entries(commonGroups).map(([category, entries]) => renderGroup(category, entries))}
+
+            <div style={{ marginTop: "16px" }}>
+                <button
+                    onClick={() => setAdvancedOpen((o) => !o)}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "var(--vscode-descriptionForeground)", fontSize: "12px", fontWeight: 600, padding: "4px 0" }}
+                >
+                    <span className={`codicon codicon-chevron-${forceAdvancedOpen || advancedOpen ? "down" : "right"}`} />
+                    Advanced
+                </button>
+                {(forceAdvancedOpen || advancedOpen) && (
+                    <div style={{ marginTop: "12px" }}>
+                        {Object.entries(advancedGroups).map(([category, entries]) => renderGroup(category, entries))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // Main view
 
 export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
@@ -394,6 +547,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
     const [filterText, setFilterText] = useState<string>("");
     const [showModifiedOnly, setShowModifiedOnly] = useState<boolean>(false);
+    const [vdmjValues, setVdmjValues] = useState<Record<string, string>>({});
+    const [vdmjSchema, setVdmjSchema] = useState<Record<string, VdmjSchemaEntry>>({});
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -401,6 +556,10 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 setSettings(e.data.data.settings);
                 setSchema(e.data.data.schema);
                 setWsFolderName(e.data.data.wsFolderName);
+            }
+            if (e.data.command === "loadVdmjProperties") {
+                setVdmjValues(e.data.data.values);
+                setVdmjSchema(e.data.data.schema);
             }
         };
         window.addEventListener("message", onMessage);
@@ -418,6 +577,13 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 next.delete(key);
                 return next;
             });
+        }, 300);
+    };
+
+    const handleVdmjChange = (key: string, value: string) => {
+        setVdmjValues((prev) => ({ ...prev, [key]: value }));
+        setTimeout(() => {
+            vscodeApi.postMessage({ command: "saveVdmjProperty", data: { key, value } });
         }, 300);
     };
 
@@ -536,7 +702,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 );
             }
             case "vdmj":
-                return <ComingSoonTab label="VDMJ"/>;
+                return <VdmjTab values={vdmjValues} schema={vdmjSchema} onChange={handleVdmjChange} />;
             case "launch":
                 return <ComingSoonTab label="Launch"/>;
             case "plugins":
