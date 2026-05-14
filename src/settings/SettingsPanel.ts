@@ -332,11 +332,15 @@ export class SettingsPanel extends AutoDisposable {
         const uiPath = Uri.joinPath(this._context.extensionUri, "resources", "vdmjUI.json").fsPath;
         const uiMeta = fs.existsSync(uiPath) ? JSON.parse(fs.readFileSync(uiPath, "utf8")) : {};
 
-        const schema: Record<string, { type: string; description: string; category: string; advanced: boolean; default: string }> = {};
+        const schema: Record<
+            string,
+            { type: string; title: string; description: string; category: string; advanced: boolean; default: string }
+        > = {};
         for (const [key, defaultValue] of Object.entries(defaults)) {
             const meta = uiMeta[key] ?? {};
             schema[key] = {
                 type: this._inferType(defaultValue),
+                title: meta.title ?? key,
                 description: meta.description ?? "",
                 category: meta.category ?? "Other",
                 advanced: meta.advanced ?? false,

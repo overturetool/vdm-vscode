@@ -85,6 +85,7 @@ interface SchemaEntry {
 
 interface VdmjSchemaEntry {
     type: "boolean" | "number" | "string";
+    title: string;
     description: string;
     category: string;
     advanced: boolean;
@@ -408,13 +409,16 @@ const VdmjPropertyRow = ({
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px" }}>
         <div style={{ flex: "1 1 0", minWidth: 0 }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontFamily: "var(--vscode-editor-font-family)", fontSize: "12px" }}>{propKey}</span>
+                {schema.title}
                 {isModified && (
                     <span
                         title="Modified from default"
                         style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--vscode-focusBorder)", display: "inline-block", flexShrink: 0 }}
                     />
                 )}
+            </div>
+            <div style={{ fontSize: "11px", color: "var(--vscode-descriptionForeground)", fontFamily: "var(--vscode-editor-font-family)", marginBottom: "2px" }}>
+                {propKey}
             </div>
             <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{schema.description}</div>
         </div>
