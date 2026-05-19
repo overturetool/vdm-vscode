@@ -54,105 +54,132 @@ export class SettingsPanel extends AutoDisposable {
         this._disposables.push(commands.registerCommand("vdm-vscode.openSettingsPanel", (uri?: Uri) => this.open(uri)));
     }
 
-    public open(uri?: Uri) {
-        // Determine which workspace folder to use (active editor or first known VDM folder)
-        const activeEditor = window.activeTextEditor;
-        const wsFolder =
-            (uri && workspace.getWorkspaceFolder(uri)) ||
-            (activeEditor && workspace.getWorkspaceFolder(activeEditor.document.uri)) ||
-            (this.knownVdmFolders.size > 0 ? Array.from(this.knownVdmFolders.keys())[0] : undefined);
+    public async open(uri?: Uri) {
+        try {
+            // Determine which workspace folder to use (active editor or first known VDM folder)
+            const activeEditor = window.activeTextEditor;
 
-        this._currentWsFolder = wsFolder;
+            const availableFolders =
+                this.knownVdmFolders.size > 0 ? Array.from(this.knownVdmFolders.keys()) : (workspace.workspaceFolders ?? []);
 
-        if (this._panel) {
-            this._panel.reveal(ViewColumn.One, false);
-            this._sendSettings();
-            this._sendVdmjProperties();
-            return;
-        }
+            let wsFolder: WorkspaceFolder | undefined =
+                (uri && uri.scheme === "file" && workspace.getWorkspaceFolder(uri)) ||
+                (activeEditor && workspace.getWorkspaceFolder(activeEditor.document.uri)) ||
+                (availableFolders.length === 1 ? availableFolders[0] : undefined);
 
-        this._panel = window.createWebviewPanel(
-            this.viewType,
-            "VDM Settings",
-            { viewColumn: ViewColumn.Beside, preserveFocus: false },
-            {
-                enableScripts: true,
-                localResourceRoots: [this._resourcesUri, this._webviewsUri],
-                retainContextWhenHidden: true,
-            },
-        );
+            // If still no folder and multiple are available, ask the user
+            if (!wsFolder && availableFolders.length > 1) {
+                const chosen = await window.showQuickPick(
+                    availableFolders.map((f) => f.name),
+                    { title: "Select workspace folder for VDM Settings" },
+                );
+                if (!chosen) {
+                    return;
+                }
+                wsFolder = availableFolders.find((f) => f.name === chosen);
+            }
 
-        this._panel.onDidDispose(
-            () => {
-                this._panel = undefined;
-            },
-            null,
-            this._disposables,
-        );
+            if (!wsFolder && availableFolders.length === 0) {
+                window.showWarningMessage("No workspace folder found. Please open a VDM project first.");
+                return;
+            }
 
-        this._panel.webview.onDidReceiveMessage(
-            async (message: Message) => {
-                switch (message.command) {
-                    case "ready":
-                        this._sendSettings();
-                        this._sendVdmjProperties();
-                        break;
+            this._currentWsFolder = wsFolder;
 
-                    case "updateSetting": {
-                        const { key, value } = message.data;
-                        const config = workspace.getConfiguration(undefined, this._currentWsFolder?.uri);
-                        try {
-                            if (this._currentWsFolder) {
-                                await config.update(key, value, ConfigurationTarget.WorkspaceFolder, true);
-                            } else {
-                                await config.update(key, value, ConfigurationTarget.Workspace);
+            if (this._panel) {
+                this._panel.title = `VDM Settings${this._currentWsFolder ? ` - ${this._currentWsFolder.name}` : ""}`;
+                this._panel.reveal(ViewColumn.One, false);
+                this._sendSettings();
+                this._sendVdmjProperties();
+                return;
+            }
+
+            this._panel = window.createWebviewPanel(
+                this.viewType,
+                `VDM Settings${this._currentWsFolder ? ` - ${this._currentWsFolder.name}` : ""}`,
+                { viewColumn: ViewColumn.Beside, preserveFocus: false },
+                {
+                    enableScripts: true,
+                    localResourceRoots: [this._resourcesUri, this._webviewsUri],
+                    retainContextWhenHidden: true,
+                },
+            );
+
+            this._panel.onDidDispose(
+                () => {
+                    this._panel = undefined;
+                },
+                null,
+                this._disposables,
+            );
+
+            this._panel.webview.onDidReceiveMessage(
+                async (message: Message) => {
+                    switch (message.command) {
+                        case "ready":
+                            this._sendSettings();
+                            this._sendVdmjProperties();
+                            break;
+
+                        case "updateSetting": {
+                            const { key, value } = message.data;
+                            const config = workspace.getConfiguration(undefined, this._currentWsFolder?.uri);
+                            try {
+                                if (this._currentWsFolder) {
+                                    await config.update(key, value, ConfigurationTarget.WorkspaceFolder, true);
+                                } else {
+                                    await config.update(key, value, ConfigurationTarget.Workspace);
+                                }
+                            } catch (e) {
+                                window.showErrorMessage(`Failed to update setting "${key}": ${e}`);
                             }
-                        } catch (e) {
-                            window.showErrorMessage(`Failed to update setting "${key}": ${e}`);
-                        }
-                        break;
-                    }
-
-                    case "openNativeSettings":
-                        commands.executeCommand(
-                            "workbench.action.openWorkspaceSettings",
-                            message.data?.query ?? "@ext:overturetool.vdm-vscode",
-                        );
-                        break;
-
-                    case "saveVdmjProperty": {
-                        const { key, value } = message.data;
-                        const projectPath = this._getPropertiesPath();
-                        if (!projectPath) {
                             break;
                         }
 
-                        const vscodeFolder = path.dirname(projectPath);
-                        if (!fs.existsSync(vscodeFolder)) {
-                            fs.mkdirSync(vscodeFolder, { recursive: true });
-                        }
+                        case "openNativeSettings":
+                            commands.executeCommand(
+                                "workbench.action.openWorkspaceSettings",
+                                message.data?.query ?? "@ext:overturetool.vdm-vscode",
+                            );
+                            break;
 
-                        const existing = fs.existsSync(projectPath)
-                            ? fs.readFileSync(projectPath, "utf8")
-                            : fs.readFileSync(Uri.joinPath(this._context.extensionUri, "resources", "vdmj.properties").fsPath, "utf8");
+                        case "saveVdmjProperty": {
+                            const { key, value } = message.data;
+                            const projectPath = this._getPropertiesPath();
+                            if (!projectPath) {
+                                break;
+                            }
 
-                        const updated = this._serializeProperties(existing, { [key]: value });
-                        fs.writeFileSync(projectPath, updated, "utf8");
-                        if (this._restartMsgTimer) {
-                            clearTimeout(this._restartMsgTimer);
+                            const vscodeFolder = path.dirname(projectPath);
+                            if (!fs.existsSync(vscodeFolder)) {
+                                fs.mkdirSync(vscodeFolder, { recursive: true });
+                            }
+
+                            const existing = fs.existsSync(projectPath)
+                                ? fs.readFileSync(projectPath, "utf8")
+                                : fs.readFileSync(Uri.joinPath(this._context.extensionUri, "resources", "vdmj.properties").fsPath, "utf8");
+
+                            const updated = this._serializeProperties(existing, { [key]: value });
+                            fs.writeFileSync(projectPath, updated, "utf8");
+                            if (this._restartMsgTimer) {
+                                clearTimeout(this._restartMsgTimer);
+                            }
+                            this._restartMsgTimer = setTimeout(() => {
+                                Util.showRestartMsg("VDMJ properties changed. Please reload VS Code to enable the changes.");
+                            }, 1000);
+                            break;
                         }
-                        this._restartMsgTimer = setTimeout(() => {
-                            Util.showRestartMsg("VDMJ properties changed. Please reload VS Code to enable the changes.");
-                        }, 1000);
-                        break;
                     }
-                }
-            },
-            null,
-            this._disposables,
-        );
+                },
+                null,
+                this._disposables,
+            );
 
-        this._panel.webview.html = this._buildHtml(this._panel.webview);
+            this._panel.webview.html = this._buildHtml(this._panel.webview);
+        } catch (e) {
+            console.error("[SettingsPanel] open() failed:", e);
+            window.showErrorMessage(`Failed to open VDM Settings: ${e instanceof Error ? e.message + "\n" + e.stack : JSON.stringify(e)}`);
+        }
     }
 
     private _sendSettings() {
