@@ -28,6 +28,7 @@ import { isSameUri, isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUti
 // import { VdmDapSupport } from "../../dap/VdmDapSupport";
 import { ProofObligationCounterExample, ProofObligationWitness, QuickCheckInfo } from "../protocol/ProofObligationGeneration";
 import { CancellationToken } from "vscode-languageclient";
+import VdmMiddleware from "../../lsp/VdmMiddleware";
 
 export interface ProofObligation {
     id: number;
@@ -108,7 +109,7 @@ export class ProofObligationPanel implements Disposable {
 
     constructor(
         private readonly _context: ExtensionContext,
-        clientManager: ClientManager,
+        private readonly _clientManager: ClientManager,
     ) {
         this.onReady = new Promise<void>((resolve, reject) => {
             this._onReadyCallbacks = new OnReady(resolve, reject);
@@ -146,8 +147,8 @@ export class ProofObligationPanel implements Disposable {
                     }
                     // If in a multi project workspace environment the user could utilise the pog.run command on a project for which no client (and therefore server) has been started.
                     // So check if a client is present for the workspacefolder or else start it.
-                    if (!clientManager.get(wsFolder)) {
-                        await clientManager.launchClientForWorkspace(wsFolder);
+                    if (!this._clientManager.get(wsFolder)) {
+                        await this._clientManager.launchClientForWorkspace(wsFolder);
                     }
                     this.onRunPog(uri);
                 },
@@ -225,9 +226,14 @@ export class ProofObligationPanel implements Disposable {
         return ProofObligationPanel._providers.find((p) => util.match(p.selector, uri));
     }
 
-    protected async onRunPog(uri: Uri) {
+    protected async onRunPog(uri: Uri, clearQcCache: boolean = true) {
         this._pos = [];
         this._filterMessage = null;
+        if (clearQcCache) {
+            const wsFolder = workspace.getWorkspaceFolder(uri);
+            const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+            (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
+        }
         const poProvider = this.getPOProvider(uri);
         this.createWebView(poProvider.provider.quickCheckProvider, uri);
         try {
@@ -292,7 +298,7 @@ export class ProofObligationPanel implements Disposable {
 
             // If POG is possible
             if (canRun) {
-                this.onRunPog(uri);
+                this.onRunPog(uri, false);
             } else {
                 // Display warning that POs may be outdated
                 this.displayWarning();
@@ -452,6 +458,9 @@ export class ProofObligationPanel implements Disposable {
                                     cancellable: true,
                                 },
                                 async (_progress, _token) => {
+                                    const wsFolder = workspace.getWorkspaceFolder(this._lastUri);
+                                    const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+                                    (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
                                     try {
                                         const qcInfos = await this.onRunQuickCheck(
                                             this._lastUri,
