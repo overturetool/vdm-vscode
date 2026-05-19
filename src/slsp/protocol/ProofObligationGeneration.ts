@@ -200,3 +200,22 @@ export namespace RunQuickCheckRequest {
 }
 
 export type RunQuickCheckRequestParams = QuickCheckConfig;
+
+/**
+ * The `slsp/POG/qc` notification is sent from the server after a qc/qr command
+ * is run from the debug console, carrying the list of PO numbers that were checked.
+ */
+export namespace QCUpdatedNotification {
+    export const type = new NotificationType<QCUpdatedParams>("slsp/POG/qc");
+    export type HandlerSignature = NotificationHandler<QCUpdatedParams>;
+}
+
+/**
+ * The parameters of a `slsp/POG/qc` notification.
+ */
+export interface QCUpdatedParams {
+    /**
+     * The list of PO numbers that were checked.
+     */
+    obligations: number[];
+}

@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 export default class VdmMiddleware implements Middleware {
     private _pendingUndoUris: Set<string> = new Set();
     private _qcDiagnostics: Map<string, vscode.Diagnostic[]> = new Map();
+    private _lastIncomingDiagnostics: Map<string, vscode.Diagnostic[]> = new Map();
 
     schedulePendingUndo(uri: string) {
         this._pendingUndoUris.add(uri);
@@ -43,9 +44,27 @@ export default class VdmMiddleware implements Middleware {
 
     clearQcDiagnostics() {
         this._qcDiagnostics.clear();
+        this._lastIncomingDiagnostics.clear();
+    }
+
+    handleQCUpdated(obligations: number[]) {
+        for (const [uri, cached] of this._qcDiagnostics) {
+            const lastIncoming = this._lastIncomingDiagnostics.get(uri) ?? [];
+            const updated = cached.filter((d) => {
+                const poMatch = obligations.some((id) => d.message.startsWith(`PO #${id}`));
+                if (!poMatch) {
+                    return true;
+                }
+                return lastIncoming.some(
+                    (server) => server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                );
+            });
+            this._qcDiagnostics.set(uri, updated);
+        }
     }
 
     handleDiagnostics(uri: vscode.Uri, diagnostics: vscode.Diagnostic[], next: HandleDiagnosticsSignature) {
+        this._lastIncomingDiagnostics.set(uri.toString(), diagnostics);
         const qcDiagnostics = diagnostics.filter((d) => d.source?.endsWith("/PO"));
         if (qcDiagnostics.length > 0) {
             const existing = this._qcDiagnostics.get(uri.toString()) ?? [];
