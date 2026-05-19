@@ -51,13 +51,14 @@ export class SettingsPanel extends AutoDisposable {
             .filter((tab) => tab.input instanceof TabInputWebview && tab.input.viewType.includes(this.viewType));
         window.tabGroups.close(orphanedTabs);
 
-        this._disposables.push(commands.registerCommand("vdm-vscode.openSettingsPanel", () => this.open()));
+        this._disposables.push(commands.registerCommand("vdm-vscode.openSettingsPanel", (uri?: Uri) => this.open(uri)));
     }
 
-    public open() {
+    public open(uri?: Uri) {
         // Determine which workspace folder to use (active editor or first known VDM folder)
         const activeEditor = window.activeTextEditor;
         const wsFolder =
+            (uri && workspace.getWorkspaceFolder(uri)) ||
             (activeEditor && workspace.getWorkspaceFolder(activeEditor.document.uri)) ||
             (this.knownVdmFolders.size > 0 ? Array.from(this.knownVdmFolders.keys())[0] : undefined);
 
@@ -66,6 +67,7 @@ export class SettingsPanel extends AutoDisposable {
         if (this._panel) {
             this._panel.reveal(ViewColumn.One, false);
             this._sendSettings();
+            this._sendVdmjProperties();
             return;
         }
 

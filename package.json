@@ -702,6 +702,11 @@
                     "command": "vdm-vscode.translate.uml2vdm",
                     "when": "resourceExtname == .puml && vdm-vscode.translate.uml2vdm",
                     "group": "vdm@2"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel",
+                    "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "group": "vdm@0"
                 }
             ],
             "editor/title": [
@@ -741,6 +746,11 @@
                     "command": "vdm-vscode.translate.uml2vdm",
                     "when": "resourceExtname == .puml && vdm-vscode.translate.uml2vdm",
                     "group": "vdm@1"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel",
+                    "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "group": "vdm@0"
                 }
             ],
             "commandPalette": [
