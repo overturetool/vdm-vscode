@@ -46,7 +46,7 @@ export default class VdmMiddleware implements Middleware {
     }
 
     handleDiagnostics(uri: vscode.Uri, diagnostics: vscode.Diagnostic[], next: HandleDiagnosticsSignature) {
-        const qcDiagnostics = diagnostics.filter((d) => (d as any).code === 9000);
+        const qcDiagnostics = diagnostics.filter((d) => d.source?.endsWith("/PO"));
         if (qcDiagnostics.length > 0) {
             const existing = this._qcDiagnostics.get(uri.toString()) ?? [];
             const updated = [
