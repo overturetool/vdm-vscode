@@ -83,13 +83,20 @@ export default class VdmMiddleware implements Middleware {
         }
         const cached = this._qcDiagnostics.get(uri.toString());
         if (cached?.length) {
-            const missing = cached.filter(
-                (d) =>
-                    !diagnostics.some(
-                        (server) =>
-                            server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
-                    ),
-            );
+            const missing = cached
+                .filter(
+                    (d) =>
+                        !diagnostics.some(
+                            (server) =>
+                                server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                        ),
+                )
+                .map((d) => {
+                    const stale = new vscode.Diagnostic(d.range, d.message, vscode.DiagnosticSeverity.Information);
+                    stale.source = d.source;
+                    stale.code = d.code;
+                    return stale;
+                });
             next(uri, [...diagnostics, ...missing]);
         } else {
             next(uri, diagnostics);
