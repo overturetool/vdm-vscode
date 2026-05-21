@@ -92,7 +92,7 @@ export default class VdmMiddleware implements Middleware {
                         ),
                 )
                 .map((d) => {
-                    const stale = new vscode.Diagnostic(d.range, d.message, vscode.DiagnosticSeverity.Information);
+                    const stale = new vscode.Diagnostic(d.range, `[STALE] ${d.message}`, vscode.DiagnosticSeverity.Information);
                     stale.source = d.source;
                     stale.code = d.code;
                     return stale;
