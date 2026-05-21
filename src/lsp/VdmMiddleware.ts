@@ -102,4 +102,25 @@ export default class VdmMiddleware implements Middleware {
             next(uri, diagnostics);
         }
     }
+
+    updateStalePONumbers(pos: { id: number; range: vscode.Range }[]) {
+        for (const [uri, cached] of this._qcDiagnostics) {
+            const updated = cached
+                .map((d) => {
+                    const match = pos.find(
+                        (po) => po.range.start.line === d.range.start.line && po.range.start.character === d.range.start.character,
+                    );
+                    if (!match) {
+                        return null;
+                    }
+                    const updatedMessage = d.message.replace(/(\[STALE\] )?PO #\d+/, `PO #${match.id}`);
+                    const updated = new vscode.Diagnostic(d.range, updatedMessage, d.severity);
+                    updated.source = d.source;
+                    updated.code = d.code;
+                    return updated;
+                })
+                .filter((d) => d !== null);
+            this._qcDiagnostics.set(uri, updated);
+        }
+    }
 }

@@ -248,6 +248,19 @@ export class ProofObligationPanel implements Disposable {
                 },
             );
             this._allPos = [...res];
+
+            const wsFolder = workspace.getWorkspaceFolder(uri);
+            const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+            const middleware = client?.middleware as VdmMiddleware;
+            if (middleware) {
+                middleware.updateStalePONumbers(
+                    this._allPos.map((po) => ({
+                        id: po.id,
+                        range: po.location.range,
+                    })),
+                );
+            }
+
             this._pos = [...res];
             this.clearWarning();
         } catch (e) {
