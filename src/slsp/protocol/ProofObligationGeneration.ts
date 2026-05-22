@@ -215,7 +215,24 @@ export namespace QCUpdatedNotification {
  */
 export interface QCUpdatedParams {
     /**
-     * The list of PO numbers that were checked.
+     * The list of PO numbers that were checked, with their current locations.
      */
-    obligations: number[];
+    obligations: QCUpdatedObligation[];
+}
+
+export interface QCUpdatedObligation {
+    /**
+     * The PO number.
+     */
+    id: number;
+    /**
+     * The current location of the PO.
+     */
+    location: {
+        uri: string;
+        range: {
+            start: { line: number; character: number };
+            end: { line: number; character: number };
+        };
+    };
 }

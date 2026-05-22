@@ -3,6 +3,7 @@
 import { ProviderResult, TextDocument, CancellationToken, CodeLens, workspace, commands } from "vscode";
 import { Middleware, ProvideCodeLensesSignature, ProvideDocumentSymbolsSignature, HandleDiagnosticsSignature } from "vscode-languageclient";
 import * as vscode from "vscode";
+import { QCUpdatedObligation } from "../slsp/protocol/ProofObligationGeneration";
 
 export default class VdmMiddleware implements Middleware {
     private _pendingUndoUris: Set<string> = new Set();
@@ -47,18 +48,44 @@ export default class VdmMiddleware implements Middleware {
         this._lastIncomingDiagnostics.clear();
     }
 
-    handleQCUpdated(obligations: number[]) {
+    handleQCUpdated(obligations: QCUpdatedObligation[]) {
         for (const [uri, cached] of this._qcDiagnostics) {
+            const obligationsForUri = obligations.filter((o) => o.location.uri === uri);
+            if (obligationsForUri.length === 0) {
+                continue;
+            }
+
             const lastIncoming = this._lastIncomingDiagnostics.get(uri) ?? [];
-            const updated = cached.filter((d) => {
-                const poMatch = obligations.some((id) => d.message.startsWith(`PO #${id}`));
-                if (!poMatch) {
-                    return true;
-                }
-                return lastIncoming.some(
-                    (server) => server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
-                );
-            });
+
+            const updated = cached
+                .map((d) => {
+                    const match = obligationsForUri.find(
+                        (o) =>
+                            o.location.range.start.line === d.range.start.line &&
+                            o.location.range.start.character === d.range.start.character,
+                    );
+
+                    if (!match) {
+                        return d;
+                    }
+
+                    const stillFailing = lastIncoming.some(
+                        (server) =>
+                            server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                    );
+
+                    if (!stillFailing) {
+                        return null;
+                    }
+
+                    const updatedMessage = d.message.replace(/PO #\d+/, `PO #${match.id}`);
+                    const updated = new vscode.Diagnostic(d.range, updatedMessage, d.severity);
+                    updated.source = d.source;
+                    updated.code = d.code;
+                    return updated;
+                })
+                .filter((d) => d !== null);
+
             this._qcDiagnostics.set(uri, updated);
         }
     }
