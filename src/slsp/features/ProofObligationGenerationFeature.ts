@@ -180,12 +180,16 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
     }
 
     private onPOGUpdatedNotification: POGUpdatedNotification.HandlerSignature = (params) => {
-        this._onDidChangeProofObligations.fire(params.successful ?? params.quickcheck);
+        if (params.quickcheck !== undefined) {
+            return;
+        }
+        this._onDidChangeProofObligations.fire(params.successful ?? false);
     };
 
     private onQCUpdatedNotification: QCUpdatedNotification.HandlerSignature = (params) => {
         const middleware = this._client.middleware as VdmMiddleware;
         middleware.handleQCUpdated(params.obligations);
+        middleware.reapplyDiagnostics();
     };
 
     private asCodeProofObligation(po: ProofObligation): CodeProofObligation {

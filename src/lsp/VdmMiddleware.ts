@@ -9,6 +9,7 @@ export default class VdmMiddleware implements Middleware {
     private _pendingUndoUris: Set<string> = new Set();
     private _qcDiagnostics: Map<string, vscode.Diagnostic[]> = new Map();
     private _lastIncomingDiagnostics: Map<string, vscode.Diagnostic[]> = new Map();
+    private _lastNext: Map<string, (uri: vscode.Uri, diagnostics: vscode.Diagnostic[]) => void> = new Map();
 
     schedulePendingUndo(uri: string) {
         this._pendingUndoUris.add(uri);
@@ -46,6 +47,7 @@ export default class VdmMiddleware implements Middleware {
     clearQcDiagnostics() {
         this._qcDiagnostics.clear();
         this._lastIncomingDiagnostics.clear();
+        this._lastNext.clear();
     }
 
     handleQCUpdated(obligations: QCUpdatedObligation[]) {
@@ -91,6 +93,7 @@ export default class VdmMiddleware implements Middleware {
     }
 
     handleDiagnostics(uri: vscode.Uri, diagnostics: vscode.Diagnostic[], next: HandleDiagnosticsSignature) {
+        this._lastNext.set(uri.toString(), next);
         this._lastIncomingDiagnostics.set(uri.toString(), diagnostics);
         const qcDiagnostics = diagnostics.filter((d) => d.source?.endsWith("/PO"));
         if (qcDiagnostics.length > 0) {
@@ -110,20 +113,13 @@ export default class VdmMiddleware implements Middleware {
         }
         const cached = this._qcDiagnostics.get(uri.toString());
         if (cached?.length) {
-            const missing = cached
-                .filter(
-                    (d) =>
-                        !diagnostics.some(
-                            (server) =>
-                                server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
-                        ),
-                )
-                .map((d) => {
-                    const stale = new vscode.Diagnostic(d.range, `[STALE] ${d.message}`, vscode.DiagnosticSeverity.Information);
-                    stale.source = d.source;
-                    stale.code = d.code;
-                    return stale;
-                });
+            const missing = cached.filter(
+                (d) =>
+                    !diagnostics.some(
+                        (server) =>
+                            server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                    ),
+            );
             next(uri, [...diagnostics, ...missing]);
         } else {
             next(uri, diagnostics);
@@ -140,14 +136,35 @@ export default class VdmMiddleware implements Middleware {
                     if (!match) {
                         return null;
                     }
-                    const updatedMessage = d.message.replace(/(\[STALE\] )?PO #\d+/, `PO #${match.id}`);
-                    const updated = new vscode.Diagnostic(d.range, updatedMessage, d.severity);
-                    updated.source = d.source;
-                    updated.code = d.code;
-                    return updated;
+                    const updatedMessage = d.message.replace(/PO #\d+/, `PO #${match.id}`);
+                    const prefixedMessage = updatedMessage.startsWith("[STALE]") ? updatedMessage : `[STALE] ${updatedMessage}`;
+                    const stale = new vscode.Diagnostic(d.range, prefixedMessage, vscode.DiagnosticSeverity.Information);
+                    stale.source = d.source;
+                    stale.code = d.code;
+                    return stale;
                 })
                 .filter((d) => d !== null);
             this._qcDiagnostics.set(uri, updated);
+        }
+    }
+
+    reapplyDiagnostics() {
+        for (const [uriString, next] of this._lastNext) {
+            const uri = vscode.Uri.parse(uriString);
+            const lastIncoming = this._lastIncomingDiagnostics.get(uriString) ?? [];
+            const cached = this._qcDiagnostics.get(uriString);
+            if (cached?.length) {
+                const missing = cached.filter(
+                    (d) =>
+                        !lastIncoming.some(
+                            (server) =>
+                                server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                        ),
+                );
+                next(uri, [...lastIncoming, ...missing]);
+            } else {
+                next(uri, lastIncoming);
+            }
         }
     }
 }

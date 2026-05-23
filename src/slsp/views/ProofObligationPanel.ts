@@ -229,10 +229,11 @@ export class ProofObligationPanel implements Disposable {
     protected async onRunPog(uri: Uri, clearQcCache: boolean = true) {
         this._pos = [];
         this._filterMessage = null;
+        const wsFolder = workspace.getWorkspaceFolder(uri);
+        const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+        const middleware = client?.middleware as VdmMiddleware;
         if (clearQcCache) {
-            const wsFolder = workspace.getWorkspaceFolder(uri);
-            const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
-            (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
+            middleware?.clearQcDiagnostics();
         }
         const poProvider = this.getPOProvider(uri);
         this.createWebView(poProvider.provider.quickCheckProvider, uri);
@@ -248,27 +249,20 @@ export class ProofObligationPanel implements Disposable {
                 },
             );
             this._allPos = [...res];
-
-            const wsFolder = workspace.getWorkspaceFolder(uri);
-            const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
-            const middleware = client?.middleware as VdmMiddleware;
-            if (middleware) {
-                middleware.updateStalePONumbers(
+            this._pos = [...res];
+            if (!clearQcCache) {
+                middleware?.updateStalePONumbers(
                     this._allPos.map((po) => ({
                         id: po.id,
                         range: po.location.range,
                     })),
                 );
             }
-
-            this._pos = [...res];
             this.clearWarning();
         } catch (e) {
             this.displayWarning();
             console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
         }
-
-        let wsFolder = workspace.getWorkspaceFolder(uri);
         this.updateContent();
 
         this._lastUri = uri;
@@ -471,9 +465,6 @@ export class ProofObligationPanel implements Disposable {
                                     cancellable: true,
                                 },
                                 async (_progress, _token) => {
-                                    const wsFolder = workspace.getWorkspaceFolder(this._lastUri);
-                                    const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
-                                    (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
                                     try {
                                         const qcInfos = await this.onRunQuickCheck(
                                             this._lastUri,
