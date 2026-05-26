@@ -92,6 +92,26 @@ interface VdmjSchemaEntry {
     default: string;
 }
 
+interface LaunchConfig {
+    name: string;
+    type: string;
+    request: string;
+    noDebug?: boolean;
+    defaultName?: string;
+    command?: string;
+    remoteControl?: string;
+    enableLogging?: boolean;
+    settings?: Record<string, unknown>;
+    properties?: Record<string, unknown>;
+    params?: Record<string, unknown>;
+}
+
+interface LaunchSnippet {
+    label: string;
+    description: string;
+    body: LaunchConfig;
+}
+
 // Tab bar
 
 const TabBar = ({ activeTab, onSelect }: { activeTab: TabId; onSelect: (tab: TabId) => void }) => {
@@ -541,6 +561,249 @@ const VdmjTab = ({
     );
 };
 
+const AdvancedFieldsSection = ({ children }: { children: React.ReactNode }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <div style={{ marginTop: "12px" }}>
+            <button
+                onClick={() => setOpen((o) => !o)}
+                style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "var(--vscode-descriptionForeground)", fontSize: "12px", fontWeight: 600, padding: "4px 0" }}
+            >
+                <span className={`codicon codicon-chevron-${open ? "down" : "right"}`} />
+                Advanced
+            </button>
+            {open && <div style={{ marginTop: "8px" }}>{children}</div>}
+        </div>
+    );
+};
+
+const LaunchTab = ({
+    configs,
+    snippets,
+    vscodeApi,
+    onSave,
+    onCreate,
+    onDelete,
+}: {
+    configs: LaunchConfig[];
+    snippets: LaunchSnippet[];
+    vscodeApi: VSCodeAPI;
+    onSave: (index: number, config: LaunchConfig) => void;
+    onCreate: (config: LaunchConfig) => void;
+    onDelete: (index: number) => void;
+}) => {
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+    const [showSnippetPicker, setShowSnippetPicker] = useState(false);
+    const [editingConfigs, setEditingConfigs] = useState<LaunchConfig[]>(configs);
+
+    useEffect(() => {
+        setEditingConfigs(configs);
+    }, [configs]);
+
+    const handleFieldChange = (index: number, field: keyof LaunchConfig, value: any) => {
+        const updated = editingConfigs.map((c, i) => 
+            i === index ? { ...c, [field]: value } : c
+        );
+        setEditingConfigs(updated);
+        setTimeout(() => onSave(index, updated[index]), 300);
+    };
+
+    const commonFieldStyle: React.CSSProperties = {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 0",
+        gap: "16px",
+    };
+
+    const fieldLabelStyle: React.CSSProperties = {
+        fontSize: "12px",
+        color: "var(--vscode-foreground)",
+        fontWeight: 600,
+        flex: "1 1 0",
+    };
+
+    const renderCommonFields = (config: LaunchConfig, index: number) => (
+        <>
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Name</span>
+                <VSCodeTextField
+                    value={config.name}
+                    onInput={(e: any) => handleFieldChange(index, "name", e.target.value)}
+                    style={{ minWidth: "200px" }}
+                />
+            </div>
+            <VSCodeDivider role="presentation" />
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>No Debug</span>
+                <VSCodeCheckbox
+                    checked={config.noDebug === true}
+                    onChange={(e: any) => handleFieldChange(index, "noDebug", e.target.value)}
+                />
+            </div>
+            <VSCodeDivider role="presentation" />
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Default Name</span>
+                <VSCodeTextField
+                    value={config.defaultName ?? ""}
+                    onInput={(e: any) => handleFieldChange(index, "defaultName", e.target.value)}
+                    style={{ minWidth: "200px" }}
+                    placeholder="e.g. DEFAULT"
+                />
+            </div>
+            <VSCodeDivider role="presentation" />
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Command</span>
+                <VSCodeTextField
+                    value={config.command ?? ""}
+                    onInput={(e: any) => handleFieldChange(index, "command", e.target.value)}
+                    style={{ minWidth: "200px" }}
+                    placeholder="e.g. print f()"
+                />
+            </div>
+            <VSCodeDivider role="presentation" />
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Remote Control</span>
+                <VSCodeTextField
+                    value={config.remoteControl ?? ""}
+                    onInput={(e: any) => handleFieldChange(index, "remoteControl", e.target.value)}
+                    style={{ minWidth: "200px" }}
+                    placeholder="e.g. com.example.Controller"
+                />
+            </div>
+            <VSCodeDivider role="presentation" />
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Enable Logging</span>
+                <VSCodeCheckbox
+                    checked={config.enableLogging === true}
+                    onChange={(e: any) => handleFieldChange(index, "enableLogging", e.target.value)}
+                />
+            </div>
+        </>
+    );
+
+    const renderAdvancedFields = (config: LaunchConfig, index: number) => (
+        <>
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Settings</span>
+                <VSCodeButton
+                    appearance="icon"
+                    title="Edit in launch.json"
+                    onClick={() => vscodeApi.postMessage({ command: "openNativeSettings", data: { query: "@ext:overturetool.vdm-vscode" } })}
+                >
+                    <span className="codicon codicon-link-external" />
+                </VSCodeButton>
+            </div>
+            <VSCodeDivider role="presentation" />
+            <div style={commonFieldStyle}>
+                <span style={fieldLabelStyle}>Properties</span>
+                <VSCodeButton
+                    appearance="icon"
+                    title="Edit in launch.json"
+                    onClick={() => vscodeApi.postMessage({ command: "openNativeSettings", data: { query: "@ext:overturetool.vdm-vscode" } })}
+                >
+                    <span className="codicon codicon-link-external" />
+                </VSCodeButton>
+            </div>
+        </>
+    );
+
+    return (
+        <div>
+            {showSnippetPicker && (
+                <div style={{ marginBottom: "16px", padding: "16px", background: "var(--vscode-editor-background)", border: "1px solid var(--vscode-panel-border)", borderRadius: "4px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--vscode-descriptionForeground)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        Select a template
+                    </div>
+                    <VSCodeDivider />
+                    {snippets.map((snippet, i) => (
+                        <div
+                            key={i}
+                            onClick={() => {
+                                const resolved = JSON.parse(
+                                    JSON.stringify(snippet.body).replace(/\$\{\d+:[^}]*\}|\$\d+/g, "")
+                                );
+                                onCreate({ ...resolved, type: "vdm", request: "launch" });
+                                setShowSnippetPicker(false);
+                            }}
+                            style={{ padding: "10px 0", cursor: "pointer" }}
+                        >
+                            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)" }}>{snippet.label}</div>
+                            <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{snippet.description}</div>
+                            <VSCodeDivider role="presentation" />
+                        </div>
+                    ))}
+                    <VSCodeButton appearance="secondary" onClick={() => setShowSnippetPicker(false)} style={{ marginTop: "8px" }}>
+                        Cancel
+                    </VSCodeButton>
+                </div>
+            )}
+
+            {editingConfigs.length === 0 && !showSnippetPicker && (
+                <div style={{ textAlign: "center", padding: "32px 0", color: "var(--vscode-descriptionForeground)", fontSize: "13px" }}>
+                    No launch configurations yet. Add one below.
+                </div>
+            )}
+
+            {editingConfigs.map((config, index) => (
+                <div
+                    key={index}
+                    style={{ marginBottom: "12px", border: "1px solid var(--vscode-panel-border)", borderRadius: "4px", overflow: "hidden" }}
+                >
+                    <div
+                        onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 16px",
+                            cursor: "pointer",
+                            background: expandedIndex === index ? "var(--vscode-list-activeSelectionBackground)" : "var(--vscode-editor-background)",
+                        }}
+                    >
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span className={`codicon codicon-chevron-${expandedIndex === index ? "down" : "right"}`} />
+                            <span style={{ fontSize: "13px", fontWeight: 600, color: expandedIndex === index ? "var(--vscode-list-activeSelectionForeground)" : "var(--vscode-foreground)" }}>
+                                {config.name || "Unnamed Configuration"}
+                            </span>
+                        </div>
+                        <VSCodeButton
+                            appearance="icon"
+                            title="Delete configuration"
+                            onClick={(e: any) => {
+                                e.stopPropagation();
+                                onDelete(index);
+                            }}
+                        >
+                            <span className="codicon codicon-trash" />
+                        </VSCodeButton>
+                    </div>
+
+                    {expandedIndex === index && (
+                        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--vscode-panel-border)" }}>
+                            {renderCommonFields(config, index)}
+                            <AdvancedFieldsSection>
+                                {renderAdvancedFields(config, index)}
+                            </AdvancedFieldsSection>
+                        </div>
+                    )}
+                </div>
+            ))}
+
+            {!showSnippetPicker && (
+                <VSCodeButton
+                    appearance="secondary"
+                    onClick={() => setShowSnippetPicker(true)}
+                    style={{ marginTop: "8px" }}
+                >
+                    <span slot="start" className="codicon codicon-add" />
+                    Add Configuration
+                </VSCodeButton>
+            )}
+        </div>
+    );
+};
+
 // Main view
 
 export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
@@ -553,6 +816,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [showModifiedOnly, setShowModifiedOnly] = useState<boolean>(false);
     const [vdmjValues, setVdmjValues] = useState<Record<string, string>>({});
     const [vdmjSchema, setVdmjSchema] = useState<Record<string, VdmjSchemaEntry>>({});
+    const [launchConfigs, setLaunchConfigs] = useState<LaunchConfig[]>([]);
+    const [launchSnippets, setLaunchSnippets] = useState<LaunchSnippet[]>([]);
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -564,6 +829,10 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             if (e.data.command === "loadVdmjProperties") {
                 setVdmjValues(e.data.data.values);
                 setVdmjSchema(e.data.data.schema);
+            }
+            if (e.data.command === "loadLaunchConfigurations") {
+                setLaunchConfigs(e.data.data.configurations);
+                setLaunchSnippets(e.data.data.snippets);
             }
         };
         window.addEventListener("message", onMessage);
@@ -589,6 +858,21 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         setTimeout(() => {
             vscodeApi.postMessage({ command: "saveVdmjProperty", data: { key, value } });
         }, 300);
+    };
+
+    const handleLaunchSave = (index: number, config: LaunchConfig) => {
+        setLaunchConfigs((prev) => prev.map((c, i) => i === index ? config : c));
+        setTimeout(() => {
+            vscodeApi.postMessage({ command: "saveLaunchConfiguration", data: { index, config } });
+        }, 300);
+    };
+
+    const handleLaunchCreate = (config: LaunchConfig) => {
+        vscodeApi.postMessage({ command: "createLaunchConfiguration", data: { config } });
+    }
+
+    const handleLaunchDelete = (index: number) => {
+        vscodeApi.postMessage({  command: "deleteLaunchConfiguration", data: { index } });
     };
 
     // Group schema entries by their group title
@@ -708,7 +992,16 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             case "vdmj":
                 return <VdmjTab values={vdmjValues} schema={vdmjSchema} onChange={handleVdmjChange} />;
             case "launch":
-                return <ComingSoonTab label="Launch"/>;
+                return (
+                    <LaunchTab
+                        configs={launchConfigs}
+                        snippets={launchSnippets}
+                        vscodeApi={vscodeApi}
+                        onSave={handleLaunchSave}
+                        onCreate={handleLaunchCreate}
+                        onDelete={handleLaunchDelete}
+                    />
+                );
             case "plugins":
                 return <ComingSoonTab label="Plugins"/>;
         }

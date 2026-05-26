@@ -91,6 +91,7 @@ export class SettingsPanel extends AutoDisposable {
                 this._panel.reveal(ViewColumn.One, false);
                 this._sendSettings();
                 this._sendVdmjProperties();
+                this._sendLaunchConfigurations();
                 return;
             }
 
@@ -119,6 +120,7 @@ export class SettingsPanel extends AutoDisposable {
                         case "ready":
                             this._sendSettings();
                             this._sendVdmjProperties();
+                            this._sendLaunchConfigurations();
                             break;
 
                         case "updateSetting": {
@@ -167,6 +169,44 @@ export class SettingsPanel extends AutoDisposable {
                             this._restartMsgTimer = setTimeout(() => {
                                 Util.showRestartMsg("VDMJ properties changed. Please reload VS Code to enable the changes.");
                             }, 1000);
+                            break;
+                        }
+
+                        case "saveLaunchConfiguration": {
+                            const { index, config } = message.data;
+                            const launchData = this._readLaunchJson();
+                            const vdmIndices = launchData.configurations
+                                .map((c: any, i: number) => (c.type === "vdm" ? i : -1))
+                                .filter((i: number) => i !== -1);
+
+                            if (index >= 0 && index < vdmIndices.length) {
+                                launchData.configurations[vdmIndices[index]] = config;
+                            }
+                            this._writeLaunchJson(launchData);
+                            break;
+                        }
+
+                        case "createLaunchConfiguration": {
+                            const { config } = message.data;
+                            const launchData = this._readLaunchJson();
+                            launchData.configurations.push(config);
+                            this._writeLaunchJson(launchData);
+                            this._sendLaunchConfigurations();
+                            break;
+                        }
+
+                        case "deleteLaunchConfiguration": {
+                            const { index } = message.data;
+                            const launchData = this._readLaunchJson();
+                            const vdmIndices = launchData.configurations
+                                .map((c: any, i: number) => (c.type === "vdm" ? i : -1))
+                                .filter((i: number) => i !== -1);
+
+                            if (index >= 0 && index < vdmIndices.length) {
+                                launchData.configurations.splice(vdmIndices[index], 1);
+                            }
+                            this._writeLaunchJson(launchData);
+                            this._sendLaunchConfigurations();
                             break;
                         }
                     }
@@ -380,6 +420,56 @@ export class SettingsPanel extends AutoDisposable {
         this._panel.webview.postMessage({
             command: "loadVdmjProperties",
             data: { values: merged, schema },
+        });
+    }
+
+    private _getLaunchPath(): string | undefined {
+        if (!this._currentWsFolder) {
+            return undefined;
+        }
+        return Uri.joinPath(this._currentWsFolder.uri, ".vscode", "launch.json").fsPath;
+    }
+
+    private _readLaunchJson(): { configurations: any[] } {
+        const launchPath = this._getLaunchPath();
+        if (!launchPath || !fs.existsSync(launchPath)) {
+            return { configurations: [] };
+        }
+        try {
+            const parsed = JSON.parse(fs.readFileSync(launchPath, "utf8"));
+            return { configurations: parsed.configurations ?? [] };
+        } catch {
+            return { configurations: [] };
+        }
+    }
+
+    private _writeLaunchJson(data: { configurations: any[] }): void {
+        const launchPath = this._getLaunchPath();
+        if (!launchPath) {
+            return;
+        }
+
+        const vscodeFolder = path.dirname(launchPath);
+        if (!fs.existsSync(vscodeFolder)) {
+            fs.mkdirSync(vscodeFolder, { recursive: true });
+        }
+        fs.writeFileSync(launchPath, JSON.stringify(data, null, 4), "utf8");
+    }
+
+    private _sendLaunchConfigurations() {
+        if (!this._panel) {
+            return;
+        }
+
+        const launchData = this._readLaunchJson();
+        const vdmConfigs = launchData.configurations.filter((c: any) => c.type === "vdm");
+        const packageJsonPath = Uri.joinPath(this._context.extensionUri, "package.json").fsPath;
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+        const snippets = packageJson.contributes.debuggers.find((d: any) => d.type === "vdm")?.configurationSnippets ?? [];
+
+        this._panel.webview.postMessage({
+            command: "loadLaunchConfigurations",
+            data: { configurations: vdmConfigs, snippets },
         });
     }
 
