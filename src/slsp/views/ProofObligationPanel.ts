@@ -232,9 +232,6 @@ export class ProofObligationPanel implements Disposable {
         const wsFolder = workspace.getWorkspaceFolder(uri);
         const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
         const middleware = client?.middleware as VdmMiddleware;
-        if (clearQcCache) {
-            middleware?.clearQcDiagnostics();
-        }
         const poProvider = this.getPOProvider(uri);
         this.createWebView(poProvider.provider.quickCheckProvider, uri);
         try {
@@ -465,6 +462,9 @@ export class ProofObligationPanel implements Disposable {
                                     cancellable: true,
                                 },
                                 async (_progress, _token) => {
+                                    const wsFolder = workspace.getWorkspaceFolder(this._lastUri);
+                                    const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+                                    (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
                                     try {
                                         const qcInfos = await this.onRunQuickCheck(
                                             this._lastUri,
