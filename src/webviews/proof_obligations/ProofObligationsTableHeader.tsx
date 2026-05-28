@@ -73,6 +73,7 @@ export const TableHeader = <T extends unknown>({
                     }}
                     cell-type="columnheader"
                     grid-column={`${idx + 1}`}
+                    css={{ whiteSpace: "nowrap" }}
                 >
                     <div>
                         {header.toString()} <HeaderSortingArrow direction={sortingState.direction} hide={sortingState.id !== header} />

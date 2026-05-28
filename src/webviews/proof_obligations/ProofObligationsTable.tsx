@@ -229,7 +229,7 @@ export const ProofObligationsTable = ({
     return (
         <>
             {shouldRenderTable ? (
-                <VSCodeDataGrid gridTemplateColumns="2fr 3fr 8fr 3fr" css={{ flexGrow: "1" }}>
+                <VSCodeDataGrid gridTemplateColumns="minmax(4em, 2fr) minmax(5em, 3fr) minmax(4em, 8fr) minmax(6em, 3fr)" css={{ flexGrow: "1" }}>
                     <TableHeader<FormattedProofObligation> headers={headers} onUpdateSortingState={setSortingState} />
                     {sortedPOs.map((row) => (
                         <React.Fragment key={`pog-row-${row.id}`}>
@@ -240,7 +240,7 @@ export const ProofObligationsTable = ({
                                     row.id === selectionState?.id && { border: "1px solid var(--vscode-list-focusOutline)" },
                                 ]}
                             >
-                                <VSCodeDataGridCell grid-column="1">
+                                <VSCodeDataGridCell css={{ whiteSpace: "nowrap" }} grid-column="1">
                                     <VSCodeButton
                                         title="Jump to source"
                                         onClick={(e) => {
@@ -261,7 +261,7 @@ export const ProofObligationsTable = ({
                                 <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="3">
                                     {row.breakableName}
                                 </VSCodeDataGridCell>
-                                <VSCodeDataGridCell css={{ position: "relative", overflow: "visible" }} grid-column="4">
+                                <VSCodeDataGridCell css={{ position: "relative", overflow: "visible", whiteSpace: "nowrap" }} grid-column="4">
                                     <StatusWithToolTip
                                         po={row}
                                         onNavigateToLocation={() => {

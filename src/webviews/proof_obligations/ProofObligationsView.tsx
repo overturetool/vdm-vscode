@@ -76,6 +76,7 @@ const ProofObligationsHeaderMenu = ({
                 justifyContent: "space-between",
                 margin: "0.5em 1em 1em 0.5em",
                 alignItems: "center",
+                gap: "0.5em",
             }}
         >
             <div
@@ -154,7 +155,7 @@ const ProofObligationsHeaderMenu = ({
                 )}
             </div>
 
-            <div css={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5em" }}>
+            <div css={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5em", flexShrink: 0 }}>
                 <VSCodeButton appearance="secondary" onClick={onExpandCollapse}>
                     {openPos.size === filterState.totalRows ? "Collapse" : "Expand"}
                 </VSCodeButton>
