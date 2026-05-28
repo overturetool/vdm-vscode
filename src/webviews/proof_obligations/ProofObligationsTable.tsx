@@ -114,7 +114,7 @@ const StatusWithToolTip = ({
         const tooltipWidth = 400;
 
         let top = rect.top;
-        let left = rect.left - tooltipWidth - 12;
+        let left = Math.max(8, rect.left - tooltipWidth - 12);
 
         setPosition({ top, left });
         setVisible(true);
