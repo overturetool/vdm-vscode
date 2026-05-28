@@ -87,7 +87,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 if (!dialect) return reject();
 
                 // Pre-populate from active editor if it's a VDM file in this workspace
-                const editorContext = getActiveEditorVdmContext(wsFolder);
+                const editorContext = await getActiveEditorVdmContext(wsFolder);
 
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
