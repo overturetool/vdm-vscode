@@ -3,7 +3,7 @@
 import * as util from "../util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
-import { guessDialect, VdmDialect } from "../util/DialectUtil";
+import { getActiveEditorVdmContext, guessDialect, VdmDialect } from "../util/DialectUtil";
 import AutoDisposable from "../helper/AutoDisposable";
 
 type VdmTypeParameter = string;
@@ -86,6 +86,9 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 );
                 if (!dialect) return reject();
 
+                // Pre-populate from active editor if it's a VDM file in this workspace
+                const editorContext = getActiveEditorVdmContext(wsFolder);
+
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
                 let selectedCommand: string;
@@ -93,12 +96,13 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     selectedClass = await window.showInputBox({
                         prompt: "Input entry point Module",
                         placeHolder: "Module",
-                        value: "DEFAULT",
+                        value: editorContext?.dialect === VdmDialect.VDMSL ? editorContext.moduleName : "DEFAULT",
                     });
                 } else {
                     selectedClass = await window.showInputBox({
                         prompt: "Input name of the entry Class",
                         placeHolder: "Class(args)",
+                        value: editorContext?.dialect === dialect ? editorContext.moduleName : undefined,
                     });
                 }
                 if (selectedClass != undefined) {

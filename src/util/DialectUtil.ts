@@ -122,3 +122,29 @@ export async function getDialect(wsFolder: WorkspaceFolder, clientManager: Clien
 
     return dialect;
 }
+
+// Returns the module/class name from the active editor if it's a VDM file
+// belonging to the given workspace folder, along with its dialect
+export function getActiveEditorVdmContext(wsFolder: WorkspaceFolder): { moduleName: string; dialect: VdmDialect } | undefined {
+    const activeDoc = window.activeTextEditor?.document;
+    if (!activeDoc) {
+        return undefined;
+    }
+
+    if (workspace.getWorkspaceFolder(activeDoc.uri)?.uri.toString() !== wsFolder.uri.toString()) {
+        return undefined;
+    }
+
+    const ext = activeDoc.uri.fsPath.split(".").pop()!.toLowerCase();
+    for (const [dialect, extensions] of dialectToFileExtensions) {
+        if (extensions.includes(ext)) {
+            const moduleName = activeDoc.uri.fsPath
+                .split("/")
+                .pop()!
+                .replace(/\.[^.]+$/, ""); // basename without ext
+            return { moduleName, dialect };
+        }
+    }
+
+    return undefined;
+}
