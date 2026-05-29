@@ -160,7 +160,6 @@ export async function getActiveEditorVdmContext(wsFolder: WorkspaceFolder): Prom
 
         const moduleSymbol = symbols.find((s) => s.range.contains(cursorPos)) ?? symbols[0];
         const childSymbol = moduleSymbol.children.find((s) => s.range.contains(cursorPos));
-        console.log(childSymbol?.detail);
 
         return {
             dialect,
