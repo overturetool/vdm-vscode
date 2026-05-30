@@ -3,12 +3,12 @@
 import * as util from "../util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
-import { getActiveEditorVdmContext, guessDialect, parseSymbolDetailToArgs, VdmDialect } from "../util/DialectUtil";
+import { getActiveEditorVdmContext, guessDialect, VdmDialect } from "../util/DialectUtil";
 import AutoDisposable from "../helper/AutoDisposable";
 
-export type VdmTypeParameter = string;
+type VdmTypeParameter = string;
 
-export interface VdmArgument {
+interface VdmArgument {
     name: string;
     type: string;
     value?: string;
@@ -109,7 +109,6 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     selectedCommand = await window.showInputBox({
                         prompt: "Input entry point function/operation",
                         placeHolder: "Run(args)",
-                        value: editorContext?.symbolName,
                     });
                 }
 
@@ -118,36 +117,12 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     return resolve(`Empty selection. Add run configuration completed.`);
                 }
 
-                // Attempt to parse arguments from symbol detail and prompt for values
-                const parsed = editorContext?.symbolDetail ? parseSymbolDetailToArgs(editorContext.symbolDetail) : undefined;
-                const parsedArgs = parsed?.args ?? [];
-                const parsedTypeParams = parsed?.typeParams ?? [];
-                let resolvedTypes: Map<VdmTypeParameter, string> = new Map();
-                if (parsedArgs.length > 0 || parsedTypeParams.length > 0) {
-                    let argsCancelled = false;
-                    await this.requestArguments([parsedArgs], parsedTypeParams, selectedCommand, wsFolder)
-                        .then((types) => {
-                            resolvedTypes = types;
-                        })
-                        .catch(() => {
-                            argsCancelled = true;
-                        });
-                    if (argsCancelled) {
-                        return resolve(`Empty selection. Add run configuration completed.`);
-                    }
-                }
-
                 // Make sure class and command has parenthesis
                 if (!selectedClass.includes("(") && !selectedClass.includes(")")) {
                     selectedClass += "()";
                 }
                 if (!selectedCommand.includes("(") && !selectedCommand.includes(")")) {
-                    if (parsedArgs.length > 0) {
-                        const typeArgs = resolvedTypes.size > 0 ? `[${Array.from(resolvedTypes.values()).join(", ")}]` : "";
-                        selectedCommand += `${typeArgs}(${parsedArgs.map((a) => a.value).join(", ")})`;
-                    } else {
-                        selectedCommand += "()";
-                    }
+                    selectedCommand += "()";
                 }
 
                 // Create run configuration

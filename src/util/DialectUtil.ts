@@ -4,18 +4,10 @@ import { WorkspaceFolder, RelativePattern, workspace, window, QuickPickItem, com
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 import { ClientManager } from "../ClientManager";
 import * as vscode from "vscode";
-import { VdmArgument, VdmTypeParameter } from "../handlers/AddRunConfigurationHandler";
 
 interface QuickPickDialectItem extends QuickPickItem {
     prettyDialect: string;
     dialect: VdmDialect;
-}
-
-interface VdmEditorContext {
-    dialect: VdmDialect;
-    moduleName: string;
-    symbolName?: string;
-    symbolDetail?: string;
 }
 
 export enum VdmDialect {
@@ -134,7 +126,9 @@ export async function getDialect(wsFolder: WorkspaceFolder, clientManager: Clien
 
 // Returns the module/class name from the active editor if it's a VDM file
 // belonging to the given workspace folder, along with its dialect
-export async function getActiveEditorVdmContext(wsFolder: WorkspaceFolder): Promise<VdmEditorContext | undefined> {
+export async function getActiveEditorVdmContext(
+    wsFolder: WorkspaceFolder,
+): Promise<{ moduleName: string; dialect: VdmDialect } | undefined> {
     const activeEditor = window.activeTextEditor;
     if (!activeEditor) {
         return undefined;
@@ -152,102 +146,14 @@ export async function getActiveEditorVdmContext(wsFolder: WorkspaceFolder): Prom
         }
 
         const symbols = await commands.executeCommand<vscode.DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", activeDoc.uri);
-        if (!symbols?.length) {
+        if (!symbols.length) {
             break;
         }
 
         const cursorPos = activeEditor.selection.active;
-
-        const moduleSymbol = symbols.find((s) => s.range.contains(cursorPos)) ?? symbols[0];
-        const childSymbol = moduleSymbol.children.find((s) => s.range.contains(cursorPos));
-
-        return {
-            dialect,
-            moduleName: moduleSymbol.name,
-            symbolName: childSymbol?.name,
-            symbolDetail: childSymbol?.detail,
-        };
+        const match = symbols.find((s) => s.range.contains(cursorPos)) ?? symbols[0];
+        return { moduleName: match.name, dialect };
     }
 
     return undefined;
-}
-
-// Find index of the top-level -> or +> (not inside parens/brackets)
-function findTopLevelArrow(s: string): number {
-    let depth = 0;
-    for (let i = 0; i < s.length - 1; i++) {
-        const c = s[i];
-        if (c === "(" || c === "[" || c === "{") {
-            depth++;
-        } else if (c === ")" || c === "]" || c === "}") {
-            depth--;
-        } else if (depth === 0) {
-            if ((s[i] === "-" || s[i] === "+") && s[i + 1] === ">") {
-                return i;
-            }
-            if (s[i] === "=" && s[i + 1] === "=" && i + 2 < s.length && s[i + 2] === ">") {
-                return i;
-            }
-        }
-    }
-    return -1;
-}
-
-// Split string on a separator only at depth 0
-function splitTopLevel(s: string, sep: string): string[] {
-    const parts: string[] = [];
-    let depth = 0;
-    let start = 0;
-    for (let i = 0; i < s.length; i++) {
-        const c = s[i];
-        if (c === "(" || c === "[" || c === "{") {
-            depth++;
-        } else if (c === ")" || c === "]" || c === "}") {
-            depth--;
-        } else if (depth === 0 && s.startsWith(sep, i)) {
-            parts.push(s.substring(start, i));
-            start = i + sep.length;
-            i += sep.length - 1;
-        }
-    }
-    parts.push(s.substring(start));
-    return parts;
-}
-
-export function parseSymbolDetailToArgs(detail: string): { args: VdmArgument[]; typeParams: VdmTypeParameter[] } | undefined {
-    // Strip outer parens
-    const inner = detail.match(/^\((.*)\)$/)?.[1]?.trim();
-    if (inner === undefined) {
-        return undefined;
-    }
-
-    // Find the top-level arrow (-> or +>) by tracking nesting depth
-    const topLevelArrowIndex = findTopLevelArrow(inner);
-    if (topLevelArrowIndex === -1) {
-        return undefined;
-    }
-
-    const paramsPart = inner.substring(0, topLevelArrowIndex).trim();
-    if (!paramsPart) {
-        return { args: [], typeParams: [] };
-    }
-
-    // Split params on top-level * only
-    const paramTypes = splitTopLevel(paramsPart, " * ");
-
-    // Collect type parameters (@T etc.)
-    const typeParams: VdmTypeParameter[] = [];
-    const args: VdmArgument[] = paramTypes.map((t, i) => {
-        const trimmed = t.trim();
-        // Collect any @T type params found in this arg's type
-        const matches = trimmed.match(/@\w+/g) ?? [];
-        matches.forEach((tp) => {
-            if (!typeParams.includes(tp)) {
-                typeParams.push(tp);
-            }
-        });
-        return { name: `arg${i + 1}`, type: trimmed };
-    });
-
-    return { args, typeParams };
 }
