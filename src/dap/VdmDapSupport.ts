@@ -362,6 +362,7 @@ export namespace VdmDapSupport {
         folder: vscode.WorkspaceFolder | undefined,
         stopOnEntry?: boolean,
         adHoc: boolean = false,
+        defaultName?: string,
     ): Thenable<boolean> {
         var debugConfiguration: VdmDebugConfiguration = {
             type: "vdm", // The type of the debug session.
@@ -371,6 +372,7 @@ export namespace VdmDapSupport {
             stopOnEntry: stopOnEntry,
             // Additional debug type specific properties.
             command: command,
+            defaultName: defaultName ?? null,
         };
 
         let sessionOptions: vscode.DebugSessionOptions = {};

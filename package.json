@@ -460,6 +460,18 @@
                 "title": "Open VDM Settings",
                 "category": "VDM",
                 "icon": "$(settings-gear)"
+            },
+            {
+                "command": "vdm-vscode.quickConsole",
+                "title": "Open Quick Console (current module)",
+                "category": "VDM"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "vdm-vscode.quickConsole",
+                "key": "alt+f5",
+                "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt"
             }
         ],
         "viewsContainers": {
@@ -582,6 +594,10 @@
                 {
                     "command": "vdm-vscode.quickInterpreter",
                     "group": "workspace@3"
+                },
+                {
+                    "command": "vdm-vscode.quickConsole",
+                    "group": "workspace@4"
                 }
             ],
             "view/title": [
