@@ -535,13 +535,20 @@ const BlankConfigCard = ({
     onSave,
     onCancel,
     vdmjSchema,
+    settingsSchema,
 }: {
     onSave: (config: LaunchConfig) => void;
     onCancel: () => void;
     vdmjSchema: Record<string, VdmjSchemaEntry>;
+    settingsSchema: Record<string, { description: string }>;
 }) => {
     const [name, setName] = useState("New Configuration");
     const [included, setIncluded] = useState<Set<string>>(new Set());
+
+    const defaultSettings = Object.fromEntries(
+        Object.entries(settingsSchema).map(([key, def]) => [key, (def as any).default ?? ((def as any).type === "boolean" ? true : 0)])
+    );
+
     const [values, setValues] = useState<Partial<LaunchConfig>>({
         noDebug: false,
         defaultName: undefined,
@@ -549,14 +556,7 @@ const BlankConfigCard = ({
         remoteControl: "",
         trace: true,
         enableLogging: false,
-        settings: {
-            dynamicTypeChecks: true,
-            invariantsChecks: true,
-            preConditionChecks: true,
-            postConditionChecks: true,
-            measureChecks: true,
-            precision: 100,
-        },
+        settings: defaultSettings,
         properties: {},
         params: {},
     });
@@ -615,35 +615,33 @@ const BlankConfigCard = ({
                 );
             case "settings": {
                 const s = (values.settings ?? {}) as any;
-                const checkFields = [
-                    { key: "dynamicTypeChecks", label: "Dynamic Type Checks" },
-                    { key: "invariantsChecks", label: "Invariants Checks" },
-                    { key: "preConditionChecks", label: "Pre-condition Checks" },
-                    { key: "postConditionChecks", label: "Post-condition Checks" },
-                    { key: "measureChecks", label: "Measure Checks" },
-                ];
+                const booleanFields = Object.entries(settingsSchema).filter(([, v]) => (v as any).type === "boolean");
                 return (
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingLeft: "8px" }}>
-                        {checkFields.map((f) => (
-                            <div key={f.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: "12px", color: "var(--vscode-foreground)" }}>{f.label}</span>
+                        {booleanFields.map(([key]) => (
+                            <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px", color: "var(--vscode-foreground)" }}>
+                                    {key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase())}
+                                </span>
                                 <VSCodeCheckbox
-                                    checked={s[f.key] !== false}
-                                    onChange={(e: any) => setValue("settings", { ...s, [f.key]: (e.target as HTMLInputElement).checked })}
+                                    checked={s[key] !== false}
+                                    onChange={(e: any) => setValue("settings", { ...s, [key]: e.target.checked })}
                                 />
                             </div>
                         ))}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: "12px", color: "var(--vscode-foreground)" }}>Precision</span>
-                            <VSCodeTextField
-                                value={String(s.precision ?? 100)}
-                                onInput={(e: any) => {
-                                    const n = Number(e.target.value);
-                                    if (!isNaN(n)) setValue("settings", { ...s, precision: n });
-                                }}
-                                style={{ minWidth: "80px" }}
-                            />
-                        </div>
+                        {settingsSchema["precision"] && (
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px", color: "var(--vscode-foreground)" }}>Precision</span>
+                                <VSCodeTextField
+                                    value={String(s.precision ?? 100)}
+                                    onInput={(e: any) => {
+                                        const n = Number(e.target.value);
+                                        if (!isNaN(n)) setValue("settings", { ...s, precision: n });
+                                    }}
+                                    style={{ minWidth: "80px" }}
+                                />
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -762,6 +760,7 @@ const LaunchTab = ({
     snippets,
     vscodeApi,
     vdmjSchema,
+    settingsSchema,
     onSave,
     onCreate,
     onDelete,
@@ -770,6 +769,7 @@ const LaunchTab = ({
     snippets: LaunchSnippet[];
     vscodeApi: VSCodeAPI;
     vdmjSchema: Record<string, VdmjSchemaEntry>;
+    settingsSchema: Record<string, { description: string }>;
     onSave: (index: number, config: LaunchConfig) => void;
     onCreate: (config: LaunchConfig) => void;
     onDelete: (index: number) => void;
@@ -858,44 +858,44 @@ const LaunchTab = ({
 
     const renderSettingsFields = (config: LaunchConfig, index: number) => {
         const s = config.settings ?? {};
-        const fields: { key: string; label: string; description: string }[] = [
-            { key: "dynamicTypeChecks", label: "Dynamic Type Checks", description: "Type check values during interpretation." },
-            { key: "invariantsChecks", label: "Invariants Checks", description: "Check both state and type invariants." },
-            { key: "preConditionChecks", label: "Pre-condition Checks", description: "Check pre-conditions for all functions and operations." },
-            { key: "postConditionChecks", label: "Post-condition Checks", description: "Check post-conditions for all functions and operations." },
-            { key: "measureChecks", label: "Measure Checks", description: "Check recursive functions for which a measure has been defined." },
-        ];
 
         const handleSettingChange = (key: string, value: boolean | number) => {
             handleFieldChange(index, "settings", { ...s, [key]: value });
         };
 
+        const booleanFields = Object.entries(settingsSchema).filter(([, v]) => (v as any).type === "boolean");
+        const precisionEntry = settingsSchema["precision"];
+
         return (
             <div style={{ marginTop: "8px" }}>
                 <div style={sharedStyles.groupTitle}>Checks</div>
                 <VSCodeDivider />
-                {fields.map((field, i) => (
-                    <React.Fragment key={field.key}>
-                        <FieldRow label={field.label} description={field.description}>
+                {booleanFields.map(([key, def], i) => (
+                    <React.Fragment key={key}>
+                        <FieldRow label={key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase())} description={(def as any).description}>
                             <VSCodeCheckbox
-                                checked={(s as any)[field.key] !== false}
-                                onChange={(e: any) => handleSettingChange(field.key, (e.target as HTMLInputElement).checked)}
+                                checked={(s as any)[key] !== false}
+                                onChange={(e: any) => handleSettingChange(key, e.target.checked)}
                             />
                         </FieldRow>
-                        {i < fields.length - 1 && <VSCodeDivider role="presentation" />}
+                        {i < booleanFields.length - 1 && <VSCodeDivider role="presentation" />}
                     </React.Fragment>
                 ))}
-                <VSCodeDivider role="presentation" />
-                <FieldRow label="Precision" description="Precision level when using high precision mode.">
-                    <VSCodeTextField
-                        value={String((s as any).precision ?? 100)}
-                        onInput={(e: any) => {
-                            const n = Number(e.target.value);
-                            if (!isNaN(n)) handleSettingChange("precision", n);
-                        }}
-                        style={{ minWidth: "80px" }}
-                    />
-                </FieldRow>
+                {precisionEntry && (
+                    <>
+                        <VSCodeDivider role="presentation" />
+                        <FieldRow label="Precision" description={(precisionEntry as any).description}>
+                            <VSCodeTextField
+                                value={String((s as any).precision ?? 100)}
+                                onInput={(e: any) => {
+                                    const n = Number(e.target.value);
+                                    if (!isNaN(n)) handleSettingChange("precision", n);
+                                }}
+                                style={{ minWidth: "80px" }}
+                            />
+                        </FieldRow>
+                    </>
+                )}
             </div>
         );
     };
@@ -997,6 +997,7 @@ const LaunchTab = ({
                     }}
                     onCancel={() => setShowBlankCard(false)}
                     vdmjSchema={vdmjSchema}
+                    settingsSchema={settingsSchema}
                 />
             )}
 
@@ -1113,6 +1114,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [vdmjSchema, setVdmjSchema] = useState<Record<string, VdmjSchemaEntry>>({});
     const [launchConfigs, setLaunchConfigs] = useState<LaunchConfig[]>([]);
     const [launchSnippets, setLaunchSnippets] = useState<LaunchSnippet[]>([]);
+    const [launchSettingsSchema, setLaunchSettingsSchema] = useState<Record<string, { description: string }>>({});
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -1128,6 +1130,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             if (e.data.command === "loadLaunchConfigurations") {
                 setLaunchConfigs(e.data.data.configurations);
                 setLaunchSnippets(e.data.data.snippets);
+                setLaunchSettingsSchema(e.data.data.settingsSchema);
             }
         };
         window.addEventListener("message", onMessage);
@@ -1262,6 +1265,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                         snippets={launchSnippets}
                         vscodeApi={vscodeApi}
                         vdmjSchema={vdmjSchema}
+                        settingsSchema={launchSettingsSchema}
                         onSave={handleLaunchSave}
                         onCreate={handleLaunchCreate}
                         onDelete={handleLaunchDelete}

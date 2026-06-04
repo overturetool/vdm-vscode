@@ -464,13 +464,18 @@ export class SettingsPanel extends AutoDisposable {
 
         const launchData = this._readLaunchJson();
         const vdmConfigs = launchData.configurations.filter((c: any) => c.type === "vdm");
+
         const packageJsonPath = Uri.joinPath(this._context.extensionUri, "package.json").fsPath;
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-        const snippets = packageJson.contributes.debuggers.find((d: any) => d.type === "vdm")?.configurationSnippets ?? [];
+
+        const vdmDebugger = packageJson.contributes.debuggers.find((d: any) => d.type === "vdm");
+        const snippets = vdmDebugger?.configurationSnippets ?? [];
+
+        const settingsSchema = vdmDebugger?.configurationAttributes?.launch?.properties?.settings?.properties ?? {};
 
         this._panel.webview.postMessage({
             command: "loadLaunchConfigurations",
-            data: { configurations: vdmConfigs, snippets },
+            data: { configurations: vdmConfigs, snippets, settingsSchema },
         });
         this._watchLaunchFile();
     }
