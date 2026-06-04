@@ -37,6 +37,108 @@ const TABS: Tab[] = [
     { id: "plugins", label: "Plugins" },
 ];
 
+// Shared styles
+const sharedStyles = {
+    groupTitle: {
+        fontSize: "11px",
+        fontWeight: 700,
+        textTransform: "uppercase" as const,
+        letterSpacing: "0.08em",
+        color: "var(--vscode-descriptionForeground)",
+        marginBottom: "8px",
+    } as React.CSSProperties,
+    fieldRow: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 0",
+        gap: "16px",
+    } as React.CSSProperties,
+    fieldLabel: {
+        fontSize: "12px",
+        color: "var(--vscode-foreground)",
+        fontWeight: 600,
+        flex: "1 1 0",
+    } as React.CSSProperties,
+    modifiedDot: {
+        width: "6px",
+        height: "6px",
+        borderRadius: "50%",
+        background: "var(--vscode-focusBorder)",
+        display: "inline-block",
+        flexShrink: 0,
+    } as React.CSSProperties,
+};
+
+// Shared components
+
+const FieldRow = ({
+    label,
+    subtitle,
+    description,
+    modified,
+    children,
+}: {
+    label: string;
+    subtitle?: string;
+    description?: string;
+    modified?: boolean;
+    children: React.ReactNode;
+}) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px" }}>
+        <div style={{ flex: "1 1 0", minWidth: 0 }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+                {label}
+                {modified && <span title="Modified from default" style={sharedStyles.modifiedDot} />}
+            </div>
+            {subtitle && <div style={{ fontSize: "11px", color: "var(--vscode-descriptionForeground)", fontFamily: "var(--vscode-editor-font-family)", marginBottom: "2px" }}>{subtitle}</div>}
+            {description && <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{description}</div>}
+        </div>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+            {children}
+        </div>
+    </div>
+);
+
+const CollapsibleSection = ({
+    label = "Advanced",
+    forceOpen,
+    marginTop = "16px",
+    children,
+}: {
+    label?: string;
+    forceOpen?: boolean;
+    marginTop?: string;
+    children: React.ReactNode;
+}) => {
+    const [open, setOpen] = useState(false);
+    const isOpen = forceOpen || open;
+
+    return (
+        <div style={{ marginTop }}>
+            <button
+                onClick={() => setOpen((o) => !o)}
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--vscode-descriptionForeground)",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "4px 0",
+                }}
+            >
+                <span className={`codicon codicon-chevron-${isOpen ? "down" : "right"}`} />
+                {label}
+            </button>
+            {isOpen && <div style={{ marginTop: "8px" }}>{children}</div>}
+        </div>
+    );
+};
+
 // Setting descriptors
 
 interface SettingDescriptorBase {
@@ -98,6 +200,7 @@ interface LaunchConfig {
     request: string;
     noDebug?: boolean;
     defaultName?: string;
+    trace?: boolean;
     command?: string;
     remoteControl?: string;
     enableLogging?: boolean;
@@ -179,51 +282,15 @@ const SettingRow = ({
     vscodeApi: VSCodeAPI;
     modified: boolean;
 }) => {
-    const rowStyle: React.CSSProperties = {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        padding: "10px 0",
-        gap: "16px",
-    };
-
-    const labelColStyle: React.CSSProperties = {
-        flex: "1 1 0",
-        minWidth: 0,
-    };
-
-    const controlColStyle: React.CSSProperties = {
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-    };
-
-    const labelStyle: React.CSSProperties = {
-        fontSize: "13px",
-        fontWeight: 600,
-        color: "var(--vscode-foreground)",
-        marginBottom: "2px",
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-    };
-
-    const descStyle: React.CSSProperties = {
-        fontSize: "12px",
-        color: "var(--vscode-descriptionForeground)",
-    };
-
     const renderControl = () => {
         switch (descriptor.type) {
             case "boolean":
                 return (
                     <VSCodeCheckbox
                         checked={value === true}
-                        onChange={(e: any) => onChange(descriptor.key, e.target.checked)}
+                        onChange={(e: any) => onChange(descriptor.key, (e.target as HTMLInputElement).checked)}
                     />
                 );
-
             case "enum":
                 return (
                     <VSCodeDropdown
@@ -233,12 +300,11 @@ const SettingRow = ({
                     >
                         {descriptor.options.map((opt) => (
                             <VSCodeOption key={opt.value} value={opt.value}>
-                                {opt.label}    
+                                {opt.label}
                             </VSCodeOption>
-                        ))}    
+                        ))}
                     </VSCodeDropdown>
                 );
-
             case "string":
                 return (
                     <VSCodeTextField
@@ -247,7 +313,6 @@ const SettingRow = ({
                         style={{ minWidth: "200px" }}
                     />
                 );
-
             case "number":
                 return (
                     <VSCodeTextField
@@ -259,7 +324,6 @@ const SettingRow = ({
                         style={{ minWidth: "80px" }}
                     />
                 );
-
             default:
                 return (
                     <VSCodeButton
@@ -279,28 +343,9 @@ const SettingRow = ({
     };
 
     return (
-        <div style={rowStyle}>
-            <div style={labelColStyle}>
-                <div style={labelStyle}>
-                    {descriptor.label}
-                    {modified && (
-                        <span
-                            title="Modified from default"
-                            style={{
-                                width: "6px",
-                                height: "6px",
-                                borderRadius: "50%",
-                                background: "var(--vscode-focusBorder)",
-                                display: "inline-block",
-                                flexShrink: 0,
-                            }}
-                        />
-                    )}
-                </div>
-                <div style={descStyle}>{descriptor.description}</div>
-            </div>
-            <div style={controlColStyle}>{renderControl()}</div>
-        </div>
+        <FieldRow label={descriptor.label} description={descriptor.description} modified={modified}>
+            {renderControl()}
+        </FieldRow>
     );
 };
 
@@ -318,100 +363,26 @@ const GroupSection = ({
     onChange: (key: string, value: SettingValue) => void;
     vscodeApi: VSCodeAPI;
     modifiedKeys: Set<string>;
-}) => {
-    const groupStyle: React.CSSProperties = {
-        marginBottom: "24px",
-    };
+}) => (
+    <div style={{ marginBottom: "24px" }}>
+        <div style={sharedStyles.groupTitle}>{group}</div>
+        <VSCodeDivider />
+        {settings.map((descriptor, i) => (
+            <React.Fragment key={descriptor.key}>
+                <SettingRow
+                    descriptor={descriptor}
+                    value={values[descriptor.key]}
+                    onChange={onChange}
+                    vscodeApi={vscodeApi}
+                    modified={modifiedKeys.has(descriptor.key)}
+                />
+                {i < settings.length - 1 && <VSCodeDivider role="presentation" />}
+            </React.Fragment>
+        ))}
+    </div>
+);
 
-    const groupTitleStyle: React.CSSProperties = {
-        fontSize: "11px",
-        fontWeight: 700,
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-        color: "var(--vscode-descriptionForeground)",
-        marginBottom: "8px",
-    };
-
-    return (
-        <div style={groupStyle}>
-            <div style={groupTitleStyle}>{group}</div>
-            <VSCodeDivider />
-            {settings.map((descriptor, i) => (
-                <React.Fragment key={descriptor.key}>
-                    <SettingRow descriptor={descriptor} value={values[descriptor.key]} onChange={onChange} vscodeApi={vscodeApi} modified={modifiedKeys.has(descriptor.key)} />
-                    {i < settings.length - 1 && <VSCodeDivider role="presentation" />}
-                </React.Fragment>
-            ))}
-        </div>
-    );
-};
-
-const AdvancedSection = ({
-    groups,
-    settings,
-    onChange,
-    vscodeApi,
-    forceOpen,
-    modifiedKeys,
-}: {
-    groups: Record<string, [string, SchemaEntry][]>;
-    settings: Settings;
-    onChange: (key: string, value: SettingValue) => void;
-    vscodeApi: VSCodeAPI;
-    forceOpen?: boolean;
-    modifiedKeys: Set<string>;
-}) => {
-    const [open, setOpen] = useState(false);
-    const isOpen = forceOpen || open;
-
-    return (
-        <div style={{ marginTop: "16px" }}>
-            <button
-                onClick={() => setOpen((o) => !o)}
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--vscode-descriptionForeground)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "4px 0",
-                }}
-            >
-                <span className={`codicon codicon-chevron-${isOpen ? "down" : "right"}`} />
-                Advanced
-            </button>
-            {isOpen && (
-                <div style={{ marginTop: "12px" }}>
-                    {Object.entries(groups).map(([group, entries]) => (
-                        <GroupSection
-                            key={group}
-                            group={group}
-                            settings={entries.map(([key, entry]) => ({
-                                key,
-                                label: entry.title,
-                                description: entry.description,
-                                group: entry.group,
-                                type: (entry.enum ? "enum" : entry.type) as SettingDescriptor["type"],
-                                default: entry.default,
-                                options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
-                                min: entry.minimum ?? undefined,
-                                max: entry.maximum ?? undefined,
-                            }) as SettingDescriptor)}
-                            values={settings}
-                            onChange={onChange}
-                            vscodeApi={vscodeApi}
-                            modifiedKeys={modifiedKeys}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
+// VDMJ tab
 
 const VdmjPropertyRow = ({
     propKey,
@@ -420,43 +391,26 @@ const VdmjPropertyRow = ({
     isModified,
     onChange,
 }: {
-    propKey: string,
-    schema: VdmjSchemaEntry,
-    value: string,
-    isModified: boolean,
+    propKey: string;
+    schema: VdmjSchemaEntry;
+    value: string;
+    isModified: boolean;
     onChange: (key: string, value: string) => void;
 }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px" }}>
-        <div style={{ flex: "1 1 0", minWidth: 0 }}>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
-                {schema.title}
-                {isModified && (
-                    <span
-                        title="Modified from default"
-                        style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--vscode-focusBorder)", display: "inline-block", flexShrink: 0 }}
-                    />
-                )}
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--vscode-descriptionForeground)", fontFamily: "var(--vscode-editor-font-family)", marginBottom: "2px" }}>
-                {propKey}
-            </div>
-            <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{schema.description}</div>
-        </div>
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-            {schema.type === "boolean" ? (
-                <VSCodeCheckbox
-                    checked={value === "true"}
-                    onChange={(e: any) => onChange(propKey, e.target.checked ? "true" : "false")}
-                />
-            ) : (
-                <VSCodeTextField
-                    value={value}
-                    onInput={(e: any) => onChange(propKey, e.target.value)}
-                    style={{ minWidth: schema.type === "number" ? "80px" : "200px" }}
-                />
-            )}
-        </div>
-    </div>
+    <FieldRow label={schema.title} subtitle={propKey} description={schema.description} modified={isModified}>
+        {schema.type === "boolean" ? (
+            <VSCodeCheckbox
+                checked={value === "true"}
+                onChange={(e: any) => onChange(propKey, (e.target as HTMLInputElement).checked ? "true" : "false")}
+            />
+        ) : (
+            <VSCodeTextField
+                value={value}
+                onInput={(e: any) => onChange(propKey, e.target.value)}
+                style={{ minWidth: schema.type === "number" ? "80px" : "200px" }}
+            />
+        )}
+    </FieldRow>
 );
 
 const VdmjTab = ({
@@ -470,26 +424,19 @@ const VdmjTab = ({
 }) => {
     const [filterText, setFilterText] = useState("");
     const [showModifiedOnly, setShowModifiedOnly] = useState(false);
-    const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const isModified = (key: string) => values[key] !== undefined && values[key] !== schema[key]?.default;
 
     const matchesFilter = (key: string, entry: VdmjSchemaEntry) => {
-        if (showModifiedOnly && !isModified(key)) {
-            return false;
-        }
-        if (!filterText) {
-            return true;
-        }
+        if (showModifiedOnly && !isModified(key)) return false;
+        if (!filterText) return true;
         const q = filterText.toLowerCase();
         return key.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
     };
 
     const groupByCategory = (entries: [string, VdmjSchemaEntry][]) =>
         entries.reduce<Record<string, [string, VdmjSchemaEntry][]>>((acc, [key, entry]) => {
-            if (!acc[entry.category]) {
-                acc[entry.category] = [];
-            }
+            if (!acc[entry.category]) acc[entry.category] = [];
             acc[entry.category].push([key, entry]);
             return acc;
         }, {});
@@ -501,9 +448,7 @@ const VdmjTab = ({
 
     const renderGroup = (category: string, entries: [string, VdmjSchemaEntry][]) => (
         <div key={category} style={{ marginBottom: "24px" }}>
-            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--vscode-descriptionForeground)", marginBottom: "8px" }}>
-                {category}
-            </div>
+            <div style={sharedStyles.groupTitle}>{category}</div>
             <VSCodeDivider />
             {entries.map(([key, entry], i) => (
                 <React.Fragment key={key}>
@@ -543,36 +488,271 @@ const VdmjTab = ({
 
             {Object.entries(commonGroups).map(([category, entries]) => renderGroup(category, entries))}
 
-            <div style={{ marginTop: "16px" }}>
-                <button
-                    onClick={() => setAdvancedOpen((o) => !o)}
-                    style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "var(--vscode-descriptionForeground)", fontSize: "12px", fontWeight: 600, padding: "4px 0" }}
-                >
-                    <span className={`codicon codicon-chevron-${forceAdvancedOpen || advancedOpen ? "down" : "right"}`} />
-                    Advanced
-                </button>
-                {(forceAdvancedOpen || advancedOpen) && (
-                    <div style={{ marginTop: "12px" }}>
-                        {Object.entries(advancedGroups).map(([category, entries]) => renderGroup(category, entries))}
-                    </div>
-                )}
-            </div>
+            <CollapsibleSection forceOpen={forceAdvancedOpen}>
+                {Object.entries(advancedGroups).map(([category, entries]) => renderGroup(category, entries))}
+            </CollapsibleSection>
         </div>
     );
 };
 
-const AdvancedFieldsSection = ({ children }: { children: React.ReactNode }) => {
-    const [open, setOpen] = useState(false);
+// Launch tab
+
+const FieldToggleRow = ({
+    label,
+    description,
+    enabled,
+    onToggle,
+    children,
+}: {
+    label: string;
+    description?: string;
+    enabled: boolean;
+    onToggle: (enabled: boolean) => void;
+    children?: React.ReactNode;
+}) => (
+    <div style={{ padding: "10px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+            <div style={{ flex: "1 1 0" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: enabled ? "var(--vscode-foreground)" : "var(--vscode-disabledForeground)" }}>
+                    {label}
+                </div>
+                {description && (
+                    <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{description}</div>
+                )}
+            </div>
+            <VSCodeCheckbox
+                checked={enabled}
+                onChange={(e: any) => onToggle((e.target as HTMLInputElement).checked)}
+            />
+        </div>
+        {enabled && children && (
+            <div style={{ marginTop: "8px" }}>{children}</div>
+        )}
+    </div>
+);
+
+const BlankConfigCard = ({
+    onSave,
+    onCancel,
+    vdmjSchema,
+}: {
+    onSave: (config: LaunchConfig) => void;
+    onCancel: () => void;
+    vdmjSchema: Record<string, VdmjSchemaEntry>;
+}) => {
+    const [name, setName] = useState("New Configuration");
+    const [included, setIncluded] = useState<Set<string>>(new Set());
+    const [values, setValues] = useState<Partial<LaunchConfig>>({
+        noDebug: false,
+        defaultName: undefined,
+        command: "",
+        remoteControl: "",
+        trace: true,
+        enableLogging: false,
+        settings: {
+            dynamicTypeChecks: true,
+            invariantsChecks: true,
+            preConditionChecks: true,
+            postConditionChecks: true,
+            measureChecks: true,
+            precision: 100,
+        },
+        properties: {},
+        params: {},
+    });
+
+    const toggle = (field: string, on: boolean) => {
+        setIncluded((prev) => {
+            const next = new Set(prev);
+            on ? next.add(field) : next.delete(field);
+            return next;
+        });
+        if (["noDebug", "trace", "enableLogging"].includes(field)) {
+            setValue(field as keyof LaunchConfig, on);
+        }
+    };
+
+    const setValue = (field: keyof LaunchConfig, value: any) => {
+        setValues((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = () => {
+        const config: LaunchConfig = { name, type: "vdm", request: "launch" };
+        for (const field of Array.from(included)) {
+            (config as any)[field] = (values as any)[field];
+        }
+        onSave(config);
+    };
+
+    const optionalFields: { key: keyof LaunchConfig; label: string; description: string }[] = [
+        { key: "noDebug", label: "No Debug", description: "Don't run in debug mode." },
+        { key: "defaultName", label: "Default Name", description: "Name of the default module or class." },
+        { key: "trace", label: "Trace", description: "Enable logging of the Debug Adapter Protocol." },
+        { key: "command", label: "Command", description: "Run a single execution of a command and terminate." },
+        { key: "remoteControl", label: "Remote Control", description: "Delegate control of the interpreter to a remote controller." },
+        { key: "enableLogging", label: "Enable Logging", description: "Log real-time events for VDM-RT." },
+        { key: "settings", label: "Settings", description: "Configure interpretation checks." },
+        { key: "properties", label: "Properties", description: "Override project-wide VDMJ properties for this configuration." },
+        { key: "params", label: "Params", description: "Miscellaneous launch parameters." },
+    ];
+
+    const renderFieldControl = (field: keyof LaunchConfig) => {
+        switch (field) {
+            case "noDebug":
+            case "trace":
+            case "enableLogging":
+                return null;
+            case "defaultName":
+            case "command":
+            case "remoteControl":
+                return (
+                    <VSCodeTextField
+                        value={String(values[field] ?? "")}
+                        onInput={(e: any) => setValue(field, e.target.value)}
+                        style={{ width: "100%" }}
+                        placeholder={field === "defaultName" ? "e.g. DEFAULT" : field === "command" ? "e.g. print f()" : "e.g. com.example.Controller"}
+                    />
+                );
+            case "settings": {
+                const s = (values.settings ?? {}) as any;
+                const checkFields = [
+                    { key: "dynamicTypeChecks", label: "Dynamic Type Checks" },
+                    { key: "invariantsChecks", label: "Invariants Checks" },
+                    { key: "preConditionChecks", label: "Pre-condition Checks" },
+                    { key: "postConditionChecks", label: "Post-condition Checks" },
+                    { key: "measureChecks", label: "Measure Checks" },
+                ];
+                return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingLeft: "8px" }}>
+                        {checkFields.map((f) => (
+                            <div key={f.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px", color: "var(--vscode-foreground)" }}>{f.label}</span>
+                                <VSCodeCheckbox
+                                    checked={s[f.key] !== false}
+                                    onChange={(e: any) => setValue("settings", { ...s, [f.key]: (e.target as HTMLInputElement).checked })}
+                                />
+                            </div>
+                        ))}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", color: "var(--vscode-foreground)" }}>Precision</span>
+                            <VSCodeTextField
+                                value={String(s.precision ?? 100)}
+                                onInput={(e: any) => {
+                                    const n = Number(e.target.value);
+                                    if (!isNaN(n)) setValue("settings", { ...s, precision: n });
+                                }}
+                                style={{ minWidth: "80px" }}
+                            />
+                        </div>
+                    </div>
+                );
+            }
+            case "properties": {
+                const props = (values.properties ?? {}) as Record<string, any>;
+                return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingLeft: "8px" }}>
+                        {Object.entries(vdmjSchema).map(([key, entry]) => (
+                            <VdmjPropertyRow
+                                key={key}
+                                propKey={key}
+                                schema={entry}
+                                value={props[key] !== undefined ? String(props[key]) : entry.default}
+                                isModified={props[key] !== undefined && String(props[key]) !== entry.default}
+                                onChange={(k, v) => setValue("properties", { ...props, [k]: v })}
+                            />
+                        ))}
+                    </div>
+                );
+            }
+            case "params": {
+                const params = (values.params ?? {}) as Record<string, string>;
+                return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingLeft: "8px" }}>
+                        {Object.entries(params).map(([k, v], i) => (
+                            <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                <VSCodeTextField
+                                    value={k}
+                                    placeholder="Key"
+                                    onInput={(e: any) => {
+                                        const updated = { ...params };
+                                        delete updated[k];
+                                        updated[e.target.value] = v;
+                                        setValue("params", updated);
+                                    }}
+                                    style={{ flex: 1 }}
+                                />
+                                <VSCodeTextField
+                                    value={v}
+                                    placeholder="Value"
+                                    onInput={(e: any) => setValue("params", { ...params, [k]: e.target.value })}
+                                    style={{ flex: 1 }}
+                                />
+                                <VSCodeButton appearance="icon" onClick={() => {
+                                    const updated = { ...params };
+                                    delete updated[k];
+                                    setValue("params", updated);
+                                }}>
+                                    <span className="codicon codicon-trash" />
+                                </VSCodeButton>
+                            </div>
+                        ))}
+                        <VSCodeButton appearance="secondary" onClick={() => setValue("params", { ...params, "": "" })}>
+                            <span slot="start" className="codicon codicon-add" />
+                            Add Param
+                        </VSCodeButton>
+                    </div>
+                );
+            }
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div style={{ marginTop: "12px" }}>
-            <button
-                onClick={() => setOpen((o) => !o)}
-                style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "var(--vscode-descriptionForeground)", fontSize: "12px", fontWeight: 600, padding: "4px 0" }}
-            >
-                <span className={`codicon codicon-chevron-${open ? "down" : "right"}`} />
-                Advanced
-            </button>
-            {open && <div style={{ marginTop: "8px" }}>{children}</div>}
+        <div style={{ marginBottom: "16px", border: "1px solid var(--vscode-focusBorder)", borderRadius: "4px", overflow: "hidden" }}>
+            <div style={{ padding: "10px 16px", background: "var(--vscode-editor-background)", borderBottom: "1px solid var(--vscode-panel-border)" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "8px" }}>
+                    New Blank Configuration
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", color: "var(--vscode-foreground)", fontWeight: 600 }}>Name</span>
+                    <VSCodeTextField
+                        value={name}
+                        onInput={(e: any) => setName(e.target.value)}
+                        style={{ flex: 1 }}
+                    />
+                </div>
+            </div>
+
+            <div style={{ padding: "0 16px" }}>
+                <div style={{ ...sharedStyles.groupTitle, padding: "12px 0 4px", marginBottom: 0 }}>
+                    Optional Fields
+                </div>
+                <VSCodeDivider />
+                {optionalFields.map((field, i) => (
+                    <React.Fragment key={field.key}>
+                        <FieldToggleRow
+                            label={field.label}
+                            description={field.description}
+                            enabled={included.has(field.key)}
+                            onToggle={(on) => toggle(field.key, on)}
+                        >
+                            {renderFieldControl(field.key)}
+                        </FieldToggleRow>
+                        {i < optionalFields.length - 1 && <VSCodeDivider role="presentation" />}
+                    </React.Fragment>
+                ))}
+            </div>
+
+            <div style={{ padding: "12px 16px", display: "flex", gap: "8px", borderTop: "1px solid var(--vscode-panel-border)" }}>
+                <VSCodeButton onClick={handleSave}>
+                    <span slot="start" className="codicon codicon-add" />
+                    Add Configuration
+                </VSCodeButton>
+                <VSCodeButton appearance="secondary" onClick={onCancel}>
+                    Cancel
+                </VSCodeButton>
+            </div>
         </div>
     );
 };
@@ -581,6 +761,7 @@ const LaunchTab = ({
     configs,
     snippets,
     vscodeApi,
+    vdmjSchema,
     onSave,
     onCreate,
     onDelete,
@@ -588,6 +769,7 @@ const LaunchTab = ({
     configs: LaunchConfig[];
     snippets: LaunchSnippet[];
     vscodeApi: VSCodeAPI;
+    vdmjSchema: Record<string, VdmjSchemaEntry>;
     onSave: (index: number, config: LaunchConfig) => void;
     onCreate: (config: LaunchConfig) => void;
     onDelete: (index: number) => void;
@@ -595,127 +777,241 @@ const LaunchTab = ({
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const [showSnippetPicker, setShowSnippetPicker] = useState(false);
     const [editingConfigs, setEditingConfigs] = useState<LaunchConfig[]>(configs);
+    const [showBlankCard, setShowBlankCard] = useState(false);
 
     useEffect(() => {
         setEditingConfigs(configs);
     }, [configs]);
 
+    const debounceTimers = React.useRef<Record<string, NodeJS.Timeout>>({});
+
     const handleFieldChange = (index: number, field: keyof LaunchConfig, value: any) => {
-        const updated = editingConfigs.map((c, i) => 
-            i === index ? { ...c, [field]: value } : c
-        );
-        setEditingConfigs(updated);
-        setTimeout(() => onSave(index, updated[index]), 300);
-    };
+        setEditingConfigs((prev) => {
+            const updated = prev.map((c, i) =>
+                i === index ? { ...c, [field]: value } : { ...c }
+            );
+            return updated;
+        });
 
-    const commonFieldStyle: React.CSSProperties = {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "8px 0",
-        gap: "16px",
-    };
-
-    const fieldLabelStyle: React.CSSProperties = {
-        fontSize: "12px",
-        color: "var(--vscode-foreground)",
-        fontWeight: 600,
-        flex: "1 1 0",
+        const timerKey = `${index}-${field}`;
+        if (debounceTimers.current[timerKey]) clearTimeout(debounceTimers.current[timerKey]);
+        debounceTimers.current[timerKey] = setTimeout(() => {
+            setEditingConfigs((prev) => {
+                onSave(index, prev[index]);
+                return prev;
+            });
+        }, 300);
     };
 
     const renderCommonFields = (config: LaunchConfig, index: number) => (
         <>
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Name</span>
+            <FieldRow label="Name">
                 <VSCodeTextField
                     value={config.name}
                     onInput={(e: any) => handleFieldChange(index, "name", e.target.value)}
                     style={{ minWidth: "200px" }}
                 />
-            </div>
+            </FieldRow>
             <VSCodeDivider role="presentation" />
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>No Debug</span>
+            <FieldRow label="No Debug" description="Don't run in debug mode.">
                 <VSCodeCheckbox
                     checked={config.noDebug === true}
-                    onChange={(e: any) => handleFieldChange(index, "noDebug", e.target.value)}
+                    onChange={(e: any) => handleFieldChange(index, "noDebug", (e.target as HTMLInputElement).checked)}
                 />
-            </div>
+            </FieldRow>
             <VSCodeDivider role="presentation" />
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Default Name</span>
+            <FieldRow label="Default Name" description="Name of the default module or class.">
                 <VSCodeTextField
                     value={config.defaultName ?? ""}
                     onInput={(e: any) => handleFieldChange(index, "defaultName", e.target.value)}
                     style={{ minWidth: "200px" }}
                     placeholder="e.g. DEFAULT"
                 />
-            </div>
+            </FieldRow>
             <VSCodeDivider role="presentation" />
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Command</span>
+            <FieldRow label="Command" description="Run a single execution of a command and terminate.">
                 <VSCodeTextField
                     value={config.command ?? ""}
                     onInput={(e: any) => handleFieldChange(index, "command", e.target.value)}
                     style={{ minWidth: "200px" }}
                     placeholder="e.g. print f()"
                 />
-            </div>
+            </FieldRow>
             <VSCodeDivider role="presentation" />
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Remote Control</span>
+            <FieldRow label="Remote Control" description="Delegate control of the interpreter to a remote controller.">
                 <VSCodeTextField
                     value={config.remoteControl ?? ""}
                     onInput={(e: any) => handleFieldChange(index, "remoteControl", e.target.value)}
                     style={{ minWidth: "200px" }}
                     placeholder="e.g. com.example.Controller"
                 />
-            </div>
+            </FieldRow>
             <VSCodeDivider role="presentation" />
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Enable Logging</span>
+            <FieldRow label="Enable Logging" description="Log real-time events for VDM-RT.">
                 <VSCodeCheckbox
                     checked={config.enableLogging === true}
-                    onChange={(e: any) => handleFieldChange(index, "enableLogging", e.target.value)}
+                    onChange={(e: any) => handleFieldChange(index, "enableLogging", (e.target as HTMLInputElement).checked)}
                 />
-            </div>
+            </FieldRow>
         </>
     );
 
-    const renderAdvancedFields = (config: LaunchConfig, index: number) => (
-        <>
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Settings</span>
-                <VSCodeButton
-                    appearance="icon"
-                    title="Edit in launch.json"
-                    onClick={() => vscodeApi.postMessage({ command: "openNativeSettings", data: { query: "@ext:overturetool.vdm-vscode" } })}
-                >
-                    <span className="codicon codicon-link-external" />
+    const renderSettingsFields = (config: LaunchConfig, index: number) => {
+        const s = config.settings ?? {};
+        const fields: { key: string; label: string; description: string }[] = [
+            { key: "dynamicTypeChecks", label: "Dynamic Type Checks", description: "Type check values during interpretation." },
+            { key: "invariantsChecks", label: "Invariants Checks", description: "Check both state and type invariants." },
+            { key: "preConditionChecks", label: "Pre-condition Checks", description: "Check pre-conditions for all functions and operations." },
+            { key: "postConditionChecks", label: "Post-condition Checks", description: "Check post-conditions for all functions and operations." },
+            { key: "measureChecks", label: "Measure Checks", description: "Check recursive functions for which a measure has been defined." },
+        ];
+
+        const handleSettingChange = (key: string, value: boolean | number) => {
+            handleFieldChange(index, "settings", { ...s, [key]: value });
+        };
+
+        return (
+            <div style={{ marginTop: "8px" }}>
+                <div style={sharedStyles.groupTitle}>Checks</div>
+                <VSCodeDivider />
+                {fields.map((field, i) => (
+                    <React.Fragment key={field.key}>
+                        <FieldRow label={field.label} description={field.description}>
+                            <VSCodeCheckbox
+                                checked={(s as any)[field.key] !== false}
+                                onChange={(e: any) => handleSettingChange(field.key, (e.target as HTMLInputElement).checked)}
+                            />
+                        </FieldRow>
+                        {i < fields.length - 1 && <VSCodeDivider role="presentation" />}
+                    </React.Fragment>
+                ))}
+                <VSCodeDivider role="presentation" />
+                <FieldRow label="Precision" description="Precision level when using high precision mode.">
+                    <VSCodeTextField
+                        value={String((s as any).precision ?? 100)}
+                        onInput={(e: any) => {
+                            const n = Number(e.target.value);
+                            if (!isNaN(n)) handleSettingChange("precision", n);
+                        }}
+                        style={{ minWidth: "80px" }}
+                    />
+                </FieldRow>
+            </div>
+        );
+    };
+
+    const renderPropertiesFields = (config: LaunchConfig, index: number) => {
+        const props = (config.properties ?? {}) as Record<string, any>;
+
+        const handlePropChange = (key: string, value: string) => {
+            handleFieldChange(index, "properties", { ...props, [key]: value });
+        };
+
+        return (
+            <div style={{ marginTop: "8px" }}>
+                <div style={sharedStyles.groupTitle}>VDMJ Property Overrides</div>
+                <VSCodeDivider />
+                <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", padding: "8px 0" }}>
+                    These override the project-wide VDMJ properties for this launch configuration only.
+                </div>
+                {Object.entries(vdmjSchema).map(([key, entry], i, arr) => (
+                    <React.Fragment key={key}>
+                        <VdmjPropertyRow
+                            propKey={key}
+                            schema={entry}
+                            value={props[key] !== undefined ? String(props[key]) : entry.default}
+                            isModified={props[key] !== undefined && String(props[key]) !== entry.default}
+                            onChange={handlePropChange}
+                        />
+                        {i < arr.length - 1 && <VSCodeDivider role="presentation" />}
+                    </React.Fragment>
+                ))}
+            </div>
+        );
+    };
+
+    const renderParamsFields = (config: LaunchConfig, index: number) => {
+        const params = (config.params ?? {}) as Record<string, string>;
+        const entries = Object.entries(params);
+
+        const handleParamChange = (oldKey: string, newKey: string, value: string) => {
+            const updated = { ...params };
+            if (oldKey !== newKey) delete updated[oldKey];
+            updated[newKey] = value;
+            handleFieldChange(index, "params", updated);
+        };
+
+        const handleParamDelete = (key: string) => {
+            const updated = { ...params };
+            delete updated[key];
+            handleFieldChange(index, "params", updated);
+        };
+
+        const handleParamAdd = () => {
+            handleFieldChange(index, "params", { ...params, "": "" });
+        };
+
+        return (
+            <div style={{ marginTop: "8px" }}>
+                <div style={sharedStyles.groupTitle}>Params</div>
+                <VSCodeDivider />
+                {entries.length === 0 && (
+                    <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", padding: "8px 0" }}>
+                        No params defined.
+                    </div>
+                )}
+                {entries.map(([key, value], i) => (
+                    <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center", padding: "6px 0" }}>
+                        <VSCodeTextField
+                            value={key}
+                            placeholder="Key"
+                            onInput={(e: any) => handleParamChange(key, e.target.value, value)}
+                            style={{ flex: 1 }}
+                        />
+                        <VSCodeTextField
+                            value={value}
+                            placeholder="Value"
+                            onInput={(e: any) => handleParamChange(key, key, e.target.value)}
+                            style={{ flex: 1 }}
+                        />
+                        <VSCodeButton appearance="icon" onClick={() => handleParamDelete(key)}>
+                            <span className="codicon codicon-trash" />
+                        </VSCodeButton>
+                    </div>
+                ))}
+                <VSCodeButton appearance="secondary" onClick={handleParamAdd} style={{ marginTop: "8px" }}>
+                    <span slot="start" className="codicon codicon-add" />
+                    Add Param
                 </VSCodeButton>
             </div>
-            <VSCodeDivider role="presentation" />
-            <div style={commonFieldStyle}>
-                <span style={fieldLabelStyle}>Properties</span>
-                <VSCodeButton
-                    appearance="icon"
-                    title="Edit in launch.json"
-                    onClick={() => vscodeApi.postMessage({ command: "openNativeSettings", data: { query: "@ext:overturetool.vdm-vscode" } })}
-                >
-                    <span className="codicon codicon-link-external" />
-                </VSCodeButton>
-            </div>
-        </>
-    );
+        );
+    };
 
     return (
         <div>
+            {showBlankCard && (
+                <BlankConfigCard
+                    onSave={(config) => {
+                        onCreate(config);
+                        setShowBlankCard(false);
+                    }}
+                    onCancel={() => setShowBlankCard(false)}
+                    vdmjSchema={vdmjSchema}
+                />
+            )}
+
             {showSnippetPicker && (
                 <div style={{ marginBottom: "16px", padding: "16px", background: "var(--vscode-editor-background)", border: "1px solid var(--vscode-panel-border)", borderRadius: "4px" }}>
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--vscode-descriptionForeground)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                        Select a template
-                    </div>
+                    <div style={{ ...sharedStyles.groupTitle, marginBottom: "12px" }}>Select a template</div>
                     <VSCodeDivider />
+                    <div
+                        onClick={() => { setShowSnippetPicker(false); setShowBlankCard(true); }}
+                        style={{ padding: "10px 0", cursor: "pointer" }}
+                    >
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)" }}>Blank Configuration</div>
+                        <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>Choose exactly which fields to include.</div>
+                        <VSCodeDivider role="presentation" />
+                    </div>
                     {snippets.map((snippet, i) => (
                         <div
                             key={i}
@@ -739,7 +1035,7 @@ const LaunchTab = ({
                 </div>
             )}
 
-            {editingConfigs.length === 0 && !showSnippetPicker && (
+            {editingConfigs.length === 0 && !showSnippetPicker && !showBlankCard && (
                 <div style={{ textAlign: "center", padding: "32px 0", color: "var(--vscode-descriptionForeground)", fontSize: "13px" }}>
                     No launch configurations yet. Add one below.
                 </div>
@@ -770,10 +1066,7 @@ const LaunchTab = ({
                         <VSCodeButton
                             appearance="icon"
                             title="Delete configuration"
-                            onClick={(e: any) => {
-                                e.stopPropagation();
-                                onDelete(index);
-                            }}
+                            onClick={(e: any) => { e.stopPropagation(); onDelete(index); }}
                         >
                             <span className="codicon codicon-trash" />
                         </VSCodeButton>
@@ -782,15 +1075,17 @@ const LaunchTab = ({
                     {expandedIndex === index && (
                         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--vscode-panel-border)" }}>
                             {renderCommonFields(config, index)}
-                            <AdvancedFieldsSection>
-                                {renderAdvancedFields(config, index)}
-                            </AdvancedFieldsSection>
+                            <CollapsibleSection marginTop="12px">
+                                {renderSettingsFields(config, index)}
+                                {renderPropertiesFields(config, index)}
+                                {renderParamsFields(config, index)}
+                            </CollapsibleSection>
                         </div>
                     )}
                 </div>
             ))}
 
-            {!showSnippetPicker && (
+            {!showSnippetPicker && !showBlankCard && (
                 <VSCodeButton
                     appearance="secondary"
                     onClick={() => setShowSnippetPicker(true)}
@@ -869,13 +1164,12 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
 
     const handleLaunchCreate = (config: LaunchConfig) => {
         vscodeApi.postMessage({ command: "createLaunchConfiguration", data: { config } });
-    }
-
-    const handleLaunchDelete = (index: number) => {
-        vscodeApi.postMessage({  command: "deleteLaunchConfiguration", data: { index } });
     };
 
-    // Group schema entries by their group title
+    const handleLaunchDelete = (index: number) => {
+        vscodeApi.postMessage({ command: "deleteLaunchConfiguration", data: { index } });
+    };
+
     const groups = Object.entries(schema).reduce<Record<string, [string, SchemaEntry][]>>(
         (acc, [key, entry]) => {
             if (!acc[entry.group]) acc[entry.group] = [];
@@ -884,48 +1178,6 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         },
         {}
     );
-
-    const containerStyle: React.CSSProperties = {
-        padding: "24px 32px",
-        maxWidth: "800px",
-        margin: "0 auto",
-        boxSizing: "border-box",
-    };
-
-    const headerStyle: React.CSSProperties = {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: "24px",
-    };
-
-    const titleStyle: React.CSSProperties = {
-        fontSize: "20px",
-        fontWeight: 600,
-        color: "var(--vscode-foreground)",
-    };
-
-    const subtitleStyle: React.CSSProperties = {
-        fontSize: "12px",
-        color: "var(--vscode-descriptionForeground)",
-        marginTop: "4px",
-    };
-
-    const scopeBadgeStyle: React.CSSProperties = {
-        fontSize: "11px",
-        padding: "2px 8px",
-        borderRadius: "3px",
-        background: "var(--vscode-badge-background)",
-        color: "var(--vscode-badge-foreground)",
-        fontWeight: 600,
-    };
-
-    const matchesFilter = (entry: SchemaEntry, key: string): boolean => {
-        if (showModifiedOnly && !modifiedKeys.has(key)) return false;
-        if (!filterText) return true;
-        const q = filterText.toLowerCase();
-        return entry.title.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
-    }
 
     const modifiedKeys = useMemo(() => {
         return new Set(
@@ -938,6 +1190,13 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         );
     }, [settings, schema]);
 
+    const matchesFilter = (entry: SchemaEntry, key: string): boolean => {
+        if (showModifiedOnly && !modifiedKeys.has(key)) return false;
+        if (!filterText) return true;
+        const q = filterText.toLowerCase();
+        return entry.title.toLowerCase().includes(q) || entry.description.toLowerCase().includes(q);
+    };
+
     const renderTabContent = () => {
         switch (activeTab) {
             case "general": {
@@ -947,13 +1206,21 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 for (const [group, entries] of Object.entries(groups)) {
                     const common = entries.filter(([key, e]) => !e.advanced && matchesFilter(e, key));
                     const advanced = entries.filter(([key, e]) => e.advanced && matchesFilter(e, key));
-                    if (common.length > 0) {
-                        commonGroups[group] = common;
-                    }
-                    if (advanced.length > 0) {
-                        advancedGroups[group] = advanced;
-                    }
+                    if (common.length > 0) commonGroups[group] = common;
+                    if (advanced.length > 0) advancedGroups[group] = advanced;
                 }
+
+                const toDescriptor = ([key, entry]: [string, SchemaEntry]): SettingDescriptor => ({
+                    key,
+                    label: entry.title,
+                    description: entry.description,
+                    group: entry.group,
+                    type: (entry.enum ? "enum" : entry.type) as SettingDescriptor["type"],
+                    default: entry.default,
+                    options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
+                    min: entry.minimum ?? undefined,
+                    max: entry.maximum ?? undefined,
+                } as SettingDescriptor);
 
                 return (
                     <>
@@ -961,31 +1228,28 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                             <GroupSection
                                 key={group}
                                 group={group}
-                                settings={entries.map(([key, entry]) => ({
-                                    key,
-                                    label: entry.title,
-                                    description: entry.description,
-                                    group: entry.group,
-                                    type: (entry.enum ? "enum" : entry.type) as SettingDescriptor["type"],
-                                    default: entry.default,
-                                    options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
-                                    min: entry.minimum ?? undefined,
-                                    max: entry.maximum ?? undefined,
-                                }) as SettingDescriptor)}
+                                settings={entries.map(toDescriptor)}
                                 values={settings}
                                 onChange={handleChange}
                                 vscodeApi={vscodeApi}
                                 modifiedKeys={modifiedKeys}
                             />
                         ))}
-                        <AdvancedSection
-                            groups={advancedGroups}
-                            settings={settings}
-                            onChange={handleChange}
-                            vscodeApi={vscodeApi}
+                        <CollapsibleSection
                             forceOpen={(filterText.length > 0 || showModifiedOnly) && Object.keys(advancedGroups).length > 0}
-                            modifiedKeys={modifiedKeys}
-                        />
+                        >
+                            {Object.entries(advancedGroups).map(([group, entries]) => (
+                                <GroupSection
+                                    key={group}
+                                    group={group}
+                                    settings={entries.map(toDescriptor)}
+                                    values={settings}
+                                    onChange={handleChange}
+                                    vscodeApi={vscodeApi}
+                                    modifiedKeys={modifiedKeys}
+                                />
+                            ))}
+                        </CollapsibleSection>
                     </>
                 );
             }
@@ -997,28 +1261,33 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                         configs={launchConfigs}
                         snippets={launchSnippets}
                         vscodeApi={vscodeApi}
+                        vdmjSchema={vdmjSchema}
                         onSave={handleLaunchSave}
                         onCreate={handleLaunchCreate}
                         onDelete={handleLaunchDelete}
                     />
                 );
             case "plugins":
-                return <ComingSoonTab label="Plugins"/>;
+                return <ComingSoonTab label="Plugins" />;
         }
     };
 
     return (
-        <div style={containerStyle}>
-            <div style={headerStyle}>
+        <div style={{ padding: "24px 32px", maxWidth: "800px", margin: "0 auto", boxSizing: "border-box" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
                 <div>
-                    <div style={titleStyle}>VDM Settings</div>
-                    <div style={subtitleStyle}>
+                    <div style={{ fontSize: "20px", fontWeight: 600, color: "var(--vscode-foreground)" }}>VDM Settings</div>
+                    <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", marginTop: "4px" }}>
                         Changes are saved to{" "}
                         <strong>{wsFolderName ? `folder: ${wsFolderName}` : "workspace"}</strong> scope.
                     </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    {pendingKeys.size > 0 && <span style={scopeBadgeStyle}>Saving...</span>}
+                    {pendingKeys.size > 0 && (
+                        <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "3px", background: "var(--vscode-badge-background)", color: "var(--vscode-badge-foreground)", fontWeight: 600 }}>
+                            Saving...
+                        </span>
+                    )}
                     <VSCodeButton
                         appearance="secondary"
                         onClick={() => vscodeApi.postMessage({ command: "openNativeSettings" })}

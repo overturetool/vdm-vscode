@@ -26,6 +26,7 @@ export class SettingsPanel extends AutoDisposable {
     private _panel: WebviewPanel | undefined;
     private _currentWsFolder: WorkspaceFolder | undefined;
     private _restartMsgTimer: NodeJS.Timeout | undefined;
+    private _launchWatcher: fs.FSWatcher | undefined;
 
     private get _webviewsUri(): Uri {
         return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
@@ -471,9 +472,38 @@ export class SettingsPanel extends AutoDisposable {
             command: "loadLaunchConfigurations",
             data: { configurations: vdmConfigs, snippets },
         });
+        this._watchLaunchFile();
+    }
+
+    private _watchLaunchFile() {
+        const launchPath = this._getLaunchPath();
+        if (!launchPath) {
+            return;
+        }
+
+        if (this._launchWatcher) {
+            this._launchWatcher.close();
+            this._launchWatcher = undefined;
+        }
+
+        if (!fs.existsSync(launchPath)) {
+            return;
+        }
+
+        this._launchWatcher = fs.watch(launchPath, () => {
+            if (this._restartMsgTimer) {
+                clearTimeout(this._restartMsgTimer);
+            }
+            this._restartMsgTimer = setTimeout(() => {
+                this._sendLaunchConfigurations();
+            }, 300);
+        });
     }
 
     public dispose() {
+        if (this._launchWatcher) {
+            this._launchWatcher.close();
+        }
         if (this._panel) {
             this._panel.dispose();
         }
