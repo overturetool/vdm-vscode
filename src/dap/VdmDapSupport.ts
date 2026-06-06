@@ -10,6 +10,7 @@ import * as Util from "../util/Util";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import { vdmFileExtensions } from "../util/DialectUtil";
+import { resolveVariables } from "../util/VariableSubstitution";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
@@ -235,6 +236,16 @@ export namespace VdmDapSupport {
                         "_",
                     )}.rtlog`,
                 );
+            }
+
+            // Resolve variables in path-valued VDMJ properties
+            if (config.properties) {
+                const pathProperties = ["vdmj.mapping.search_path", "vdmj.parser.external_readers"];
+                for (const key of pathProperties) {
+                    if (typeof config.properties[key] === "string") {
+                        config.properties[key] = resolveVariables(config.properties[key], resolvedFolder);
+                    }
+                }
             }
 
             return config;

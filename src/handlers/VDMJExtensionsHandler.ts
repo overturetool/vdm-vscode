@@ -7,6 +7,7 @@ import { getFilesFromDirRecur } from "../util/DirectoriesUtil";
 import { getExtensionPath } from "../util/ExtensionUtil";
 import { JarFile } from "../util/JarFile";
 import { packageJsonSchema } from "../util/Schemas";
+import { resolveVariablesInArray } from "../util/VariableSubstitution";
 
 type ExtensionType = "builtin" | "user";
 
@@ -68,12 +69,15 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     private static getUserExtensionSources(wsFolder: WorkspaceFolder): ExtensionSource[] {
         // Get extension jars specified by the user at the folder level setting - if not defined at this level then the "next up" level where it is defined is returned.
-        let folderSettings: string[] = (workspace.getConfiguration("vdm-vscode.server", wsFolder.uri)?.get("extensionSearchPaths") ??
-            []) as string[];
+        let folderSettings: string[] = resolveVariablesInArray(
+            (workspace.getConfiguration("vdm-vscode.server", wsFolder.uri)?.get("extensionSearchPaths") ?? []) as string[],
+            wsFolder,
+        );
 
         // Get extension jars specified by the user at the user or workspace level setting - if the workspace level setting is defined then it is returned instead of the user level setting.
-        let userOrWorkspaceSettings: string[] = (workspace.getConfiguration("vdm-vscode.server")?.get("extensionSearchPaths") ??
-            []) as string[];
+        let userOrWorkspaceSettings: string[] = resolveVariablesInArray(
+            (workspace.getConfiguration("vdm-vscode.server")?.get("extensionSearchPaths") ?? []) as string[],
+        );
         const resolveFailedPaths: string[] = [];
         const jarPathsFromSettings: string[] = this.resolveJarPathsFromSettings(folderSettings, resolveFailedPaths, wsFolder.uri);
 
