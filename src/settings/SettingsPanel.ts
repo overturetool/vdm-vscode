@@ -93,6 +93,7 @@ export class SettingsPanel extends AutoDisposable {
                 this._sendSettings();
                 this._sendVdmjProperties();
                 this._sendLaunchConfigurations();
+                this._sendPluginSchemas();
                 return;
             }
 
@@ -122,6 +123,7 @@ export class SettingsPanel extends AutoDisposable {
                             this._sendSettings();
                             this._sendVdmjProperties();
                             this._sendLaunchConfigurations();
+                            this._sendPluginSchemas();
                             break;
 
                         case "updateSetting": {
@@ -502,6 +504,54 @@ export class SettingsPanel extends AutoDisposable {
             this._restartMsgTimer = setTimeout(() => {
                 this._sendLaunchConfigurations();
             }, 300);
+        });
+    }
+
+    private _sendPluginSchemas() {
+        if (!this._panel) {
+            return;
+        }
+
+        // Hardcoded test data - will be replaced with real server data
+        const pluginSchemas = [
+            {
+                plugin: "QuickCheck",
+                schema: {
+                    type: "object",
+                    properties: {
+                        numTests: {
+                            type: "integer",
+                            title: "Number of Tests",
+                            description: "Number of random tests to run.",
+                            default: 100,
+                        },
+                        timeout: {
+                            type: "integer",
+                            title: "Timeout (seconds)",
+                            description: "Maximum time allowed per test.",
+                            default: 30,
+                        },
+                        strategy: {
+                            type: "string",
+                            title: "Strategy",
+                            description: "The QuickCheck strategy to use",
+                            enum: ["random", "exhaustive", "boundary"],
+                            default: "random",
+                        },
+                        verbose: {
+                            type: "boolean",
+                            title: "Verbose Output",
+                            description: "Print detailed output for each test.",
+                            default: false,
+                        },
+                    },
+                },
+            },
+        ];
+
+        this._panel.webview.postMessage({
+            command: "loadPluginSchemas",
+            data: { pluginSchemas },
         });
     }
 

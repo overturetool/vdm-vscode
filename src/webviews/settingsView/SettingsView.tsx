@@ -215,6 +215,22 @@ interface LaunchSnippet {
     body: LaunchConfig;
 }
 
+interface JsonSchemaProperty {
+    type: "string" | "integer" | "number" | "boolean";
+    title?: string;
+    description?: string;
+    default?: unknown;
+    enum?: string[];
+}
+
+interface PluginSchema {
+    plugin: string;
+    schema: {
+        type: "object";
+        properties: Record<string, JsonSchemaProperty>;
+    };
+}
+
 // Tab bar
 
 const TabBar = ({ activeTab, onSelect }: { activeTab: TabId; onSelect: (tab: TabId) => void }) => {
@@ -1100,6 +1116,95 @@ const LaunchTab = ({
     );
 };
 
+const PluginsTab = ({
+    schemas,
+    data,
+    onChange,
+}: {
+    schemas: PluginSchema[];
+    data: Record<string, Record<string, unknown>>;
+    onChange: (plugin: string, key: string, value: unknown) => void;
+}) => {
+    if (schemas.length === 0) {
+        return (
+            <div style={{ textAlign: "center", padding: "32px 0", color: "var(--vscode-descriptionForeground)", fontSize: "13px" }}>
+                No plugins with settings are currently active.
+            </div>
+        );
+    }
+
+    const renderControl = (plugin: string, key: string, def: JsonSchemaProperty) => {
+        const value = data[plugin]?.[key];
+
+        if (def.enum) {
+            return (
+                <VSCodeDropdown
+                    value={String(value ?? def.default ?? "")}
+                    onChange={(e: any) => onChange(plugin, key, e.target.value)}
+                    style={{ minWidth: "120px" }}
+                >
+                    {def.enum.map((opt) => (
+                        <VSCodeOption key={opt} value={opt}>{opt}</VSCodeOption>
+                    ))}
+                </VSCodeDropdown>
+            );
+        }
+
+        switch (def.type) {
+            case "boolean":
+                return (
+                    <VSCodeCheckbox
+                        checked={value === true}
+                        onChange={(e: any) => onChange(plugin, key, e.target.checked)}
+                    />
+                );
+            case "integer":
+            case "number":
+                return (
+                    <VSCodeTextField
+                        value={String(value ?? def.default ?? 0)}
+                        onInput={(e: any) => {
+                            const n = Number(e.target.value);
+                            if (!isNaN(n)) {
+                                onChange(plugin, key, n);
+                            }
+                        }}
+                        style={{ minWidth: "80px" }}
+                    />
+                );
+            case "string":
+            default:
+                return (
+                    <VSCodeTextField
+                        value={String(value ?? def.default ?? "")}
+                        onInput={(e: any) => onChange(plugin, key, e.target.value)}
+                        style={{ minWidth: "200px" }}
+                    />
+                );
+        }
+    };
+
+    return (
+        <div>
+            {schemas.map(({ plugin, schema }, i) => (
+                <CollapsibleSection key={plugin} label={plugin} marginTop={i === 0 ? "0px" : "16px"}>
+                    {Object.entries(schema.properties).map(([key, def], j, arr) => (
+                        <React.Fragment key={key}>
+                            <FieldRow
+                                label={def.title ?? key}
+                                description={def.description}
+                            >
+                                {renderControl(plugin, key, def)}
+                            </FieldRow>
+                            {j < arr.length - 1 && <VSCodeDivider role="presentation" />}
+                        </React.Fragment>
+                    ))}
+                </CollapsibleSection>
+            ))}
+        </div>
+    );
+};
+
 // Main view
 
 export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
@@ -1115,6 +1220,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [launchConfigs, setLaunchConfigs] = useState<LaunchConfig[]>([]);
     const [launchSnippets, setLaunchSnippets] = useState<LaunchSnippet[]>([]);
     const [launchSettingsSchema, setLaunchSettingsSchema] = useState<Record<string, { description: string }>>({});
+    const [pluginSchemas, setPluginSchemas] = useState<PluginSchema[]>([]);
+    const [pluginData, setPluginData] = useState<Record<string, Record<string, unknown>>>({});
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -1131,6 +1238,18 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 setLaunchConfigs(e.data.data.configurations);
                 setLaunchSnippets(e.data.data.snippets);
                 setLaunchSettingsSchema(e.data.data.settingsSchema);
+            }
+            if (e.data.command === "loadPluginSchemas") {
+                const schemas: PluginSchema[] = e.data.data.pluginSchemas;
+                setPluginSchemas(schemas);
+                const defaults: Record<string, Record<string, unknown>> = {};
+                for (const { plugin, schema } of schemas ) {
+                    defaults[plugin] = {};
+                    for (const [key, def] of Object.entries(schema.properties)) {
+                        defaults[plugin][key] = def.default ?? null;
+                    }
+                }
+                setPluginData(defaults);
             }
         };
         window.addEventListener("message", onMessage);
@@ -1171,6 +1290,14 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
 
     const handleLaunchDelete = (index: number) => {
         vscodeApi.postMessage({ command: "deleteLaunchConfiguration", data: { index } });
+    };
+
+    const handlePluginChange = (plugin: string, key: string, value: unknown) => {
+        setPluginData((prev) => ({
+            ...prev,
+            [plugin]: { ...prev[plugin], [key]: value },
+        }));
+        // TODO: persist to plugin config file when server protocol supports it
     };
 
     const groups = Object.entries(schema).reduce<Record<string, [string, SchemaEntry][]>>(
@@ -1272,7 +1399,13 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                     />
                 );
             case "plugins":
-                return <ComingSoonTab label="Plugins" />;
+                return (
+                    <PluginsTab
+                        schemas={pluginSchemas}
+                        data={pluginData}
+                        onChange={handlePluginChange}
+                    />
+                );
         }
     };
 
