@@ -517,7 +517,6 @@ export class SettingsPanel extends AutoDisposable {
             {
                 plugin: "QuickCheck",
                 schema: {
-                    type: "object",
                     properties: {
                         timeout: {
                             type: "integer",

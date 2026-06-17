@@ -226,7 +226,6 @@ interface JsonSchemaProperty {
 interface PluginSchema {
     plugin: string;
     schema: {
-        type: "object";
         properties: Record<string, JsonSchemaProperty>;
     };
 }
