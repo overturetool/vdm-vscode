@@ -519,12 +519,6 @@ export class SettingsPanel extends AutoDisposable {
                 schema: {
                     type: "object",
                     properties: {
-                        numTests: {
-                            type: "integer",
-                            title: "Number of Tests",
-                            description: "Number of random tests to run.",
-                            default: 100,
-                        },
                         timeout: {
                             type: "integer",
                             title: "Timeout (seconds)",
