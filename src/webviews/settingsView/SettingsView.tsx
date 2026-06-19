@@ -79,7 +79,7 @@ const FieldRow = ({
     modified,
     children,
 }: {
-    label: string;
+    label: React.ReactNode;
     subtitle?: string;
     description?: string;
     modified?: boolean;
@@ -599,6 +599,8 @@ const BlankConfigCard = ({
         onSave(config);
     };
 
+    const isValid = name.trim().length > 0;
+
     const optionalFields: { key: keyof LaunchConfig; label: string; description: string }[] = [
         { key: "noDebug", label: "No Debug", description: "Don't run in debug mode." },
         { key: "defaultName", label: "Default Name", description: "Name of the default module or class." },
@@ -728,7 +730,9 @@ const BlankConfigCard = ({
                     New Blank Configuration
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "12px", color: "var(--vscode-foreground)", fontWeight: 600 }}>Name</span>
+                    <span style={{ fontSize: "12px", color: "var(--vscode-foreground)", fontWeight: 600 }}>
+                        Name <span style={{ color: "var(--vscode-errorForeground)" }}>*</span>
+                    </span>
                     <VSCodeTextField
                         value={name}
                         onInput={(e: any) => setName(e.target.value)}
@@ -758,7 +762,7 @@ const BlankConfigCard = ({
             </div>
 
             <div style={{ padding: "12px 16px", display: "flex", gap: "8px", borderTop: "1px solid var(--vscode-panel-border)" }}>
-                <VSCodeButton onClick={handleSave}>
+                <VSCodeButton onClick={handleSave} disabled={!isValid}>
                     <span slot="start" className="codicon codicon-add" />
                     Add Configuration
                 </VSCodeButton>
@@ -801,6 +805,10 @@ const LaunchTab = ({
     const debounceTimers = React.useRef<Record<string, NodeJS.Timeout>>({});
 
     const handleFieldChange = (index: number, field: keyof LaunchConfig, value: any) => {
+        if (field === "name" && typeof value === "string" && value.trim().length === 0) {
+            setEditingConfigs((prev) => prev.map((c, i) => i === index ? { ...c, name: value } : c));
+            return;
+        }
         setEditingConfigs((prev) => {
             const updated = prev.map((c, i) =>
                 i === index ? { ...c, [field]: value } : { ...c }
@@ -820,12 +828,19 @@ const LaunchTab = ({
 
     const renderCommonFields = (config: LaunchConfig, index: number) => (
         <>
-            <FieldRow label="Name">
-                <VSCodeTextField
-                    value={config.name}
-                    onInput={(e: any) => handleFieldChange(index, "name", e.target.value)}
-                    style={{ minWidth: "200px" }}
-                />
+            <FieldRow
+                label={
+                    <>
+                        Name <span style={{ color: "var(--vscode-errorForeground)" }}>*</span>
+                    </>
+                }
+                description={config.name.trim().length === 0 ? "Name cannot be empty - change will not be saved." : undefined}
+            >
+                    <VSCodeTextField
+                        value={config.name}
+                        onInput={(e: any) => handleFieldChange(index, "name", e.target.value)}
+                        style={{ minWidth: "200px" }}
+                    />
             </FieldRow>
             <VSCodeDivider role="presentation" />
             <FieldRow label="No Debug" description="Don't run in debug mode.">
@@ -1078,6 +1093,13 @@ const LaunchTab = ({
                             <span style={{ fontSize: "13px", fontWeight: 600, color: expandedIndex === index ? "var(--vscode-list-activeSelectionForeground)" : "var(--vscode-foreground)" }}>
                                 {config.name || "Unnamed Configuration"}
                             </span>
+                            {config.name.trim().length === 0 && (
+                                <span
+                                    className="codicon codicon-warning"
+                                    title="Name is required"
+                                    style={{ color: "var(--vscode.errorForeground)", marginLeft: "4px" }}
+                                />
+                            )}
                         </div>
                         <VSCodeButton
                             appearance="icon"
