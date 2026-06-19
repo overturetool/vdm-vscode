@@ -27,6 +27,7 @@ export class SettingsPanel extends AutoDisposable {
     private _currentWsFolder: WorkspaceFolder | undefined;
     private _restartMsgTimer: NodeJS.Timeout | undefined;
     private _launchWatcher: fs.FSWatcher | undefined;
+    private _suppressNextWatcherReload = false;
 
     private get _webviewsUri(): Uri {
         return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
@@ -185,6 +186,7 @@ export class SettingsPanel extends AutoDisposable {
                             if (index >= 0 && index < vdmIndices.length) {
                                 launchData.configurations[vdmIndices[index]] = config;
                             }
+                            this._suppressNextWatcherReload = true;
                             this._writeLaunchJson(launchData);
                             break;
                         }
@@ -193,6 +195,7 @@ export class SettingsPanel extends AutoDisposable {
                             const { config } = message.data;
                             const launchData = this._readLaunchJson();
                             launchData.configurations.push(config);
+                            this._suppressNextWatcherReload = true;
                             this._writeLaunchJson(launchData);
                             this._sendLaunchConfigurations();
                             break;
@@ -208,6 +211,7 @@ export class SettingsPanel extends AutoDisposable {
                             if (index >= 0 && index < vdmIndices.length) {
                                 launchData.configurations.splice(vdmIndices[index], 1);
                             }
+                            this._suppressNextWatcherReload = true;
                             this._writeLaunchJson(launchData);
                             this._sendLaunchConfigurations();
                             break;
@@ -498,6 +502,10 @@ export class SettingsPanel extends AutoDisposable {
         }
 
         this._launchWatcher = fs.watch(launchPath, () => {
+            if (this._suppressNextWatcherReload) {
+                this._suppressNextWatcherReload = false;
+                return;
+            }
             if (this._restartMsgTimer) {
                 clearTimeout(this._restartMsgTimer);
             }
