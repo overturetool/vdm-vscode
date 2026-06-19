@@ -617,7 +617,7 @@ const BlankConfigCard = ({
 
     const optionalFields: { key: keyof LaunchConfig; label: string; description: string }[] = [
         { key: "noDebug", label: "No Debug", description: "Don't run in debug mode." },
-        { key: "defaultName", label: "Default Name", description: "Name of the default module or class." },
+        { key: "defaultName", label: "Default Module or Class", description: "Name of the default module or class." },
         { key: "trace", label: "Trace", description: "Enable logging of the Debug Adapter Protocol." },
         { key: "command", label: "Command", description: "Run a single execution of a command and terminate." },
         { key: "remoteControl", label: "Remote Control", description: "Delegate control of the interpreter to a remote controller." },
@@ -865,7 +865,7 @@ const LaunchTab = ({
                 />
             </FieldRow>
             <VSCodeDivider role="presentation" />
-            <FieldRow label="Default Name" description="Name of the default module or class.">
+            <FieldRow label="Default Module or Class" description="Name of the default module or class.">
                 <VSCodeTextField
                     value={config.defaultName ?? ""}
                     onInput={(e: any) => handleFieldChange(index, "defaultName", e.target.value)}
