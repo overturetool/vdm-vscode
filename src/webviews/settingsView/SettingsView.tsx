@@ -37,6 +37,20 @@ const TABS: Tab[] = [
     { id: "plugins", label: "Plugins" },
 ];
 
+const LAUNCH_PROPERTY_KEYS = [
+    "vdmj.scheduler.fcfs_timeslice",
+    "vdmj.scheduler.virtual_timeslice",
+    "vdmj.scheduler.jitter",
+    "vdmj.rt.duration_default",
+    "vdmj.rt.duration_transactions",
+    "vdmj.rt.log_instvarchanges",
+    "vdmj.rt.max_periodic_overlaps",
+    "vdmj.rt.diags_guards",
+    "vdmj.rt.diags_timestep",
+    "vdmj.in.powerset_limit",
+    "vdmj.in.typebind_limit"
+];
+
 // Shared styles
 const sharedStyles = {
     groupTitle: {
@@ -664,9 +678,10 @@ const BlankConfigCard = ({
             }
             case "properties": {
                 const props = (values.properties ?? {}) as Record<string, any>;
+                const launchVdmjSchema = Object.entries(vdmjSchema).filter(([key]) => LAUNCH_PROPERTY_KEYS.includes(key));
                 return (
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingLeft: "8px" }}>
-                        {Object.entries(vdmjSchema).map(([key, entry]) => (
+                        {launchVdmjSchema.map(([key, entry]) => (
                             <VdmjPropertyRow
                                 key={key}
                                 propKey={key}
@@ -937,6 +952,8 @@ const LaunchTab = ({
             handleFieldChange(index, "properties", { ...props, [key]: value });
         };
 
+        const launchVdmjSchema = Object.entries(vdmjSchema).filter(([key]) => LAUNCH_PROPERTY_KEYS.includes(key));
+
         return (
             <div style={{ marginTop: "8px" }}>
                 <div style={sharedStyles.groupTitle}>VDMJ Property Overrides</div>
@@ -944,7 +961,7 @@ const LaunchTab = ({
                 <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", padding: "8px 0" }}>
                     These override the project-wide VDMJ properties for this launch configuration only.
                 </div>
-                {Object.entries(vdmjSchema).map(([key, entry], i, arr) => (
+                {launchVdmjSchema.map(([key, entry], i, arr) => (
                     <React.Fragment key={key}>
                         <VdmjPropertyRow
                             propKey={key}
