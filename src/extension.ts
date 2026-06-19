@@ -151,7 +151,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new QuickInterpreterHandler());
     context.subscriptions.push(new CreateProjectHandler());
     context.subscriptions.push(new OpenSettingsHandler());
-    context.subscriptions.push(new SettingsPanel(context, knownVdmFolders));
+    context.subscriptions.push(new SettingsPanel(context, knownVdmFolders, clientManager));
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);

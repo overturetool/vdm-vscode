@@ -239,6 +239,7 @@ interface JsonSchemaProperty {
 
 interface PluginSchema {
     plugin: string;
+    filename: string;
     schema: {
         properties: Record<string, JsonSchemaProperty>;
     };
@@ -1278,16 +1279,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 setLaunchSettingsSchema(e.data.data.settingsSchema);
             }
             if (e.data.command === "loadPluginSchemas") {
-                const schemas: PluginSchema[] = e.data.data.pluginSchemas;
-                setPluginSchemas(schemas);
-                const defaults: Record<string, Record<string, unknown>> = {};
-                for (const { plugin, schema } of schemas ) {
-                    defaults[plugin] = {};
-                    for (const [key, def] of Object.entries(schema.properties)) {
-                        defaults[plugin][key] = def.default ?? null;
-                    }
-                }
-                setPluginData(defaults);
+                setPluginSchemas(e.data.data.pluginSchemas);
+                setPluginData(e.data.data.pluginData);
             }
         };
         window.addEventListener("message", onMessage);
@@ -1335,7 +1328,16 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             ...prev,
             [plugin]: { ...prev[plugin], [key]: value },
         }));
-        // TODO: persist to plugin config file when server protocol supports it
+        
+        const pluginSchema = pluginSchemas.find((p) => p.plugin === plugin);
+        if (!pluginSchema) {
+            return;
+        }
+
+        vscodeApi.postMessage({
+            command: "savePluginSetting",
+            data: { plugin, filename: pluginSchema.filename, key, value },
+        });
     };
 
     const groups = Object.entries(schema).reduce<Record<string, [string, SchemaEntry][]>>(

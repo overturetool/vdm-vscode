@@ -16,6 +16,7 @@ import { VdmDialect } from "../util/DialectUtil";
 import * as fs from "fs";
 import * as path from "path";
 import * as Util from "../util/Util";
+import { ClientManager } from "../ClientManager";
 
 interface Message {
     command: string;
@@ -27,7 +28,9 @@ export class SettingsPanel extends AutoDisposable {
     private _currentWsFolder: WorkspaceFolder | undefined;
     private _restartMsgTimer: NodeJS.Timeout | undefined;
     private _launchWatcher: fs.FSWatcher | undefined;
-    private _suppressNextWatcherReload = false;
+    private _pluginWatchers: fs.FSWatcher[] = [];
+    private _suppressNextLaunchWatcherReload = false;
+    private _suppressNextPluginWatcherReload = false;
 
     private get _webviewsUri(): Uri {
         return Uri.joinPath(this._context.extensionUri, "dist", "webviews");
@@ -44,6 +47,7 @@ export class SettingsPanel extends AutoDisposable {
     constructor(
         private readonly _context: ExtensionContext,
         readonly knownVdmFolders: Map<WorkspaceFolder, VdmDialect>,
+        private readonly _clientManager: ClientManager,
     ) {
         super();
 
@@ -186,7 +190,7 @@ export class SettingsPanel extends AutoDisposable {
                             if (index >= 0 && index < vdmIndices.length) {
                                 launchData.configurations[vdmIndices[index]] = config;
                             }
-                            this._suppressNextWatcherReload = true;
+                            this._suppressNextLaunchWatcherReload = true;
                             this._writeLaunchJson(launchData);
                             break;
                         }
@@ -195,7 +199,7 @@ export class SettingsPanel extends AutoDisposable {
                             const { config } = message.data;
                             const launchData = this._readLaunchJson();
                             launchData.configurations.push(config);
-                            this._suppressNextWatcherReload = true;
+                            this._suppressNextLaunchWatcherReload = true;
                             this._writeLaunchJson(launchData);
                             this._sendLaunchConfigurations();
                             break;
@@ -211,9 +215,36 @@ export class SettingsPanel extends AutoDisposable {
                             if (index >= 0 && index < vdmIndices.length) {
                                 launchData.configurations.splice(vdmIndices[index], 1);
                             }
-                            this._suppressNextWatcherReload = true;
+                            this._suppressNextLaunchWatcherReload = true;
                             this._writeLaunchJson(launchData);
                             this._sendLaunchConfigurations();
+                            break;
+                        }
+
+                        case "savePluginSetting": {
+                            const { filename, key, value } = message.data;
+                            if (!this._currentWsFolder) {
+                                break;
+                            }
+
+                            const vscodeFolder = Uri.joinPath(this._currentWsFolder.uri, ".vscode").fsPath;
+                            if (!fs.existsSync(vscodeFolder)) {
+                                fs.mkdirSync(vscodeFolder, { recursive: true });
+                            }
+
+                            const filePath = path.join(vscodeFolder, filename);
+                            let current: Record<string, unknown> = {};
+                            if (fs.existsSync(filePath)) {
+                                try {
+                                    current = JSON.parse(fs.readFileSync(filePath, "utf8"));
+                                } catch {
+                                    current = {};
+                                }
+                            }
+
+                            current[key] = value;
+                            this._suppressNextPluginWatcherReload = true;
+                            fs.writeFileSync(filePath, JSON.stringify(current, null, 4), "utf8");
                             break;
                         }
                     }
@@ -502,8 +533,8 @@ export class SettingsPanel extends AutoDisposable {
         }
 
         this._launchWatcher = fs.watch(launchPath, () => {
-            if (this._suppressNextWatcherReload) {
-                this._suppressNextWatcherReload = false;
+            if (this._suppressNextLaunchWatcherReload) {
+                this._suppressNextLaunchWatcherReload = false;
                 return;
             }
             if (this._restartMsgTimer) {
@@ -520,46 +551,70 @@ export class SettingsPanel extends AutoDisposable {
             return;
         }
 
-        // Hardcoded test data - will be replaced with real server data
-        const pluginSchemas = [
-            {
-                plugin: "QuickCheck",
-                schema: {
-                    properties: {
-                        timeout: {
-                            type: "integer",
-                            title: "Timeout (seconds)",
-                            description: "Maximum time allowed per test.",
-                            default: 30,
-                        },
-                        strategy: {
-                            type: "string",
-                            title: "Strategy",
-                            description: "The QuickCheck strategy to use",
-                            enum: ["random", "exhaustive", "boundary"],
-                            default: "random",
-                        },
-                        verbose: {
-                            type: "boolean",
-                            title: "Verbose Output",
-                            description: "Print detailed output for each test.",
-                            default: false,
-                        },
-                    },
-                },
-            },
-        ];
+        let pluginSchemas: { plugin: string; filename: string; schema: any }[] = [];
+
+        if (this._currentWsFolder) {
+            const client = this._clientManager.get(this._currentWsFolder);
+            pluginSchemas = client?.initializeResult?.capabilities?.experimental?.pluginSchemas ?? [];
+        }
+
+        const pluginData: Record<string, Record<string, unknown>> = {};
+        for (const { plugin, filename } of pluginSchemas) {
+            const filepath = this._currentWsFolder ? Uri.joinPath(this._currentWsFolder.uri, ".vscode", filename).fsPath : undefined;
+            if (filepath && fs.existsSync(filepath)) {
+                try {
+                    pluginData[plugin] = JSON.parse(fs.readFileSync(filepath, "utf8"));
+                } catch {
+                    pluginData[plugin] = {};
+                }
+            } else {
+                pluginData[plugin] = {};
+            }
+        }
 
         this._panel.webview.postMessage({
             command: "loadPluginSchemas",
-            data: { pluginSchemas },
+            data: { pluginSchemas, pluginData },
         });
+
+        this._watchPluginFiles(pluginSchemas);
+    }
+
+    private _watchPluginFiles(pluginSchemas: { filename: string }[]) {
+        this._pluginWatchers.forEach((w) => w.close());
+        this._pluginWatchers = [];
+
+        if (!this._currentWsFolder) {
+            return;
+        }
+
+        for (const { filename } of pluginSchemas) {
+            const filePath = Uri.joinPath(this._currentWsFolder.uri, ".vscode", filename).fsPath;
+            if (!fs.existsSync(filePath)) {
+                continue;
+            }
+
+            const watcher = fs.watch(filePath, () => {
+                if (this._suppressNextPluginWatcherReload) {
+                    this._suppressNextPluginWatcherReload = false;
+                    return;
+                }
+                if (this._restartMsgTimer) {
+                    clearTimeout(this._restartMsgTimer);
+                }
+                this._restartMsgTimer = setTimeout(() => {
+                    this._sendPluginSchemas();
+                }, 300);
+            });
+            this._pluginWatchers.push(watcher);
+        }
     }
 
     public dispose() {
         if (this._launchWatcher) {
             this._launchWatcher.close();
         }
+        this._pluginWatchers.forEach((w) => w.close());
         if (this._panel) {
             this._panel.dispose();
         }
