@@ -88,7 +88,7 @@ export class SettingsPanel extends AutoDisposable {
             this._currentWsFolder = wsFolder;
 
             if (this._panel) {
-                this._panel.title = `VDM Settings${this._currentWsFolder ? ` - ${this._currentWsFolder.name}` : ""}`;
+                this._panel.title = `Configure Project${this._currentWsFolder ? ` - ${this._currentWsFolder.name}` : ""}`;
                 this._panel.reveal(ViewColumn.One, false);
                 this._sendSettings();
                 this._sendVdmjProperties();
@@ -99,7 +99,7 @@ export class SettingsPanel extends AutoDisposable {
 
             this._panel = window.createWebviewPanel(
                 this.viewType,
-                `VDM Settings${this._currentWsFolder ? ` - ${this._currentWsFolder.name}` : ""}`,
+                `Configure Project${this._currentWsFolder ? ` - ${this._currentWsFolder.name}` : ""}`,
                 { viewColumn: ViewColumn.Beside, preserveFocus: false },
                 {
                     enableScripts: true,

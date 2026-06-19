@@ -457,15 +457,15 @@
             },
             {
                 "command": "vdm-vscode.openSettings",
-                "title": "Open VDM Settings",
+                "title": "Open VDM-VSCode Settings",
                 "category": "VDM",
                 "icon": "$(settings-gear)"
             },
             {
                 "command": "vdm-vscode.openSettingsPanel",
-                "title": "Open VDM Settings Panel",
+                "title": "Configure Project",
                 "category": "VDM",
-                "icon": "$(settings-gear)"
+                "icon": "$(wrench)"
             }
         ],
         "viewsContainers": {
