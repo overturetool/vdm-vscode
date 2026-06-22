@@ -221,8 +221,8 @@ export class SettingsPanel extends AutoDisposable {
                             break;
                         }
 
-                        case "savePluginSetting": {
-                            const { filename, key, value } = message.data;
+                        case "savePluginSettings": {
+                            const { filename, params } = message.data;
                             if (!this._currentWsFolder) {
                                 break;
                             }
@@ -233,18 +233,8 @@ export class SettingsPanel extends AutoDisposable {
                             }
 
                             const filePath = path.join(vscodeFolder, filename);
-                            let current: Record<string, unknown> = {};
-                            if (fs.existsSync(filePath)) {
-                                try {
-                                    current = JSON.parse(fs.readFileSync(filePath, "utf8"));
-                                } catch {
-                                    current = {};
-                                }
-                            }
-
-                            current[key] = value;
                             this._suppressNextPluginWatcherReload = true;
-                            fs.writeFileSync(filePath, JSON.stringify(current, null, 4), "utf8");
+                            fs.writeFileSync(filePath, JSON.stringify(params, null, 4), "utf8");
                             break;
                         }
                     }
@@ -551,12 +541,18 @@ export class SettingsPanel extends AutoDisposable {
             return;
         }
 
-        let pluginSchemas: { plugin: string; filename: string; schema: any }[] = [];
+        let rawSchemas: any[] = [];
 
         if (this._currentWsFolder) {
             const client = this._clientManager.get(this._currentWsFolder);
-            pluginSchemas = client?.initializeResult?.capabilities?.experimental?.pluginSchemas ?? [];
+            rawSchemas = client?.initializeResult?.capabilities?.experimental?.pluginSchemas ?? [];
         }
+
+        const pluginSchemas = rawSchemas.map((s: any) => ({
+            plugin: s.plugin,
+            filename: s.filename,
+            paramsSchema: s.schema,
+        }));
 
         const pluginData: Record<string, Record<string, unknown>> = {};
         for (const { plugin, filename } of pluginSchemas) {

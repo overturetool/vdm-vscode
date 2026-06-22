@@ -229,19 +229,23 @@ interface LaunchSnippet {
     body: LaunchConfig;
 }
 
-interface JsonSchemaProperty {
-    type: "string" | "integer" | "number" | "boolean";
+interface JsonSchemaNode {
+    type?: "string" | "integer" | "number" | "boolean" | "object" | "array";
     title?: string;
     description?: string;
     default?: unknown;
     enum?: string[];
+    const?: unknown;
+    properties?: Record<string, JsonSchemaNode>;
+    oneOf?: JsonSchemaNode[];
 }
 
 interface PluginSchema {
     plugin: string;
     filename: string;
-    schema: {
-        properties: Record<string, JsonSchemaProperty>;
+    paramsSchema: JsonSchemaNode & {
+        type: "object";
+        properties: Record<string, JsonSchemaNode>;
     };
 }
 
@@ -1155,6 +1159,262 @@ const LaunchTab = ({
     );
 };
 
+const RawJsonField = ({
+    label,
+    description,
+    value,
+    onChange,
+}: {
+    label: string;
+    description: string | undefined;
+    value: unknown;
+    onChange: (value: unknown) => void;
+}) => {
+    const [text, setText] = useState(JSON.stringify(value ?? [], null, 2));
+    const [error, setError] = useState<string | null>(null);
+
+    return (
+        <div style={{ padding: "10px 0" }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px" }}>
+                {label}
+            </div>
+            {description && (
+                <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", marginBottom: "6px" }}>
+                    {description}
+                </div>
+            )}
+            <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onBlur={() => {
+                    try {
+                        const parsed = JSON.parse(text);
+                        setError(null);
+                        onChange(parsed);
+                    } catch {
+                        setError("Invalid JSON");
+                    }
+                }}
+                rows={6}
+                style={{
+                    width: "100%",
+                    fontFamily: "var(--vscode-editor-font-family)",
+                    fontSize: "12px",
+                    background: "var(--vscode-input-background)",
+                    color: "var(--vscode-input-foreground)",
+                    border: `1px solid ${error ? "var(--vscode-errorForeground)" : "var(--vscode-input-border)"}`,
+                    borderRadius: "4px",
+                    padding: "6px 8px",
+                    boxSizing: "border-box",
+                    resize: "vertical",
+                }}
+            />
+            {error && (
+                <div style={{ fontSize: "11px", color: "var(--vscode-errorForeground)", marginTop: "4px" }}>{error}</div>
+            )}
+        </div>
+    );
+};
+
+const renderSchemaNode = (
+    node: JsonSchemaNode,
+    key: string,
+    value: unknown,
+    onChange: (value: unknown) => void,
+    depth: number = 0
+): React.ReactNode => {
+    const label = node.title ?? key;
+    const description = node.description;
+
+    if (node.type === "object" && node.properties) {
+        const objValue = (value ?? {}) as Record<string, unknown>;
+        return (
+            <div key={key} style={{ marginLeft: depth > 0 ? "16px" : 0, marginTop: "8px" }}>
+                <div style={{ ...sharedStyles.groupTitle, marginBottom: "8px" }}>{label}</div>
+                {description && (
+                    <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", marginBottom: "8px" }}>
+                        {description}
+                    </div>
+                )}
+                {Object.entries(node.properties).map(([childKey, childNode], i, arr) => (
+                    <React.Fragment key={childKey}>
+                        {renderSchemaNode(
+                            childNode,
+                            childKey,
+                            objValue[childKey],
+                            (v) => onChange({ ...objValue, [childKey]: v }),
+                            depth + 1
+                        )}
+                        {i < arr.length - 1 && depth === 0 && <VSCodeDivider role="presentation" />}
+                    </React.Fragment>
+                ))}
+            </div>
+        );
+    }
+
+    if (node.type === "array" && node.oneOf) {
+        const strategies = node.oneOf;
+        const currentArray = (value ?? []) as Record<string, unknown>[];
+
+        const isEnabled = (strategyName: string) =>
+            currentArray.some((s) => s.name === strategyName);
+
+        const toggleStrategy = (strategyName: string, on: boolean, extraDefaults: Record<string, unknown>) => {
+            let updated: Record<string, unknown>[];
+            if (on) {
+                const strategy = strategies.find((s) => String(s.properties?.name?.const) === strategyName);
+                const enabledConst = strategy?.properties?.enabled?.const ?? true;
+                updated = [...currentArray, { name: strategyName, enabled: enabledConst, ...extraDefaults }];
+            } else {
+                updated = currentArray.filter((s) => s.name !== strategyName);
+            }
+            onChange(updated);
+        };
+
+        const updateStrategyField = (strategyName: string, field: string, val: unknown) => {
+            const updated = currentArray.map((s) =>
+                s.name === strategyName ? { ...s, [field]: val } : s
+            );
+            onChange(updated);
+        };
+
+        return (
+            <div key={key} style={{ marginTop: "8px" }}>
+                <div style={{ ...sharedStyles.groupTitle, marginBottom: "8px" }}>{label}</div>
+                {description && (
+                    <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)", marginBottom: "8px" }}>
+                        {description}
+                    </div>
+                )}
+                <VSCodeDivider />
+                {strategies.map((strategy, i) => {
+                    const strategyName = String(strategy.properties?.name?.const ?? `Strategy ${i}`);
+                    const enabled = isEnabled(strategyName);
+
+                    const extraFields = Object.entries(strategy.properties ?? {}).filter(
+                        ([k]) => k !== "name" && k !== "enabled"
+                    );
+
+                    const extraDefaults = Object.fromEntries(
+                        extraFields.map(([k, v]) => [k, v.default ?? (v.type === "integer" || v.type === "number" ? 0 : "")])
+                    );
+
+                    const currentStrategy = currentArray.find((s) => s.name === strategyName) ?? {};
+
+                    return (
+                        <React.Fragment key={strategyName}>
+                            <div style={{ padding: "10px 0" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                                    <div style={{ flex: "1 1 0" }}>
+                                        <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)" }}>
+                                            {strategyName}
+                                        </div>
+                                        {strategy.properties?.name?.description && (
+                                            <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>
+                                                {strategy.properties.name.description}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <VSCodeCheckbox
+                                        checked={enabled}
+                                        onChange={(e: any) =>
+                                            toggleStrategy(strategyName, e.target.checked, extraDefaults)
+                                        }
+                                    />
+                                </div>
+                                {enabled && extraFields.length > 0 && (
+                                    <div style={{ marginTop: "8px", paddingLeft: "16px" }}>
+                                        {extraFields.map(([fieldKey, fieldNode], j) => (
+                                            <React.Fragment key={fieldKey}>
+                                                <FieldRow
+                                                    label={fieldNode.title ?? fieldKey}
+                                                    description={fieldNode.description}
+                                                >
+                                                    <VSCodeTextField
+                                                        value={String(currentStrategy[fieldKey] ?? fieldNode.default ?? 0)}
+                                                        onInput={(e: any) => {
+                                                            const n = Number(e.target.value)
+                                                            if (!isNaN(n)) {
+                                                                updateStrategyField(strategyName, fieldKey, n);
+                                                            }
+                                                        }}
+                                                        style={{ minWidth: "80px" }}
+                                                    />
+                                                </FieldRow>
+                                                {j < extraFields.length - 1 && <VSCodeDivider role="presentation" />}
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {i < strategies.length - 1 && <VSCodeDivider role="presentation" />}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    if (node.type === "array") {
+        return (
+            <RawJsonField key={key} label={label} description={description} value={value} onChange={onChange} />
+        );
+    }
+
+    if (node.enum) {
+        return (
+            <FieldRow key={key} label={label} description={description}>
+                <VSCodeDropdown
+                    value={String(value ?? node.default ?? "")}
+                    onChange={(e: any) => onChange(e.target.value)}
+                    style={{ minWidth: "120px" }}
+                >
+                    {node.enum.map((opt) => (
+                        <VSCodeOption key={opt} value={opt}>{opt}</VSCodeOption>
+                    ))}
+                </VSCodeDropdown>
+            </FieldRow>
+        );
+    }
+
+    switch (node.type) {
+        case "boolean":
+            return (
+                <FieldRow key={key} label={label} description={description}>
+                    <VSCodeCheckbox
+                        checked={value === true}
+                        onChange={(e: any) => onChange(e.target.checked)}
+                    />
+                </FieldRow>
+            );
+        case "integer":
+        case "number":
+            return (
+                <FieldRow key={key} label={label} description={description}>
+                    <VSCodeTextField
+                        value={String(value ?? node.default ?? 0)}
+                        onInput={(e: any) => {
+                            const n = Number(e.target.value);
+                            if (!isNaN(n)) onChange(n);
+                        }}
+                        style={{ minWidth: "80px" }}
+                    />
+                </FieldRow>
+            );
+        case "string":
+        default:
+            return (
+                <FieldRow key={key} label={label} description={description}>
+                    <VSCodeTextField
+                        value={String(value ?? node.default ?? "")}
+                        onInput={(e: any) => onChange(e.target.value)}
+                        style={{ minWidth: "200px" }}
+                    />
+                </FieldRow>
+            );
+    }
+}
+
 const PluginsTab = ({
     schemas,
     data,
@@ -1162,7 +1422,7 @@ const PluginsTab = ({
 }: {
     schemas: PluginSchema[];
     data: Record<string, Record<string, unknown>>;
-    onChange: (plugin: string, key: string, value: unknown) => void;
+    onChange: (plugin: string, newData: Record<string, unknown>) => void;
 }) => {
     if (schemas.length === 0) {
         return (
@@ -1172,72 +1432,22 @@ const PluginsTab = ({
         );
     }
 
-    const renderControl = (plugin: string, key: string, def: JsonSchemaProperty) => {
-        const value = data[plugin]?.[key];
-
-        if (def.enum) {
-            return (
-                <VSCodeDropdown
-                    value={String(value ?? def.default ?? "")}
-                    onChange={(e: any) => onChange(plugin, key, e.target.value)}
-                    style={{ minWidth: "120px" }}
-                >
-                    {def.enum.map((opt) => (
-                        <VSCodeOption key={opt} value={opt}>{opt}</VSCodeOption>
-                    ))}
-                </VSCodeDropdown>
-            );
-        }
-
-        switch (def.type) {
-            case "boolean":
-                return (
-                    <VSCodeCheckbox
-                        checked={value === true}
-                        onChange={(e: any) => onChange(plugin, key, e.target.checked)}
-                    />
-                );
-            case "integer":
-            case "number":
-                return (
-                    <VSCodeTextField
-                        value={String(value ?? def.default ?? 0)}
-                        onInput={(e: any) => {
-                            const n = Number(e.target.value);
-                            if (!isNaN(n)) {
-                                onChange(plugin, key, n);
-                            }
-                        }}
-                        style={{ minWidth: "80px" }}
-                    />
-                );
-            case "string":
-            default:
-                return (
-                    <VSCodeTextField
-                        value={String(value ?? def.default ?? "")}
-                        onInput={(e: any) => onChange(plugin, key, e.target.value)}
-                        style={{ minWidth: "200px" }}
-                    />
-                );
-        }
-    };
-
     return (
         <div>
-            {schemas.map(({ plugin, schema }, i) => (
+            {schemas.map(({ plugin, paramsSchema }, i) => (
                 <CollapsibleSection key={plugin} label={plugin} marginTop={i === 0 ? "0px" : "16px"}>
-                    {Object.entries(schema.properties).map(([key, def], j, arr) => (
-                        <React.Fragment key={key}>
-                            <FieldRow
-                                label={def.title ?? key}
-                                description={def.description}
-                            >
-                                {renderControl(plugin, key, def)}
-                            </FieldRow>
-                            {j < arr.length - 1 && <VSCodeDivider role="presentation" />}
-                        </React.Fragment>
-                    ))}
+                    {paramsSchema.properties &&
+                        Object.entries(paramsSchema.properties).map(([key, node], j, arr) => (
+                            <React.Fragment key={key}>
+                                {renderSchemaNode(
+                                    node,
+                                    key,
+                                    data[plugin]?.[key],
+                                    (v) => onChange(plugin, { ...data[plugin], [key]: v })
+                                )}
+                                {j < arr.length - 1 && <VSCodeDivider role="presentation" />}
+                            </React.Fragment>
+                        ))}
                 </CollapsibleSection>
             ))}
         </div>
@@ -1323,10 +1533,10 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         vscodeApi.postMessage({ command: "deleteLaunchConfiguration", data: { index } });
     };
 
-    const handlePluginChange = (plugin: string, key: string, value: unknown) => {
+    const handlePluginChange = (plugin: string, newData: Record<string, unknown>) => {
         setPluginData((prev) => ({
             ...prev,
-            [plugin]: { ...prev[plugin], [key]: value },
+            [plugin]: newData,
         }));
         
         const pluginSchema = pluginSchemas.find((p) => p.plugin === plugin);
@@ -1335,8 +1545,8 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
         }
 
         vscodeApi.postMessage({
-            command: "savePluginSetting",
-            data: { plugin, filename: pluginSchema.filename, key, value },
+            command: "savePluginSettings",
+            data: { filename: pluginSchema.filename, params: newData },
         });
     };
 
