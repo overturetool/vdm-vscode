@@ -6,6 +6,11 @@ import { quickcheckConfigSchema } from "./Schemas";
 
 export type QuickCheckConfig = z.infer<typeof quickcheckConfigSchema>;
 
+export interface QuickCheckRequestConfig extends QuickCheckConfig {
+    obligations?: number[];
+    workDoneToken?: string;
+}
+
 export async function readOptionalConfiguration<T>(wsFolder: Uri, filename: string, schema: z.ZodType<T>, callback: (config: T) => void) {
     const configPath = path.resolve(wsFolder.fsPath, ".vscode", filename);
     let callbackValue: T | null = null;

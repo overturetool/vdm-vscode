@@ -26,7 +26,7 @@ import {
 } from "../protocol/ProofObligationGeneration";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
-import { mergeDeep, QuickCheckConfig, readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
+import { QuickCheckRequestConfig, readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
 import { quickcheckConfigSchema } from "../../util/Schemas";
 
 export default class ProofObligationGenerationFeature implements StaticFeature {
@@ -142,7 +142,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             increment?: number;
         }>,
     ): Thenable<QuickCheckInfo[]> {
-        let workDoneToken = null;
+        let workDoneToken = undefined;
         if (progress) {
             workDoneToken = this.generateToken();
             const progressDisp = this._client.onProgress(WorkDoneProgress.type, workDoneToken, (value) => {
@@ -156,13 +156,11 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
 
         return new Promise((resolve, reject) => {
             readOptionalConfiguration(wsFolder, "quickcheck.json", quickcheckConfigSchema, (config: RunQuickCheckRequestParams) => {
-                const calculatedConfig: QuickCheckConfig & { workDoneToken: string } = {
-                    config: {
-                        obligations: poIds,
-                    },
+                const configWithObligations: QuickCheckRequestConfig = {
+                    ...config,
+                    obligations: poIds,
                     workDoneToken: workDoneToken,
                 };
-                const configWithObligations: QuickCheckConfig = mergeDeep(calculatedConfig, config);
 
                 this._client
                     .sendRequest(RunQuickCheckRequest.type, configWithObligations, cancellationToken)

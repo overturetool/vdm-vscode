@@ -19,12 +19,6 @@ export const quickcheckConfigSchema = z
                     .gte(0, "The timeout has to be at least 0 second.")
                     .optional()
                     .describe("The timeout of a QuickCheck execution in milliseconds."),
-                obligations: z
-                    .array(z.number().int().gte(1))
-                    .optional()
-                    .describe(
-                        "A list of proof obligation indexes to run QuickCheck on. When left undefined or as an empty list, the default behavior is to check all proof obligations left after search filtering."
-                    ),
             })
             .describe("General configuration."),
         strategies: z
