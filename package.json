@@ -465,6 +465,11 @@
                 "command": "vdm-vscode.quickConsole",
                 "title": "Open Quick Console (current module)",
                 "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.saveLoadedFiles",
+                "title": "Save Loaded File Order...",
+                "category": "VDM"
             }
         ],
         "keybindings": [
@@ -598,6 +603,10 @@
                 {
                     "command": "vdm-vscode.quickConsole",
                     "group": "workspace@4"
+                },
+                {
+                    "command": "vdm-vscode.saveLoadedFiles",
+                    "group": "workspace@5"
                 }
             ],
             "view/title": [
