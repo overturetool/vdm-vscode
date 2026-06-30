@@ -107,6 +107,8 @@ export class ProofObligationPanel implements Disposable {
     private onReady: Promise<void>;
     private _onReadyCallbacks: OnReady;
 
+    private _pogQcBusy: boolean = false;
+
     constructor(
         private readonly _context: ExtensionContext,
         private readonly _clientManager: ClientManager,
@@ -189,6 +191,62 @@ export class ProofObligationPanel implements Disposable {
                 await this.onRunPog(wsFolder.uri);
             }),
         );
+        this._disposables.push(
+            commands.registerCommand(`vdm-vscode.pog.runWorkspaceAndQuickCheck`, async () => {
+                if (this._pogQcBusy) {
+                    window.showWarningMessage("POG + QuickCheck is already running. Please wait for it to complete.");
+                    return;
+                }
+
+                const activeEditor = window.activeTextEditor;
+                if (!activeEditor) {
+                    window.showWarningMessage("No active file to determine workspace.");
+                    return;
+                }
+                const wsFolder = workspace.getWorkspaceFolder(activeEditor.document.uri);
+                if (!wsFolder) {
+                    window.showWarningMessage("Cannot determine workspace folder.");
+                    return;
+                }
+
+                this._pogQcBusy = true;
+                commands.executeCommand("setContext", "vdm-vscode.pog.pogQcBusy", true);
+                try {
+                    await this.onRunPog(wsFolder.uri);
+
+                    if (!this._allPos || this._allPos.length === 0) {
+                        return;
+                    }
+
+                    await window.withProgress(
+                        {
+                            location: ProgressLocation.Notification,
+                            title: "Running QuickCheck",
+                            cancellable: true,
+                        },
+                        async (_progress, _token) => {
+                            const client = this._clientManager.get(wsFolder);
+                            (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
+                            const poIds = this._allPos.map((po) => po.id);
+                            const qcInfos = await this.onRunQuickCheck(wsFolder.uri, poIds, _token, _progress);
+                            if (qcInfos) {
+                                const posWithQc = this.addQuickCheckInfoToPos(this._allPos, qcInfos);
+                                await this._panel?.webview.postMessage({
+                                    command: "newPOs",
+                                    pos: posWithQc,
+                                    filterMessage: this._filterMessage,
+                                });
+                            }
+                        },
+                    );
+                } catch (e) {
+                    console.warn(`[Proof Obligation View] Combined POG+QC run failed: ${e}`);
+                } finally {
+                    this._pogQcBusy = false;
+                    commands.executeCommand("setContext", "vdm-vscode.pog.pogQcBusy", false);
+                }
+            }),
+        );
     }
 
     public get viewType(): string {
@@ -206,6 +264,9 @@ export class ProofObligationPanel implements Disposable {
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
         this._providers.push({ selector: documentSelector, provider: provider });
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, true);
+        if (provider.quickCheckProvider) {
+            commands.executeCommand("setContext", `vdm-vscode.pog.quickCheckProvider`, true);
+        }
 
         let listener = provider.onDidChangeProofObligations((e) => commands.executeCommand(`vdm-vscode.pog.update`, e));
 
@@ -215,6 +276,7 @@ export class ProofObligationPanel implements Disposable {
                 this._providers = this._providers.filter((p) => p.selector !== documentSelector || p.provider !== provider);
                 if (this._providers.length === 0) {
                     commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+                    commands.executeCommand("setContext", `vdm-vscode.pog.quickCheckProvider`, false);
                 }
             },
         };
@@ -568,6 +630,7 @@ export class ProofObligationPanel implements Disposable {
 
     public dispose() {
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+        commands.executeCommand("setContext", `vdm-vscode.pog.pogQcBusy`, false);
 
         // Clean up our resources
         if (this._panel) {

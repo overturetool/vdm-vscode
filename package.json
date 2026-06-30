@@ -343,6 +343,14 @@
                 }
             },
             {
+                "command": "vdm-vscode.pog.runWorkspaceAndQuickCheck",
+                "title": "Run Proof Obligation Generation and QuickCheck (Workspace)",
+                "icon": {
+                    "light": "resources/icons/light/pogQc_light.svg",
+                    "dark": "resources/icons/dark/pogQc_dark.svg"
+                }
+            },
+            {
                 "command": "vdm-vscode.openServerLog",
                 "title": "Open Server Log",
                 "category": "VDM"
@@ -737,6 +745,11 @@
                 {
                     "command": "vdm-vscode.pog.runWorkspace",
                     "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.pog.runWorkspaceAndQuickCheck",
+                    "when": "(resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt) && vdm-vscode.pog.quickCheckProvider == true && vdm-vscode.pog.pogQcBusy != true",
                     "group": "navigation"
                 },
                 {
