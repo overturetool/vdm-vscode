@@ -1,7 +1,6 @@
 <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
   <g fill="#ffffff" stroke="none" font-family="monospace" text-anchor="middle">
-    <text x="8" y="6" font-size="5.5">POG</text>
-    <text x="8" y="10.5" font-size="5.5">+</text>
-    <text x="8" y="15" font-size="5.5">QC</text>
+    <text x="8" y="7" font-size="8">POG</text>
+    <text x="8" y="14" font-size="8">+QC</text>
   </g>
 </svg>
