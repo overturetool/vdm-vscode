@@ -86,6 +86,10 @@
                     "VDM-SL",
                     "vdmsl"
                 ],
+                "icon": {
+                    "light": "resources/icons/vdmsl_file.svg",
+                    "dark": "resources/icons/vdmsl_file.svg"
+                },
                 "extensions": [
                     ".vdmsl"
                 ],
@@ -98,6 +102,10 @@
                     "VDM-PP",
                     "vdmpp"
                 ],
+                "icon": {
+                    "light": "resources/icons/light/vdmpp_file_light.svg",
+                    "dark": "resources/icons/dark/vdmpp_file_dark.svg"
+                },
                 "extensions": [
                     ".vdmpp"
                 ],
@@ -109,6 +117,10 @@
                     "VDM-RT",
                     "vdmrt"
                 ],
+                "icon": {
+                    "light": "resources/icons/vdmrt_file.svg",
+                    "dark": "resources/icons/vdmrt_file.svg"
+                },
                 "extensions": [
                     ".vdmrt"
                 ],
