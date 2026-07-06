@@ -58,7 +58,7 @@ export class CombinatorialTestingView implements Disposable {
         private _clientManager: ClientManager,
         private _knownVdmFolders: Map<WorkspaceFolder, VdmDialect>,
         private _filterHandler?: CTExecuteFilterHandler,
-        private _interpreterHandler?: CTInterpreterHandler
+        private _interpreterHandler?: CTInterpreterHandler,
     ) {
         this.state = state.idle;
 
@@ -90,7 +90,7 @@ export class CombinatorialTestingView implements Disposable {
                     let testItem = item as TestItem;
                     this._resultProvider.updateTestResults(testItem.idNumber, testItem.trace.name);
                 }
-            })
+            }),
         );
 
         // Set button behavior
@@ -133,6 +133,7 @@ export class CombinatorialTestingView implements Disposable {
         this.registerCommand("vdm-vscode.ct.goToTrace", (e) => this.goToTrace(e));
         this.registerCommand("vdm-vscode.ct.cancel", () => this._cancelToken?.cancel());
         this.registerCommand("vdm-vscode.ct.selectWorkspaceFolder", () => this.selectWorkspaceFolder());
+        this.registerCommand("vdm-vscode.ct.generateOutline", () => this.generateOutline());
         this.registerCommand("vdm-vscode.ct.clearView", () => this.clearView());
 
         //* Configuration change handler /////
@@ -146,7 +147,7 @@ export class CombinatorialTestingView implements Disposable {
                 }
             },
             this,
-            this._disposables
+            this._disposables,
         );
     }
 
@@ -165,7 +166,7 @@ export class CombinatorialTestingView implements Disposable {
 
         // Prompt user to chose a specification for CT.
         // Skip if using current workspace
-        let wsFolder: WorkspaceFolder = this._currentWsFolder || (await this.selectWorkspaceFolder());
+        let wsFolder: WorkspaceFolder = this._currentWsFolder || (await this.generateOutline());
         if (!wsFolder) {
             this.state = state.idle;
             return console.info(`[CT View] Rebuild Outline canceled, did not find a workspacefolder`);
@@ -201,7 +202,7 @@ export class CombinatorialTestingView implements Disposable {
                 } finally {
                     this.state = state.idle;
                 }
-            }
+            },
         );
     }
 
@@ -249,7 +250,7 @@ export class CombinatorialTestingView implements Disposable {
                     title: `Running test generation for ${traceItem.label}`,
                     cancellable: false,
                 },
-                generateFunc
+                generateFunc,
             );
     }
 
@@ -311,7 +312,7 @@ export class CombinatorialTestingView implements Disposable {
                     // Start a timer to update the UI periodically - this timer is cleared in the finished function
                     this._timeoutRef = setInterval(
                         () => this._testProvider.rebuildViewFromElement(this._currentlyExecutingTrace),
-                        this._uiUpdateIntervalMS
+                        this._uiUpdateIntervalMS,
                     );
 
                     // Update the data storage
@@ -320,12 +321,12 @@ export class CombinatorialTestingView implements Disposable {
                         range,
                         this._cancelToken.token,
                         progress,
-                        filter ? this._filterHandler.getFilter() : null
+                        filter ? this._filterHandler.getFilter() : null,
                     );
 
                     // Update view
                     this._testProvider.rebuildViewFromElement(
-                        this.state == state.executingTestTrace ? null : this._currentlyExecutingTrace
+                        this.state == state.executingTestTrace ? null : this._currentlyExecutingTrace,
                     );
 
                     // Reset state
@@ -362,7 +363,7 @@ export class CombinatorialTestingView implements Disposable {
                     this._cancelToken = undefined;
                     this.showCancelButton(false);
                 }
-            }
+            },
         );
     }
 
@@ -436,50 +437,72 @@ export class CombinatorialTestingView implements Disposable {
         window.showTextDocument(trace.location.uri, { selection: trace.location.range });
     }
 
-    private async selectWorkspaceFolder(): Promise<WorkspaceFolder> {
+    private async resolveWorkspaceFolder(preferActive: boolean): Promise<WorkspaceFolder> {
         // Manage state
         if (this.state != state.idle) {
             console.info(`[CT View] Select workspace not possible while in state ${state[this.state]}`);
             return;
         }
 
-        let wsFolder: WorkspaceFolder;
-
         if (this._knownVdmFolders.size == 0) {
             window.showInformationMessage("[CT View] Unable to find any workspace folders containing files that the extension can handle");
-            return wsFolder;
+            return;
         }
 
-        // Select workspace folder.
-        const wsFS: string | WorkspaceFolder =
-            workspace.workspaceFolders.length > 1
-                ? await window.showQuickPick(
-                      Array.from(this._knownVdmFolders.keys()).map((key) => key.name),
-                      { canPickMany: false, title: "Select workspace folder" }
-                  )
-                : workspace.workspaceFolders[0];
-        if (wsFS) {
-            wsFolder = typeof wsFS === "string" ? Array.from(this._knownVdmFolders.keys()).find((key) => key.name == wsFS) : wsFS;
-            // Check if a data provider has not been registered for the workspace folder.
+        let wsFolder: WorkspaceFolder;
+
+        // Try the active editor's workspace folder first
+        if (preferActive) {
+            const activeUri = window.activeTextEditor?.document?.uri;
+            const activeWsFolder = activeUri ? workspace.getWorkspaceFolder(activeUri) : undefined;
+            if (activeWsFolder && this._knownVdmFolders.has(activeWsFolder)) {
+                wsFolder = activeWsFolder;
+            }
+        }
+
+        // Fall back to prompting the user if there is no active editor,
+        // or if the caller explicitly wants a picker (preferActive == false)
+        if (!wsFolder) {
+            const wsFS: string | WorkspaceFolder =
+                workspace.workspaceFolders?.length > 1
+                    ? await window.showQuickPick(
+                          Array.from(this._knownVdmFolders.keys()).map((key) => key.name),
+                          { canPickMany: false, title: "Select workspace folder" },
+                      )
+                    : workspace.workspaceFolders[0];
+            if (wsFS) {
+                wsFolder = typeof wsFS === "string" ? Array.from(this._knownVdmFolders.keys()).find((key) => key.name == wsFS) : wsFS;
+            }
+        }
+
+        if (wsFolder) {
             if (!this._dataStorage.workspaceFolders.find((wsfWithProvider) => wsfWithProvider.uri == wsFolder.uri)) {
-                // If a client already exists the language server does not support combinatorial testing
                 if (this._clientManager.has(wsFolder)) {
                     console.info(
-                        "[CT View] Select workspace not possible as the langauge server does not seem to support combinatorial testing"
+                        "[CT View] Select workspace not possible as the langiage server does not seem to support combinatorial testing",
                     );
                 } else {
                     await this._clientManager.launchClientForWorkspace(wsFolder);
                 }
             }
         }
-        // If the workspace folder has changed, rebuild the outline
+
         if (wsFolder && this._currentWsFolder != wsFolder) {
             this._currentWsFolder = wsFolder;
-            if (this.state == state.idle) this.rebuildOutline();
+            if (this.state == state.idle) {
+                this.rebuildOutline();
+            }
         }
 
-        // Return the selected workspace folder
         return wsFolder;
+    }
+
+    private async selectWorkspaceFolder(): Promise<WorkspaceFolder> {
+        return this.resolveWorkspaceFolder(false);
+    }
+
+    private async generateOutline(): Promise<WorkspaceFolder> {
+        return this.resolveWorkspaceFolder(true);
     }
 
     private clearView() {

@@ -458,6 +458,12 @@
                 "enablement": "vdm-vscode.ct.idle-state"
             },
             {
+                "command": "vdm-vscode.ct.generateOutline",
+                "title": "Generate Test Outline",
+                "category": "VDM",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
                 "command": "vdm-vscode.ct.clearView",
                 "title": "Clear Combinatorial Testing View",
                 "category": "VDM",
@@ -536,7 +542,7 @@
             },
             {
                 "view": "vdm-vscode.ct.testView",
-                "contents": "[Generate test outline](command:vdm-vscode.ct.selectWorkspaceFolder)"
+                "contents": "[Generate test outline](command:vdm-vscode.ct.generateOutline)"
             }
         ],
         "submenus": [
