@@ -16,6 +16,7 @@ import { ManagePluginsHandler } from "../handlers/ManagePluginsHandler";
 import { VdmDialect } from "../util/DialectUtil";
 import { VDMJExtensionsHandler } from "../handlers/VDMJExtensionsHandler";
 import { ManageAnnotationsHandler } from "../handlers/ManageAnnotationsHandler";
+import { resolveVariables } from "../util/VariableSubstitution";
 
 export class ServerFactory implements Disposable {
     private _jarPath: string;
@@ -156,7 +157,7 @@ export class ServerFactory implements Disposable {
 
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {
-            const resolvedCp: string = cp.replace("${workspaceFolder}", wsFolder.uri.fsPath);
+            const resolvedCp: string = resolveVariables(cp, wsFolder);
             const pathToCheck: string = resolvedCp.endsWith(path.sep + "*") ? resolvedCp.substr(0, resolvedCp.length - 2) : resolvedCp;
             if (!fs.existsSync(pathToCheck)) {
                 const msg: string = "Invalid path in class path additions: " + cp;
@@ -197,7 +198,7 @@ export class ServerFactory implements Disposable {
         let server = child_process.spawn(this._javaPath, args, { cwd: wsFolder.uri.fsPath });
 
         // Create output channel for server stdout
-        let stdoutLogPath = stdioConfig.stdioLogPath;
+        let stdoutLogPath = resolveVariables(stdioConfig.stdioLogPath as string, wsFolder);
         if (stdioConfig.activateStdoutLogging) {
             // Log to file
             if (stdoutLogPath != "") {

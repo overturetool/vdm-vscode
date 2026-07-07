@@ -28,6 +28,7 @@ import { isSameUri, isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUti
 // import { VdmDapSupport } from "../../dap/VdmDapSupport";
 import { ProofObligationCounterExample, ProofObligationWitness, QuickCheckInfo } from "../protocol/ProofObligationGeneration";
 import { CancellationToken } from "vscode-languageclient";
+import VdmMiddleware from "../../lsp/VdmMiddleware";
 
 export interface ProofObligation {
     id: number;
@@ -106,9 +107,11 @@ export class ProofObligationPanel implements Disposable {
     private onReady: Promise<void>;
     private _onReadyCallbacks: OnReady;
 
+    private _pogQcBusy: boolean = false;
+
     constructor(
         private readonly _context: ExtensionContext,
-        clientManager: ClientManager,
+        private readonly _clientManager: ClientManager,
     ) {
         this.onReady = new Promise<void>((resolve, reject) => {
             this._onReadyCallbacks = new OnReady(resolve, reject);
@@ -146,8 +149,8 @@ export class ProofObligationPanel implements Disposable {
                     }
                     // If in a multi project workspace environment the user could utilise the pog.run command on a project for which no client (and therefore server) has been started.
                     // So check if a client is present for the workspacefolder or else start it.
-                    if (!clientManager.get(wsFolder)) {
-                        await clientManager.launchClientForWorkspace(wsFolder);
+                    if (!this._clientManager.get(wsFolder)) {
+                        await this._clientManager.launchClientForWorkspace(wsFolder);
                     }
                     this.onRunPog(uri);
                 },
@@ -188,6 +191,62 @@ export class ProofObligationPanel implements Disposable {
                 await this.onRunPog(wsFolder.uri);
             }),
         );
+        this._disposables.push(
+            commands.registerCommand(`vdm-vscode.pog.runWorkspaceAndQuickCheck`, async () => {
+                if (this._pogQcBusy) {
+                    window.showWarningMessage("POG + QuickCheck is already running. Please wait for it to complete.");
+                    return;
+                }
+
+                const activeEditor = window.activeTextEditor;
+                if (!activeEditor) {
+                    window.showWarningMessage("No active file to determine workspace.");
+                    return;
+                }
+                const wsFolder = workspace.getWorkspaceFolder(activeEditor.document.uri);
+                if (!wsFolder) {
+                    window.showWarningMessage("Cannot determine workspace folder.");
+                    return;
+                }
+
+                this._pogQcBusy = true;
+                commands.executeCommand("setContext", "vdm-vscode.pog.pogQcBusy", true);
+                try {
+                    await this.onRunPog(wsFolder.uri);
+
+                    if (!this._allPos || this._allPos.length === 0) {
+                        return;
+                    }
+
+                    await window.withProgress(
+                        {
+                            location: ProgressLocation.Notification,
+                            title: "Running QuickCheck",
+                            cancellable: true,
+                        },
+                        async (_progress, _token) => {
+                            const client = this._clientManager.get(wsFolder);
+                            (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
+                            const poIds = this._allPos.map((po) => po.id);
+                            const qcInfos = await this.onRunQuickCheck(wsFolder.uri, poIds, _token, _progress);
+                            if (qcInfos) {
+                                const posWithQc = this.addQuickCheckInfoToPos(this._allPos, qcInfos);
+                                await this._panel?.webview.postMessage({
+                                    command: "newPOs",
+                                    pos: posWithQc,
+                                    filterMessage: this._filterMessage,
+                                });
+                            }
+                        },
+                    );
+                } catch (e) {
+                    console.warn(`[Proof Obligation View] Combined POG+QC run failed: ${e}`);
+                } finally {
+                    this._pogQcBusy = false;
+                    commands.executeCommand("setContext", "vdm-vscode.pog.pogQcBusy", false);
+                }
+            }),
+        );
     }
 
     public get viewType(): string {
@@ -205,6 +264,9 @@ export class ProofObligationPanel implements Disposable {
     public static registerProofObligationProvider(documentSelector: DocumentSelector, provider: ProofObligationProvider): Disposable {
         this._providers.push({ selector: documentSelector, provider: provider });
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, true);
+        if (provider.quickCheckProvider) {
+            commands.executeCommand("setContext", `vdm-vscode.pog.quickCheckProvider`, true);
+        }
 
         let listener = provider.onDidChangeProofObligations((e) => commands.executeCommand(`vdm-vscode.pog.update`, e));
 
@@ -214,6 +276,7 @@ export class ProofObligationPanel implements Disposable {
                 this._providers = this._providers.filter((p) => p.selector !== documentSelector || p.provider !== provider);
                 if (this._providers.length === 0) {
                     commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+                    commands.executeCommand("setContext", `vdm-vscode.pog.quickCheckProvider`, false);
                 }
             },
         };
@@ -225,9 +288,12 @@ export class ProofObligationPanel implements Disposable {
         return ProofObligationPanel._providers.find((p) => util.match(p.selector, uri));
     }
 
-    protected async onRunPog(uri: Uri) {
+    protected async onRunPog(uri: Uri, clearQcCache: boolean = true) {
         this._pos = [];
         this._filterMessage = null;
+        const wsFolder = workspace.getWorkspaceFolder(uri);
+        const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+        const middleware = client?.middleware as VdmMiddleware;
         const poProvider = this.getPOProvider(uri);
         this.createWebView(poProvider.provider.quickCheckProvider, uri);
         try {
@@ -243,13 +309,19 @@ export class ProofObligationPanel implements Disposable {
             );
             this._allPos = [...res];
             this._pos = [...res];
+            if (!clearQcCache) {
+                middleware?.updateStalePONumbers(
+                    this._allPos.map((po) => ({
+                        id: po.id,
+                        range: po.location.range,
+                    })),
+                );
+            }
             this.clearWarning();
         } catch (e) {
             this.displayWarning();
             console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
         }
-
-        let wsFolder = workspace.getWorkspaceFolder(uri);
         this.updateContent();
 
         this._lastUri = uri;
@@ -292,7 +364,7 @@ export class ProofObligationPanel implements Disposable {
 
             // If POG is possible
             if (canRun) {
-                this.onRunPog(uri);
+                this.onRunPog(uri, false);
             } else {
                 // Display warning that POs may be outdated
                 this.displayWarning();
@@ -452,6 +524,9 @@ export class ProofObligationPanel implements Disposable {
                                     cancellable: true,
                                 },
                                 async (_progress, _token) => {
+                                    const wsFolder = workspace.getWorkspaceFolder(this._lastUri);
+                                    const client = wsFolder ? this._clientManager.get(wsFolder) : undefined;
+                                    (client?.middleware as VdmMiddleware)?.clearQcDiagnostics();
                                     try {
                                         const qcInfos = await this.onRunQuickCheck(
                                             this._lastUri,
@@ -555,6 +630,7 @@ export class ProofObligationPanel implements Disposable {
 
     public dispose() {
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
+        commands.executeCommand("setContext", `vdm-vscode.pog.pogQcBusy`, false);
 
         // Clean up our resources
         if (this._panel) {

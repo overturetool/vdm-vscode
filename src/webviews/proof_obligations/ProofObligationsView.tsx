@@ -12,7 +12,7 @@ export interface FormattedProofObligation extends Omit<ProofObligation, "name"> 
 }
 
 const ProofObligationContainer = (props: PropsWithChildren) => {
-    return <div css={{ height: "100%", display: "flex", flexDirection: "column", minWidth: "550px" }}>{props.children}</div>;
+    return <div css={{ height: "100%", display: "flex", flexDirection: "column" }}>{props.children}</div>;
 };
 
 const formatProofObligationSource = (poSource: ProofObligation["source"]) => {
@@ -76,6 +76,7 @@ const ProofObligationsHeaderMenu = ({
                 justifyContent: "space-between",
                 margin: "0.5em 1em 1em 0.5em",
                 alignItems: "center",
+                gap: "0.5em",
             }}
         >
             <div
@@ -88,7 +89,9 @@ const ProofObligationsHeaderMenu = ({
             >
                 <div
                     css={{
-                        flex: "0 0 250px",
+                        flex: "1 1 auto",
+                        minWidth: "min-content",
+                        maxWidth: "250px",
                         marginTop: "3px",
                     }}
                 >
@@ -152,9 +155,9 @@ const ProofObligationsHeaderMenu = ({
                 )}
             </div>
 
-            <div css={{ flexShrink: 0 }}>
-                <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
-                    {openPos.size === filterState.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
+            <div css={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.5em", flexShrink: 0 }}>
+                <VSCodeButton appearance="secondary" onClick={onExpandCollapse}>
+                    {openPos.size === filterState.totalRows ? "Collapse" : "Expand"}
                 </VSCodeButton>
                 {enableQuickCheck ? (
                     <VSCodeButton css={{ minWidth: "9.5rem" }} disabled={disableQuickCheck} onClick={onClickQuickCheck}>

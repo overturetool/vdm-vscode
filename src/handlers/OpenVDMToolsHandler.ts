@@ -7,6 +7,7 @@ import { ChildProcess, spawn } from "child_process";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import { dialectToPrettyFormat, VdmDialect, vdmFilePattern } from "../util/DialectUtil";
+import { resolveVariables } from "../util/VariableSubstitution";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
     constructor(knownVdmFolders: Map<WorkspaceFolder, VdmDialect>) {
@@ -26,7 +27,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                           Array.from(knownVdmFolders.entries())
                               .filter((entry) => entry[1] == VdmDialect.VDMPP || entry[1] == VdmDialect.VDMSL)
                               .map((entry) => entry[0].name),
-                          { canPickMany: false, title: "Select workspace folder" }
+                          { canPickMany: false, title: "Select workspace folder" },
                       )
                     : workspace.workspaceFolders[0];
 
@@ -40,12 +41,15 @@ export class OpenVDMToolsHandler extends AutoDisposable {
             const dialect: VdmDialect = knownVdmFolders.get(wsFolder);
 
             // Check if the user has defined the VDMTools path in settings
-            let vdmToolsPath: string = workspace.getConfiguration("vdm-vscode.vdmtools.path", wsFolder).get(dialect);
+            let vdmToolsPath: string = resolveVariables(
+                workspace.getConfiguration("vdm-vscode.vdmtools.path", wsFolder).get(dialect) ?? "",
+                wsFolder,
+            );
             if (!vdmToolsPath) {
                 window
                     .showInformationMessage(
                         `No path to VDMTools specified for ${dialectToPrettyFormat.get(dialect)} in the settings`,
-                        ...["Go to settings"]
+                        ...["Go to settings"],
                     )
                     .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.vdmtools"));
                 return;
@@ -82,10 +86,10 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                     configHelper.generateVDMToolsOptFileContent(wsFolder.name),
                     configHelper.generateVDMToolsPrjFileContent(
                         dialect,
-                        (await workspace.findFiles(vdmFilePattern(wsFolder.uri.fsPath))).map((uri) => uri.fsPath)
+                        (await workspace.findFiles(vdmFilePattern(wsFolder.uri.fsPath))).map((uri) => uri.fsPath),
                     ),
                     Path.join(Util.generatedDataPath(wsFolder).fsPath, "VDMTools"),
-                    wsFolder.name
+                    wsFolder.name,
                 )
                 .then((projectFilePath: string) => {
                     // Start VDMTools with settings detached and stdio ignore so that the process is decoupled from the parent process.

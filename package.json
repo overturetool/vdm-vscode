@@ -86,6 +86,10 @@
                     "VDM-SL",
                     "vdmsl"
                 ],
+                "icon": {
+                    "light": "resources/icons/vdmsl_file.svg",
+                    "dark": "resources/icons/vdmsl_file.svg"
+                },
                 "extensions": [
                     ".vdmsl"
                 ],
@@ -98,6 +102,10 @@
                     "VDM-PP",
                     "vdmpp"
                 ],
+                "icon": {
+                    "light": "resources/icons/light/vdmpp_file_light.svg",
+                    "dark": "resources/icons/dark/vdmpp_file_dark.svg"
+                },
                 "extensions": [
                     ".vdmpp"
                 ],
@@ -109,6 +117,10 @@
                     "VDM-RT",
                     "vdmrt"
                 ],
+                "icon": {
+                    "light": "resources/icons/vdmrt_file.svg",
+                    "dark": "resources/icons/vdmrt_file.svg"
+                },
                 "extensions": [
                     ".vdmrt"
                 ],
@@ -343,6 +355,14 @@
                 }
             },
             {
+                "command": "vdm-vscode.pog.runWorkspaceAndQuickCheck",
+                "title": "Run Proof Obligation Generation and QuickCheck (Workspace)",
+                "icon": {
+                    "light": "resources/icons/light/pogQc_light.svg",
+                    "dark": "resources/icons/dark/pogQc_dark.svg"
+                }
+            },
+            {
                 "command": "vdm-vscode.openServerLog",
                 "title": "Open Server Log",
                 "category": "VDM"
@@ -438,6 +458,12 @@
                 "enablement": "vdm-vscode.ct.idle-state"
             },
             {
+                "command": "vdm-vscode.ct.generateOutline",
+                "title": "Generate Test Outline",
+                "category": "VDM",
+                "enablement": "vdm-vscode.ct.idle-state"
+            },
+            {
                 "command": "vdm-vscode.ct.clearView",
                 "title": "Clear Combinatorial Testing View",
                 "category": "VDM",
@@ -466,6 +492,23 @@
                 "title": "Configure Project",
                 "category": "VDM",
                 "icon": "$(wrench)"
+            },
+            {
+                "command": "vdm-vscode.quickConsole",
+                "title": "Open Quick Console (current module)",
+                "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.saveLoadedFiles",
+                "title": "Save Loaded File Order...",
+                "category": "VDM"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "vdm-vscode.quickConsole",
+                "key": "alt+f5",
+                "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt"
             }
         ],
         "viewsContainers": {
@@ -505,7 +548,7 @@
             },
             {
                 "view": "vdm-vscode.ct.testView",
-                "contents": "[Generate test outline](command:vdm-vscode.ct.selectWorkspaceFolder)"
+                "contents": "[Generate test outline](command:vdm-vscode.ct.generateOutline)"
             }
         ],
         "submenus": [
@@ -588,6 +631,14 @@
                 {
                     "command": "vdm-vscode.quickInterpreter",
                     "group": "workspace@3"
+                },
+                {
+                    "command": "vdm-vscode.quickConsole",
+                    "group": "workspace@4"
+                },
+                {
+                    "command": "vdm-vscode.saveLoadedFiles",
+                    "group": "workspace@5"
                 }
             ],
             "view/title": [
@@ -723,6 +774,11 @@
                 {
                     "command": "vdm-vscode.pog.runWorkspace",
                     "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.pog.runWorkspaceAndQuickCheck",
+                    "when": "(resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt) && vdm-vscode.pog.quickCheckProvider == true && vdm-vscode.pog.pogQcBusy != true",
                     "group": "navigation"
                 },
                 {
@@ -1150,6 +1206,18 @@
                         "default": "surrender",
                         "description": "Proof strategy choice for the `isapog` plugin. It determines what kind of proof script the plugin will generate for the translated PO.",
                         "scope": "resource"
+                    },
+                    "vdm-vscode.translate.latex.headers": {
+                        "type": "string",
+                        "default": "auto",
+                        "scope": "resource",
+                        "enum": ["auto", "always", "never"],
+                        "markdownEnumDescriptions": [
+                            "Automatically include LaTeX headers (preamble, `\\begin{document}`, etc.) only when translating a single file. When translating a folder (multi-file project), headers are omitted from all files so that the generated main file can include them as subfiles without preamble conflicts.",
+                            "Always include LaTeX headers in every translated file.",
+                            "Never include LaTeX headers in any translated file."
+                        ],
+                        "markdownDescription": "Controls whether LaTeX document headers (preamble, `\\documentclass`, `\\begin{document}`, etc.) are included in the translation output. Use `auto` to let the extension decide based on whether a single file or a whole project is being translated."
                     }
                 }
             },

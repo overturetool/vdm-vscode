@@ -3,7 +3,7 @@
 import * as util from "../util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
-import { guessDialect, VdmDialect } from "../util/DialectUtil";
+import { getActiveEditorVdmContext, guessDialect, VdmDialect } from "../util/DialectUtil";
 import AutoDisposable from "../helper/AutoDisposable";
 
 type VdmTypeParameter = string;
@@ -39,7 +39,6 @@ interface VdmLaunchLensConfiguration {
 }
 
 export class AddRunConfigurationHandler extends AutoDisposable {
-    private static readonly lensNameBegin: string = "Lens config:";
     private static showArgumentTypeWarning = true;
 
     // Argument storage, map from workspacefolder name to arguments
@@ -86,6 +85,9 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 );
                 if (!dialect) return reject();
 
+                // Pre-populate from active editor if it's a VDM file in this workspace
+                const editorContext = await getActiveEditorVdmContext(wsFolder);
+
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
                 let selectedCommand: string;
@@ -93,12 +95,13 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                     selectedClass = await window.showInputBox({
                         prompt: "Input entry point Module",
                         placeHolder: "Module",
-                        value: "DEFAULT",
+                        value: editorContext?.dialect === VdmDialect.VDMSL ? editorContext.moduleName : "DEFAULT",
                     });
                 } else {
                     selectedClass = await window.showInputBox({
                         prompt: "Input name of the entry Class",
                         placeHolder: "Class(args)",
+                        value: editorContext?.dialect === dialect ? editorContext.moduleName : undefined,
                     });
                 }
                 if (selectedClass != undefined) {
@@ -156,9 +159,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
 
                     // Create run configuration
                     let runConfig: VdmDebugConfiguration = {
-                        name: `${AddRunConfigurationHandler.lensNameBegin} ${input.noDebug ? "Launch" : "Debug"} ${input.defaultName}\`${
-                            input.applyName
-                        }`,
+                        name: `${input.noDebug ? "Launch" : "Debug"} ${input.defaultName}\`${input.applyName}`,
                         type: input.type,
                         request: input.request,
                         noDebug: input.noDebug,
@@ -253,6 +254,36 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         runConfig.command = command;
                     }
 
+                    // Ask user whether to save the configuration
+                    const saveItem = { label: "$(save) Save this configuration to launch.json" };
+                    const noneItem = { label: "$(play) Just run, don't save" };
+
+                    const savePick = await window.showQuickPick([noneItem, saveItem], {
+                        title: "Save configuration?",
+                        placeHolder: "Select an option",
+                        ignoreFocusOut: true,
+                    });
+
+                    if (savePick === undefined) {
+                        return resolve("Cancelled.");
+                    }
+
+                    let chosenName: string | undefined;
+                    if (savePick?.label === saveItem.label) {
+                        const shortName = `${input.noDebug ? "Run" : "Debug"} ${input.defaultName}\`${input.applyName}`;
+                        chosenName = await window.showInputBox({
+                            prompt: "Name for this configuration",
+                            value: shortName,
+                            ignoreFocusOut: true,
+                        });
+
+                        if (chosenName === undefined) {
+                            return resolve("Cancelled.");
+                        }
+
+                        runConfig.name = chosenName;
+                    }
+
                     const dialect = await guessDialect(wsFolder);
                     if (dialect === VdmDialect.VDMRT) {
                         // Prompt for enableLogging
@@ -304,8 +335,9 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                         }
                     }
 
-                    // Save configuration
-                    this.saveRunConfiguration(wsFolder, runConfig);
+                    if (chosenName !== undefined) {
+                        this.saveRunConfiguration(wsFolder, runConfig);
+                    }
 
                     // Start debug session with custom debug configurations
                     resolve("Launching");
@@ -324,7 +356,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         const rawConfigs: DebugConfiguration[] = launchConfigurations.configurations;
 
         // Only save one configuration with the same name
-        let i = rawConfigs.findIndex((c) => c.name === runConf.name || (this.isLensConfig(runConf) && this.isLensConfig(c)));
+        let i = rawConfigs.findIndex((c) => c.name === runConf.name);
         if (i >= 0) {
             rawConfigs[i] = { ...rawConfigs[i], ...runConf };
         } else {
@@ -343,10 +375,6 @@ export class AddRunConfigurationHandler extends AutoDisposable {
             noDebug: false,
             defaultName: defaultName,
         };
-    }
-
-    private isLensConfig(runConf: DebugConfiguration): boolean {
-        return runConf.name.startsWith(AddRunConfigurationHandler.lensNameBegin);
     }
 
     private async requestConcreteTypes(

@@ -10,6 +10,7 @@ import * as Util from "../util/Util";
 import * as Path from "path";
 import * as Fs from "fs-extra";
 import { vdmFileExtensions } from "../util/DialectUtil";
+import { resolveVariables } from "../util/VariableSubstitution";
 
 export interface VdmDebugConfiguration extends vscode.DebugConfiguration {
     noDebug?: boolean;
@@ -237,6 +238,16 @@ export namespace VdmDapSupport {
                 );
             }
 
+            // Resolve variables in path-valued VDMJ properties
+            if (config.properties) {
+                const pathProperties = ["vdmj.mapping.search_path", "vdmj.parser.external_readers"];
+                for (const key of pathProperties) {
+                    if (typeof config.properties[key] === "string") {
+                        config.properties[key] = resolveVariables(config.properties[key], resolvedFolder);
+                    }
+                }
+            }
+
             return config;
         }
     }
@@ -362,6 +373,7 @@ export namespace VdmDapSupport {
         folder: vscode.WorkspaceFolder | undefined,
         stopOnEntry?: boolean,
         adHoc: boolean = false,
+        defaultName?: string,
     ): Thenable<boolean> {
         var debugConfiguration: VdmDebugConfiguration = {
             type: "vdm", // The type of the debug session.
@@ -371,6 +383,7 @@ export namespace VdmDapSupport {
             stopOnEntry: stopOnEntry,
             // Additional debug type specific properties.
             command: command,
+            defaultName: defaultName ?? null,
         };
 
         let sessionOptions: vscode.DebugSessionOptions = {};

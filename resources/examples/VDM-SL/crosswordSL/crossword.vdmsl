@@ -472,4 +472,3 @@ ext wr cwgrid : grid
 An alternate version of $SOFT-DELETE$ could be designed that would only leave
 on the grid the letters of validated words. This could be easily performed by
 checking that the word that the location belongs to is in the valid list.
-\end{document}

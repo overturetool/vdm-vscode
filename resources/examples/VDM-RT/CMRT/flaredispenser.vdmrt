@@ -78,7 +78,7 @@ Step () ==
   cycles (1E5) 
   (if len curplan > 0
    then (dcl curtime : Time := time, done : bool := false;
-         while not done do
+         while not done and len curplan > 0 do
            (dcl first : PlanStep := hd curplan,
                 next : Plan := tl curplan;
             let mk_(fltp, fltime) = first in

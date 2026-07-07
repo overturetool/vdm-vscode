@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { WorkspaceFolder, RelativePattern, workspace, window, QuickPickItem } from "vscode";
+import { WorkspaceFolder, RelativePattern, workspace, window, QuickPickItem, commands } from "vscode";
 import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 import { ClientManager } from "../ClientManager";
+import * as vscode from "vscode";
 
 interface QuickPickDialectItem extends QuickPickItem {
     prettyDialect: string;
@@ -121,4 +122,38 @@ export async function getDialect(wsFolder: WorkspaceFolder, clientManager: Clien
     }
 
     return dialect;
+}
+
+// Returns the module/class name from the active editor if it's a VDM file
+// belonging to the given workspace folder, along with its dialect
+export async function getActiveEditorVdmContext(
+    wsFolder: WorkspaceFolder,
+): Promise<{ moduleName: string; dialect: VdmDialect } | undefined> {
+    const activeEditor = window.activeTextEditor;
+    if (!activeEditor) {
+        return undefined;
+    }
+
+    const activeDoc = activeEditor.document;
+    if (workspace.getWorkspaceFolder(activeDoc.uri)?.uri.toString() !== wsFolder.uri.toString()) {
+        return undefined;
+    }
+
+    const ext = activeDoc.uri.fsPath.split(".").pop()!.toLowerCase();
+    for (const [dialect, extensions] of dialectToFileExtensions) {
+        if (!extensions.includes(ext)) {
+            continue;
+        }
+
+        const symbols = await commands.executeCommand<vscode.DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", activeDoc.uri);
+        if (!symbols.length) {
+            break;
+        }
+
+        const cursorPos = activeEditor.selection.active;
+        const match = symbols.find((s) => s.range.contains(cursorPos)) ?? symbols[0];
+        return { moduleName: match.name, dialect };
+    }
+
+    return undefined;
 }

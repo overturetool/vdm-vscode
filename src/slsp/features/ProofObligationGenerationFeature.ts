@@ -23,11 +23,13 @@ import {
     QuickCheckInfo,
     RunQuickCheckRequest,
     RunQuickCheckRequestParams,
+    QCUpdatedNotification,
 } from "../protocol/ProofObligationGeneration";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
 import { QuickCheckRequestConfig, readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
 import { quickcheckConfigSchema } from "../../util/Schemas";
+import VdmMiddleware from "../../lsp/VdmMiddleware";
 
 export default class ProofObligationGenerationFeature implements StaticFeature {
     private _onDidChangeProofObligations: EventEmitter<boolean>;
@@ -57,6 +59,7 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
 
         this._onDidChangeProofObligations = new EventEmitter<boolean>();
         this._disposables.push(this._client.onNotification(POGUpdatedNotification.type, this.onPOGUpdatedNotification));
+        this._disposables.push(this._client.onNotification(QCUpdatedNotification.type, this.onQCUpdatedNotification));
         let provider: ProofObligationProvider = {
             provideProofObligations: (
                 uri: Uri,
@@ -175,7 +178,16 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
     }
 
     private onPOGUpdatedNotification: POGUpdatedNotification.HandlerSignature = (params) => {
-        this._onDidChangeProofObligations.fire(params.successful ?? params.quickcheck);
+        if (params.quickcheck !== undefined) {
+            return;
+        }
+        this._onDidChangeProofObligations.fire(params.successful ?? false);
+    };
+
+    private onQCUpdatedNotification: QCUpdatedNotification.HandlerSignature = (params) => {
+        const middleware = this._client.middleware as VdmMiddleware;
+        middleware.handleQCUpdated(params.obligations);
+        middleware.reapplyDiagnostics();
     };
 
     private asCodeProofObligation(po: ProofObligation): CodeProofObligation {

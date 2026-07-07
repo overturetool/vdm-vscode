@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { ProviderResult, TextDocument, CancellationToken, CodeLens, workspace, commands } from "vscode";
-import { Middleware, ProvideCodeLensesSignature, ProvideDocumentSymbolsSignature } from "vscode-languageclient";
+import { Middleware, ProvideCodeLensesSignature, ProvideDocumentSymbolsSignature, HandleDiagnosticsSignature } from "vscode-languageclient";
+import * as vscode from "vscode";
+import { QCUpdatedObligation } from "../slsp/protocol/ProofObligationGeneration";
 
 export default class VdmMiddleware implements Middleware {
     private _pendingUndoUris: Set<string> = new Set();
+    private _qcDiagnostics: Map<string, vscode.Diagnostic[]> = new Map();
+    private _lastIncomingDiagnostics: Map<string, vscode.Diagnostic[]> = new Map();
+    private _lastNext: Map<string, (uri: vscode.Uri, diagnostics: vscode.Diagnostic[]) => void> = new Map();
 
     schedulePendingUndo(uri: string) {
         this._pendingUndoUris.add(uri);
@@ -37,5 +42,129 @@ export default class VdmMiddleware implements Middleware {
         if (enabled) return next(document, token);
         // Kill the request
         else return [];
+    }
+
+    clearQcDiagnostics() {
+        this._qcDiagnostics.clear();
+        this._lastIncomingDiagnostics.clear();
+        this._lastNext.clear();
+    }
+
+    handleQCUpdated(obligations: QCUpdatedObligation[]) {
+        for (const [uri, cached] of this._qcDiagnostics) {
+            const obligationsForUri = obligations.filter((o) => o.location.uri === uri);
+            if (obligationsForUri.length === 0) {
+                continue;
+            }
+
+            const lastIncoming = this._lastIncomingDiagnostics.get(uri) ?? [];
+
+            const updated = cached
+                .map((d) => {
+                    const match = obligationsForUri.find(
+                        (o) =>
+                            o.location.range.start.line === d.range.start.line &&
+                            o.location.range.start.character === d.range.start.character,
+                    );
+
+                    if (!match) {
+                        return d;
+                    }
+
+                    const stillFailing = lastIncoming.some(
+                        (server) =>
+                            server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                    );
+
+                    if (!stillFailing) {
+                        return null;
+                    }
+
+                    const updatedMessage = d.message.replace(/PO #\d+/, `PO #${match.id}`);
+                    const updated = new vscode.Diagnostic(d.range, updatedMessage, d.severity);
+                    updated.source = d.source;
+                    updated.code = d.code;
+                    return updated;
+                })
+                .filter((d) => d !== null);
+
+            this._qcDiagnostics.set(uri, updated);
+        }
+    }
+
+    handleDiagnostics(uri: vscode.Uri, diagnostics: vscode.Diagnostic[], next: HandleDiagnosticsSignature) {
+        this._lastNext.set(uri.toString(), next);
+        this._lastIncomingDiagnostics.set(uri.toString(), diagnostics);
+        const qcDiagnostics = diagnostics.filter((d) => d.source?.endsWith("/PO"));
+        if (qcDiagnostics.length > 0) {
+            const existing = this._qcDiagnostics.get(uri.toString()) ?? [];
+            const updated = [
+                ...existing.filter(
+                    (cached) =>
+                        !qcDiagnostics.some(
+                            (incoming) =>
+                                incoming.range.start.line === cached.range.start.line &&
+                                incoming.range.start.character === cached.range.start.character,
+                        ),
+                ),
+                ...qcDiagnostics,
+            ];
+            this._qcDiagnostics.set(uri.toString(), updated);
+        }
+        const cached = this._qcDiagnostics.get(uri.toString());
+        if (cached?.length) {
+            const missing = cached.filter(
+                (d) =>
+                    !diagnostics.some(
+                        (server) =>
+                            server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                    ),
+            );
+            next(uri, [...diagnostics, ...missing]);
+        } else {
+            next(uri, diagnostics);
+        }
+    }
+
+    updateStalePONumbers(pos: { id: number; range: vscode.Range }[]) {
+        for (const [uri, cached] of this._qcDiagnostics) {
+            const updated = cached
+                .map((d) => {
+                    const match = pos.find(
+                        (po) => po.range.start.line === d.range.start.line && po.range.start.character === d.range.start.character,
+                    );
+                    if (!match) {
+                        return null;
+                    }
+                    const updatedMessage = d.message.replace(/PO #\d+/, `PO #${match.id}`);
+                    const prefixedMessage = updatedMessage.startsWith("[STALE]") ? updatedMessage : `[STALE] ${updatedMessage}`;
+                    const stale = new vscode.Diagnostic(d.range, prefixedMessage, vscode.DiagnosticSeverity.Information);
+                    stale.source = d.source;
+                    stale.code = d.code;
+                    return stale;
+                })
+                .filter((d) => d !== null);
+            this._qcDiagnostics.set(uri, updated);
+        }
+    }
+
+    reapplyDiagnostics() {
+        for (const [uriString, next] of this._lastNext) {
+            const uri = vscode.Uri.parse(uriString);
+            const lastIncoming = this._lastIncomingDiagnostics.get(uriString) ?? [];
+            const cached = this._qcDiagnostics.get(uriString);
+            if (cached?.length) {
+                const missing = cached.filter(
+                    (d) =>
+                        !lastIncoming.some(
+                            (server) =>
+                                server.range.start.line === d.range.start.line && server.range.start.character === d.range.start.character,
+                        ),
+                );
+                next(uri, [...lastIncoming, ...missing]);
+            } else {
+                next(uri, lastIncoming);
+            }
+        }
     }
 }

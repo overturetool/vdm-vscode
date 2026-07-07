@@ -63,7 +63,7 @@ export class TranslateButton implements Disposable {
                         [this._extensionName, "translate", this._language].join("."),
                         wsFolder,
                     );
-                    p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig)).then(async (mainFileUri) => {
+                    p.provider.doTranslation(saveUri, uri, this.getOptions(languageConfig, uri)).then(async (mainFileUri) => {
                         // Check if a file has been returned
                         if (!isDir(mainFileUri.fsPath)) {
                             // Open the main file in the translation
@@ -93,7 +93,7 @@ export class TranslateButton implements Disposable {
         return saveLocation;
     }
 
-    private getOptions(config: WorkspaceConfiguration): any {
+    private getOptions(config: WorkspaceConfiguration, uri: Uri): any {
         let options = {};
 
         // Add configurations to the command options
@@ -103,6 +103,15 @@ export class TranslateButton implements Disposable {
                 options[key] = config[key];
             }
         });
+
+        const headersConfig: string = options["headers"] ?? "auto";
+        if (headersConfig === "always") {
+            options["headers"] = true;
+        } else if (headersConfig === "never") {
+            options["headers"] = false;
+        } else {
+            options["headers"] = !isDir(uri.fsPath);
+        }
 
         return options;
     }
