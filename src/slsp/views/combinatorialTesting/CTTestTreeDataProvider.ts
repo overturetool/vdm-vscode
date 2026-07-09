@@ -1,31 +1,38 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Event, EventEmitter, TreeDataProvider, TreeItem, TreeItemCollapsibleState } from "vscode";
 import { VerdictKind } from "../../protocol/CombinatorialTesting";
 import { CTViewDataStorage } from "./CTViewDataStorage";
 import { CTTreeItem, TestGroupItem, TraceGroupItem, TraceItem } from "./CTTreeItems";
+import * as Types from "./CTDataTypes";
 
 const defaultGroupSize = 300;
 
 export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeItem> {
     // Event to signal that the root has changed, so the view should be updated
     private _onDidChangeTreeData: EventEmitter<CTTreeItem | undefined> = new EventEmitter<CTTreeItem | undefined>();
-    public onDidChangeTreeData: Event<CTTreeItem> = this._onDidChangeTreeData.event;
+    public onDidChangeTreeData: Event<CTTreeItem | undefined> = this._onDidChangeTreeData.event;
 
     // Variable used to determine the size of the groups that the test cases are divided into.
-    private _groupSize: number;
+    private _groupSize: number = defaultGroupSize;
     public get groupSize(): number {
         return this._groupSize;
     }
     public set groupSize(value: number) {
         let oldSize = this.groupSize;
         this._groupSize = value > 0 ? value : defaultGroupSize;
-        if (oldSize != this.groupSize) this.rebuildViewFromElement();
+        if (oldSize != this.groupSize) {
+            this.rebuildViewFromElement();
+        }
     }
-    private _roots: CTTreeItem[];
+    private _roots: CTTreeItem[] = [];
     private _filter: boolean = false;
-    private _verdictKindToShow: VerdictKind[]; // variable used to store the filter settings
-    constructor(private _dataStorage: CTViewDataStorage, groupSize: number = defaultGroupSize) {
+    private _verdictKindToShow?: VerdictKind[]; // variable used to store the filter settings
+    constructor(
+        private _dataStorage: CTViewDataStorage,
+        groupSize: number = defaultGroupSize,
+    ) {
         this.groupSize = groupSize;
     }
 
@@ -61,7 +68,9 @@ export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeIt
                 let newSymbol = new TraceGroupItem(groupName, TreeItemCollapsibleState.Collapsed);
 
                 let oldSymbolIndex = this._roots.findIndex((symbol) => newSymbol.label == symbol.label);
-                if (oldSymbolIndex != -1) newSymbol.setChildren(this._roots[oldSymbolIndex].getChildren());
+                if (oldSymbolIndex != -1) {
+                    newSymbol.setChildren(this._roots[oldSymbolIndex].getChildren());
+                }
 
                 return newSymbol;
             });
@@ -82,6 +91,9 @@ export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeIt
         if (TraceItem.is(item)) {
             let trace = item as TraceItem;
             let traceData = this._dataStorage.getTrace(trace.name);
+            if (!traceData) {
+                throw new Types.OutOfSyncError(`Trace not found: ${trace.name}`);
+            }
             trace.update(traceData, this.groupSize, {
                 enabled: this._filter,
                 showGroup: (tests) => tests.find((test) => this.showVerdict(test.verdict), this) !== undefined,
@@ -117,10 +129,15 @@ export default class CTTestTreeDataProvider implements TreeDataProvider<CTTreeIt
         this.rebuildViewFromElement();
     }
 
-    private showVerdict(verdict: VerdictKind): boolean {
+    private showVerdict(verdict: VerdictKind | null): boolean {
         if (this._filter) {
-            if (verdict) return this._verdictKindToShow.includes(verdict);
-            else return false;
-        } else return true;
+            if (verdict) {
+                return this._verdictKindToShow!.includes(verdict);
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
     }
 }

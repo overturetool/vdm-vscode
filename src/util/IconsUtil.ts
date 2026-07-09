@@ -15,15 +15,15 @@ export namespace Icons {
         };
     }
 
-    export function verdictToIconPath(verdict: VerdictKind): Icons.IconPath {
+    export function verdictToIconPath(verdict: VerdictKind | null): Icons.IconPath | undefined {
         return verdict == VerdictKind.Passed
             ? getIcon("passed.svg")
             : verdict == VerdictKind.Failed
-            ? getIcon("failed.svg")
-            : verdict == VerdictKind.Inconclusive
-            ? getIcon("inconclusive.svg")
-            : verdict == VerdictKind.Filtered
-            ? getIcon("filtered.svg")
-            : null;
+              ? getIcon("failed.svg")
+              : verdict == VerdictKind.Inconclusive
+                ? getIcon("inconclusive.svg")
+                : verdict == VerdictKind.Filtered
+                  ? getIcon("filtered.svg")
+                  : undefined;
     }
 }

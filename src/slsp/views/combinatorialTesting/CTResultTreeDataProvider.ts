@@ -14,7 +14,7 @@ export default class CTResultTreeDataProvider implements TreeDataProvider<CTTree
 
     // Event to signal that the root has changed, so the view should be updated
     private _onDidChangeTreeData: EventEmitter<CTTreeItem | undefined> = new EventEmitter<CTTreeItem | undefined>();
-    onDidChangeTreeData: Event<CTTreeItem> = this._onDidChangeTreeData.event;
+    onDidChangeTreeData: Event<CTTreeItem | undefined> = this._onDidChangeTreeData.event;
 
     constructor(private _dataStorage: CTViewDataStorage) {}
 
@@ -25,7 +25,9 @@ export default class CTResultTreeDataProvider implements TreeDataProvider<CTTree
 
     // Supplies the tree items to the view. If an item is provided in the argument, we know it is an expression item, so we return the child of that
     getChildren(item?: CTTreeItem): ProviderResult<CTTreeItem[]> {
-        if (item) return (item as TestExpressionItem).getChildren();
+        if (item) {
+            return (item as TestExpressionItem).getChildren();
+        }
         return this._resultItems;
     }
 
@@ -41,7 +43,7 @@ export default class CTResultTreeDataProvider implements TreeDataProvider<CTTree
         });
 
         // Update View
-        this._onDidChangeTreeData.fire(null);
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     // Reset/clear the view
@@ -50,6 +52,6 @@ export default class CTResultTreeDataProvider implements TreeDataProvider<CTTree
         this._resultItems = [];
 
         // Update View
-        this._onDidChangeTreeData.fire(null);
+        this._onDidChangeTreeData.fire(undefined);
     }
 }

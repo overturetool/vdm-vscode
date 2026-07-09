@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { Location } from "vscode";
@@ -19,14 +20,14 @@ export interface TraceGroup {
 export interface TraceInfo {
     name: string;
     location: Location;
-    verdict?: VerdictKind;
+    verdict?: VerdictKind | null;
 }
 export interface Trace extends TraceInfo {
     testCases: TestCase[];
 }
 export interface TestCase {
     id: number;
-    verdict: VerdictKind;
+    verdict: VerdictKind | null;
     sequence: TestResult[];
 }
 export interface TestResult {
@@ -53,14 +54,22 @@ export namespace util {
         return tests.slice((range?.start || 1) - 1, range?.end || tests.length) || [];
     }
 
-    export function determineVerdict(tests: TestCase[]): VerdictKind {
-        if (!tests || tests.length == 0) return null;
+    export function determineVerdict(tests: TestCase[]): VerdictKind | null {
+        if (!tests || tests.length == 0) {
+            return null;
+        }
 
         // If the tests contains a failed test, set the trace verdict "Failed"
-        if (tests.some((tc) => tc.verdict == VerdictKind.Failed)) return VerdictKind.Failed;
+        if (tests.some((tc) => tc.verdict == VerdictKind.Failed)) {
+            return VerdictKind.Failed;
+        }
         // If the tests contains a test that has not been executed, set the trace verdict blank
-        else if (tests.some((tc) => tc.verdict == null)) return null;
+        else if (tests.some((tc) => tc.verdict == null)) {
+            return null;
+        }
         // If all traces has been executed and non of them are "Failed", set the trace verdict to "Passed"
-        else return VerdictKind.Passed;
+        else {
+            return VerdictKind.Passed;
+        }
     }
 }
