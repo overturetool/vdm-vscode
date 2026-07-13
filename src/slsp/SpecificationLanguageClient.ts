@@ -5,6 +5,7 @@ import { CombinantorialTestingFeature } from "./features/CombinatorialTestingFea
 import * as TranslationLanguageId from "./protocol/TranslationLanguageId";
 import ProofObligationGenerationFeature from "./features/ProofObligationGenerationFeature";
 import TranslateFeature from "./features/TranslateFeature";
+import CoverageFeature from "./features/CoverageFeature";
 
 export class SpecificationLanguageClient extends LanguageClient {
     constructor(
@@ -23,7 +24,7 @@ export class SpecificationLanguageClient extends LanguageClient {
         this.registerFeature(new CombinantorialTestingFeature(this));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.latex));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.word));
-        this.registerFeature(new TranslateFeature(this, TranslationLanguageId.coverage));
+        this.registerFeature(new CoverageFeature(this));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.graphviz));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.isabelle));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.vdm2uml));

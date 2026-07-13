@@ -1,35 +1,51 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { TranslateButton } from "./TranslateButton";
-import * as LanguageId from "../../protocol/TranslationLanguageId";
-import { Uri, window, WorkspaceFolder } from "vscode";
+import * as Fs from "fs-extra";
+import { commands, Disposable, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import * as Util from "../../../util/Util";
-import { TranslateProviderManager } from "./TranslateProviderManager";
 import { ClientManager } from "../../../ClientManager";
+import { CoverageProviderManager } from "./CoverageProviderManager";
+import { createDirectorySync } from "../../../util/DirectoriesUtil";
 
 const events = require("events");
 
-export class GenerateCoverageButton extends TranslateButton {
+export class GenerateCoverageButton implements Disposable {
     public eventEmitter = new events.EventEmitter();
     public static translationDoneId: string = "TDONE";
+    private static readonly _language = "coverage";
 
-    constructor(protected _extensionName: string, clientManager: ClientManager) {
-        super(LanguageId.coverage, _extensionName, clientManager);
+    protected _commandDisposable: Disposable;
+
+    constructor(
+        protected _extensionName: string,
+        clientManager: ClientManager,
+    ) {
+        this._commandDisposable = commands.registerCommand(
+            `${_extensionName}.translate.${GenerateCoverageButton._language}`,
+            async (uri: Uri) => {
+                const wsFolder = workspace.getWorkspaceFolder(uri);
+                if (!wsFolder) {
+                    throw Error(`Cannor find workspace folder for Uri: ${uri.toString()}`);
+                }
+                if (!clientManager.get(wsFolder)) {
+                    await clientManager.launchClientForWorkspace(wsFolder);
+                }
+                this.generateCoverage(wsFolder);
+            },
+            this,
+        );
     }
-    // Override
-    protected async translate(_uri: Uri, wsFolder: WorkspaceFolder) {
-        for await (const p of TranslateProviderManager.getProviders(this._language)) {
-            if (Util.match(p.selector, wsFolder.uri)) {
+
+    private async generateCoverage(wsFolder: WorkspaceFolder): Promise<void> {
+        for (const entry of CoverageProviderManager.getProviders()) {
+            if (Util.match(entry.selector, wsFolder.uri)) {
                 try {
-                    // Get save location for coverage files
                     const saveUri = this.createSaveDir(
-                        true,
-                        Uri.joinPath(Util.generatedDataPath(wsFolder), this._language, this._language)
+                        Uri.joinPath(Util.generatedDataPath(wsFolder), GenerateCoverageButton._language, GenerateCoverageButton._language),
                     );
 
-                    // Perform translation to generate coverage files
-                    p.provider
-                        .doTranslation(saveUri, wsFolder.uri, { storeAllTranslations: "true", allowSingleFileTranslation: "false" })
+                    entry.provider
+                        .doCoverage(saveUri, wsFolder.uri, { storeAllTranslations: "true", allowSingleFileTranslation: "false" })
                         .then(() => {
                             this.eventEmitter.emit(GenerateCoverageButton.translationDoneId, {
                                 uri: saveUri,
@@ -37,12 +53,23 @@ export class GenerateCoverageButton extends TranslateButton {
                             } as GeneratedCoverage);
                         });
                 } catch (e) {
-                    const message = `${this._language} translate provider failed with message: ${e}`;
+                    const message = `Coverage provider failed with message: ${e}`;
                     window.showWarningMessage(message);
                     console.warn(message);
                 }
             }
         }
+    }
+
+    private createSaveDir(location: Uri): Uri {
+        const saveLocation = createDirectorySync(location, true);
+        Fs.removeSync(saveLocation.fsPath);
+        Fs.ensureDirSync(saveLocation.fsPath);
+        return saveLocation;
+    }
+
+    dispose() {
+        this._commandDisposable.dispose();
     }
 }
 

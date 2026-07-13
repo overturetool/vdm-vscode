@@ -280,45 +280,14 @@
                 "icon": "$(example)"
             },
             {
-                "command": "vdm-vscode.translate.latex",
-                "title": "Translate to LaTeX",
-                "category": "VDM",
-                "icon": "$(references)"
-            },
-            {
-                "command": "vdm-vscode.translate.word",
-                "title": "Translate to Word",
+                "command": "vdm-vscode.translate",
+                "title": "Translate...",
                 "category": "VDM",
                 "icon": "$(references)"
             },
             {
                 "command": "vdm-vscode.translate.coverage",
                 "title": "Generate Coverage",
-                "category": "VDM",
-                "icon": "$(references)"
-            },
-            {
-                "command": "vdm-vscode.translate.graphviz",
-                "title": "Generate Dependency Graph",
-                "category": "VDM",
-                "icon": "$(references)"
-            },
-            {
-                "command": "vdm-vscode.translate.isabelle",
-                "title": "Translate to Isabelle",
-                "category": "VDM",
-                "icon": "$(references)",
-                "enablement": "vdm-vscode.translate.isabelle"
-            },
-            {
-                "command": "vdm-vscode.translate.vdm2uml",
-                "title": "Translate to UML",
-                "category": "VDM",
-                "icon": "$(references)"
-            },
-            {
-                "command": "vdm-vscode.translate.uml2vdm",
-                "title": "Translate to VDM",
                 "category": "VDM",
                 "icon": "$(references)"
             },
@@ -573,22 +542,8 @@
                     "group": "verification@1"
                 },
                 {
-                    "command": "vdm-vscode.translate.latex",
+                    "command": "vdm-vscode.translate",
                     "group": "translate@1"
-                },
-                {
-                    "command": "vdm-vscode.translate.word",
-                    "group": "translate@2"
-                },
-                {
-                    "command": "vdm-vscode.translate.isabelle",
-                    "when": "explorerResourceIsFolder || resourceLangId == vdmsl",
-                    "group": "translate@3"
-                },
-                {
-                    "command": "vdm-vscode.translate.vdm2uml",
-                    "when": "(explorerResourceIsFolder || resourceLangId == vdmpp || resourceLangId == vdmrt) && vdm-vscode.translate.vdm2uml",
-                    "group": "translate@4"
                 },
                 {
                     "command": "vdm-vscode.translate.coverage",
@@ -597,10 +552,6 @@
                 {
                     "command": "vdm-vscode.javaCodeGen",
                     "group": "generate@2"
-                },
-                {
-                    "command": "vdm-vscode.translate.graphviz",
-                    "group": "generate@3"
                 },
                 {
                     "command": "vdm-vscode.addLibrary",
@@ -742,11 +693,6 @@
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
                     "group": "vdm@1"
-                },
-                {
-                    "command": "vdm-vscode.translate.uml2vdm",
-                    "when": "resourceExtname == .puml && vdm-vscode.translate.uml2vdm",
-                    "group": "vdm@2"
                 }
             ],
             "editor/title": [
@@ -780,11 +726,6 @@
                 {
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
-                    "group": "vdm@1"
-                },
-                {
-                    "command": "vdm-vscode.translate.uml2vdm",
-                    "when": "resourceExtname == .puml && vdm-vscode.translate.uml2vdm",
                     "group": "vdm@1"
                 }
             ],
@@ -854,31 +795,11 @@
                     "when": "false"
                 },
                 {
-                    "command": "vdm-vscode.translate.latex",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.translate.word",
+                    "command": "vdm-vscode.translate",
                     "when": "false"
                 },
                 {
                     "command": "vdm-vscode.translate.coverage",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.translate.graphviz",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.translate.isabelle",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.translate.vdm2uml",
-                    "when": "false"
-                },
-                {
-                    "command": "vdm-vscode.translate.uml2vdm",
                     "when": "false"
                 },
                 {

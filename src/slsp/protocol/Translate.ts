@@ -33,11 +33,22 @@ export interface TranslateServerCapabilities {
         translateProvider?: boolean | TranslateOptions;
     };
 }
+
+/**
+ * Describes a single translation target the server can produce.
+ * `name` is the stable identifier used throughout the client.
+ * `description` is a human-readable string for display purposes only.
+ */
+export interface TranslateLanguageInfo {
+    name: string;
+    description?: string;
+}
+
 /**
  * Options for the translate feature.
  */
 export interface TranslateOptions extends WorkDoneProgressOptions {
-    languageId: string | string[];
+    languages: TranslateLanguageInfo[];
 }
 
 /**
@@ -50,7 +61,7 @@ export namespace TranslateRequest {
     export type MiddlewareSignature = (
         params: TranslateParams,
         token: CancellationToken,
-        next: HandlerSignature
+        next: HandlerSignature,
     ) => HandlerResult<TranslateResponse | null, void>;
 }
 
