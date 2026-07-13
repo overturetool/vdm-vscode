@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as fs from "fs-extra";
@@ -14,7 +15,7 @@ export interface CombinatorialTestProvider {
         traceName: string,
         options?: { asPartial?: boolean; filter?: CTFilterOption[]; range?: NumberRange },
         cancellationToken?: CancellationToken,
-        progress?: Progress<{ message?: string; increment?: number }>
+        progress?: Progress<{ message?: string; increment?: number }>,
     ): Thenable<Types.TestCase[] | null>;
     onDidGetPartialResult?: Event<Types.TestCase[]>;
 }
@@ -22,10 +23,13 @@ export interface CombinatorialTestProvider {
 export class CTViewDataStorage {
     private readonly _name: string = "CT Data Storage";
     private _traceGroups: Types.TraceGroup[] = [];
-    private _currentWsFolder: WorkspaceFolder;
+    private _currentWsFolder?: WorkspaceFolder;
     private _usingPartialResult: boolean = false;
 
     public get storageLocation(): Uri {
+        if (!this._currentWsFolder) {
+            throw new Error(`[${this._name}] No workspace folder is currently selected`);
+        }
         return Uri.joinPath(generatedDataPath(this._currentWsFolder), "Combinatorial Testing");
     }
 
@@ -74,7 +78,7 @@ export class CTViewDataStorage {
                             // Go through files in the folder and read content
                             entries.forEach((entry: fs.Dirent) => {
                                 // Make sure the file is a save file
-                                if (entry.isFile && entry.name.includes(".json")) {
+                                if (entry.isFile() && entry.name.includes(".json")) {
                                     // Get the location of the file
                                     let fileUri = Uri.joinPath(this.storageLocation, entry.name);
                                     try {
@@ -119,10 +123,14 @@ export class CTViewDataStorage {
         let shortest = length < trace.testCases.length ? length : trace.testCases.length;
 
         // Shorten trace test storage if needed
-        for (let i = trace.testCases.length; i > length; --i) trace.testCases.pop();
+        for (let i = trace.testCases.length; i > length; --i) {
+            trace.testCases.pop();
+        }
 
         // Extend trace test storage if needed
-        for (let i = trace.testCases.length; i < length; ++i) trace.testCases.push({ id: i + 1, verdict: null, sequence: [] });
+        for (let i = trace.testCases.length; i < length; ++i) {
+            trace.testCases.push({ id: i + 1, verdict: null, sequence: [] });
+        }
 
         // Reset verdict and results on each test
         for (let i = 0; i < shortest; ++i) {
@@ -134,29 +142,37 @@ export class CTViewDataStorage {
         return trace;
     }
 
+    private requireTrace(traceName: string): Types.Trace {
+        const trace = this.getTrace(traceName);
+        if (!trace) {
+            throw new Types.OutOfSyncError(`Trace not found: ${traceName}`);
+        }
+        return trace;
+    }
+
     // Stores an array of tests
     private storeTests(traceName: string, tests: Types.TestCase[]) {
-        let existingTestCases: Types.TestCase[] = this.getTrace(traceName).testCases;
+        const trace = this.requireTrace(traceName);
 
         if (this._usingPartialResult) {
             // Add each test to the existing tests
             tests.forEach((test) => {
                 try {
                     // Tests start at id=1, thus e.g. test 12 is stored at index 11
-                    existingTestCases[test.id - 1] = test;
+                    trace.testCases[test.id - 1] = test;
                 } catch (e) {
                     // Warn if a storage location does not exist for the test
-                    return console.warn(`[${this._name}] storeTest could not find index: ${test.id - 1}`);
+                    console.warn(`[${this._name}] storeTest could not find index: ${test.id - 1}`);
                 }
             });
         } else {
             // Overwrite all the tests of the trace with the incomming
-            existingTestCases = tests;
+            trace.testCases = tests;
         }
     }
 
     public async updateTraceGroups(wsFolder: WorkspaceFolder): Promise<Types.TraceGroup[]> {
-        if (!isSameWorkspaceFolder(this._currentWsFolder, wsFolder)) {
+        if (!this._currentWsFolder || !isSameWorkspaceFolder(this._currentWsFolder, wsFolder)) {
             // Workspace has changed, load data for the workspace
             this._currentWsFolder = wsFolder;
             this._traceGroups = await this.loadCTs();
@@ -178,16 +194,18 @@ export class CTViewDataStorage {
 
             // Map TraceGroupInfo to TraceGroup type
             if (!localGroup) {
-                localGroup = {
+                return {
                     name: providedGroupInfo.name,
                     traces: providedGroupInfo.traces.map((trace) => {
                         return { name: trace.name, location: trace.location, verdict: trace.verdict, testCases: [] };
                     }),
                 };
             } else {
+                const group = localGroup;
+
                 // Update all traces with information from provider
-                localGroup.traces = providedGroupInfo.traces.map((trace) => {
-                    let localTrace = localGroup.traces.find((t) => t.name == trace.name);
+                group.traces = providedGroupInfo.traces.map((trace) => {
+                    let localTrace = group.traces.find((t) => t.name == trace.name);
 
                     // Map TraceInfo to Trace type
                     if (!localTrace) {
@@ -203,8 +221,8 @@ export class CTViewDataStorage {
                     }
                     return localTrace;
                 });
+                return group;
             }
-            return localGroup;
         });
 
         return Promise.resolve(this._traceGroups);
@@ -212,22 +230,35 @@ export class CTViewDataStorage {
 
     public async updateTrace(traceName: string): Promise<Types.Trace> {
         return new Promise(async (resolve, reject) => {
-            // Find existing trace
-            let returnTrace: Types.Trace = this.getTrace(traceName);
-
             try {
+                // Find existing trace
+                const returnTrace = this.requireTrace(traceName);
+
+                const wsFolder = this._currentWsFolder;
+                if (!wsFolder) {
+                    return reject(`[${this._name}] No workspace folder selected`);
+                }
+
                 // Request generate from server
-                const provider = CTViewDataStorage.getProvider(this._currentWsFolder);
+                const provider = CTViewDataStorage.getProvider(wsFolder);
+                if (!provider) {
+                    return reject(`Could not find provider for workspace ${wsFolder.name}`);
+                }
                 const numberOfTests = await provider.provideNumberOfTests(traceName);
 
-                if (typeof numberOfTests != "number") return reject(numberOfTests);
+                if (typeof numberOfTests != "number") {
+                    return reject(numberOfTests);
+                }
 
                 // Reset trace
                 returnTrace.verdict = null;
                 this.resetTraceToLength(numberOfTests, returnTrace);
 
                 // Store trace
-                let localGroup = this._traceGroups.find((group) => group.traces.find((trace) => trace.name == traceName));
+                const localGroup = this._traceGroups.find((group) => group.traces.some((trace) => trace.name == traceName));
+                if (!localGroup) {
+                    return reject(`[${this._name}] Could not find trace group containing trace: ${traceName}`);
+                }
                 localGroup.traces[localGroup.traces.findIndex((trace) => trace.name == traceName)] = returnTrace;
 
                 return resolve(returnTrace);
@@ -243,15 +274,22 @@ export class CTViewDataStorage {
         range: NumberRange,
         cancellationToken?: CancellationToken,
         progress?: Progress<{ message?: string; increment?: number }>,
-        filter?: CTFilterOption[]
+        filter?: CTFilterOption[],
     ): Promise<Types.TestCase[]> {
         return new Promise(async (resolve, reject) => {
+            const wsFolder = this._currentWsFolder;
+            if (!wsFolder) {
+                return reject(`[${this._name}] No workspace folder selected`);
+            }
+
             // Find provider
-            const provider = CTViewDataStorage.getProvider(this._currentWsFolder);
-            if (!provider) return reject(`Could not find provider for workspace ${this._currentWsFolder}`);
+            const provider = CTViewDataStorage.getProvider(wsFolder);
+            if (!provider) {
+                return reject(`Could not find provider for workspace ${wsFolder.name}`);
+            }
 
             // Use partial result?
-            let eventHandler: Disposable;
+            let eventHandler: Disposable | undefined;
             if (provider.onDidGetPartialResult != undefined) {
                 this._usingPartialResult = true;
 
@@ -271,7 +309,7 @@ export class CTViewDataStorage {
                         range: range,
                     },
                     cancellationToken,
-                    progress
+                    progress,
                 );
 
                 // Clear partial result control variable
@@ -314,23 +352,32 @@ export class CTViewDataStorage {
     }
 
     public getTraces(groupName: string): Types.Trace[] {
-        return this._traceGroups.find((ct) => ct.name == groupName).traces;
+        const group = this._traceGroups.find((ct) => ct.name == groupName);
+        if (!group) {
+            console.warn(`[${this._name}] getTraces could not find group: ${groupName}`);
+            return [];
+        }
+        return group.traces;
     }
 
-    public getTrace(traceName: string): Types.Trace {
-        return [].concat(...this._traceGroups.map((symbol) => symbol.traces)).find((trace) => trace.name == traceName);
+    public getTrace(traceName: string): Types.Trace | undefined {
+        return this._traceGroups.flatMap((group) => group.traces).find((trace) => trace.name == traceName);
     }
 
     public getNumberOftests(traceName: string): number {
-        return this.getTrace(traceName).testCases.length;
+        return this.requireTrace(traceName).testCases.length;
     }
 
     public getTestCase(traceName: string, id: number): Types.TestCase {
-        return this.getTrace(traceName).testCases.find((test) => test.id == id);
+        const testCase = this.requireTrace(traceName).testCases.find((test) => test.id == id);
+        if (!testCase) {
+            throw new Types.OutOfSyncError(`Test case not found: ${traceName} #${id}`);
+        }
+        return testCase;
     }
 
     public getTestCases(traceName: string, testIdRange?: NumberRange): Types.TestCase[] {
-        let trace: Types.Trace = this.getTrace(traceName);
+        let trace: Types.Trace = this.requireTrace(traceName);
         if (testIdRange) {
             return Types.util.getTestCases(trace.testCases, testIdRange);
         } else {
@@ -348,7 +395,9 @@ export namespace CTViewDataStorage {
 
     export function registerTestProvider(wsFolder: WorkspaceFolder, provider: CombinatorialTestProvider): Disposable {
         // Check if a provider already exists for the workspace, if so it will be overwritten
-        if (testProviders.get(wsFolder)) console.info(`[CT Storage] Overwriting provider for workspace folder: ${wsFolder.name}`);
+        if (testProviders.get(wsFolder)) {
+            console.info(`[CT Storage] Overwriting provider for workspace folder: ${wsFolder.name}`);
+        }
 
         // Set provider for workspace
         testProviders.set(wsFolder, provider);
@@ -356,12 +405,14 @@ export namespace CTViewDataStorage {
         // Return a disposeable that removes the provider from the array of available providers.
         return {
             dispose: () => {
-                if (testProviders.get(wsFolder) == provider) testProviders.delete(wsFolder);
+                if (testProviders.get(wsFolder) == provider) {
+                    testProviders.delete(wsFolder);
+                }
             },
         };
     }
 
-    export function getProvider(wsFolder: WorkspaceFolder): CombinatorialTestProvider {
+    export function getProvider(wsFolder: WorkspaceFolder): CombinatorialTestProvider | undefined {
         return testProviders.get(wsFolder);
     }
 

@@ -29,21 +29,17 @@ export default class TranslateFeature implements StaticFeature {
         // Not supported
         if (!translateCapabilities || typeof translateCapabilities == "boolean") return;
 
-        // Check server supported languages
-        let languageIds = translateCapabilities.languageId;
-        let languages = typeof languageIds == "string" ? [languageIds] : languageIds;
+        // Find this feature's language among the server-advertised translation targets
+        const languageInfo = translateCapabilities.languages?.find((l) => l.name === this._language);
 
-        // Check for feature's language //TODO: Inform that the server does not provide translation for the language although it was expected?
-        if (languages.includes(this._language)) {
+        if (languageInfo) {
             const provider: TranslateProvider = {
                 doTranslation: (saveUri: Uri, rootUri?: Uri, options?: any) => this.provideTranslation(saveUri, rootUri, options),
             };
-            this._disposables.push(TranslateProviderManager.registerTranslateProvider(this._selector, provider, this._language));
+            this._disposables.push(
+                TranslateProviderManager.registerTranslateProvider(this._selector, provider, this._language, languageInfo.description),
+            );
         }
-
-        // Check if support work done progress // TODO not currently used for anything..
-        // if (WorkDoneProgressOptions.hasWorkDoneProgress(translateCapabilities))
-        // this._supportWorkDone = translateCapabilities.workDoneProgress;
     }
     getState(): FeatureState {
         return { kind: "static" };

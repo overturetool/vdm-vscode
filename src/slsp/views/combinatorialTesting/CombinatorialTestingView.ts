@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/* eslint-disable eqeqeq */
 
 import { Disposable, TreeView, commands, window, WorkspaceFolder, ProgressLocation, CancellationTokenSource, workspace } from "vscode";
 import CTTestTreeDataProvider from "./CTTestTreeDataProvider";
@@ -10,6 +11,7 @@ import { CTFilterOption, NumberRange, VerdictKind } from "../../protocol/Combina
 import { ClientManager } from "../../../ClientManager";
 import { VdmDialect } from "../../../util/DialectUtil";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 enum state {
     idle,
     buildingOutline,
@@ -39,10 +41,10 @@ export class CombinatorialTestingView implements Disposable {
     private _resultView: TreeView<CTTreeItem>;
 
     // Control variables
-    private _timeoutRef: NodeJS.Timeout;
-    private _currentWsFolder: WorkspaceFolder;
-    private _currentlyExecutingTrace: TraceItem;
-    private _cancelToken: CancellationTokenSource;
+    private _timeoutRef?: NodeJS.Timeout;
+    private _currentWsFolder?: WorkspaceFolder;
+    private _currentlyExecutingTrace?: TraceItem;
+    private _cancelToken?: CancellationTokenSource;
     private _executeCanceled: boolean = false;
 
     private _state: state = state.idle;
@@ -118,7 +120,7 @@ export class CombinatorialTestingView implements Disposable {
 
         //* Command registration /////
         if (canFilter) {
-            this.registerCommand("vdm-vscode.ct.setExecuteFilter", () => this._filterHandler.setFilter());
+            this.registerCommand("vdm-vscode.ct.setExecuteFilter", () => this._filterHandler!.setFilter());
             this.registerCommand("vdm-vscode.ct.filteredExecute", (e) => this.execute(e, true));
         }
         if (canInterpret) {
@@ -161,38 +163,44 @@ export class CombinatorialTestingView implements Disposable {
 
     private async rebuildOutline(): Promise<void> {
         // Manage state
-        if (this.state != state.idle) return console.info(`[CT View] Rebuild Outline not possible while in state ${state[this.state]}`);
+        if (this.state != state.idle) {
+            return console.info(`[CT View] Rebuild Outline not possible while in state ${state[this.state]}`);
+        }
         this.state = state.buildingOutline;
 
         // Prompt user to chose a specification for CT.
         // Skip if using current workspace
-        let wsFolder: WorkspaceFolder = this._currentWsFolder || (await this.generateOutline());
+        const wsFolder: WorkspaceFolder | undefined = this._currentWsFolder || (await this.generateOutline());
         if (!wsFolder) {
             this.state = state.idle;
             return console.info(`[CT View] Rebuild Outline canceled, did not find a workspacefolder`);
         }
+        this._currentWsFolder = wsFolder;
 
         //Change viewname
-        this._testView.title = this._currentWsFolder.name;
+        this._testView.title = wsFolder.name;
 
         // Display progress
         await window.withProgress(
             {
                 location: ProgressLocation.Notification,
-                title: `Generating trace outline for ${this._currentWsFolder.name}`,
+                title: `Generating trace outline for ${wsFolder.name}`,
                 cancellable: false,
             },
             async (_progress, _token) => {
                 try {
                     // Update data storage
-                    let traceGroups = await this._dataStorage.updateTraceGroups(this._currentWsFolder);
+                    let traceGroups = await this._dataStorage.updateTraceGroups(wsFolder);
 
                     // Inform user if no traces were found
-                    if (traceGroups.length == 0)
-                        window.showInformationMessage(`No traces found for the workspace ${this._currentWsFolder.name}`);
+                    if (traceGroups.length == 0) {
+                        window.showInformationMessage(`No traces found for the workspace ${wsFolder.name}`);
+                    }
 
                     // Notify tree view of data update
-                    if (traceGroups) this._testProvider.rebuildViewFromElement();
+                    if (traceGroups) {
+                        this._testProvider.rebuildViewFromElement();
+                    }
 
                     // Reset test sequence view
                     this._resultProvider.reset();
@@ -208,11 +216,15 @@ export class CombinatorialTestingView implements Disposable {
 
     private async generateTests(treeItem: CTTreeItem, silent: boolean = false) {
         // Validate indput type
-        if (!TraceItem.is(treeItem)) return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+        if (!TraceItem.is(treeItem)) {
+            return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+        }
         let traceItem = treeItem as TraceItem;
 
         // Manage state
-        if (this.state != state.idle) return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+        if (this.state != state.idle) {
+            return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+        }
         this.state = state.generatingTests;
 
         // Set status bar
@@ -242,8 +254,9 @@ export class CombinatorialTestingView implements Disposable {
         };
 
         // Call the function
-        if (silent) await generateFunc();
-        else
+        if (silent) {
+            await generateFunc();
+        } else {
             await window.withProgress(
                 {
                     location: ProgressLocation.Notification,
@@ -252,15 +265,19 @@ export class CombinatorialTestingView implements Disposable {
                 },
                 generateFunc,
             );
+        }
     }
 
     private async execute(treeItem: CTTreeItem, filter: boolean = false) {
         // Validate input type
-        if (treeItem == undefined || (!TraceItem.is(treeItem) && !TestGroupItem.is(treeItem)))
+        if (treeItem == undefined || (!TraceItem.is(treeItem) && !TestGroupItem.is(treeItem))) {
             return console.info(`[CT View] Execute only possible for Trace or Test Group items`);
+        }
 
         // Manage state
-        if (this.state != state.idle) return console.info(`[CT View] Execute not possible while in state ${state[this.state]}`);
+        if (this.state != state.idle) {
+            return console.info(`[CT View] Execute not possible while in state ${state[this.state]}`);
+        }
         this.state = TraceItem.is(treeItem) ? state.executingTestTrace : state.executingTestGroup;
 
         // Set status bar
@@ -268,7 +285,8 @@ export class CombinatorialTestingView implements Disposable {
 
         // Generate cancel token
         this._cancelToken = new CancellationTokenSource();
-        this._cancelToken.token.onCancellationRequested(() => {
+        const cancelToken = this._cancelToken;
+        cancelToken.token.onCancellationRequested(() => {
             this._executeCanceled = true;
             this.showCancelButton(false);
         });
@@ -283,7 +301,7 @@ export class CombinatorialTestingView implements Disposable {
                 cancellable: true,
             },
             async (progress, token) => {
-                token.onCancellationRequested(() => this._cancelToken.cancel());
+                token.onCancellationRequested(() => cancelToken.cancel());
 
                 // Do the execute request
                 try {
@@ -303,31 +321,31 @@ export class CombinatorialTestingView implements Disposable {
                         } else {
                             range = { end: traceItem.numberOfTests };
                         }
-                    } else if (this.state == state.executingTestGroup) {
+                    } else {
                         let testGroupItem = treeItem as TestGroupItem;
                         this._currentlyExecutingTrace = testGroupItem.getParent();
                         range = testGroupItem.range;
                     }
 
+                    const currentlyExecutingTrace = this._currentlyExecutingTrace;
+
                     // Start a timer to update the UI periodically - this timer is cleared in the finished function
                     this._timeoutRef = setInterval(
-                        () => this._testProvider.rebuildViewFromElement(this._currentlyExecutingTrace),
+                        () => this._testProvider.rebuildViewFromElement(currentlyExecutingTrace),
                         this._uiUpdateIntervalMS,
                     );
 
                     // Update the data storage
                     await this._dataStorage.updateTests(
-                        this._currentlyExecutingTrace.name,
+                        currentlyExecutingTrace.name,
                         range,
-                        this._cancelToken.token,
+                        cancelToken.token,
                         progress,
-                        filter ? this._filterHandler.getFilter() : null,
+                        filter && this._filterHandler ? this._filterHandler.getFilter() : undefined,
                     );
 
                     // Update view
-                    this._testProvider.rebuildViewFromElement(
-                        this.state == state.executingTestTrace ? null : this._currentlyExecutingTrace,
-                    );
+                    this._testProvider.rebuildViewFromElement(this.state == state.executingTestTrace ? undefined : currentlyExecutingTrace);
 
                     // Reset state
                     this.state = state.idle;
@@ -343,7 +361,7 @@ export class CombinatorialTestingView implements Disposable {
                         if (err.message.includes("not found")) {
                             // Trace not found -> group out-of-sync
                             this.rebuildOutline();
-                        } else {
+                        } else if (traceItem) {
                             // Trace out-of-sync -> try to generate it again
                             this.generateTests(traceItem);
                         }
@@ -369,28 +387,34 @@ export class CombinatorialTestingView implements Disposable {
 
     private async fullExecute() {
         // Manage state
-        if (this.state != state.idle) return console.info(`[CT View] Full Execute not possible while in state ${state[this.state]}`);
+        if (this.state != state.idle) {
+            return console.info(`[CT View] Full Execute not possible while in state ${state[this.state]}`);
+        }
 
         // Make sure we are up-to-date
         await this.rebuildOutline();
 
         // Run Execute on all traces of all trace groups
-        for await (const group of await this._testProvider.getChildren()) {
-            for await (const trace of await this._testProvider.getChildren(group)) {
+        for (const group of await this._testProvider.getChildren()) {
+            for (const trace of await this._testProvider.getChildren(group)) {
                 await this.generateTests(trace, true);
                 await this.execute(trace, false);
-                if (this._executeCanceled) return;
+                if (this._executeCanceled) {
+                    return;
+                }
             }
         }
     }
 
     private async sendToInterpreter(treeItem: CTTreeItem) {
         // Validate input type
-        if (!TestItem.is(treeItem)) return;
+        if (!TestItem.is(treeItem)) {
+            return;
+        }
         let testItem = treeItem as TestItem;
 
         // Use the handler to send to interpreter
-        this._interpreterHandler.sendToInterpreter(testItem.trace.name, testItem.idNumber, this._currentWsFolder);
+        this._interpreterHandler!.sendToInterpreter(testItem.trace.name, testItem.idNumber, this._currentWsFolder);
     }
 
     private async treeVerdictFilter(enable: boolean) {
@@ -405,10 +429,14 @@ export class CombinatorialTestingView implements Disposable {
             });
 
             // If non are selected, abort filtering
-            if (selectedFilters === undefined || selectedFilters.length == 0) return;
+            if (selectedFilters === undefined || selectedFilters.length == 0) {
+                return;
+            }
 
             // If all are selected remove filtering
-            if (selectedFilters.length == filterItems.length) enable = false;
+            if (selectedFilters.length == filterItems.length) {
+                enable = false;
+            }
 
             // Transform the the selection to be able to use it in the function filterTree below
             for (let i = 0; i < filterItems.length; i++) {
@@ -427,29 +455,35 @@ export class CombinatorialTestingView implements Disposable {
 
     private goToTrace(treeItem: CTTreeItem) {
         // Validate input type
-        if (!TraceItem.is(treeItem)) return;
+        if (!TraceItem.is(treeItem)) {
+            return;
+        }
         let traceItem = treeItem as TraceItem;
 
         // Find trace that test belongs to
         let trace = this._dataStorage.getTrace(traceItem.name);
+        if (!trace) {
+            console.warn(`[CT View] goToTrace could not find trace: ${traceItem.name}`);
+            return;
+        }
 
         // Show the file
         window.showTextDocument(trace.location.uri, { selection: trace.location.range });
     }
 
-    private async resolveWorkspaceFolder(preferActive: boolean): Promise<WorkspaceFolder> {
+    private async resolveWorkspaceFolder(preferActive: boolean): Promise<WorkspaceFolder | undefined> {
         // Manage state
         if (this.state != state.idle) {
             console.info(`[CT View] Select workspace not possible while in state ${state[this.state]}`);
-            return;
+            return undefined;
         }
 
         if (this._knownVdmFolders.size == 0) {
             window.showInformationMessage("[CT View] Unable to find any workspace folders containing files that the extension can handle");
-            return;
+            return undefined;
         }
 
-        let wsFolder: WorkspaceFolder;
+        let wsFolder: WorkspaceFolder | undefined;
 
         // Try the active editor's workspace folder first
         if (preferActive) {
@@ -463,20 +497,20 @@ export class CombinatorialTestingView implements Disposable {
         // Fall back to prompting the user if there is no active editor,
         // or if the caller explicitly wants a picker (preferActive == false)
         if (!wsFolder) {
-            const wsFS: string | WorkspaceFolder =
-                workspace.workspaceFolders?.length > 1
-                    ? await window.showQuickPick(
-                          Array.from(this._knownVdmFolders.keys()).map((key) => key.name),
-                          { canPickMany: false, title: "Select workspace folder" },
-                      )
-                    : workspace.workspaceFolders[0];
-            if (wsFS) {
-                wsFolder = typeof wsFS === "string" ? Array.from(this._knownVdmFolders.keys()).find((key) => key.name == wsFS) : wsFS;
+            const folders = workspace.workspaceFolders;
+            if (folders && folders.length > 1) {
+                const pickedName = await window.showQuickPick(
+                    Array.from(this._knownVdmFolders.keys()).map((key) => key.name),
+                    { canPickMany: false, title: "Select workspace folder" },
+                );
+                wsFolder = pickedName ? Array.from(this._knownVdmFolders.keys()).find((key) => key.name == pickedName) : undefined;
+            } else if (folders && folders.length === 1) {
+                wsFolder = folders[0];
             }
         }
 
         if (wsFolder) {
-            if (!this._dataStorage.workspaceFolders.find((wsfWithProvider) => wsfWithProvider.uri == wsFolder.uri)) {
+            if (!this._dataStorage.workspaceFolders.find((wsfWithProvider) => wsfWithProvider.uri == wsFolder!.uri)) {
                 if (this._clientManager.has(wsFolder)) {
                     console.info(
                         "[CT View] Select workspace not possible as the langiage server does not seem to support combinatorial testing",
@@ -497,17 +531,19 @@ export class CombinatorialTestingView implements Disposable {
         return wsFolder;
     }
 
-    private async selectWorkspaceFolder(): Promise<WorkspaceFolder> {
+    private async selectWorkspaceFolder(): Promise<WorkspaceFolder | undefined> {
         return this.resolveWorkspaceFolder(false);
     }
 
-    private async generateOutline(): Promise<WorkspaceFolder> {
+    private async generateOutline(): Promise<WorkspaceFolder | undefined> {
         return this.resolveWorkspaceFolder(true);
     }
 
     private clearView() {
         // Only allowed while idle
-        if (this.state != state.idle) return console.info(`[CT View] Clear view not possible while in state ${state[this.state]}`);
+        if (this.state != state.idle) {
+            return console.info(`[CT View] Clear view not possible while in state ${state[this.state]}`);
+        }
 
         // Reset control variables and views
         this._currentWsFolder = undefined;
@@ -517,10 +553,20 @@ export class CombinatorialTestingView implements Disposable {
     }
 
     dispose() {
-        while (this._disposables.length) this._disposables.pop().dispose();
-        if (this._testView) this._testView.dispose();
-        if (this._resultView) this._resultView.dispose();
-        if (this._timeoutRef) this._timeoutRef.unref();
-        if (this._cancelToken) this._cancelToken.dispose();
+        while (this._disposables.length) {
+            this._disposables.pop()?.dispose();
+        }
+        if (this._testView) {
+            this._testView.dispose();
+        }
+        if (this._resultView) {
+            this._resultView.dispose();
+        }
+        if (this._timeoutRef) {
+            this._timeoutRef.unref();
+        }
+        if (this._cancelToken) {
+            this._cancelToken.dispose();
+        }
     }
 }

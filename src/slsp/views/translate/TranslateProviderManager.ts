@@ -2,14 +2,25 @@
 
 import { commands, Disposable, DocumentSelector, Uri } from "vscode";
 
+interface RegisteredTranslateProvider {
+    selector: DocumentSelector;
+    provider: TranslateProvider;
+    description?: string;
+}
+
 export class TranslateProviderManager {
     // Keep track of translate providers for each workspace/client
-    private static _providers: Map<string, { selector: DocumentSelector; provider: TranslateProvider }[]> = new Map();
+    private static _providers: Map<string, RegisteredTranslateProvider[]> = new Map();
 
     // Register a new translate provider for a workspace/client
-    public static registerTranslateProvider(documentSelector: DocumentSelector, provider: TranslateProvider, language: string): Disposable {
+    public static registerTranslateProvider(
+        documentSelector: DocumentSelector,
+        provider: TranslateProvider,
+        language: string,
+        description?: string,
+    ): Disposable {
         const providers = this._providers.get(language) || [];
-        providers.push({ selector: documentSelector, provider: provider });
+        providers.push({ selector: documentSelector, provider, description });
         this._providers.set(language, providers);
 
         commands.executeCommand("setContext", `vdm-vscode.translate.${language}`, true);
@@ -23,8 +34,12 @@ export class TranslateProviderManager {
         };
     }
 
-    public static getProviders(language: string): { selector: DocumentSelector; provider: TranslateProvider }[] {
-        return TranslateProviderManager._providers.get(language);
+    public static getProviders(language: string): RegisteredTranslateProvider[] {
+        return TranslateProviderManager._providers.get(language) ?? [];
+    }
+
+    public static getRegisteredLanguages(): string[] {
+        return Array.from(this._providers.keys()).filter((lang) => (this._providers.get(lang) ?? []).length > 0);
     }
 }
 

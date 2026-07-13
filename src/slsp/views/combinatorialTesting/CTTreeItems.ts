@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable eqeqeq */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { MarkdownString, TreeItem, TreeItemCollapsibleState, TreeItemLabel } from "vscode";
@@ -17,10 +19,10 @@ enum CTTreeItemTypes {
 
 // Base class for the TreeItems in the CT View
 export class CTTreeItem extends TreeItem {
-    protected readonly _parent: CTTreeItem;
-    protected _children: CTTreeItem[];
+    protected readonly _parent?: CTTreeItem;
+    protected _children: CTTreeItem[] = [];
 
-    public readonly contextValue: CTTreeItemTypes;
+    public readonly contextValue!: CTTreeItemTypes;
     public readonly label: string | TreeItemLabel;
     public collapsibleState?: TreeItemCollapsibleState;
     public readonly name: string;
@@ -33,7 +35,7 @@ export class CTTreeItem extends TreeItem {
         this.name = label.toString();
     }
 
-    public getParent(): CTTreeItem {
+    public getParent(): CTTreeItem | undefined {
         return this._parent;
     }
 
@@ -48,21 +50,26 @@ export class CTTreeItem extends TreeItem {
 
 // Base class for the TreeItems in the CT View that can have a verdict
 export class CTVerdictTreeItem extends CTTreeItem {
-    protected _verdict: VerdictKind;
+    protected _verdict: VerdictKind | null = null;
     public iconPath?: Icons.IconPath;
 
-    constructor(label: string | TreeItemLabel, collapsibleState: TreeItemCollapsibleState, parent: CTTreeItem, verdict?: VerdictKind) {
+    constructor(
+        label: string | TreeItemLabel,
+        collapsibleState: TreeItemCollapsibleState,
+        parent: CTTreeItem,
+        verdict?: VerdictKind | null,
+    ) {
         super(label, collapsibleState, parent);
         this.setVerdict(verdict);
     }
 
-    get verdict() {
+    get verdict(): VerdictKind | null {
         return this._verdict;
     }
 
-    setVerdict(verdict: VerdictKind) {
-        this._verdict = verdict;
-        this.iconPath = Icons.verdictToIconPath(verdict);
+    setVerdict(verdict?: VerdictKind | null) {
+        this._verdict = verdict ?? null;
+        this.iconPath = Icons.verdictToIconPath(this._verdict);
     }
 }
 
@@ -90,7 +97,7 @@ export class TraceGroupItem extends CTTreeItem {
                 } else {
                     return new TraceItem(trace.name, TreeItemCollapsibleState.Collapsed, this, trace.verdict);
                 }
-            })
+            }),
         );
     }
 }
@@ -103,9 +110,14 @@ export namespace TraceGroupItem {
 // Trace tree item
 export class TraceItem extends CTVerdictTreeItem {
     public readonly contextValue = CTTreeItemTypes.Trace;
-    private _numberOfTests: number;
+    private _numberOfTests: number = 0;
 
-    constructor(label: string | TreeItemLabel, collapsibleState: TreeItemCollapsibleState, parent: TraceGroupItem, verdict?: VerdictKind) {
+    constructor(
+        label: string | TreeItemLabel,
+        collapsibleState: TreeItemCollapsibleState,
+        parent: TraceGroupItem,
+        verdict?: VerdictKind | null,
+    ) {
         super(label, collapsibleState, parent, verdict);
         this._children = [];
     }
@@ -147,11 +159,13 @@ export class TraceItem extends CTVerdictTreeItem {
                     // Create test group where the collapsible state is the same as it was for the old group on this index. If no old group it should be collapsed.
                     new TestGroupItem(
                         "test group",
-                        i < this.getChildren().length ? this.getChildren()[i].collapsibleState : TreeItemCollapsibleState.Collapsed,
+                        i < this.getChildren().length
+                            ? (this.getChildren()[i].collapsibleState ?? TreeItemCollapsibleState.Collapsed)
+                            : TreeItemCollapsibleState.Collapsed,
                         this,
                         range,
-                        verdict
-                    )
+                        verdict,
+                    ),
                 );
             }
 
@@ -180,7 +194,7 @@ export class TestGroupItem extends CTVerdictTreeItem {
         collapsibleState: TreeItemCollapsibleState,
         parent: TraceItem,
         range: NumberRange,
-        verdict?: VerdictKind
+        verdict?: VerdictKind | null,
     ) {
         super(label, collapsibleState, parent, verdict);
         this._children = [];
@@ -208,7 +222,7 @@ export class TestItem extends CTVerdictTreeItem {
     public readonly contextValue = CTTreeItemTypes.Test;
     public readonly idNumber: number;
 
-    constructor(label: string | TreeItemLabel, parent: TestGroupItem, verdict?: VerdictKind) {
+    constructor(label: string | TreeItemLabel, parent: TestGroupItem, verdict?: VerdictKind | null) {
         super(label, TreeItemCollapsibleState.None, parent, verdict);
         this.description = verdict ? VerdictKind[verdict] : "n/a";
         this.idNumber = Number(label);
