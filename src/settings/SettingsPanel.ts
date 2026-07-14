@@ -435,6 +435,9 @@ export class SettingsPanel extends AutoDisposable {
         > = {};
         for (const [key, defaultValue] of Object.entries(defaults)) {
             const meta = uiMeta[key] ?? {};
+            if (meta.hidden) {
+                continue;
+            }
             schema[key] = {
                 type: this._inferType(defaultValue),
                 title: meta.title ?? key,
