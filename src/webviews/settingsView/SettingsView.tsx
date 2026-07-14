@@ -91,25 +91,34 @@ const FieldRow = ({
     subtitle,
     description,
     modified,
+    disabled,
+    tooltip,
     children,
 }: {
     label: React.ReactNode;
     subtitle?: string;
     description?: string;
     modified?: boolean;
+    disabled?: boolean;
+    tooltip?: string;
     children: React.ReactNode;
 }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px" }}>
-        <div style={{ flex: "1 1 0", minWidth: 0 }}>
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
-                {label}
-                {modified && <span title="Modified from default" style={sharedStyles.modifiedDot} />}
+    <div
+        title={tooltip}
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px", opacity: disabled ? 0.4 : 1 }}
+    >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: "16px" }}>
+            <div style={{ flex: "1 1 0", minWidth: 0 }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--vscode-foreground)", marginBottom: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    {label}
+                    {modified && <span title="Modified from default" style={sharedStyles.modifiedDot} />}
+                </div>
+                {subtitle && <div style={{ fontSize: "11px", color: "var(--vscode-descriptionForeground)", fontFamily: "var(--vscode-editor-font-family)", marginBottom: "2px" }}>{subtitle}</div>}
+                {description && <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{description}</div>}
             </div>
-            {subtitle && <div style={{ fontSize: "11px", color: "var(--vscode-descriptionForeground)", fontFamily: "var(--vscode-editor-font-family)", marginBottom: "2px" }}>{subtitle}</div>}
-            {description && <div style={{ fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>{description}</div>}
-        </div>
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-            {children}
+            <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+                {children}
+            </div>
         </div>
     </div>
 );
@@ -204,6 +213,7 @@ interface VdmjSchemaEntry {
     title: string;
     description: string;
     category: string;
+    rtOnly: boolean;
     advanced: boolean;
     default: string;
 }
@@ -424,22 +434,33 @@ const VdmjPropertyRow = ({
     value,
     isModified,
     onChange,
+    disabled,
 }: {
     propKey: string;
     schema: VdmjSchemaEntry;
     value: string;
     isModified: boolean;
     onChange: (key: string, value: string) => void;
+    disabled?: boolean;
 }) => (
-    <FieldRow label={schema.title} subtitle={propKey} description={schema.description} modified={isModified}>
+    <FieldRow
+        label={schema.title}
+        subtitle={propKey}
+        description={schema.description}
+        modified={isModified}
+        disabled={disabled}
+        tooltip={disabled ? "VDM-RT only" : undefined}
+    >
         {schema.type === "boolean" ? (
             <VSCodeCheckbox
                 checked={value === "true"}
+                disabled={disabled}
                 onChange={(e: any) => onChange(propKey, (e.target as HTMLInputElement).checked ? "true" : "false")}
             />
         ) : (
             <VSCodeTextField
                 value={value}
+                disabled={disabled}
                 onInput={(e: any) => onChange(propKey, e.target.value)}
                 style={{ minWidth: schema.type === "number" ? "80px" : "200px" }}
             />
@@ -451,10 +472,12 @@ const VdmjTab = ({
     values,
     schema,
     onChange,
+    dialect,
 }: {
     values: Record<string, string>;
     schema: Record<string, VdmjSchemaEntry>;
     onChange: (key: string, value: string) => void;
+    dialect: string | null;
 }) => {
     const [filterText, setFilterText] = useState("");
     const [showModifiedOnly, setShowModifiedOnly] = useState(false);
@@ -492,6 +515,7 @@ const VdmjTab = ({
                         value={values[key] ?? entry.default}
                         isModified={isModified(key)}
                         onChange={onChange}
+                        disabled={entry.rtOnly && dialect !== "vdmrt"}
                     />
                     {i < entries.length - 1 && <VSCodeDivider role="presentation" />}
                 </React.Fragment>
@@ -1471,6 +1495,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
     const [launchSettingsSchema, setLaunchSettingsSchema] = useState<Record<string, { description: string }>>({});
     const [pluginSchemas, setPluginSchemas] = useState<PluginSchema[]>([]);
     const [pluginData, setPluginData] = useState<Record<string, Record<string, unknown>>>({});
+    const [vdmjDialect, setVdmjDialect] = useState<string | null>(null);
 
     useEffect(() => {
         const onMessage = (e: MessageEvent) => {
@@ -1482,6 +1507,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
             if (e.data.command === "loadVdmjProperties") {
                 setVdmjValues(e.data.data.values);
                 setVdmjSchema(e.data.data.schema);
+                setVdmjDialect(e.data.data.dialect);
             }
             if (e.data.command === "loadLaunchConfigurations") {
                 setLaunchConfigs(e.data.data.configurations);
@@ -1634,7 +1660,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                 );
             }
             case "vdmj":
-                return <VdmjTab values={vdmjValues} schema={vdmjSchema} onChange={handleVdmjChange} />;
+                return <VdmjTab values={vdmjValues} schema={vdmjSchema} onChange={handleVdmjChange} dialect={vdmjDialect} />;
             case "launch":
                 return (
                     <LaunchTab

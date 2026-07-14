@@ -83,54 +83,63 @@
         "title": "FCFS Timeslice",
         "description": "Default timeslice (statements executed) for the FCFS policy.",
         "category": "Scheduler",
+        "rtOnly": true,
         "advanced": false
     },
     "vdmj.scheduler.virtual_timeslice": {
         "title": "Virtual Timeslice",
         "description": "vCPU/vBUS timeslice.",
         "category": "Scheduler",
+        "rtOnly": true,
         "advanced": false
     },
     "vdmj.scheduler.jitter": {
         "title": "Jitter",
         "description": "Timeslice variation (+/- jitter ticks).",
         "category": "Scheduler",
+        "rtOnly": true,
         "advanced": false
     },
     "vdmj.rt.duration_default": {
         "title": "Default Duration",
         "description": "Default duration for RT statements.",
         "category": "Real-Time",
+        "rtOnly": true,
         "advanced": true
     },
     "vdmj.rt.duration_transactions": {
         "title": "Duration Transactions",
         "description": "Enable transactional variable updates.",
         "category": "Real-Time",
+        "rtOnly": true,
         "advanced": true
     },
     "vdmj.rt.log_instvarchanges": {
         "title": "Log Instance Variable Changes",
         "description": "Enable InstVarChange RT log entries.",
         "category": "Real-Time",
+        "rtOnly": true,
         "advanced": true
     },
     "vdmj.rt.max_periodic_overlaps": {
         "title": "Max Periodic Overlaps",
         "description": "Maximum period thread overlaps allowed per object (0 = off).",
         "category": "Real-Time",
+        "rtOnly": true,
         "advanced": true
     },
     "vdmj.rt.diags_guards": {
         "title": "Diagnose Guards",
         "description": "Enable extra diagnostics for guards.",
         "category": "Real-Time",
+        "rtOnly": true,
         "advanced": true
     },
     "vdmj.rt.diags_timestep": {
         "title": "Diagnose Timesteps",
         "description": "Enable extra RT log diagnostics for timesteps.",
         "category": "Real-Time",
+        "rtOnly": true,
         "advanced": true
     },
     "vdmj.in.powerset_limit": {

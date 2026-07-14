@@ -429,9 +429,11 @@ export class SettingsPanel extends AutoDisposable {
         const uiPath = Uri.joinPath(this._context.extensionUri, "resources", "vdmjUI.json").fsPath;
         const uiMeta = fs.existsSync(uiPath) ? JSON.parse(fs.readFileSync(uiPath, "utf8")) : {};
 
+        const dialect = this._currentWsFolder ? (this._clientManager.get(this._currentWsFolder)?.languageId ?? null) : null;
+
         const schema: Record<
             string,
-            { type: string; title: string; description: string; category: string; advanced: boolean; default: string }
+            { type: string; title: string; description: string; category: string; rtOnly: boolean; advanced: boolean; default: string }
         > = {};
         for (const [key, defaultValue] of Object.entries(defaults)) {
             const meta = uiMeta[key] ?? {};
@@ -443,6 +445,7 @@ export class SettingsPanel extends AutoDisposable {
                 title: meta.title ?? key,
                 description: meta.description ?? "",
                 category: meta.category ?? "Other",
+                rtOnly: meta.rtOnly ?? false,
                 advanced: meta.advanced ?? false,
                 default: defaultValue,
             };
@@ -450,7 +453,7 @@ export class SettingsPanel extends AutoDisposable {
 
         this._panel.webview.postMessage({
             command: "loadVdmjProperties",
-            data: { values: merged, schema },
+            data: { values: merged, schema, dialect },
         });
     }
 
