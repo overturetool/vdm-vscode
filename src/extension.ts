@@ -45,6 +45,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { CreateProjectHandler } from "./handlers/CreateProjectHandler";
 import { OpenSettingsHandler } from "./handlers/OpenSettingsHandler";
+import { SettingsPanel } from "./settings/SettingsPanel";
 import { QuickConsoleHandler } from "./handlers/QuickConsoleHandler";
 import { SaveLoadedFilesHandler } from "./handlers/SaveLoadedFilesHandler";
 import { GenericTranslateHandler } from "./slsp/views/translate/GenericTranslateHandler";
@@ -146,6 +147,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new QuickInterpreterHandler());
     context.subscriptions.push(new CreateProjectHandler());
     context.subscriptions.push(new OpenSettingsHandler());
+    context.subscriptions.push(new SettingsPanel(context, knownVdmFolders, clientManager));
     context.subscriptions.push(new QuickConsoleHandler());
     context.subscriptions.push(new SaveLoadedFilesHandler(clientManager));
 

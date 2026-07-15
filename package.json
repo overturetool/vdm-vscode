@@ -452,9 +452,15 @@
             },
             {
                 "command": "vdm-vscode.openSettings",
-                "title": "Open VDM Settings",
+                "title": "Open VDM-VSCode Settings",
                 "category": "VDM",
                 "icon": "$(settings-gear)"
+            },
+            {
+                "command": "vdm-vscode.openSettingsPanel",
+                "title": "Configure Project",
+                "category": "VDM",
+                "icon": "$(wrench)"
             },
             {
                 "command": "vdm-vscode.quickConsole",
@@ -693,6 +699,11 @@
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
                     "group": "vdm@1"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel",
+                    "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "group": "vdm@0"
                 }
             ],
             "editor/title": [
@@ -720,6 +731,11 @@
                     "command": "vdm-vscode.openSettings",
                     "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
                     "group": "navigation"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel",
+                    "when": "resourceLangId == vdmsl || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "group": "navigation"
                 }
             ],
             "editor/context": [
@@ -727,6 +743,11 @@
                     "submenu": "vdm-vscode.vdmsubmenu",
                     "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
                     "group": "vdm@1"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel",
+                    "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "group": "vdm@0"
                 }
             ],
             "commandPalette": [
@@ -827,6 +848,9 @@
                 },
                 {
                     "command": "vdm-vscode.openSettings"
+                },
+                {
+                    "command": "vdm-vscode.openSettingsPanel"
                 }
             ]
         },
@@ -1565,6 +1589,75 @@
                             "request": "launch",
                             "noDebug": true,
                             "command": "p new TestRunner().run()"
+                        }
+                    },
+                    {
+                        "label": "VDM: Run and Exit",
+                        "description": "Run a specific expression and exit. Useful for batch-style execution without an interactive session.",
+                        "body": {
+                            "name": "Run and Exit",
+                            "type": "vdm",
+                            "request": "launch",
+                            "noDebug": true,
+                            "defaultName": "${1:DEFAULT}",
+                            "command": "print ${2:expression}"
+                        }
+                    },
+                    {
+                        "label": "VDM: With Checks Disabled",
+                        "description": "Launch with all interpretation checks turned off. Useful for performance on large specifications.",
+                        "body": {
+                            "name": "With Checks Disabled",
+                            "type": "vdm",
+                            "request": "launch",
+                            "noDebug": false,
+                            "defaultName": null,
+                            "settings": {
+                                "dynamicTypeChecks": false,
+                                "invariantsChecks": false,
+                                "preConditionChecks": false,
+                                "postConditionChecks": false,
+                                "measureChecks": false
+                            }
+                        }
+                    },
+                    {
+                        "label": "VDM: With Property Overrides",
+                        "description": "Launch with per-session VDMJ property overrides. Useful for tuning interpreter behaviour without changing project-wide settings.",
+                        "body": {
+                            "name": "With Property Overrides",
+                            "type": "vdm",
+                            "request": "launch",
+                            "noDebug": false,
+                            "defaultName": null,
+                            "properties": {
+                                "vdmj.tc.max_errors": 200,
+                                "vdmj.in.typebind_limit": 200000,
+                                "vdmj.traces.max_repeats": 10
+                            }
+                        }
+                    },
+                    {
+                        "label": "VDM: RT with Logging",
+                        "description": "Launch a VDM-RT project with real-time event logging enabled. The log can be viewed with the RT Log Viewer",
+                        "body": {
+                            "name": "RT with Logging",
+                            "type": "vdm",
+                            "request": "launch",
+                            "noDebug": false,
+                            "defaultName": null,
+                            "enableLogging": true
+                        }
+                    },
+                    {
+                        "label": "VDM: No Debug (Fast)",
+                        "description": "Launch without the debugger for faster execution. Breakpoints will be ignored.",
+                        "body": {
+                            "name": "No Debug",
+                            "type": "vdm",
+                            "request": "launch",
+                            "noDebug": true,
+                            "defaultName": null
                         }
                     }
                 ]

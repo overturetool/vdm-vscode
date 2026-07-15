@@ -3,9 +3,11 @@ import { createRoot } from "react-dom/client";
 import { ProofObligationsView } from "./proof_obligations/ProofObligationsView";
 import createCache from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
+import { SettingsView } from "./settingsView/SettingsView";
 
 const webViews = {
     ProofObligations: ProofObligationsView,
+    Settings: SettingsView,
 };
 
 type WebviewKeys = keyof typeof webViews;
