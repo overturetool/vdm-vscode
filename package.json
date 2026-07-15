@@ -1043,7 +1043,7 @@
                         "scope": "resource",
                         "description": "Report VDMJ warnings as part of the plugin output."
                     },
-                    "vdm-vscode.translate.isabelle.linientInvCheck": {
+                    "vdm-vscode.translate.isabelle.lenientInvCheck": {
                         "type": "boolean",
                         "default": true,
                         "scope": "resource",
@@ -1053,9 +1053,9 @@
                         "type": "boolean",
                         "default": false,
                         "scope": "resource",
-                        "description": "Exu module sorting creates a new module, which you can re typecheck to ensure no VDM type errors have occured as a result of sorting."
+                        "description": "Exu module sorting creates a new module, which you can re typecheck to ensure no VDM type errors have occurred as a result of sorting."
                     },
-                    "vdm-vscode.translate.isabelle.linientPost": {
+                    "vdm-vscode.translate.isabelle.lenientPost": {
                         "type": "boolean",
                         "default": false,
                         "scope": "resource",
