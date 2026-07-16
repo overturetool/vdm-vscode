@@ -6,6 +6,7 @@ import * as TranslationLanguageId from "./protocol/TranslationLanguageId";
 import ProofObligationGenerationFeature from "./features/ProofObligationGenerationFeature";
 import TranslateFeature from "./features/TranslateFeature";
 import CoverageFeature from "./features/CoverageFeature";
+import FileOrderFeature from "./features/FileOrderFeature";
 
 export class SpecificationLanguageClient extends LanguageClient {
     constructor(
@@ -29,5 +30,6 @@ export class SpecificationLanguageClient extends LanguageClient {
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.isabelle));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.vdm2uml));
         this.registerFeature(new TranslateFeature(this, TranslationLanguageId.uml2vdm));
+        this.registerFeature(new FileOrderFeature(this));
     }
 }

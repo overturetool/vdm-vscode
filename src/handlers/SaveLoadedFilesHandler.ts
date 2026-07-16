@@ -5,7 +5,8 @@ import * as fs from "fs";
 import AutoDisposable from "../helper/AutoDisposable";
 import { ClientManager } from "../ClientManager";
 import { registerCommand } from "../util/Util";
-import { FileOrderRequest, FileOrderResponse } from "../slsp/protocol/FileOrder";
+import { FileOrderParams } from "../slsp/protocol/FileOrder";
+import FileOrderFeature from "../slsp/features/FileOrderFeature";
 
 export class SaveLoadedFilesHandler extends AutoDisposable {
     constructor(private readonly clients: ClientManager) {
@@ -46,8 +47,8 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
             return;
         }
 
-        const orderingParh = vscode.Uri.joinPath(wsFolder.uri, ".vscode", "ordering").fsPath;
-        if (!fs.existsSync(orderingParh)) {
+        const orderingPath = vscode.Uri.joinPath(wsFolder.uri, ".vscode", "ordering").fsPath;
+        if (!fs.existsSync(orderingPath)) {
             return;
         }
 
@@ -66,15 +67,21 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
     }
 
     private async _requestFileOrder(wsFolder: vscode.WorkspaceFolder): Promise<string[] | undefined> {
-        const client = this.clients.get(wsFolder);
-        if (!client) {
-            vscode.window.showErrorMessage(`No active VDM language server for workspace "${wsFolder.name}".`);
+        const provider = FileOrderFeature.getProvider();
+        if (!provider) {
+            vscode.window.showWarningMessage("The connected server does not support ordering.");
             return undefined;
         }
 
         try {
-            const params = { uri: client.code2ProtocolConverter.asUri(wsFolder.uri) };
-            const response: FileOrderResponse | null = await client.sendRequest(FileOrderRequest.type, params);
+            const client = this.clients.get(wsFolder);
+            if (!client) {
+                vscode.window.showErrorMessage(`No active VDM language server for workspace "${wsFolder.name}".`);
+                return undefined;
+            }
+
+            const params: FileOrderParams = { uri: client.code2ProtocolConverter.asUri(wsFolder.uri) };
+            const response = await provider.requestFileOrder(params);
             if (!response?.files?.length) {
                 vscode.window.showWarningMessage(`The server returned an empty file list.`);
                 return undefined;
