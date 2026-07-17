@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { RequestHandler, RequestType, URI } from "vscode-languageclient";
+import { RequestHandler0, RequestType0 } from "vscode-languageclient";
 
 export namespace FileOrderRequest {
     export const method = "slsp/ordering";
-    export const type = new RequestType<FileOrderParams, FileOrderResponse | null, void>("slsp/ordering");
-    export type HandlerSignature = RequestHandler<FileOrderParams, FileOrderResponse | null, void>;
+    export const type = new RequestType0<FileOrderResponse | null, void>("slsp/ordering");
+    export type HandlerSignature = RequestHandler0<FileOrderResponse | null, void>;
 }
 
-export interface FileOrderParams {
-    uri: URI;
-}
-
-export interface FileOrderResponse {
-    files: string[];
-}
+export type FileOrderResponse = string[];
 
 export interface FileOrderClientCapabilities {
     experimental: {

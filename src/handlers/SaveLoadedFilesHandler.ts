@@ -3,10 +3,9 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import AutoDisposable from "../helper/AutoDisposable";
-import { ClientManager } from "../ClientManager";
 import { registerCommand } from "../util/Util";
-import { FileOrderParams } from "../slsp/protocol/FileOrder";
-import FileOrderFeature from "../slsp/features/FileOrderFeature";
+import { ClientManager } from "../ClientManager";
+import { FileOrderRequest } from "../slsp/protocol/FileOrder";
 
 export class SaveLoadedFilesHandler extends AutoDisposable {
     constructor(private readonly clients: ClientManager) {
@@ -67,26 +66,25 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
     }
 
     private async _requestFileOrder(wsFolder: vscode.WorkspaceFolder): Promise<string[] | undefined> {
-        const provider = FileOrderFeature.getProvider();
-        if (!provider) {
-            vscode.window.showWarningMessage("The connected server does not support ordering.");
+        const client = this.clients.get(wsFolder);
+        if (!client) {
+            vscode.window.showWarningMessage(`No active VDM language server for workspace "${wsFolder.name}".`);
+            return undefined;
+        }
+
+        const supported = client.initializeResult?.capabilities?.experimental?.orderingProvider;
+        if (!supported) {
+            vscode.window.showWarningMessage("The connected server does not support ordering");
             return undefined;
         }
 
         try {
-            const client = this.clients.get(wsFolder);
-            if (!client) {
-                vscode.window.showErrorMessage(`No active VDM language server for workspace "${wsFolder.name}".`);
-                return undefined;
-            }
-
-            const params: FileOrderParams = { uri: client.code2ProtocolConverter.asUri(wsFolder.uri) };
-            const response = await provider.requestFileOrder(params);
-            if (!response?.files?.length) {
+            const response = await client.sendRequest(FileOrderRequest.type);
+            if (!response?.length) {
                 vscode.window.showWarningMessage(`The server returned an empty file list.`);
                 return undefined;
             }
-            return response.files;
+            return response;
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to get file order from server: ${e}`);
             return undefined;
