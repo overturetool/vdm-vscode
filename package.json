@@ -1132,7 +1132,11 @@
                         "type": "string",
                         "default": "auto",
                         "scope": "resource",
-                        "enum": ["auto", "always", "never"],
+                        "enum": [
+                            "auto",
+                            "always",
+                            "never"
+                        ],
                         "markdownEnumDescriptions": [
                             "Automatically include LaTeX headers (preamble, `\\begin{document}`, etc.) only when translating a single file. When translating a folder (multi-file project), headers are omitted from all files so that the generated main file can include them as subfiles without preamble conflicts.",
                             "Always include LaTeX headers in every translated file.",
@@ -1777,7 +1781,7 @@
         "@emotion/react": "^11.11.4",
         "@vscode/codicons": "^0.0.35",
         "@vscode/webview-ui-toolkit": "^1.4.0",
-        "adm-zip": "^0.5.16",
+        "adm-zip": "^0.6.0",
         "fs-extra": "^10.0.0",
         "iconv-lite": "^0.6.3",
         "jschardet": "^3.0.0",
