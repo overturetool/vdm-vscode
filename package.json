@@ -469,7 +469,7 @@
             },
             {
                 "command": "vdm-vscode.saveLoadedFiles",
-                "title": "Save Loaded File Order...",
+                "title": "Optimize Build Order",
                 "category": "VDM"
             }
         ],

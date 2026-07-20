@@ -6,6 +6,8 @@ import AutoDisposable from "../helper/AutoDisposable";
 import { registerCommand } from "../util/Util";
 import { ClientManager } from "../ClientManager";
 import { FileOrderRequest } from "../slsp/protocol/FileOrder";
+import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
+import { CompletedParsingNotification } from "../server/ServerNotifications";
 
 export class SaveLoadedFilesHandler extends AutoDisposable {
     constructor(private readonly clients: ClientManager) {
@@ -31,13 +33,52 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
             return;
         }
 
-        const files = await this._requestFileOrder(wsFolder);
-        if (!files) {
-            return;
+        const client = this.clients.get(wsFolder);
+        if (!client) {
+            vscode.window.showWarningMessage(`No active VDM language server for workspace "${wsFolder.name}".`);
         }
 
-        await this._writeOrderingFile(wsFolder, files);
-        vscode.window.showInformationMessage(`File order saved to .vscode/ordering`);
+        await vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Notification, title: "Optimizing build order" },
+            async (progress) => {
+                const orderingPath = vscode.Uri.joinPath(wsFolder.uri, ".vscode", "ordering").fsPath;
+                const orderingExists = fs.existsSync(orderingPath);
+
+                if (orderingExists) {
+                    progress.report({ message: "Clearing existing ordering..." });
+                    const checkedPromise = this._waitForChecked(client);
+                    fs.unlinkSync(orderingPath);
+
+                    progress.report({ message: "Waiting for rebuild..." });
+                    const success = await checkedPromise;
+                    if (!success) {
+                        vscode.window.showErrorMessage("Build failed after clearing ordering - cannot optimize");
+                        return;
+                    }
+                }
+
+                progress.report({ message: "Writing new ordering file..." });
+                const files = await this._requestFileOrder(wsFolder);
+                if (!files) {
+                    return;
+                }
+
+                await this._writeOrderingFile(wsFolder, files);
+                progress.report({ message: "Done." });
+                await new Promise((r) => setTimeout(r, 1500));
+
+                vscode.window.showInformationMessage(`File order saved to .vscode/ordering`);
+            },
+        );
+    }
+
+    private _waitForChecked(client: SpecificationLanguageClient): Promise<boolean> {
+        return new Promise((resolve) => {
+            const disposable = client.onNotification(CompletedParsingNotification.type, (params) => {
+                disposable.dispose();
+                resolve(params.successful);
+            });
+        });
     }
 
     private async _onVdmFilesChanged(changedUri: vscode.Uri): Promise<void> {
