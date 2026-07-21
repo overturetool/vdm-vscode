@@ -5,6 +5,7 @@ import {
     commands,
     Diagnostic,
     Disposable,
+    EventEmitter,
     languages,
     Range,
     RelativePattern,
@@ -38,6 +39,9 @@ export class ClientManager extends AutoDisposable {
     private _stdlibHashes: Map<string, string> = new Map();
     private _stdlibDiagnostics = languages.createDiagnosticCollection("vdm-stdlib");
     private _pendingSaveUris: Set<string> = new Set();
+    private _onClientStarted = new EventEmitter<SpecificationLanguageClient>();
+
+    public readonly onClientStarted = this._onClientStarted.event;
 
     constructor(
         private _serverFactory: ServerFactory,
@@ -109,6 +113,8 @@ export class ClientManager extends AutoDisposable {
 
     async dispose() {
         super.dispose();
+
+        this._onClientStarted.dispose();
 
         // Dispose of server factory
         this._serverFactory.dispose();
@@ -288,6 +294,7 @@ export class ClientManager extends AutoDisposable {
                     (client.middleware as VdmMiddleware).schedulePendingUndo(key);
                 });
         });
+        this._onClientStarted.fire(client);
     }
 
     private async checkForClientCrash(e: StateChangeEvent, wsFolder: WorkspaceFolder) {

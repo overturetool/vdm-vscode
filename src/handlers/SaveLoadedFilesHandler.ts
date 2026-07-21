@@ -15,28 +15,20 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
 
         registerCommand(this._disposables, "vdm-vscode.saveLoadedFiles", () => this._saveLoadedFiles());
 
-        this._updateCheckedListeners();
-        this._disposables.push(vscode.workspace.onDidChangeWorkspaceFolders(() => this._updateCheckedListeners()));
+        this._disposables.push(
+            clients.onClientStarted((client) => {
+                this._disposables.push(
+                    client.onNotification(CompletedParsingNotification.type, (params) => {
+                        vscode.commands.executeCommand("setContext", "vdm-vscode.saveLoadedFiles", params.successful);
+                    }),
+                );
+            }),
+        );
 
         const watcher = vscode.workspace.createFileSystemWatcher(`**/*.{vdmsl,vdmpp,vdmrt}`);
         this._disposables.push(watcher);
         this._disposables.push(watcher.onDidCreate((uri) => this._onVdmFilesChanged(uri)));
         this._disposables.push(watcher.onDidDelete((uri) => this._onVdmFilesChanged(uri)));
-    }
-
-    private _updateCheckedListeners(): void {
-        vscode.workspace.workspaceFolders?.forEach((wsFolder) => {
-            const client = this.clients.get(wsFolder);
-            if (!client) {
-                return;
-            }
-
-            this._disposables.push(
-                client.onNotification(CompletedParsingNotification.type, (params) => {
-                    vscode.commands.executeCommand("setContext", "vdm-vscode.saveLoadedFiles", params.successful);
-                }),
-            );
-        });
     }
 
     private async _writeOrderingFile(wsFolder: vscode.WorkspaceFolder, files: string[]): Promise<void> {
