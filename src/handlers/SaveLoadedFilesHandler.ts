@@ -15,10 +15,28 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
 
         registerCommand(this._disposables, "vdm-vscode.saveLoadedFiles", () => this._saveLoadedFiles());
 
+        this._updateCheckedListeners();
+        this._disposables.push(vscode.workspace.onDidChangeWorkspaceFolders(() => this._updateCheckedListeners()));
+
         const watcher = vscode.workspace.createFileSystemWatcher(`**/*.{vdmsl,vdmpp,vdmrt}`);
         this._disposables.push(watcher);
         this._disposables.push(watcher.onDidCreate((uri) => this._onVdmFilesChanged(uri)));
         this._disposables.push(watcher.onDidDelete((uri) => this._onVdmFilesChanged(uri)));
+    }
+
+    private _updateCheckedListeners(): void {
+        vscode.workspace.workspaceFolders?.forEach((wsFolder) => {
+            const client = this.clients.get(wsFolder);
+            if (!client) {
+                return;
+            }
+
+            this._disposables.push(
+                client.onNotification(CompletedParsingNotification.type, (params) => {
+                    vscode.commands.executeCommand("setContext", "vdm-vscode.saveLoadedFiles", params.successful);
+                }),
+            );
+        });
     }
 
     private async _writeOrderingFile(wsFolder: vscode.WorkspaceFolder, files: string[]): Promise<void> {
@@ -36,6 +54,7 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
         const client = this.clients.get(wsFolder);
         if (!client) {
             vscode.window.showWarningMessage(`No active VDM language server for workspace "${wsFolder.name}".`);
+            return;
         }
 
         await vscode.window.withProgress(
@@ -57,13 +76,19 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
                     }
                 }
 
-                progress.report({ message: "Writing new ordering file..." });
+                progress.report({ message: "Calculating optimal order..." });
                 const files = await this._requestFileOrder(wsFolder);
                 if (!files) {
                     return;
                 }
 
+                progress.report({ message: "Writing ordering file..." });
+                const checkedPromise = this._waitForChecked(client);
                 await this._writeOrderingFile(wsFolder, files);
+
+                progress.report({ message: "Rebuilding in optimal order..." });
+                await checkedPromise;
+
                 progress.report({ message: "Done." });
                 await new Promise((r) => setTimeout(r, 1500));
 

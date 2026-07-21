@@ -470,7 +470,8 @@
             {
                 "command": "vdm-vscode.saveLoadedFiles",
                 "title": "Optimize Build Order",
-                "category": "VDM"
+                "category": "VDM",
+                "enablement": "vdm-vscode.saveLoadedFiles"
             }
         ],
         "keybindings": [
