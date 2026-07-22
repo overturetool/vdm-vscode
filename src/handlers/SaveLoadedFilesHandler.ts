@@ -6,10 +6,11 @@ import AutoDisposable from "../helper/AutoDisposable";
 import { registerCommand } from "../util/Util";
 import { ClientManager } from "../ClientManager";
 import { FileOrderRequest } from "../slsp/protocol/FileOrder";
-import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
 import { CompletedParsingNotification } from "../server/ServerNotifications";
 
 export class SaveLoadedFilesHandler extends AutoDisposable {
+    private _checkedCallback: ((successful: boolean) => void) | undefined;
+
     constructor(private readonly clients: ClientManager) {
         super();
 
@@ -20,6 +21,10 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
                 this._disposables.push(
                     client.onNotification(CompletedParsingNotification.type, (params) => {
                         vscode.commands.executeCommand("setContext", "vdm-vscode.saveLoadedFiles", params.successful);
+                        if (this._checkedCallback) {
+                            this._checkedCallback(params.successful);
+                            this._checkedCallback = undefined;
+                        }
                     }),
                 );
             }),
@@ -57,7 +62,7 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
 
                 if (orderingExists) {
                     progress.report({ message: "Clearing existing ordering..." });
-                    const checkedPromise = this._waitForChecked(client);
+                    const checkedPromise = this._waitForChecked();
                     fs.unlinkSync(orderingPath);
 
                     progress.report({ message: "Waiting for rebuild..." });
@@ -75,7 +80,7 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
                 }
 
                 progress.report({ message: "Writing ordering file..." });
-                const checkedPromise = this._waitForChecked(client);
+                const checkedPromise = this._waitForChecked();
                 await this._writeOrderingFile(wsFolder, files);
 
                 progress.report({ message: "Rebuilding in optimal order..." });
@@ -89,12 +94,9 @@ export class SaveLoadedFilesHandler extends AutoDisposable {
         );
     }
 
-    private _waitForChecked(client: SpecificationLanguageClient): Promise<boolean> {
+    private _waitForChecked(): Promise<boolean> {
         return new Promise((resolve) => {
-            const disposable = client.onNotification(CompletedParsingNotification.type, (params) => {
-                disposable.dispose();
-                resolve(params.successful);
-            });
+            this._checkedCallback = resolve;
         });
     }
 
