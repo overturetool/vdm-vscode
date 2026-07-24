@@ -47,25 +47,43 @@ export class GenericTranslateHandler implements Disposable {
         }
 
         if (candidates.length === 0) {
-            window.showInformationMessage("No translations available for this file/folder.");
+            const choice = await window.showInformationMessage(
+                "No translations available for this file/folder. This can happen if the relevant plugin is disabled or not installed.",
+                "Manage VDMJ Plugins...",
+            );
+            if (choice === "Manage VDMJ Plugins...") {
+                commands.executeCommand("vdm-vscode.managePlugins", uri);
+            }
             return;
         }
 
+        const HINT_ITEM: QuickPickLanguageItem = {
+            label: "$(gear) Manage VDMJ Plugins...",
+            description: "Don't see what you're looking for? Enable more translation plugins here.",
+            languageId: "__manage_plugins__",
+        };
+
         let chosen = candidates[0];
-        if (candidates.length > 1) {
-            const picked = await window.showQuickPick<QuickPickLanguageItem>(
-                candidates.map((c) => ({
+
+        const picked = await window.showQuickPick<QuickPickLanguageItem>(
+            [
+                ...candidates.map((c) => ({
                     label: c.languageId,
                     description: c.description,
                     languageId: c.languageId,
                 })),
-                { placeHolder: "Choose a translation..." },
-            );
-            if (!picked) {
-                return;
-            }
-            chosen = candidates.find((c) => c.languageId === picked.languageId)!;
+                HINT_ITEM,
+            ],
+            { placeHolder: "Choose a translation..." },
+        );
+        if (!picked) {
+            return;
         }
+        if (picked.languageId === "__manage_plugins__") {
+            commands.executeCommand("vdm-vscode.managePlugins", uri);
+            return;
+        }
+        chosen = candidates.find((c) => c.languageId === picked.languageId)!;
 
         await this.translate(chosen.languageId, chosen.provider, uri, wsFolder);
     }
