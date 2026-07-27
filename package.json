@@ -1144,6 +1144,12 @@
                             "Never include LaTeX headers in any translated file."
                         ],
                         "markdownDescription": "Controls whether LaTeX document headers (preamble, `\\documentclass`, `\\begin{document}`, etc.) are included in the translation output. Use `auto` to let the extension decide based on whether a single file or a whole project is being translated."
+                    },
+                    "vdm-vscode.translate.suppressPlantUmlPrompt": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Don't prompt to install the PlantUML extension after a UML translation."
                     }
                 }
             },

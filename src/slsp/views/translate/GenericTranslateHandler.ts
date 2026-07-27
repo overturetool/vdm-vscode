@@ -2,15 +2,50 @@
 
 import * as Fs from "fs-extra";
 import * as util from "../../../util/Util";
-import { commands, QuickPickItem, Uri, ViewColumn, window, workspace, WorkspaceConfiguration, WorkspaceFolder } from "vscode";
+import { commands, extensions, QuickPickItem, Uri, ViewColumn, window, workspace, WorkspaceConfiguration, WorkspaceFolder } from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";
 import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
 import { ClientManager } from "../../../ClientManager";
 import { guessDialect, VdmDialect } from "../../../util/DialectUtil";
 
+const PLANTUML_EXTENSION_ID = "jebbs.plantuml";
+
 interface QuickPickLanguageItem extends QuickPickItem {
     languageId: string;
+}
+
+function suggestPlantUmlExtension(mainFileUri: Uri): void {
+    if (!directoryContainsPuml(mainFileUri)) {
+        console.log(`Not a puml file: ${mainFileUri.fsPath}`);
+        return;
+    }
+    if (extensions.getExtension(PLANTUML_EXTENSION_ID)) {
+        console.log("Extension already installed");
+        return;
+    }
+
+    window
+        .showInformationMessage(
+            "This translation produced a PlantUML (.puml) file. Install the PlantUML extension to preview the rendered diagram?",
+            "Install",
+            "Don't ask again",
+        )
+        .then((choice) => {
+            if (choice === "Install") {
+                commands.executeCommand("workbench.extensions.installExtension", PLANTUML_EXTENSION_ID);
+            } else if (choice === "Don't ask again") {
+                workspace.getConfiguration("vdm-vscode").update("translate.suppressPlantUmlPrompt", true, true);
+            }
+        });
+}
+
+function directoryContainsPuml(dirUri: Uri): boolean {
+    try {
+        return Fs.readdirSync(dirUri.fsPath).some((f) => f.endsWith(".puml"));
+    } catch {
+        return false;
+    }
 }
 
 export class GenericTranslateHandler implements Disposable {
@@ -113,6 +148,9 @@ export class GenericTranslateHandler implements Disposable {
                 if (!isDir(mainFileUri.fsPath)) {
                     const doc = await workspace.openTextDocument(mainFileUri);
                     window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: true });
+                }
+                if (!workspace.getConfiguration("vdm-vscode").get("translate.suppressPlantUmlPrompt", false)) {
+                    suggestPlantUmlExtension(mainFileUri);
                 }
             });
         } catch (e) {
