@@ -2,7 +2,18 @@
 
 import * as Fs from "fs-extra";
 import * as util from "../../../util/Util";
-import { commands, extensions, QuickPickItem, Uri, ViewColumn, window, workspace, WorkspaceConfiguration, WorkspaceFolder } from "vscode";
+import {
+    commands,
+    extensions,
+    QuickPickItem,
+    TabInputText,
+    Uri,
+    ViewColumn,
+    window,
+    workspace,
+    WorkspaceConfiguration,
+    WorkspaceFolder,
+} from "vscode";
 import { Disposable } from "vscode-languageclient";
 import { TranslateProviderManager } from "./TranslateProviderManager";
 import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
@@ -17,11 +28,9 @@ interface QuickPickLanguageItem extends QuickPickItem {
 
 function suggestPlantUmlExtension(mainFileUri: Uri): void {
     if (!directoryContainsPuml(mainFileUri)) {
-        console.log(`Not a puml file: ${mainFileUri.fsPath}`);
         return;
     }
     if (extensions.getExtension(PLANTUML_EXTENSION_ID)) {
-        console.log("Extension already installed");
         return;
     }
 
@@ -145,10 +154,33 @@ export class GenericTranslateHandler implements Disposable {
             const languageConfig = workspace.getConfiguration([this._extensionName, "translate", language].join("."), wsFolder);
 
             provider.doTranslation(saveUri, uri, this.getOptions(languageConfig, uri)).then(async (mainFileUri: Uri) => {
-                if (!isDir(mainFileUri.fsPath)) {
-                    const doc = await workspace.openTextDocument(mainFileUri);
-                    window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: true });
+                let fileToOpen: Uri | undefined = isDir(mainFileUri.fsPath) ? undefined : mainFileUri;
+
+                if (isDir(mainFileUri.fsPath)) {
+                    const filesInDir = Fs.readdirSync(mainFileUri.fsPath);
+                    if (filesInDir.length === 1) {
+                        fileToOpen = Uri.joinPath(mainFileUri, filesInDir[0]);
+                    }
                 }
+
+                if (fileToOpen) {
+                    const doc = await workspace.openTextDocument(fileToOpen);
+                    const isPuml = fileToOpen.fsPath.endsWith(".puml");
+
+                    await window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: !isPuml });
+
+                    if (isPuml && extensions.getExtension(PLANTUML_EXTENSION_ID)) {
+                        commands.executeCommand("plantuml.preview");
+
+                        const rawTab = window.tabGroups.all
+                            .flatMap((group) => group.tabs)
+                            .find((tab) => tab.input instanceof TabInputText && tab.input.uri.toString() === doc.uri.toString());
+                        if (rawTab) {
+                            await window.tabGroups.close(rawTab);
+                        }
+                    }
+                }
+
                 if (!workspace.getConfiguration("vdm-vscode").get("translate.suppressPlantUmlPrompt", false)) {
                     suggestPlantUmlExtension(mainFileUri);
                 }
