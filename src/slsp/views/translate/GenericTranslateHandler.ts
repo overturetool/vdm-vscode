@@ -20,17 +20,24 @@ import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
 import { ClientManager } from "../../../ClientManager";
 import { guessDialect, VdmDialect } from "../../../util/DialectUtil";
 
-const PLANTUML_EXTENSION_ID = "jebbs.plantuml";
+const PLANTUML_EXTENSIONS: { id: string; previewCommand: string }[] = [
+    { id: "jebbs.plantuml", previewCommand: "plantuml.preview" },
+    { id: "Mebrahtom.plantumlpreviewer", previewCommand: "extension.pumlpreviewer" },
+];
 
 interface QuickPickLanguageItem extends QuickPickItem {
     languageId: string;
+}
+
+function findInstalledPlantUmlExtension(): { id: string; previewCommand: string } | undefined {
+    return PLANTUML_EXTENSIONS.find((e) => extensions.getExtension(e.id));
 }
 
 function suggestPlantUmlExtension(mainFileUri: Uri): void {
     if (!directoryContainsPuml(mainFileUri)) {
         return;
     }
-    if (extensions.getExtension(PLANTUML_EXTENSION_ID)) {
+    if (findInstalledPlantUmlExtension()) {
         return;
     }
 
@@ -42,7 +49,7 @@ function suggestPlantUmlExtension(mainFileUri: Uri): void {
         )
         .then((choice) => {
             if (choice === "Install") {
-                commands.executeCommand("workbench.extensions.installExtension", PLANTUML_EXTENSION_ID);
+                commands.executeCommand("workbench.extensions.installExtension", "jebbs.plantuml");
             } else if (choice === "Don't ask again") {
                 workspace.getConfiguration("vdm-vscode").update("translate.suppressPlantUmlPrompt", true, true);
             }
@@ -166,11 +173,12 @@ export class GenericTranslateHandler implements Disposable {
                 if (fileToOpen) {
                     const doc = await workspace.openTextDocument(fileToOpen);
                     const isPuml = fileToOpen.fsPath.endsWith(".puml");
+                    const plantUml = isPuml ? findInstalledPlantUmlExtension() : undefined;
 
-                    await window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: !isPuml });
+                    await window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: !(isPuml && plantUml) });
 
-                    if (isPuml && extensions.getExtension(PLANTUML_EXTENSION_ID)) {
-                        commands.executeCommand("plantuml.preview");
+                    if (plantUml) {
+                        await commands.executeCommand(plantUml.previewCommand);
 
                         const rawTab = window.tabGroups.all
                             .flatMap((group) => group.tabs)
