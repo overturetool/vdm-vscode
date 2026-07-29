@@ -29,31 +29,70 @@ interface QuickPickLanguageItem extends QuickPickItem {
     languageId: string;
 }
 
+async function waitForPlantUmlExtension(timeoutMs: number): Promise<{ id: string; previewCommand: string } | undefined> {
+    const immediate = findInstalledPlantUmlExtension();
+    if (immediate) {
+        return immediate;
+    }
+
+    return new Promise((resolve) => {
+        const sub = extensions.onDidChange(() => {
+            const found = findInstalledPlantUmlExtension();
+            if (found) {
+                clearTimeout(timer);
+                sub.dispose();
+                resolve(found);
+            }
+        });
+        const timer = setTimeout(() => {
+            sub.dispose();
+            resolve(undefined);
+        }, timeoutMs);
+    });
+}
+
+async function openWithPreview(fileUri: Uri, plantUml: { id: string; previewCommand: string }): Promise<void> {
+    const doc = await workspace.openTextDocument(fileUri);
+    await window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: false });
+    await commands.executeCommand(plantUml.previewCommand);
+
+    const rawTab = window.tabGroups.all
+        .flatMap((group) => group.tabs)
+        .find((tab) => tab.input instanceof TabInputText && tab.input.uri.toString() === doc.uri.toString());
+    if (rawTab) {
+        await window.tabGroups.close(rawTab);
+    }
+}
+
 function findInstalledPlantUmlExtension(): { id: string; previewCommand: string } | undefined {
     return PLANTUML_EXTENSIONS.find((e) => extensions.getExtension(e.id));
 }
 
-function suggestPlantUmlExtension(mainFileUri: Uri): void {
-    if (!directoryContainsPuml(mainFileUri)) {
+async function suggestPlantUmlExtension(outputDir: Uri, fileToPreview?: Uri): Promise<void> {
+    if (!directoryContainsPuml(outputDir)) {
         return;
     }
     if (findInstalledPlantUmlExtension()) {
         return;
     }
 
-    window
-        .showInformationMessage(
-            "This translation produced a PlantUML (.puml) file. Install the PlantUML extension to preview the rendered diagram?",
-            "Install",
-            "Don't ask again",
-        )
-        .then((choice) => {
-            if (choice === "Install") {
-                commands.executeCommand("workbench.extensions.installExtension", "jebbs.plantuml");
-            } else if (choice === "Don't ask again") {
-                workspace.getConfiguration("vdm-vscode").update("translate.suppressPlantUmlPrompt", true, true);
-            }
-        });
+    const choice = await window.showInformationMessage(
+        "This translation produced a PlantUML (.puml) file. Install the PlantUML extension to preview the rendered diagram?",
+        "Install",
+        "Don't ask again",
+    );
+
+    if (choice === "Install") {
+        await commands.executeCommand("workbench.extensions.installExtension", "jebbs.plantuml");
+        const plantUml = await waitForPlantUmlExtension(5000);
+        if (plantUml && fileToPreview) {
+            await openWithPreview(fileToPreview, plantUml);
+        } else if (!plantUml) {
+            window.showInformationMessage("PlantUML installed. You may need to reload VS Code before previewing.");
+        }
+    } else if (choice === "Don't ask again") {
+        workspace.getConfiguration("vdm-vscode").update("translate.suppressPlantUmlPrompt", true, true);
+    }
 }
 
 function directoryContainsPuml(dirUri: Uri): boolean {
@@ -190,7 +229,7 @@ export class GenericTranslateHandler implements Disposable {
                 }
 
                 if (!workspace.getConfiguration("vdm-vscode").get("translate.suppressPlantUmlPrompt", false)) {
-                    suggestPlantUmlExtension(mainFileUri);
+                    suggestPlantUmlExtension(mainFileUri, fileToOpen);
                 }
             });
         } catch (e) {
