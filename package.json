@@ -1150,6 +1150,12 @@
                         "default": false,
                         "scope": "resource",
                         "description": "Don't prompt to install the PlantUML extension after a UML translation."
+                    },
+                    "vdm-vscode.translate.suppressGraphvizPrompt": {
+                        "type": "boolean",
+                        "default": false,
+                        "scope": "resource",
+                        "description": "Don't warn about missing Graphviz (\"dot\") when previewing UML diagrams."
                     }
                 }
             },

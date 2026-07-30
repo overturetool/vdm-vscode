@@ -19,6 +19,7 @@ import { TranslateProviderManager } from "./TranslateProviderManager";
 import { createDirectorySync, isDir } from "../../../util/DirectoriesUtil";
 import { ClientManager } from "../../../ClientManager";
 import { guessDialect, VdmDialect } from "../../../util/DialectUtil";
+import { exec } from "child_process";
 
 const PLANTUML_EXTENSIONS: { id: string; previewCommand: string }[] = [
     { id: "jebbs.plantuml", previewCommand: "plantuml.preview" },
@@ -27,6 +28,42 @@ const PLANTUML_EXTENSIONS: { id: string; previewCommand: string }[] = [
 
 interface QuickPickLanguageItem extends QuickPickItem {
     languageId: string;
+}
+
+function checkGraphvizInstalled(): Promise<boolean> {
+    return new Promise((resolve) => {
+        exec("dot -V", (error) => resolve(!error));
+    });
+}
+
+function graphvizInstallHint(): string {
+    switch (process.platform) {
+        case "darwin":
+            return "brew install graphviz (or 'sudo port install graphviz' for MacPorts)";
+        case "linux":
+            return "sudo apt install graphviz (or your distro package manager equivalent)";
+        case "win32":
+            return "download an installer from https://graphviz.org/download/, or run 'choco install graphviz'";
+        default:
+            return "install it from https://graphviz.org/download/";
+    }
+}
+
+async function warnMissingGraphviz(): Promise<void> {
+    if (workspace.getConfiguration("vdm-vscode").get("translate.suppressGraphvizPrompt", false)) {
+        return;
+    }
+    if (await checkGraphvizInstalled()) {
+        return;
+    }
+
+    const choice = await window.showWarningMessage(
+        `Previewing UML diagrams requires Graphviz ("dot") on your system, which wasn't found. Install it with: ${graphvizInstallHint()}`,
+        "Don't show again",
+    );
+    if (choice === "Don't show again") {
+        workspace.getConfiguration("vdm-vscode").update("translate.suppressGraphvizPrompt", true, true);
+    }
 }
 
 async function waitForPlantUmlExtension(timeoutMs: number): Promise<{ id: string; previewCommand: string } | undefined> {
@@ -54,6 +91,8 @@ async function waitForPlantUmlExtension(timeoutMs: number): Promise<{ id: string
 async function openWithPreview(fileUri: Uri, plantUml: { id: string; previewCommand: string }): Promise<void> {
     const doc = await workspace.openTextDocument(fileUri);
     await window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: false });
+
+    await warnMissingGraphviz();
     await commands.executeCommand(plantUml.previewCommand);
 
     const rawTab = window.tabGroups.all
@@ -217,6 +256,7 @@ export class GenericTranslateHandler implements Disposable {
                     await window.showTextDocument(doc.uri, { viewColumn: ViewColumn.Beside, preserveFocus: !(isPuml && plantUml) });
 
                     if (plantUml) {
+                        await warnMissingGraphviz();
                         await commands.executeCommand(plantUml.previewCommand);
 
                         const rawTab = window.tabGroups.all
