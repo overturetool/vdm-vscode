@@ -698,7 +698,7 @@
                 },
                 {
                     "submenu": "vdm-vscode.vdmsubmenu",
-                    "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "when": "explorerResourceIsFolder && vdm-submenus-show == true || resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true || resourceExtname == .puml && vdm-submenus-show == true",
                     "group": "vdm@1"
                 },
                 {
@@ -742,7 +742,7 @@
             "editor/context": [
                 {
                     "submenu": "vdm-vscode.vdmsubmenu",
-                    "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true",
+                    "when": "resourceLangId == vdmsl && vdm-submenus-show == true || resourceLangId == vdmpp && vdm-submenus-show == true || resourceLangId == vdmrt && vdm-submenus-show == true || resourceExtname == .puml && vdm-submenus-show == true",
                     "group": "vdm@1"
                 },
                 {
