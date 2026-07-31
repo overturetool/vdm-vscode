@@ -19,7 +19,7 @@ export async function addToSettingsArray(
     folders: boolean,
     settingName: string,
     configurationIdentifier: string,
-    configurationSettingElement: string
+    configurationSettingElement: string,
 ) {
     window.setStatusBarMessage(
         `Adding to ${settingName}`,
@@ -78,7 +78,7 @@ export async function addToSettingsArray(
             configuration.update(configurationSettingElement, currentSettingElementValue, scope < 2 ? scope + 1 : 3);
 
             resolve(`Add to ${settingName} completed`);
-        })
+        }),
     );
 }
 
@@ -143,7 +143,7 @@ export function match(documentSelector: DocumentSelector, uri: Uri) {
         if (typeof ds != "string") {
             let df = ds as DocumentFilter;
             if (df.pattern) {
-                const g = new glob.GlobSync(df.pattern.toString());
+                const g = new glob.GlobSync(df.pattern.toString(), { dot: true });
                 const found = g.found.map((f) => f.toLowerCase());
                 if (found.some((f) => f.includes(uri.path.substring(1).toLowerCase()))) {
                     if (df.scheme) {

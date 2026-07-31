@@ -166,8 +166,16 @@ export class GenericTranslateHandler implements Disposable {
             await this.clientManager.launchClientForWorkspace(wsFolder);
         }
 
+        const LANGUAGE_INPUT_EXTENSION: Record<string, string> = {
+            uml2vdm: ".puml",
+        };
+
         const candidates: { languageId: string; selector: any; provider: any; description?: string }[] = [];
         for (const languageId of TranslateProviderManager.getRegisteredLanguages()) {
+            const requiredExt = LANGUAGE_INPUT_EXTENSION[languageId];
+            if (requiredExt && !uri.fsPath.endsWith(requiredExt)) {
+                continue;
+            }
             for (const entry of TranslateProviderManager.getProviders(languageId) ?? []) {
                 if (util.match(entry.selector, uri)) {
                     candidates.push({ languageId, selector: entry.selector, provider: entry.provider, description: entry.description });
