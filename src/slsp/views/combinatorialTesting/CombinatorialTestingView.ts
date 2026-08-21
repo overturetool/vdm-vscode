@@ -214,21 +214,25 @@ export class CombinatorialTestingView implements Disposable {
         );
     }
 
-    private async generateTests(treeItem: CTTreeItem, silent: boolean = false) {
+    private async generateTests(treeItem: CTTreeItem, silent: boolean = false): Promise<boolean> {
         // Validate indput type
         if (!TraceItem.is(treeItem)) {
-            return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+            console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+            return false;
         }
         let traceItem = treeItem as TraceItem;
 
         // Manage state
         if (this.state != state.idle) {
-            return console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+            console.info(`[CT View] Generate tests not possible while in state ${state[this.state]}`);
+            return false;
         }
         this.state = state.generatingTests;
 
         // Set status bar
         let statusBarMessage = window.setStatusBarMessage(`Generating test cases for ${traceItem.label}`);
+
+        let success = true;
 
         // Setup generate process
         let generateFunc = async () => {
@@ -243,8 +247,9 @@ export class CombinatorialTestingView implements Disposable {
                     this.rebuildOutline();
                     console.info(`[CT View] Test outline out of sync - rebuilding`);
                 } else {
-                    console.error(`[CT View] Failed to generate tests: ${e}`);
-                    window.showWarningMessage("Failed to generate tests");
+                    console.error(`[CT View] Failed to generate tests for ${traceItem.label}: ${e}`);
+                    window.showErrorMessage(`Failed to generate tests for ${traceItem.label}: ${e}`);
+                    success = false;
                 }
             } finally {
                 // Remove status bar message
@@ -266,6 +271,8 @@ export class CombinatorialTestingView implements Disposable {
                 generateFunc,
             );
         }
+
+        return success;
     }
 
     private async execute(treeItem: CTTreeItem, filter: boolean = false) {
@@ -315,7 +322,10 @@ export class CombinatorialTestingView implements Disposable {
                         if (!traceItem.numberOfTests) {
                             // Generate the tests for the trace
                             this.state = state.idle;
-                            await this.generateTests(traceItem, true);
+                            const generated = await this.generateTests(traceItem, true);
+                            if (!generated) {
+                                return;
+                            }
                             this.state = state.executingTestTrace;
                             range = { end: this._dataStorage.getNumberOftests(traceItem.name) };
                         } else {
@@ -367,7 +377,7 @@ export class CombinatorialTestingView implements Disposable {
                         }
                     } else {
                         console.error(`[CT View] Failed to execute tests: ${e}`);
-                        window.showWarningMessage("Failed to execute tests");
+                        window.showErrorMessage(`Failed to execute tests: ${e}`);
                     }
                 } finally {
                     // Handle that execution of tests has finished
@@ -397,7 +407,10 @@ export class CombinatorialTestingView implements Disposable {
         // Run Execute on all traces of all trace groups
         for (const group of await this._testProvider.getChildren()) {
             for (const trace of await this._testProvider.getChildren(group)) {
-                await this.generateTests(trace, true);
+                const generated = await this.generateTests(trace, true);
+                if (!generated) {
+                    continue;
+                }
                 await this.execute(trace, false);
                 if (this._executeCanceled) {
                     return;
