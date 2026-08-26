@@ -458,7 +458,7 @@
             },
             {
                 "command": "vdm-vscode.openSettingsPanel",
-                "title": "Configure Project",
+                "title": "Configure Project...",
                 "category": "VDM",
                 "icon": "$(wrench)"
             },
