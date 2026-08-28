@@ -199,6 +199,16 @@
                 "category": "VDM"
             },
             {
+                "command": "vdm-vscode.selectVDMToolsPath.vdmpp",
+                "title": "Locate VDMTools binary for VDM++",
+                "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.selectVDMToolsPath.vdmsl",
+                "title": "Locate VDMTools binary for VDM-SL",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.OpenRTLog",
                 "title": "Open real-time log in log viewer",
                 "category": "VDM"
@@ -765,6 +775,14 @@
                     "when": "vdm-vscode.OpenRTLog"
                 },
                 {
+                    "command": "vdm-vscode.selectVDMToolsPath.vdmpp",
+                    "when": "false"
+                },
+                {
+                    "command": "vdm-vscode.selectVDMToolsPath.vdmsl",
+                    "when": "false"
+                },
+                {
                     "command": "vdm-vscode.coverageOverlay.enable",
                     "when": "false"
                 },
@@ -1201,14 +1219,14 @@
                         "type": "string",
                         "default": "",
                         "scope": "resource",
-                        "description": "Path to VDMTools for VDM++."
+                        "markdownDescription": "Path to the VDMTools GUI binary for VDM++, which must be named `vppgde`. You can also point this at the root folder of a VDMTools installation, and the `bin/vppgde` binary will be located automatically. [Find File...](command:vdm-vscode.selectVDMToolsPath.vdmpp)"
                     },
                     "vdm-vscode.vdmtools.path.vdmsl": {
                         "title": "Path to VDMTools for VDM-SL",
                         "type": "string",
                         "default": "",
                         "scope": "resource",
-                        "description": "Path to VDMTools for VDM-SL."
+                        "markdownDescription": "Path to the VDMTools GUI binary for VDM-SL, which must be named `vdmgde`. You can also point this at the root folder of a VDMTools installation, and the `bin/vdmgde` binary will be located automatically. [Find File...](command:vdm-vscode.selectVDMToolsPath.vdmsl)"
                     },
                     "vdm-vscode.real-timeLogViewer.scaleWithEditorFont": {
                         "type": "boolean",

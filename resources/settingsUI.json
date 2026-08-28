@@ -139,13 +139,15 @@
     },
     "vdm-vscode.vdmtools.path.vdmpp": {
         "title": "VDMTools Path (VDM++)",
-        "description": "Path to the VDMTools executable for VDM++.",
-        "advanced": true
+        "description": "Path to the VDMTools GUI binary for VDM++ ('vppgde'), or the root of a VDMTools installation.",
+        "advanced": true,
+        "browseCommand": "vdm-vscode.selectVDMToolsPath.vdmpp"
     },
     "vdm-vscode.vdmtools.path.vdmsl": {
         "title": "VDMTools Path (VDM-SL)",
-        "description": "Path to the VDMTools executable for VDM-SL.",
-        "advanced": true
+        "description": "Path to the VDMTools GUI binary for VDM-SL ('vdmgde'), or the root of a VDMTools installation.",
+        "advanced": true,
+        "browseCommand": "vdm-vscode.selectVDMToolsPath.vdmsl"
     },
     "vdm-vscode.real-timeLogViewer.scaleWithEditorFont": {
         "title": "RT Log: Scale with Editor Font",

@@ -8,6 +8,7 @@ import * as Path from "path";
 import * as Fs from "fs-extra";
 import { dialectToPrettyFormat, VdmDialect, vdmFilePattern } from "../util/DialectUtil";
 import { resolveVariables } from "../util/VariableSubstitution";
+import { expectedBinaryName, resolveVDMToolsInstallation } from "../util/VDMToolsUtil";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
     constructor(knownVdmFolders: Map<WorkspaceFolder, VdmDialect>) {
@@ -67,17 +68,28 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                 }
             }
 
-            // Handle path in MAC OS
-            if (process.platform === "darwin") {
-                if (dialect == VdmDialect.VDMPP) {
-                    vdmToolsPath = Path.join(vdmToolsPath, "vppgde.app", "Contents", "MacOS", "vppgde");
-                } else if (dialect == VdmDialect.VDMSL) {
-                    vdmToolsPath = Path.join(vdmToolsPath, "vdmgde.app", "Contents", "MacOS", "vdmgde");
-                }
-            } else if (Fs.statSync(vdmToolsPath).isDirectory()) {
-                window.showErrorMessage("The VDMTools path should point to the GUI binary");
+            // The configured path may point directly at the GUI binary, at its containing "bin"
+            // folder, or at the root of a VDMTools installation. Resolve it to the actual binary to launch
+            // and make sure that binary exists and is executable.
+            const resolvedVdmTools = resolveVDMToolsInstallation(vdmToolsPath, dialect);
+            if (!resolvedVdmTools) {
+                const binaryName = expectedBinaryName(dialect);
+                window
+                    .showErrorMessage(
+                        `Could not find an executable '${binaryName}' binary at or under '${vdmToolsPath}'.` +
+                            `The path should point to the ${dialectToPrettyFormat.get(
+                                dialect,
+                            )} GUI binary itself (e.g. '.../bin/${binaryName}') or to the root of a VDMTools installation.`,
+                        "Go to settings",
+                    )
+                    .then((choice) => {
+                        if (choice) {
+                            commands.executeCommand("workbench.action.openSettings", "vdm-vscode.vdmtools");
+                        }
+                    });
                 return;
             }
+            vdmToolsPath = resolvedVdmTools.binaryPath;
 
             // Generate and save the project and options file content used by VDMTools.
             const configHelper: VDMToolsConfigurationHelper = new VDMToolsConfigurationHelper();

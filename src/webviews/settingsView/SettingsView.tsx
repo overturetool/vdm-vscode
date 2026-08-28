@@ -179,6 +179,7 @@ interface BooleanSetting extends SettingDescriptorBase {
 interface StringSetting extends SettingDescriptorBase {
     type: "string";
     default: string;
+    browseCommand?: string;
 }
 
 interface EnumSetting extends SettingDescriptorBase {
@@ -206,6 +207,7 @@ interface SchemaEntry {
     maximum: number | null;
     group: string;
     advanced: boolean;
+    browseCommand?: string;
 }
 
 interface VdmjSchemaEntry {
@@ -351,11 +353,27 @@ const SettingRow = ({
                 );
             case "string":
                 return (
-                    <VSCodeTextField
-                        value={String(value ?? descriptor.default)}
-                        onInput={(e: any) => onChange(descriptor.key, e.target.value)}
-                        style={{ minWidth: "200px" }}
-                    />
+                    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                        <VSCodeTextField
+                            value={String(value ?? descriptor.default)}
+                            onInput={(e: any) => onChange(descriptor.key, e.target.value)}
+                            style={{ minWidth: "200px" }}
+                        />
+                        {descriptor.browseCommand && (
+                            <VSCodeButton
+                                appearance="icon"
+                                title="Find File..."
+                                onClick={() =>
+                                    vscodeApi.postMessage({
+                                        command: "runCommand",
+                                        data: { command: descriptor.browseCommand },
+                                    })
+                                }
+                            >
+                                <span className="codicon codicon-folder-opened" />
+                            </VSCodeButton>
+                        )}
+                    </div>
                 );
             case "number":
                 return (
@@ -1626,6 +1644,7 @@ export const SettingsView = ({ vscodeApi }: SettingsViewProps) => {
                     options: entry.enum?.map((v) => ({ value: v, label: v })) ?? [],
                     min: entry.minimum ?? undefined,
                     max: entry.maximum ?? undefined,
+                    browseCommand: entry.browseCommand,
                 } as SettingDescriptor);
 
                 return (

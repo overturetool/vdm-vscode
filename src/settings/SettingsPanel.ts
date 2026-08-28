@@ -153,6 +153,15 @@ export class SettingsPanel extends AutoDisposable {
                             );
                             break;
 
+                        case "runCommand": {
+                            const { command: commandId } = message.data;
+                            if (typeof commandId === "string") {
+                                await commands.executeCommand(commandId, this._currentWsFolder?.uri);
+                                this._sendSettings();
+                            }
+                            break;
+                        }
+
                         case "saveVdmjProperty": {
                             const { key, value } = message.data;
                             const projectPath = this._getPropertiesPath();

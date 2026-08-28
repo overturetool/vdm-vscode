@@ -32,6 +32,7 @@ import { vdmFileExtensions, guessDialect, VdmDialect, vdmFilePattern } from "./u
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
+import { SelectVDMToolsPathHandler } from "./handlers/SelectVDMToolsPathHandler";
 import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHandler";
 import { RTLogViewHandler } from "./handlers/RTLogViewHandler";
 import { FMUHandler } from "./handlers/FMUHandler";
@@ -142,6 +143,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));
     context.subscriptions.push(new AddToClassPathHandler());
     context.subscriptions.push(new OpenVDMToolsHandler(knownVdmFolders));
+    context.subscriptions.push(new SelectVDMToolsPathHandler());
     context.subscriptions.push(new ChangeVdmjPropertiesHandler(knownVdmFolders));
     context.subscriptions.push(new FMUHandler());
     context.subscriptions.push(new QuickInterpreterHandler());
