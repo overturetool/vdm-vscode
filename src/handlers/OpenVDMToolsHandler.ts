@@ -76,7 +76,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                 const binaryName = expectedBinaryName(dialect);
                 window
                     .showErrorMessage(
-                        `Could not find an executable '${binaryName}' binary at or under '${vdmToolsPath}'.` +
+                        `Could not find an executable '${binaryName}' binary at or under '${vdmToolsPath}'. ` +
                             `The path should point to the ${dialectToPrettyFormat.get(
                                 dialect,
                             )} GUI binary itself (e.g. '.../bin/${binaryName}') or to the root of a VDMTools installation.`,
@@ -107,14 +107,36 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                     // Start VDMTools with settings detached and stdio ignore so that the process is decoupled from the parent process.
                     const vdmToolsProc: ChildProcess = spawn(vdmToolsPath, [projectFilePath], {
                         detached: true,
-                        stdio: "ignore",
+                        stdio: ["ignore", "ignore", "pipe"],
                     });
-                    if (vdmToolsProc.pid) {
-                        // If started then unref so that closing VSCode does not close VDMTools
-                        vdmToolsProc.unref();
-                    } else {
+
+                    if (!vdmToolsProc.pid) {
                         window.showErrorMessage("Unable to start VDMTools");
+                        return;
                     }
+
+                    let stderrOutput = "";
+                    const onStderr = (chunk: Buffer) => (stderrOutput += chunk.toString());
+                    vdmToolsProc.stderr?.on("data", onStderr);
+
+                    vdmToolsProc.once("error", (err) => {
+                        window.showErrorMessage(`Unable to start VDMTools: ${err.message}`);
+                    });
+
+                    vdmToolsProc.once("exit", (code) => {
+                        if (code !== 0 && code !== null) {
+                            window.showErrorMessage(
+                                `VDMTools (${dialectToPrettyFormat.get(dialect)}) exited immediately with exit code ${code}. ` +
+                                    (stderrOutput.trim() || "This usually indicates a missing runtime dependency, e.g. a shared library."),
+                            );
+                        }
+                    });
+
+                    setTimeout(() => {
+                        vdmToolsProc.stderr?.off("data", onStderr);
+                        vdmToolsProc.stderr?.destroy();
+                        vdmToolsProc.unref();
+                    }, 3000);
                 })
                 .catch((err) => {
                     window.showErrorMessage("Failed to save configuration for VDMTools: " + err);

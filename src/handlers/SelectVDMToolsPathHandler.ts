@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { ConfigurationTarget, window, workspace, WorkspaceFolder } from "vscode";
+import { ConfigurationTarget, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import * as Fs from "fs-extra";
+import * as Path from "path";
 import AutoDisposable from "../helper/AutoDisposable";
 import * as Util from "../util/Util";
 import { dialectToPrettyFormat, VdmDialect } from "../util/DialectUtil";
@@ -37,8 +39,11 @@ export class SelectVDMToolsPathHandler extends AutoDisposable {
             (window.activeTextEditor && workspace.getWorkspaceFolder(window.activeTextEditor.document.uri)) ||
             workspace.workspaceFolders?.[0];
 
+        const currentValue = workspace.getConfiguration("vdm-vscode.vdmtools.path", wsFolder?.uri).get<string>(configKey);
+        const defaultUri = SelectVDMToolsPathHandler._nearestExistingFolder(currentValue, wsFolder) ?? wsFolder?.uri;
+
         const selection = await window.showOpenDialog({
-            defaultUri: wsFolder?.uri,
+            defaultUri,
             canSelectFiles: true,
             canSelectFolders: true,
             canSelectMany: false,
@@ -54,7 +59,7 @@ export class SelectVDMToolsPathHandler extends AutoDisposable {
         const resolved = resolveVDMToolsInstallation(selectedPath, dialect);
         if (!resolved) {
             window.showErrorMessage(
-                `Could not find a nexecutable '${binaryName}' binary at or under '${selectedPath}'.` +
+                `Could not find an executable '${binaryName}' binary at or under '${selectedPath}'. ` +
                     `Please select the '${binaryName}' binary itself, its containing 'bin' folder, or the root of a VDMTools installation.`,
             );
             return;
@@ -65,5 +70,31 @@ export class SelectVDMToolsPathHandler extends AutoDisposable {
         await config.update(configKey, resolved.settingValue, target);
 
         window.showInformationMessage(`VDMTools path for ${prettyDialect} set to '${resolved.settingValue}'`);
+    }
+
+    private static _nearestExistingFolder(configuredValue: string | undefined, wsFolder: WorkspaceFolder | undefined): Uri | undefined {
+        if (!configuredValue) {
+            return undefined;
+        }
+
+        let current = Path.isAbsolute(configuredValue)
+            ? configuredValue
+            : wsFolder
+              ? Path.resolve(wsFolder.uri.fsPath, configuredValue)
+              : undefined;
+        if (!current) {
+            return undefined;
+        }
+
+        while (true) {
+            if (Fs.existsSync(current)) {
+                return Uri.file(Fs.statSync(current).isDirectory() ? current : Path.dirname(current));
+            }
+            const parent = Path.dirname(current);
+            if (parent === current) {
+                return undefined;
+            }
+            current = parent;
+        }
     }
 }
