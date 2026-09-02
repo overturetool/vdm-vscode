@@ -1,22 +1,22 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "VDM-RT",
-	"patterns": [
-		{
-			"name": "storage.type.system.vdmrt",
-			"match": "\\b(system)\\b"
-		},
-		{
-			"name": "keyword.other.vdmrt",
-			"match": "\\b(async|time)\\b"
-		},
-		{
-			"name": "support.function.timing.vdmrt",
-			"match": "\\b(cycles|duration)\\b"
-		},
-		{
-			"include": "source.vdmpp"
-		}
-	],
-	"scopeName": "source.vdmrt"
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "VDM-RT",
+    "patterns": [
+        {
+            "name": "storage.type.system.vdmrt",
+            "match": "(?<![\\w$'])(system)(?![\\w$'])"
+        },
+        {
+            "name": "keyword.other.vdmrt",
+            "match": "(?<![\\w$'])(async|time)(?![\\w$'])"
+        },
+        {
+            "name": "support.function.timing.vdmrt",
+            "match": "(?<![\\w$'])(cycles|duration)(?![\\w$'])"
+        },
+        {
+            "include": "source.vdmpp"
+        }
+    ],
+    "scopeName": "source.vdmrt"
 }

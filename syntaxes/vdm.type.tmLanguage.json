@@ -27,15 +27,15 @@
     "repository": {
         "basicTypes": {
             "name": "support.type.basic.vdm",
-            "match": "\\b(bool|nat|nat1|int|rat|real|char|token|nil|undefined)\\b"
+            "match": "(?<![\\w$'])(bool|nat|nat1|int|rat|real|char|token|nil|undefined)(?![\\w$'])"
         },
         "truefalse": {
             "name": "constant.language.boolean.vdm",
-            "match": "\\b(true|false)\\b"
+            "match": "(?<![\\w$'])(true|false)(?![\\w$'])"
         },
         "collection": {
             "name": "storage.modifier.collection.vdm",
-            "match": "\\b(set of|set1 of|seq of|seq1 of|map|inmap|to|set|set1|seq|seq1)\\b"
+            "match": "(?<![\\w$'])(set of|set1 of|seq of|seq1 of|map|inmap|to|set|set1|seq|seq1)(?![\\w$'])"
         },
         "enum": {
             "name": "support.type.enum.vdm",
@@ -43,7 +43,7 @@
         },
         "tuple": {
             "name": "support.type.tuple.vdm",
-            "match": "\\bmk_"
+            "match": "(?<![\\w$'])mk_"
         },
         "chars": {
             "name": "string.quoted.single.vdm",

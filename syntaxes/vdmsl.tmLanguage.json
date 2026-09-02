@@ -1,26 +1,26 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "VDM-SL",
-	"patterns": [
-		{
-			"include": "source.vdm"
-		},
-		{
-			"name": "storage.type.module.vdmsl",
-			"match": "\\b(module)\\b"
-		},
-		{
-			"name": "keyword.control.import.vdmsl",
-			"match": "\\b(imports|from|init|renamed|uselib)\\b"
-		},
-		{
-			"name": "keyword.control.export.vdmsl",
-			"match": "\\b(exports)\\b"
-		},
-		{
-			"name": "keyword.other.vdmsl",
-			"match": "\\b(state|struct)\\b"
-		}
-	],
-	"scopeName": "source.vdmsl"
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "VDM-SL",
+    "patterns": [
+        {
+            "include": "source.vdm"
+        },
+        {
+            "name": "storage.type.module.vdmsl",
+            "match": "(?<![\\w$'])(module)(?![\\w$'])"
+        },
+        {
+            "name": "keyword.control.import.vdmsl",
+            "match": "(?<![\\w$'])(imports|from|init|renamed|uselib)(?![\\w$'])"
+        },
+        {
+            "name": "keyword.control.export.vdmsl",
+            "match": "(?<![\\w$'])(exports)(?![\\w$'])"
+        },
+        {
+            "name": "keyword.other.vdmsl",
+            "match": "(?<![\\w$'])(state|struct)(?![\\w$'])"
+        }
+    ],
+    "scopeName": "source.vdmsl"
 }

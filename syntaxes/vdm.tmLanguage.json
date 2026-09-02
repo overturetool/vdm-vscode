@@ -104,7 +104,7 @@
         "annotation-keywords": {
             "patterns": [
                 {
-                    "match": "@(Override|Trace|NoPOG|Printf|OnFail|Warning)\\b",
+                    "match": "@(Override|Trace|NoPOG|Printf|OnFail|Warning)(?![\\w$'])",
                     "name": "keyword.other.documentation.vdm"
                 }
             ]
@@ -169,7 +169,7 @@
             "patterns": [
                 {
                     "name": "storage.type.definition.vdm",
-                    "match": "\\b(operations|functions|types|values|instance variables|traces|definitions)\\b"
+                    "match": "(?<![\\w$'])(operations|functions|types|values|instance variables|traces|definitions)(?![\\w$'])"
                 }
             ]
         },
@@ -177,19 +177,19 @@
             "patterns": [
                 {
                     "name": "storage.modifier.vdm",
-                    "match": "\\b(public|private|protected|static|pre|post|pure|inv)\\b"
+                    "match": "(?<![\\w$'])(public|private|protected|static|pre|post|pure|inv)(?![\\w$'])"
                 }
             ]
         },
         "storage": {
             "name": "storage.type.dcl.vdm",
-            "match": "\\b(dcl|struct|state|def|atomic)\\b"
+            "match": "(?<![\\w$'])(dcl|struct|state|def|atomic)(?![\\w$'])"
         },
         "end": {
             "patterns": [
                 {
                     "name": "keyword.other.end.vdm",
-                    "match": "(?<!\\\\)\\bend\\b"
+                    "match": "(?<!\\\\)(?<![\\w$'])end(?![\\w$'])"
                 }
             ]
         },
@@ -213,7 +213,7 @@
             "patterns": [
                 {
                     "name": "keyword.other.vdm",
-                    "match": "\\b(always|error|errs|ext|exit|skip|using)\\b"
+                    "match": "(?<![\\w$'])(always|error|errs|ext|exit|skip|using)(?![\\w$'])"
                 }
             ]
         },
@@ -221,13 +221,13 @@
             "patterns": [
                 {
                     "name": "keyword.other.mode.vdm",
-                    "match": "\\b(rd|wr)\\b"
+                    "match": "(?<![\\w$'])(rd|wr)(?![\\w$'])"
                 }
             ]
         },
         "instance-variables-definition": {
             "name": "meta.instance-variables.vdm",
-            "begin": "\\b(instance variables)\\b",
+            "begin": "(?<![\\w$'])(instance variables)(?![\\w$'])",
             "end": "(.*)(?=(operations|functions|types|values|end))",
             "beginCaptures": {
                 "1": {
@@ -273,7 +273,7 @@
         },
         "types-definition": {
             "name": "meta.types.vdm",
-            "begin": "\\b(types)\\b",
+            "begin": "(?<![\\w$'])(types)(?![\\w$'])",
             "end": "(.*)(?=(operations|functions|values|instance variables|end))",
             "beginCaptures": {
                 "1": {
@@ -332,7 +332,7 @@
         },
         "values-definition": {
             "name": "meta.values.vdm",
-            "begin": "\\b(values)\\b",
+            "begin": "(?<![\\w$'])(values)(?![\\w$'])",
             "end": "(.*)(?=(operations|functions|types|instance variables|end))",
             "beginCaptures": {
                 "1": {
@@ -406,7 +406,7 @@
         },
         "functions-definition": {
             "name": "meta.functions.vdm",
-            "begin": "\\b(functions)\\b",
+            "begin": "(?<![\\w$'])(functions)(?![\\w$'])",
             "end": ".*(?=operations|values|types|instance variables|end)",
             "beginCaptures": {
                 "1": {
@@ -495,7 +495,7 @@
         },
         "operations-definition": {
             "name": "meta.operations.vdm",
-            "begin": "\\b(operations)\\b",
+            "begin": "(?<![\\w$'])(operations)(?![\\w$'])",
             "end": "(.*)(?=(functions|values|types|instance variables|end))",
             "beginCaptures": {
                 "1": {
