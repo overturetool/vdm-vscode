@@ -6,20 +6,16 @@
             "include": "source.vdm"
         },
         {
-            "name": "storage.type.module.vdmsl",
+            "name": "storage.type.vdm",
             "match": "(?<![\\w$'])(module)(?![\\w$'])"
         },
         {
-            "name": "keyword.control.import.vdmsl",
+            "name": "storage.type.vdm",
             "match": "(?<![\\w$'])(imports|from|init|renamed|uselib)(?![\\w$'])"
         },
         {
-            "name": "keyword.control.export.vdmsl",
+            "name": "keyword.type.vdm",
             "match": "(?<![\\w$'])(exports)(?![\\w$'])"
-        },
-        {
-            "name": "keyword.other.vdmsl",
-            "match": "(?<![\\w$'])(state|struct)(?![\\w$'])"
         }
     ],
     "scopeName": "source.vdmsl"

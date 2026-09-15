@@ -3,35 +3,47 @@
     "name": "VDM++",
     "patterns": [
         {
-            "name": "storage.type.class.vdmpp",
-            "match": "(?<![\\w$'])(class|self)(?![\\w$'])"
+            "name": "storage.type.vdm",
+            "match": "(?<![\\w$'])(class)(?![\\w$'])"
         },
         {
-            "name": "storage.type.definition.class.vdmpp",
+            "name": "keyword.other.value.vdm",
+            "match": "(?<![\\w$'])(self)(?![\\w$'])"
+        },
+        {
+            "name": "storage.type.vdm",
             "match": "(?<![\\w$'])(thread|sync|instance|variables)(?![\\w$'])"
         },
         {
-            "name": "keyword.other.subclassResposibility.vdmpp",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(is subclass responsibility)(?![\\w$'])"
         },
         {
-            "name": "keyword.other.history.vdmpp",
+            "name": "keyword.other.value.vdm",
             "match": "(\\#act|\\#active|\\#fin|\\#req|\\#waiting)(?![\\w$'])"
         },
         {
-            "name": "support.function.membership.vdmpp",
-            "match": "(?<![\\w$'])(isofbaseclass|isofclass|samebaseclass|sameclass|subclass)(?![\\w$'])"
+            "name": "keyword.other.value.vdm",
+            "match": "(?<![\\w$'])(isofbaseclass|isofclass|samebaseclass|sameclass)(?![\\w$'])"
         },
         {
-            "name": "support.function.sync.vdmpp",
+            "name": "storage.type.vdm",
+            "match": "(?<![\\w$'])(subclass)(?![\\w$'])"
+        },
+        {
+            "name": "storage.type.vdm",
             "match": "(?<![\\w$'])(mutex|per)(?![\\w$'])"
         },
         {
-            "name": "keyword.other.thread.vdmpp",
-            "match": "(?<![\\w$'])(periodic|sporadic|threadid)(?![\\w$'])"
+            "name": "storage.type.vdm",
+            "match": "(?<![\\w$'])(periodic|sporadic)(?![\\w$'])"
         },
         {
-            "name": "support.function.startstop.vdmpp",
+            "name": "keyword.other.value.vdm",
+            "match": "(?<![\\w$'])(threadid)(?![\\w$'])"
+        },
+        {
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(start|startlist|stop|stoplist)(?![\\w$'])"
         },
         {

@@ -45,7 +45,7 @@
             "match": "(=)"
         },
         "combinators": {
-            "name": "keyword.other.combinators.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(\\*\\*|comp)(?![\\w$'])"
         },
         "applicators": {},
@@ -58,7 +58,7 @@
             "match": "\\b(\\+\\+|\\<\\:|\\<\\-\\:|\\:\\>|\\:\\-\\>)\\b"
         },
         "evaluators": {
-            "name": "keyword.other.evaluators.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(abs|floor|card|power|dunion|dinter|hd|tl|len|inds|elems|conc|reverse|dom|rng|merge|inverse|rem|mod|div|union|inter|munion)(?![\\w$'])"
         },
         "relations": {
@@ -66,24 +66,24 @@
             "match": "\\b(<=|>=|<|>|=|==|<>)\\b"
         },
         "set": {
-            "name": "keyword.other.set.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(subset|psubset|in set|not in set)(?![\\w$'])"
         },
         "seq": {
-            "name": "keyword.other.seq.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(in seq|in seq1)(?![\\w$'])"
         },
         "connectives": {
-            "name": "keyword.other.connectives.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(not|and|or|=>|<=>)(?![\\w$'])"
         },
         "type": {},
         "new": {
-            "name": "keyword.operator.new.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(new)(?![\\w$'])"
         },
         "other": {
-            "name": "keyword.other.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(\\.\\.\\.|forall|exists|exists1|iota|lambda|all|eq|ord|compose|is|of)(?![\\w$'])"
         }
     },

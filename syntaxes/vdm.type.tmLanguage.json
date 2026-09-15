@@ -26,7 +26,7 @@
     ],
     "repository": {
         "basicTypes": {
-            "name": "support.type.basic.vdm",
+            "name": "support.type.vdm",
             "match": "(?<![\\w$'])(bool|nat|nat1|int|rat|real|char|token|nil|undefined)(?![\\w$'])"
         },
         "truefalse": {
@@ -34,7 +34,7 @@
             "match": "(?<![\\w$'])(true|false)(?![\\w$'])"
         },
         "collection": {
-            "name": "storage.modifier.collection.vdm",
+            "name": "support.type.vdm",
             "match": "(?<![\\w$'])(set of|set1 of|seq of|seq1 of|map|inmap|to|set|set1|seq|seq1)(?![\\w$'])"
         },
         "enum": {
@@ -42,7 +42,7 @@
             "match": "<\\w+>"
         },
         "tuple": {
-            "name": "support.type.tuple.vdm",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])mk_"
         },
         "chars": {

@@ -3,15 +3,15 @@
     "name": "VDM-RT",
     "patterns": [
         {
-            "name": "storage.type.system.vdmrt",
+            "name": "storage.type.vdm",
             "match": "(?<![\\w$'])(system)(?![\\w$'])"
         },
         {
-            "name": "keyword.other.vdmrt",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(async|time)(?![\\w$'])"
         },
         {
-            "name": "support.function.timing.vdmrt",
+            "name": "keyword.other.value.vdm",
             "match": "(?<![\\w$'])(cycles|duration)(?![\\w$'])"
         },
         {
