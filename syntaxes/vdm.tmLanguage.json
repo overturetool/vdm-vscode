@@ -12,6 +12,9 @@
             "include": "#modifier"
         },
         {
+            "include": "#state-block"
+        },
+        {
             "include": "#storage"
         },
         {
@@ -185,13 +188,21 @@
             "patterns": [
                 {
                     "name": "storage.type.vdm",
-                    "match": "(?<![\\w$'])(struct|state)(?![\\w$'])"
+                    "match": "(?<![\\w$'])(struct)(?![\\w$'])"
                 },
                 {
                     "name": "storage.other.value.vdm",
                     "match": "(?<![\\w$'])(dcl|def|atomic)(?![\\w$'])"
                 }
             ]
+        },
+        "state-block": {
+            "name": "meta.state.vdm",
+            "begin": "(?<![\\w$'])(state)(?![\\w$'])",
+            "beginCaptures": { "1": { "name": "storage.type.vdm" } },
+            "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
+            "endCaptures": { "1": { "name": "storage.type.vdm" } },
+            "patterns": [{ "include": "$self" }]
         },
         "end": {
             "patterns": [

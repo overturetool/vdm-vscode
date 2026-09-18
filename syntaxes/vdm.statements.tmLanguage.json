@@ -11,6 +11,9 @@
             "name": "meta.statements.vdm",
             "patterns": [
                 {
+                    "include": "#cases-block"
+                },
+                {
                     "include": "#control-statements"
                 },
                 {
@@ -34,9 +37,17 @@
             "patterns": [
                 {
                     "name": "keyword.control.value.vdm",
-                    "match": "(?<![\\w$'])(if|then|else|elseif|cases|return|while|for|do|measure|by|others|tixe|trap|with)(?![\\w$'])"
+                    "match": "(?<![\\w$'])(if|then|else|elseif|return|while|for|do|measure|by|others|tixe|trap|with)(?![\\w$'])"
                 }
             ]
+        },
+        "cases-block": {
+            "name": "meta.cases.vdm",
+            "begin": "(?<![\\w$'])(cases)(?![\\w$'])",
+            "beginCaptures": { "1": { "name": "keyword.control.value.vdm" } },
+            "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
+            "endCaptures": { "1": { "name": "keyword.control.value.vdm" } },
+            "patterns": [{ "include": "$self" }]
         },
         "local-binding-statements": {
             "patterns": [

@@ -6,8 +6,12 @@
             "include": "source.vdm"
         },
         {
-            "name": "storage.type.vdm",
-            "match": "(?<![\\w$'])(module)(?![\\w$'])"
+            "name": "meta.module.vdmsl",
+            "begin": "(?<![\\w$'])(module)(?![\\w$'])",
+            "beginCaptures": { "1": { "name": "storage.type.vdm" } },
+            "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
+            "endCaptures": { "1": { "name": "storage.type.vdm" } },
+            "patterns": [{ "include": "$self" }]
         },
         {
             "name": "storage.type.vdm",

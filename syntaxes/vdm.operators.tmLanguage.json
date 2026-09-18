@@ -84,7 +84,7 @@
         },
         "other": {
             "name": "keyword.other.value.vdm",
-            "match": "(?<![\\w$'])(\\.\\.\\.|forall|exists|exists1|iota|lambda|all|eq|ord|compose|is|of)(?![\\w$'])"
+            "match": "(?<![\\w$'])(\\.\\.\\.|forall|exists|exists1|iota|lambda|all|eq|ord|is|of)(?![\\w$'])"
         }
     },
     "scopeName": "source.vdm.operators"

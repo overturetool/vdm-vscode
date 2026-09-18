@@ -3,8 +3,12 @@
     "name": "VDM++",
     "patterns": [
         {
-            "name": "storage.type.vdm",
-            "match": "(?<![\\w$'])(class)(?![\\w$'])"
+            "name": "meta.class.vdmpp",
+            "begin": "(?<![\\w$'])(class)(?![\\w$'])",
+            "beginCaptures": { "1": { "name": "storage.type.vdm" } },
+            "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
+            "endCaptures": { "1": { "name": "storage.type.vdm" } },
+            "patterns": [{ "include": "$self" }]
         },
         {
             "name": "keyword.other.value.vdm",

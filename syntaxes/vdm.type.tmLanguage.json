@@ -12,6 +12,9 @@
             "include": "#collection"
         },
         {
+            "include": "#compose-block"
+        },
+        {
             "include": "#enum"
         },
         {
@@ -25,6 +28,14 @@
         }
     ],
     "repository": {
+        "compose-block": {
+            "name": "meta.compose.vdm",
+            "begin": "(?<![\\w$'])(compose)(?![\\w$'])",
+            "beginCaptures": { "1": { "name": "support.type.vdm" } },
+            "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
+            "endCaptures": { "1": { "name": "support.type.vdm" } },
+            "patterns": [{ "include": "$self" }, { "include": "source.vdm.statements" }]
+        },
         "basicTypes": {
             "name": "support.type.vdm",
             "match": "(?<![\\w$'])(bool|nat|nat1|int|rat|real|char|token|nil|undefined)(?![\\w$'])"
