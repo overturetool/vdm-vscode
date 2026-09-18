@@ -50,6 +50,7 @@ import { SettingsPanel } from "./settings/SettingsPanel";
 import { QuickConsoleHandler } from "./handlers/QuickConsoleHandler";
 import { SaveLoadedFilesHandler } from "./handlers/SaveLoadedFilesHandler";
 import { GenericTranslateHandler } from "./slsp/views/translate/GenericTranslateHandler";
+import { ShowMessageHandler } from "./handlers/ShowMessageHandler";
 
 let clientManager: ClientManager;
 
@@ -152,6 +153,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(new SettingsPanel(context, knownVdmFolders, clientManager));
     context.subscriptions.push(new QuickConsoleHandler());
     context.subscriptions.push(new SaveLoadedFilesHandler(clientManager));
+    context.subscriptions.push(new ShowMessageHandler());
 
     // Initialise debug handler
     dapSupport.initDebugConfig(context, clientManager);
