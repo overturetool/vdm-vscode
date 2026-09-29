@@ -34,7 +34,7 @@
             "beginCaptures": { "1": { "name": "support.type.vdm" } },
             "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
             "endCaptures": { "1": { "name": "support.type.vdm" } },
-            "patterns": [{ "include": "$self" }, { "include": "source.vdm.statements" }]
+            "patterns": [{ "include": "$base" }, { "include": "source.vdm.statements" }]
         },
         "basicTypes": {
             "name": "support.type.vdm",

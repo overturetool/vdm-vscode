@@ -47,7 +47,7 @@
             "beginCaptures": { "1": { "name": "keyword.control.value.vdm" } },
             "end": "(?<!\\\\)(?<![\\w$'])(end)(?![\\w$'])",
             "endCaptures": { "1": { "name": "keyword.control.value.vdm" } },
-            "patterns": [{ "include": "$self" }]
+            "patterns": [{ "include": "$base" }]
         },
         "local-binding-statements": {
             "patterns": [
