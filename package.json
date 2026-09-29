@@ -1718,6 +1718,18 @@
                 "fileMatch": ".vscode/quickcheck.json",
                 "url": "./resources/schemas/schema.quickcheck.json"
             }
+        ],
+        "themes": [
+            {
+                "label": "VDM Dark",
+                "uiTheme": "vs-dark",
+                "path": "./resources/themes/vdm-dark.json"
+            },
+            {
+                "label": "VDM Light",
+                "uiTheme": "vs",
+                "path": "./resources/themes/vdm-light.json"
+            }
         ]
     },
     "scripts": {
