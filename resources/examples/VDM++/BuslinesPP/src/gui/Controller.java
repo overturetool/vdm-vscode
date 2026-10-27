@@ -44,7 +44,7 @@ public class Controller extends JFrame  {
         }
         
       attachListenersToComponents();
-      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       layOutComponents();
       // Connect model and view
       model.addObserver(view);

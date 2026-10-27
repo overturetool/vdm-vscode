@@ -1,7 +1,7 @@
 package gui;
 
-import org.overture.interpreter.debug.RemoteInterpreter;
-import org.overture.interpreter.values.Value;
+import com.fujitsu.vdmj.RemoteInterpreter;
+import com.fujitsu.vdmj.values.Value;
 
 
 

@@ -1,6 +1,6 @@
 
-import org.overture.interpreter.values.IntegerValue;
-import org.overture.interpreter.values.SeqValue;
+import com.fujitsu.vdmj.values.IntegerValue;
+import com.fujitsu.vdmj.values.SeqValue;
 
 import gui.Graphics;
 

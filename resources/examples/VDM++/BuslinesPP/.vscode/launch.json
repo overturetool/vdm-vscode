@@ -1,7 +1,7 @@
 {
     "configurations": [
 	{
-	    "name": "Launch BuslinesPP Debug 1",
+	    "name": "Launch BuslinesPP Debug",
 	    "type": "vdm",
 	    "request": "launch",
 	    "noDebug": false,

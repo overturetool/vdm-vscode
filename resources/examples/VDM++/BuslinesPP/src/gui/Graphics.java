@@ -2,9 +2,9 @@ package gui;
 
 import java.io.Serializable;
 
-import org.overture.interpreter.runtime.ValueException;
-import org.overture.interpreter.values.Value;
-import org.overture.interpreter.values.VoidValue;
+import com.fujitsu.vdmj.runtime.ValueException;
+import com.fujitsu.vdmj.values.Value;
+import com.fujitsu.vdmj.values.VoidValue;
 
 
 public class Graphics implements Serializable  {

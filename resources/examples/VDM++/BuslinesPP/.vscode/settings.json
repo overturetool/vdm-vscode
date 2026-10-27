@@ -1,0 +1,3 @@
+{
+    "vdm-vscode.server.classPathAdditions": ["${workspaceFolder}/lib/graphics.jar"]
+}
